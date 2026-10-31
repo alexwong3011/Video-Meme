@@ -1,0 +1,338 @@
+{
+ "song": "Lá Thu Trôi",
+ "artist": "alexwong3011",
+ "section": "Chorus 1 (lines 1-5)",
+ "timing_source": "faster-whisper small, word timestamps; text from embedded lyrics",
+ "lines": [
+  {
+   "rows": [
+    [
+     {
+      "text": "Một",
+      "start": 69.0,
+      "end": 69.58
+     },
+     {
+      "text": "chiếc",
+      "start": 69.58,
+      "end": 69.9
+     },
+     {
+      "text": "lá",
+      "start": 69.9,
+      "end": 70.28
+     },
+     {
+      "text": "nghiêng",
+      "start": 70.28,
+      "end": 70.66
+     },
+     {
+      "text": "chở",
+      "start": 70.66,
+      "end": 71.06
+     },
+     {
+      "text": "đôi",
+      "start": 71.06,
+      "end": 71.3
+     },
+     {
+      "text": "câu",
+      "start": 71.3,
+      "end": 71.98
+     },
+     {
+      "text": "chữ",
+      "start": 71.98,
+      "end": 72.62
+     }
+    ],
+    [
+     {
+      "text": "vượt",
+      "start": 72.62,
+      "end": 73.1
+     },
+     {
+      "text": "mấy",
+      "start": 73.1,
+      "end": 73.42
+     },
+     {
+      "text": "tầng",
+      "start": 73.42,
+      "end": 73.88
+     },
+     {
+      "text": "tường",
+      "start": 73.88,
+      "end": 74.6
+     }
+    ]
+   ]
+  },
+  {
+   "rows": [
+    [
+     {
+      "text": "Ngỡ",
+      "start": 75.14,
+      "end": 75.6
+     },
+     {
+      "text": "nước",
+      "start": 75.6,
+      "end": 75.82
+     },
+     {
+      "text": "vô",
+      "start": 75.82,
+      "end": 76.24
+     },
+     {
+      "text": "tình",
+      "start": 76.24,
+      "end": 76.52
+     }
+    ],
+    [
+     {
+      "text": "đâu",
+      "start": 76.52,
+      "end": 76.88
+     },
+     {
+      "text": "ai",
+      "start": 76.88,
+      "end": 77.52
+     },
+     {
+      "text": "biết",
+      "start": 77.52,
+      "end": 77.88
+     },
+     {
+      "text": "kẻ",
+      "start": 77.88,
+      "end": 78.68
+     },
+     {
+      "text": "bắc",
+      "start": 78.68,
+      "end": 78.98
+     },
+     {
+      "text": "cầu",
+      "start": 78.98,
+      "end": 79.54
+     },
+     {
+      "text": "thương",
+      "start": 79.54,
+      "end": 80.26
+     }
+    ]
+   ]
+  },
+  {
+   "rows": [
+    [
+     {
+      "text": "Chưa",
+      "start": 80.26,
+      "end": 81.42
+     },
+     {
+      "text": "tỏ",
+      "start": 81.42,
+      "end": 81.8
+     },
+     {
+      "text": "mặt",
+      "start": 81.8,
+      "end": 82.08
+     },
+     {
+      "text": "đã",
+      "start": 82.08,
+      "end": 82.48
+     },
+     {
+      "text": "quen",
+      "start": 82.48,
+      "end": 83.08
+     }
+    ],
+    [
+     {
+      "text": "từng",
+      "start": 83.08,
+      "end": 83.7
+     },
+     {
+      "text": "nét",
+      "start": 83.7,
+      "end": 83.84
+     },
+     {
+      "text": "mực",
+      "start": 83.84,
+      "end": 84.14
+     },
+     {
+      "text": "thắm",
+      "start": 84.14,
+      "end": 84.52
+     },
+     {
+      "text": "chưa",
+      "start": 84.52,
+      "end": 85.0
+     },
+     {
+      "text": "nhoà",
+      "start": 85.0,
+      "end": 85.72
+     }
+    ]
+   ]
+  },
+  {
+   "rows": [
+    [
+     {
+      "text": "Lá",
+      "start": 85.86,
+      "end": 85.98
+     },
+     {
+      "text": "cuốn",
+      "start": 85.98,
+      "end": 86.34
+     },
+     {
+      "text": "chậm",
+      "start": 86.34,
+      "end": 86.68
+     },
+     {
+      "text": "trôi",
+      "start": 86.68,
+      "end": 87.16
+     },
+     {
+      "text": "chở",
+      "start": 87.16,
+      "end": 87.72
+     },
+     {
+      "text": "giùm",
+      "start": 87.72,
+      "end": 88.16
+     },
+     {
+      "text": "nhau",
+      "start": 88.16,
+      "end": 88.5
+     }
+    ],
+    [
+     {
+      "text": "trọn",
+      "start": 88.5,
+      "end": 89.04
+     },
+     {
+      "text": "một",
+      "start": 89.04,
+      "end": 89.4
+     },
+     {
+      "text": "kiếp",
+      "start": 89.4,
+      "end": 90.16
+     },
+     {
+      "text": "này",
+      "start": 90.16,
+      "end": 90.6
+     },
+     {
+      "text": "thôi…",
+      "start": 90.6,
+      "end": 91.3
+     }
+    ]
+   ]
+  },
+  {
+   "rows": [
+    [
+     {
+      "text": "Người",
+      "start": 92.02,
+      "end": 92.22
+     },
+     {
+      "text": "chốn",
+      "start": 92.22,
+      "end": 92.58
+     },
+     {
+      "text": "thâm",
+      "start": 92.58,
+      "end": 92.92
+     },
+     {
+      "text": "cung",
+      "start": 92.92,
+      "end": 93.22
+     },
+     {
+      "text": "tay",
+      "start": 93.22,
+      "end": 93.6
+     },
+     {
+      "text": "buông",
+      "start": 93.6,
+      "end": 94.0
+     },
+     {
+      "text": "mắt",
+      "start": 94.0,
+      "end": 94.3
+     },
+     {
+      "text": "ngóng",
+      "start": 94.3,
+      "end": 94.76
+     }
+    ],
+    [
+     {
+      "text": "chỉ",
+      "start": 94.76,
+      "end": 95.0
+     },
+     {
+      "text": "rối",
+      "start": 95.0,
+      "end": 95.52
+     },
+     {
+      "text": "tơi",
+      "start": 95.52,
+      "end": 96.0
+     },
+     {
+      "text": "bời",
+      "start": 96.0,
+      "end": 97.18
+     }
+    ]
+   ]
+  }
+ ]
+}

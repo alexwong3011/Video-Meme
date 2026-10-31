@@ -66,6 +66,10 @@ npm run ff -- webm      out.webm in.mp4           # VP9/Opus cho web
 npm run ff -- probe     in.mp4                    # thông tin file
 ```
 
+## Dự án
+
+- [`projects/la-thu-troi`](projects/la-thu-troi): clip nhạc 30s — kéo dài video, lồng hook, phụ đề karaoke.
+
 ## Thành phần tùy chọn (chưa cài)
 
 `npx hyperframes doctor` liệt kê thêm: **whisper.cpp** (tạo transcript/phụ đề tự động),
