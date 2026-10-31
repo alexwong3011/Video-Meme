@@ -1,0 +1,16 @@
+{
+  "name": "video-meme",
+  "private": true,
+  "description": "Video toolkit: HyperFrames (HTML → MP4), Remotion (React → MP4) and FFmpeg post-production.",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "verify": "bash scripts/verify.sh",
+    "hf:preview": "cd hyperframes && npx --yes hyperframes@0.8.223 preview",
+    "hf:check": ". scripts/env.sh && cd hyperframes && npx --yes hyperframes@0.8.223 check",
+    "hf:render": ". scripts/env.sh && cd hyperframes && npx --yes hyperframes@0.8.223 render -o ../out/hyperframes.mp4",
+    "rm:studio": "cd remotion && npx remotion studio",
+    "rm:render": ". scripts/env.sh && cd remotion && npx remotion render MemeIntro ../out/remotion.mp4",
+    "ff": "bash scripts/ffmpeg-tools.sh"
+  }
+}
