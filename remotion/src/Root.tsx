@@ -1,6 +1,7 @@
 import { Composition } from "remotion";
 import { MemeIntro, memeIntroSchemaDefaults } from "./MemeIntro";
 import { LaThuTroi } from "./LaThuTroi/LaThuTroi";
+import { MV } from "./LaThuTroiMV/MV";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -21,6 +22,14 @@ export const RemotionRoot: React.FC = () => {
       fps={30}
       width={1080}
       height={1608}
+    />
+    <Composition
+      id="LaThuTroiMV"
+      component={MV}
+      durationInFrames={Math.ceil(306.5 * 30)}
+      fps={30}
+      width={1080}
+      height={1920}
     />
     </>
   );

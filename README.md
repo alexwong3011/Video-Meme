@@ -70,6 +70,7 @@ npm run ff -- probe     in.mp4                    # thông tin file
 
 - [`projects/la-thu-troi`](projects/la-thu-troi): clip nhạc 30s — kéo dài video, lồng hook, phụ đề karaoke.
 - [`projects/la-thu-troi-2min`](projects/la-thu-troi-2min): bản 2 phút — 14 shot slow-motion, chữ vàng ròng tan thành tia sáng (Remotion).
+- [`projects/la-thu-troi-mv`](projects/la-thu-troi-mv): MV đầy đủ 5:06 — 47 cảnh 2.5D từ 4 ảnh concept, cắt theo nhịp.
 
 ## Thành phần tùy chọn (chưa cài)
 
