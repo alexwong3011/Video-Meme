@@ -148,3 +148,12 @@ socialheat/
   db.py                 SQLite (data/socialheat.db)
 tests/                  pytest -q tests
 ```
+
+## 9. Tự phát hiện vấn đề nóng (`discover`)
+
+```bash
+python -m socialheat discover -n 10            # gom tin Google News + RSS báo + Google Trends, thêm thành chủ đề [Tự động]
+python -m socialheat discover -n 10 --crawl     # ...và crawl/chấm điểm ngay các chủ đề đó
+```
+Tiêu đề từ nhiều báo được gom cụm theo cụm từ đặc trưng; cụm được nhiều báo khác nhau cùng đưa tin là ứng viên.
+Từ khóa tự sinh đôi khi quá rộng (ví dụ "dự án & đề xuất") – nên xem lại và sửa trong *Quản lý chủ đề*.

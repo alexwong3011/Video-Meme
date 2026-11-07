@@ -64,6 +64,12 @@ def main(argv=None):
     p.add_argument("--debug", action="store_true", help="lưu response thô vào data/debug & hiện trình duyệt")
     p.add_argument("--show", action="store_true", help="hiện cửa sổ trình duyệt")
 
+    p = sub.add_parser("discover", help="tự phát hiện các vấn đề đang được quan tâm và thêm thành chủ đề")
+    p.add_argument("-n", "--top", type=int, default=10, help="số ứng viên")
+    p.add_argument("--no-add", action="store_true", help="chỉ in, không thêm thành chủ đề")
+    p.add_argument("--crawl", action="store_true", help="crawl ngay các chủ đề vừa thêm")
+    p.add_argument("-p", "--platforms", nargs="*", choices=["facebook", "tiktok", "threads", "news"])
+
     sub.add_parser("score", help="tính lại điểm & in bảng xếp hạng")
     sub.add_parser("serve", help="chỉ chạy dashboard")
     sub.add_parser("run", help="dashboard + tự động crawl định kỳ")
@@ -96,6 +102,22 @@ def main(argv=None):
             cfg["general"]["headless"] = False
         crawl(db, cfg, args.platforms, args.topics, debug=args.debug)
         _print_scores(db, cfg)
+    elif args.cmd == "discover":
+        from .discover import discover, second_phrase
+        clusters, _ = discover(cfg, top=args.top)
+        ids = []
+        print(f"\n{'#':<3}{'Điểm':>6}{'Báo':>5}{'Tin':>5}{'Trends':>8}  Sự việc")
+        for i, c in enumerate(clusters, 1):
+            kw2 = second_phrase(c)
+            kw = f"{c.phrase} & {kw2}" if kw2 else c.phrase
+            print(f"{i:<3}{c.score:>6.1f}{len(c.outlets):>5}{len(c.headlines):>5}{c.trends_traffic:>8}  {c.title[:90]}")
+            print(f"{'':<27}từ khóa: {kw}")
+            if not args.no_add:
+                ids.append(db.upsert_topic(f"[Tự động] {c.title[:90]}", [kw], []))
+        if ids and args.crawl:
+            from .pipeline import crawl
+            crawl(db, cfg, args.platforms, ids)
+            _print_scores(db, cfg)
     elif args.cmd == "score":
         from .pipeline import score_and_alert
         score_and_alert(db, cfg)

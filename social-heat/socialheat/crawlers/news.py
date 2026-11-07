@@ -85,5 +85,7 @@ class NewsCrawler:
     def search(self, keyword: str) -> list[Post]:
         if not self.pcfg.get("google_news", True):
             return []
-        url = f"https://news.google.com/rss/search?q={quote(keyword)}+when:7d&hl=vi&gl=VN&ceid=VN:vi"
+        # "a & b" → tìm chính xác cả hai cụm: "a" "b"
+        q = " ".join(f'"{p.strip()}"' for p in keyword.split("&") if p.strip())
+        url = f"https://news.google.com/rss/search?q={quote(q)}+when:7d&hl=vi&gl=VN&ceid=VN:vi"
         return self.fetch(url, "google_news")

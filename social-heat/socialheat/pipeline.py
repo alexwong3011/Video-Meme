@@ -101,7 +101,7 @@ def crawl_news(db: DB, cfg: Config, topics: list[dict]) -> None:
                 run = db.start_run("news", f"{t['name']}: {q}")
                 STATE["current"] = f"news · {q}"
                 try:
-                    posts = nc.search(q)
+                    posts = nc.search(kw)
                     pks = db.save_posts(posts)
                     _assign(db, posts, pks, all_topics, t)
                     db.finish_run(run, "ok", len(posts))
