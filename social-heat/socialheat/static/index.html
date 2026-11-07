@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Social Heat</title>
+<script src="/static/chart.umd.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --surface-2: #f2f1ed; --border: #e4e2dc;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781; --grid: #ebe9e3;
+  --s-facebook: #2a78d6; --s-tiktok: #eb6834; --s-threads: #1baf7a; --s-news: #eda100;
+  --accent: #2a78d6;
+  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --crisis-tint: rgba(208, 59, 59, .07);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321; --border: #2e2e2b;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781; --grid: #2a2a28;
+    --s-facebook: #3987e5; --s-tiktok: #d95926; --s-threads: #199e70; --s-news: #c98500;
+    --accent: #3987e5; --crisis-tint: rgba(208, 59, 59, .12);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321; --border: #2e2e2b;
+  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781; --grid: #2a2a28;
+  --s-facebook: #3987e5; --s-tiktok: #d95926; --s-threads: #199e70; --s-news: #c98500;
+  --accent: #3987e5; --crisis-tint: rgba(208, 59, 59, .12);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 5; }
+header h1 { font-size: 18px; margin: 0 12px 0 0; letter-spacing: -.01em; }
+header .sp { flex: 1; }
+main { max-width: 1440px; margin: 0 auto; padding: 16px 20px 40px; display: grid; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-width: 0; }
+.card h2 { font-size: 15px; margin: 0 0 4px; }
+.card .sub { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.kpi .v { font-size: 28px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.kpi .l { color: var(--ink-2); font-size: 13px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; }
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+select, input, textarea { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 8px; border-bottom: 1px solid var(--grid); vertical-align: middle; white-space: nowrap; }
+td.name { white-space: normal; min-width: 190px; }
+tr.sel td { background: var(--surface-2); }
+tbody tr.click { cursor: pointer; }
+tbody tr.click:hover td { background: var(--surface-2); }
+.num { text-align: right; }
+.meter { display: flex; align-items: center; gap: 6px; min-width: 84px; }
+.meter .bar { flex: 1; height: 6px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+.meter .bar i { display: block; height: 100%; border-radius: 3px; background: var(--ink-2); }
+.meter b { width: 26px; text-align: right; font-weight: 600; }
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--border); white-space: nowrap; color: var(--ink); }
+.badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.q-crisis .dot { background: var(--critical); } .q-crisis { border-color: var(--critical); }
+.q-latent .dot { background: var(--warning); } .q-latent { border-color: var(--warning); }
+.q-trend .dot { background: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--ink-2); margin-bottom: 8px; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+.chart { position: relative; height: 260px; }
+.chart.tall { height: 340px; }
+.comp { display: grid; grid-template-columns: 120px 1fr 40px; gap: 6px 10px; align-items: center; font-size: 13px; }
+.comp .bar { height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
+.comp .bar i { display: block; height: 100%; background: var(--ink-2); border-radius: 4px; }
+.comp .w { color: var(--muted); font-size: 11px; }
+.posts { display: grid; gap: 10px; max-height: 520px; overflow: auto; }
+.post { border: 1px solid var(--grid); border-radius: 8px; padding: 10px 12px; }
+.post .meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); margin-bottom: 4px; align-items: center; }
+.post .meta .pf { color: var(--ink-2); font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+.post .meta .pf::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+.post a { color: var(--ink); text-decoration: none; }
+.post a:hover { text-decoration: underline; }
+.tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.tabs button.on { background: var(--ink); color: var(--surface); }
+.hdr { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; }
+.hdr h2 { font-size: 20px; }
+.big { font-size: 34px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1; }
+.scores { display: flex; gap: 28px; margin: 10px 0 4px; flex-wrap: wrap; }
+.scores .l { color: var(--muted); font-size: 12px; }
+.summary { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+.muted { color: var(--muted); }
+.list { display: grid; gap: 6px; font-size: 13px; max-height: 300px; overflow: auto; }
+.err { color: var(--critical); }
+.empty { padding: 30px; text-align: center; color: var(--muted); }
+dialog { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--ink); width: min(720px, 94vw); padding: 20px; }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+.form { display: grid; gap: 10px; }
+.form label { display: grid; gap: 4px; font-size: 13px; color: var(--ink-2); }
+.hscroll { overflow-x: auto; }
+@media (max-width: 1100px) { .row2, .row3 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  header, main { padding-left: 16px; padding-right: 16px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi .v { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Social Heat</h1>
+  <label class="muted">Khung thời gian
+    <select id="window">
+      <option value="6">6 giờ</option>
+      <option value="24" selected>24 giờ</option>
+      <option value="72">3 ngày</option>
+      <option value="168">7 ngày</option>
+    </select>
+  </label>
+  <span class="sp"></span>
+  <span id="status" class="muted"></span>
+  <button id="btnCrawl" class="primary">Crawl ngay</button>
+  <button id="btnTopics">Quản lý chủ đề</button>
+  <button id="btnTheme" title="Đổi giao diện sáng/tối">◐</button>
+</header>
+
+<main>
+  <section class="kpis">
+    <div class="card kpi"><div class="l">Chủ đề đang theo dõi</div><div class="v" id="kTopics">–</div></div>
+    <div class="card kpi"><div class="l">Đang ở mức khủng hoảng</div><div class="v" id="kCrisis">–</div></div>
+    <div class="card kpi"><div class="l">Bài viết trong khung</div><div class="v" id="kPosts">–</div></div>
+    <div class="card kpi"><div class="l">Tổng tương tác</div><div class="v" id="kEng">–</div></div>
+  </section>
+
+  <section class="row2">
+    <div class="card">
+      <h2>Xếp hạng chủ đề</h2>
+      <p class="sub">Sắp theo Nóng + Nghiêm trọng. Bấm một dòng để xem chi tiết.</p>
+      <div class="hscroll"><table>
+        <thead><tr><th>Chủ đề</th><th>Sức nóng</th><th>Nghiêm trọng</th><th>Phân loại</th><th>Giai đoạn</th><th class="num">Bài</th><th class="num">Tương tác</th><th>Diễn biến</th></tr></thead>
+        <tbody id="rank"></tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h2>Ma trận Nóng × Nghiêm trọng</h2>
+      <p class="sub">Góc trên phải = khủng hoảng; góc trên trái = rủi ro tiềm ẩn.</p>
+      <div class="chart tall"><canvas id="matrix"></canvas></div>
+    </div>
+  </section>
+
+  <section id="detail" class="card" hidden>
+    <div class="hdr"><h2 id="dName"></h2><span id="dBadges"></span></div>
+    <div class="muted" id="dKw"></div>
+    <div class="scores">
+      <div><div class="l">Sức nóng</div><div class="big" id="dHeat"></div></div>
+      <div><div class="l">Nghiêm trọng</div><div class="big" id="dSev"></div></div>
+      <div><div class="l">Bài / 6h gần nhất</div><div class="big" id="d6h"></div></div>
+      <div><div class="l">Tốc độ so với nền</div><div class="big" id="dVel"></div></div>
+      <div><div class="l">Tỷ lệ tiêu cực</div><div class="big" id="dNeg"></div></div>
+      <div><div class="l">Nội dung trùng lặp</div><div class="big" id="dSeed"></div></div>
+    </div>
+    <div id="dSummary"></div>
+    <div style="margin-top:8px"><a id="dExport" href="#">Tải dữ liệu bài viết (CSV)</a></div>
+  </section>
+
+  <section id="detail2" class="row2" hidden>
+    <div class="card">
+      <h2>Số bài theo giờ, theo nền tảng</h2>
+      <p class="sub">Theo giờ đăng bài</p>
+      <div class="legend" id="pfLegend"></div>
+      <div class="chart"><canvas id="volChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Tương tác theo giờ</h2>
+      <p class="sub">Tương tác quy đổi của các bài đăng trong từng giờ (like + 2×bình luận + 3×chia sẻ + 1% lượt xem)</p>
+      <div class="chart"><canvas id="engChart"></canvas></div>
+    </div>
+  </section>
+
+  <section id="detail3" class="row3" hidden>
+    <div class="card">
+      <h2>Thành phần Sức nóng</h2>
+      <p class="sub">Mỗi thành phần 0–1, trọng số ghi bên phải</p>
+      <div class="comp" id="heatComp"></div>
+    </div>
+    <div class="card">
+      <h2>Thành phần Nghiêm trọng</h2>
+      <p class="sub" id="sevNote">Mỗi thành phần 0–1, trọng số ghi bên phải</p>
+      <div class="comp" id="sevComp"></div>
+    </div>
+    <div class="card">
+      <h2>Theo nền tảng</h2>
+      <p class="sub">Trong khung thời gian đã chọn</p>
+      <table><thead><tr><th>Nền tảng</th><th class="num">Bài</th><th class="num">Tương tác</th></tr></thead><tbody id="pfTable"></tbody></table>
+      <h2 style="margin-top:16px">Loại rủi ro phát hiện</h2>
+      <div class="list" id="cats"></div>
+    </div>
+  </section>
+
+  <section id="detail4" class="card" hidden>
+    <div class="tabs" id="postTabs">
+      <button data-k="top_posts" class="on">Tương tác cao nhất</button>
+      <button data-k="latest_posts">Mới nhất</button>
+      <button data-k="negative_comments">Bình luận tiêu cực</button>
+    </div>
+    <div class="posts" id="posts"></div>
+  </section>
+
+  <section class="row2">
+    <div class="card">
+      <h2>Cảnh báo</h2>
+      <p class="sub">Gửi qua Telegram nếu đã cấu hình</p>
+      <div class="list" id="alerts"></div>
+    </div>
+    <div class="card">
+      <h2>Nhật ký crawl</h2>
+      <p class="sub" id="sessions"></p>
+      <div class="list" id="runs"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="topicDlg">
+  <h2 style="margin-top:0">Quản lý chủ đề</h2>
+  <form class="form" id="topicForm">
+    <input type="hidden" id="tId">
+    <label>Tên chủ đề <input id="tName" required placeholder="Ví dụ: Ngộ độc thực phẩm trường học"></label>
+    <label>Từ khóa, mỗi dòng một từ khóa. Dùng "a & b" khi bài viết phải chứa cả hai.
+      <textarea id="tKw" rows="4" required placeholder="ngộ độc & trường học&#10;bếp ăn bán trú"></textarea></label>
+    <label>Từ loại trừ, mỗi dòng một từ (tùy chọn)
+      <textarea id="tEx" rows="2" placeholder="quảng cáo"></textarea></label>
+    <div style="display:flex; gap:8px; justify-content:flex-end">
+      <button type="button" id="tReset">Tạo mới</button>
+      <button type="submit" class="primary">Lưu</button>
+    </div>
+  </form>
+  <h3>Danh sách</h3>
+  <div class="list" id="topicList" style="max-height:260px"></div>
+  <div style="text-align:right; margin-top:12px"><button id="dlgClose">Đóng</button></div>
+</dialog>
+
+<script>
+const PF = { facebook: "Facebook", tiktok: "TikTok", threads: "Threads", news: "Báo chí" };
+const Q = { "Khủng hoảng": "q-crisis", "Tiềm ẩn": "q-latent", "Xu hướng": "q-trend", "Theo dõi": "q-watch" };
+const HEAT_W = { volume: ["Khối lượng", .30], engagement: ["Tương tác", .35], velocity: ["Tốc độ", .20], spread: ["Lan rộng", .15] };
+const SEV_W = { negative: ["Tiêu cực", .25], emotion: ["Cảm xúc mạnh", .15], risk: ["Loại rủi ro", .30], danger: ["Từ khóa nguy hiểm", .10], mainstream: ["Báo chí đưa tin", .10], official: ["Cơ quan chức năng", .10] };
+const $ = s => document.querySelector(s);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(1).replace(".0", "") + " tr" : n >= 1e3 ? (n / 1e3).toFixed(1).replace(".0", "") + " N" : String(Math.round(n ?? 0));
+const ago = ts => { const m = Math.round((Date.now() / 1000 - ts) / 60); return m < 60 ? `${m} phút trước` : m < 1440 ? `${Math.round(m / 60)} giờ trước` : `${Math.round(m / 1440)} ngày trước`; };
+const hhmm = ts => new Date(ts * 1000).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
+const api = async (url, opt) => { const r = await fetch(url, opt); if (!r.ok) throw new Error(await r.text()); return r.json(); };
+
+let state = { win: 24, sel: null, overview: null, detail: null, tab: "top_posts" };
+const charts = {};
+
+function badge(q) { return `<span class="badge ${Q[q] || ""}"><span class="dot"></span>${esc(q)}</span>`; }
+function meter(v) { return `<div class="meter"><div class="bar"><i style="width:${Math.min(100, v)}%"></i></div><b>${Math.round(v)}</b></div>`; }
+function spark(arr) {
+  const w = 90, h = 22, max = Math.max(1, ...arr);
+  const pts = arr.map((v, i) => `${(i / Math.max(1, arr.length - 1) * w).toFixed(1)},${(h - 2 - v / max * (h - 4)).toFixed(1)}`).join(" ");
+  return `<svg width="${w}" height="${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${css("--ink-2")}" stroke-width="1.5"/></svg>`;
+}
+
+Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+function baseOpts() {
+  Chart.defaults.color = css("--muted");
+  Chart.defaults.borderColor = css("--grid");
+  return {
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: css("--surface"), titleColor: css("--ink"), bodyColor: css("--ink-2"), borderColor: css("--border"), borderWidth: 1, padding: 10 } },
+  };
+}
+
+async function loadOverview() {
+  const d = await api(`/api/overview?window=${state.win}`);
+  state.overview = d;
+  $("#kTopics").textContent = d.topics.length;
+  $("#kCrisis").textContent = d.topics.filter(t => t.quadrant === "Khủng hoảng").length;
+  $("#kPosts").textContent = fmt(d.topics.reduce((a, t) => a + t.posts, 0));
+  $("#kEng").textContent = fmt(d.topics.reduce((a, t) => a + t.engagement, 0));
+  $("#rank").innerHTML = d.topics.length ? d.topics.map(t => `
+    <tr class="click ${t.topic_id === state.sel ? "sel" : ""}" data-id="${t.topic_id}">
+      <td class="name"><b>${esc(t.name)}</b><div class="muted" style="font-size:12px">${esc(t.risk_category || "")}</div></td>
+      <td>${meter(t.heat)}</td><td>${meter(t.severity)}</td>
+      <td>${badge(t.quadrant)}</td><td>${esc(t.stage)}</td>
+      <td class="num">${fmt(t.posts)}</td><td class="num">${fmt(t.engagement)}</td>
+      <td>${spark(t.spark)}</td></tr>`).join("")
+    : `<tr><td colspan="8" class="empty">Chưa có chủ đề. Bấm "Quản lý chủ đề" để thêm.</td></tr>`;
+  document.querySelectorAll("#rank tr.click").forEach(tr => tr.onclick = () => select(+tr.dataset.id));
+  drawMatrix(d);
+  $("#alerts").innerHTML = d.alerts.length ? d.alerts.map(a => `<div><span class="muted">${hhmm(a.ts)}</span> ${esc(a.message)}</div>`).join("") : `<div class="muted">Chưa có cảnh báo.</div>`;
+  if (!state.sel && d.topics.length) select(d.topics[0].topic_id, true); else if (state.sel) select(state.sel, true);
+}
+
+function drawMatrix(d) {
+  const ctx = $("#matrix");
+  charts.matrix?.destroy();
+  const th = d.thresholds;
+  const zones = {
+    id: "zones",
+    beforeDatasetsDraw(c) {
+      const { ctx, chartArea: a, scales: { x, y } } = c;
+      ctx.save();
+      ctx.fillStyle = css("--crisis-tint");
+      ctx.fillRect(x.getPixelForValue(th.heat), a.top, a.right - x.getPixelForValue(th.heat), y.getPixelForValue(th.severity) - a.top);
+      ctx.setLineDash([4, 4]); ctx.strokeStyle = css("--muted"); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x.getPixelForValue(th.heat), a.top); ctx.lineTo(x.getPixelForValue(th.heat), a.bottom);
+      ctx.moveTo(a.left, y.getPixelForValue(th.severity)); ctx.lineTo(a.right, y.getPixelForValue(th.severity)); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle = css("--muted"); ctx.font = "11px " + Chart.defaults.font.family;
+      ctx.textAlign = "right"; ctx.fillText("KHỦNG HOẢNG", a.right - 6, a.top + 14); ctx.fillText("XU HƯỚNG", a.right - 6, a.bottom - 8);
+      ctx.textAlign = "left"; ctx.fillText("TIỀM ẨN", a.left + 6, a.top + 14); ctx.fillText("THEO DÕI", a.left + 6, a.bottom - 8);
+      ctx.restore();
+    },
+    afterDatasetsDraw(c) {
+      const { ctx } = c; const meta = c.getDatasetMeta(0);
+      ctx.save(); ctx.font = "12px " + Chart.defaults.font.family; ctx.fillStyle = css("--ink-2");
+      const placed = [];
+      meta.data.map((pt, i) => [pt, i]).sort((a, b) => a[0].y - b[0].y).forEach(([pt, i]) => {
+        const t = d.topics[i]; const name = t.name.length > 28 ? t.name.slice(0, 27) + "…" : t.name;
+        const right = pt.x > c.chartArea.right - 160;
+        const w = ctx.measureText(name).width;
+        let x0 = right ? pt.x - 10 - w : pt.x + 10, y = pt.y + 4;
+        // tránh nhãn chồng nhau: đẩy xuống từng nấc 14px
+        while (placed.some(r => x0 < r.x + r.w && x0 + w > r.x && Math.abs(y - r.y) < 14)) y += 14;
+        placed.push({ x: x0, y, w });
+        ctx.textAlign = "left"; ctx.fillText(name, x0, y);
+      });
+      ctx.restore();
+    },
+  };
+  const o = baseOpts();
+  o.interaction = { mode: "nearest", intersect: true };
+  o.plugins.tooltip.callbacks = { title: items => d.topics[items[0].dataIndex].name, label: it => `Nóng ${it.raw.x.toFixed(0)} · Nghiêm trọng ${it.raw.y.toFixed(0)}` };
+  o.scales = { x: { min: 0, max: 100, title: { display: true, text: "Sức nóng" }, grid: { color: css("--grid") } }, y: { min: 0, max: 100, title: { display: true, text: "Nghiêm trọng" }, grid: { color: css("--grid") } } };
+  o.onClick = (e, els) => els.length && select(d.topics[els[0].index].topic_id);
+  charts.matrix = new Chart(ctx, {
+    type: "scatter", plugins: [zones], options: o,
+    data: { datasets: [{ data: d.topics.map(t => ({ x: t.heat, y: t.severity })), pointRadius: d.topics.map(t => t.topic_id === state.sel ? 8 : 6), pointHoverRadius: 9, backgroundColor: css("--accent"), borderColor: css("--surface"), borderWidth: 2 }] },
+  });
+}
+
+async function select(id, quiet) {
+  state.sel = id;
+  document.querySelectorAll("#rank tr.click").forEach(tr => tr.classList.toggle("sel", +tr.dataset.id === id));
+  const t = await api(`/api/topics/${id}?window=${state.win}`);
+  state.detail = t;
+  ["#detail", "#detail2", "#detail3", "#detail4"].forEach(s => $(s).hidden = false);
+  $("#dName").textContent = t.name;
+  $("#dBadges").innerHTML = `${badge(t.quadrant)} <span class="badge">${esc(t.stage)}</span>` + (t.risk_category ? ` <span class="badge">${esc(t.risk_category)}</span>` : "");
+  $("#dKw").textContent = "Từ khóa: " + t.keywords.join(" · ");
+  $("#dHeat").textContent = Math.round(t.heat);
+  $("#dSev").textContent = Math.round(t.severity);
+  $("#d6h").textContent = t.posts_last6h;
+  $("#dVel").textContent = "×" + t.velocity_ratio.toFixed(1);
+  $("#dNeg").textContent = Math.round(t.sentiment.neg * 100) + "%";
+  $("#dSeed").textContent = Math.round(t.seeding_ratio * 100) + "%";
+  $("#dExport").href = `/api/topics/${id}/export.csv`;
+  $("#dSummary").innerHTML = t.llm ? `<div class="summary"><b>Tóm tắt (AI, ${ago(t.llm.ts)}):</b> ${esc(t.llm.summary)}<ul>${(t.llm.key_points || []).map(k => `<li>${esc(k)}</li>`).join("")}</ul><div class="muted">AI chấm mức nghiêm trọng ${t.llm.severity}/100: ${esc(t.llm.reason)}</div></div>` : "";
+  $("#sevNote").textContent = t.llm ? `Theo luật: ${t.components.severity_rule}; điểm cuối = 50% luật + 50% AI` : "Mỗi thành phần 0–1, trọng số ghi bên phải";
+  const comp = (el, vals, W) => $(el).innerHTML = Object.entries(W).map(([k, [lbl, w]]) =>
+    `<span>${lbl}</span><div class="bar"><i style="width:${(vals[k] || 0) * 100}%"></i></div><span class="w">×${w}</span>`).join("");
+  comp("#heatComp", t.components.heat, HEAT_W);
+  comp("#sevComp", t.components.severity, SEV_W);
+  $("#pfTable").innerHTML = Object.entries(t.by_platform).map(([p, v]) => `<tr><td>${PF[p] || p}</td><td class="num">${fmt(v.posts)}</td><td class="num">${p === "news" ? "–" : fmt(v.engagement)}</td></tr>`).join("");
+  const cats = Object.entries(t.categories || {});
+  $("#cats").innerHTML = cats.length ? cats.map(([c, n]) => `<div>${esc(c)} <span class="muted">· ${n} văn bản</span></div>`).join("") : `<div class="muted">Không phát hiện.</div>`;
+  drawSeries(t);
+  renderPosts();
+  if (!quiet) $("#detail").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function drawSeries(t) {
+  const s = t.series; const n = s.engagement.length;
+  const labels = Array.from({ length: n }, (_, i) => new Date((s.start + i * s.step) * 1000));
+  const lab = labels.map(d => n > 48 ? d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }) + " " + d.getHours() + "h" : d.getHours() + "h");
+  const plats = Object.keys(s.volume);
+  $("#pfLegend").innerHTML = plats.map(p => `<span style="--c:var(--s-${p})">${PF[p]}</span>`).join("");
+  charts.vol?.destroy(); charts.eng?.destroy();
+  const o1 = baseOpts();
+  o1.scales = { x: { stacked: true, grid: { display: false }, ticks: { maxTicksLimit: 12, maxRotation: 0 } }, y: { stacked: true, beginAtZero: true, grid: { color: css("--grid") }, ticks: { precision: 0 } } };
+  charts.vol = new Chart($("#volChart"), {
+    type: "bar", options: o1,
+    data: { labels: lab, datasets: plats.map(p => ({ label: PF[p], data: s.volume[p], backgroundColor: css(`--s-${p}`), borderColor: css("--surface"), borderWidth: { top: 1, bottom: 0, left: 0, right: 0 }, borderRadius: 2, borderSkipped: "bottom", barPercentage: .9, categoryPercentage: .9 })) },
+  });
+  const o2 = baseOpts();
+  o2.scales = { x: { grid: { display: false }, ticks: { maxTicksLimit: 12, maxRotation: 0 } }, y: { beginAtZero: true, grid: { color: css("--grid") }, ticks: { callback: v => fmt(v) } } };
+  o2.plugins.tooltip.callbacks = { label: it => "Tương tác: " + fmt(it.raw) };
+  charts.eng = new Chart($("#engChart"), {
+    type: "line", options: o2,
+    data: { labels: lab, datasets: [{ label: "Tương tác", data: s.engagement, borderColor: css("--accent"), backgroundColor: "transparent", borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: .25 }] },
+  });
+}
+
+function renderPosts() {
+  const t = state.detail; if (!t) return;
+  document.querySelectorAll("#postTabs button").forEach(b => b.classList.toggle("on", b.dataset.k === state.tab));
+  const list = t[state.tab] || [];
+  $("#posts").innerHTML = list.length ? list.map(p => `
+    <div class="post">
+      <div class="meta"><span class="pf" style="--c:var(--s-${p.platform})">${PF[p.platform] || p.platform}${p.kind === "comment" ? " · bình luận" : ""}</span>
+        <span>${esc(p.author || "")}</span><span>${p.created_at ? hhmm(p.created_at) : ""}</span>
+        ${p.platform !== "news" ? `<span>👍 ${fmt(p.reactions)}</span><span>💬 ${fmt(p.comments)}</span><span>↗ ${fmt(p.shares)}</span>${p.views ? `<span>▶ ${fmt(p.views)}</span>` : ""}` : ""}
+      </div>
+      ${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.text) || "(không có nội dung chữ)"}</a>` : esc(p.text)}
+    </div>`).join("") : `<div class="empty">Không có dữ liệu.</div>`;
+}
+document.querySelectorAll("#postTabs button").forEach(b => b.onclick = () => { state.tab = b.dataset.k; renderPosts(); });
+
+async function loadStatus() {
+  const s = await api("/api/status");
+  const st = s.state;
+  $("#status").textContent = st.running ? `Đang crawl: ${st.current || "…"}` : st.last_finished ? `Crawl lần cuối ${ago(st.last_finished)} · tự động mỗi ${s.interval_minutes} phút` : "Chưa crawl lần nào";
+  $("#btnCrawl").disabled = st.running;
+  $("#sessions").innerHTML = "Đăng nhập: " + Object.entries(s.sessions).map(([p, ok]) => `${PF[p]} ${ok ? "✓" : '<span class="err">✗ chưa đăng nhập</span>'}`).join(" · ") + (s.llm ? " · AI: bật" : " · AI: tắt");
+  $("#runs").innerHTML = s.runs.length ? s.runs.map(r => `<div><span class="muted">${hhmm(r.started)}</span> <b>${PF[r.platform] || r.platform}</b> ${esc(r.target)} – ${r.status === "ok" ? `${r.items} mục` : r.status === "running" ? "đang chạy…" : `<span class="err">${esc(r.error || r.status)}</span>`}</div>`).join("") : `<div class="muted">Chưa có lượt crawl.</div>`;
+  return st.running;
+}
+
+let wasRunning = false;
+async function tick() {
+  try {
+    const running = await loadStatus();
+    if (wasRunning && !running) await loadOverview();
+    wasRunning = running;
+  } catch (e) { console.error(e); }
+}
+
+$("#btnCrawl").onclick = async () => { await api("/api/crawl", { method: "POST" }); wasRunning = true; tick(); };
+$("#window").onchange = e => { state.win = +e.target.value; loadOverview(); };
+$("#btnTheme").onclick = () => {
+  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("sh-theme", document.documentElement.dataset.theme); } catch (e) {}
+  loadOverview();
+};
+try { const th = localStorage.getItem("sh-theme"); if (th) document.documentElement.dataset.theme = th; } catch (e) {}
+
+// ---- quản lý chủ đề
+const lines = s => s.split("\n").map(x => x.trim()).filter(Boolean);
+async function loadTopicList() {
+  const ts = await api("/api/topics");
+  $("#topicList").innerHTML = ts.map(t => `<div style="display:flex;gap:8px;align-items:center">
+    <span style="flex:1"><b>${esc(t.name)}</b> ${t.active ? "" : '<span class="muted">(đã tắt)</span>'}<br><span class="muted">${esc(t.keywords.join(" · "))}</span></span>
+    <button data-edit="${t.id}">Sửa</button>${t.active ? `<button data-off="${t.id}">Tắt</button>` : ""}</div>`).join("") || '<div class="muted">Chưa có chủ đề.</div>';
+  $("#topicList").querySelectorAll("[data-edit]").forEach(b => b.onclick = () => {
+    const t = ts.find(x => x.id === +b.dataset.edit);
+    $("#tId").value = t.id; $("#tName").value = t.name; $("#tKw").value = t.keywords.join("\n"); $("#tEx").value = t.exclude.join("\n");
+  });
+  $("#topicList").querySelectorAll("[data-off]").forEach(b => b.onclick = async () => { await api(`/api/topics/${b.dataset.off}`, { method: "DELETE" }); loadTopicList(); loadOverview(); });
+}
+$("#btnTopics").onclick = () => { $("#topicDlg").showModal(); loadTopicList(); };
+$("#dlgClose").onclick = () => $("#topicDlg").close();
+$("#tReset").onclick = () => { $("#topicForm").reset(); $("#tId").value = ""; };
+$("#topicForm").onsubmit = async e => {
+  e.preventDefault();
+  const body = JSON.stringify({ name: $("#tName").value, keywords: lines($("#tKw").value), exclude: lines($("#tEx").value), active: true });
+  const id = $("#tId").value;
+  await api(id ? `/api/topics/${id}` : "/api/topics", { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body });
+  $("#topicForm").reset(); $("#tId").value = "";
+  loadTopicList(); loadOverview();
+};
+
+loadOverview().catch(e => { $("#rank").innerHTML = `<tr><td colspan="8" class="err">${esc(e.message)}</td></tr>`; });
+tick(); setInterval(tick, 5000); setInterval(() => { if (!wasRunning) loadOverview(); }, 120000);
+</script>
+</body>
+</html>

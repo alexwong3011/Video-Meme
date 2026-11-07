@@ -77,3 +77,8 @@ npm run ff -- probe     in.mp4                    # thông tin file
 `npx hyperframes doctor` liệt kê thêm: **whisper.cpp** (tạo transcript/phụ đề tự động),
 **Kokoro** (TTS cục bộ: `pip install kokoro-onnx soundfile`), **MusicGen** (nhạc nền:
 `pip install transformers torch soundfile numpy`) và **Docker** (render đóng gói với `--docker`).
+
+## Social Heat (công cụ đo sức nóng dư luận)
+
+Thư mục [`social-heat/`](social-heat/README.md): crawl Facebook, TikTok, Threads và báo điện tử, tính chỉ số
+Sức nóng và Nghiêm trọng của từng chủ đề, hiển thị trên dashboard nội bộ. Xem thử: `cd social-heat && python -m socialheat demo --serve`.
