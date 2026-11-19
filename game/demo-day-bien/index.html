@@ -80,6 +80,61 @@ body{background:var(--abyss);color:var(--ink);font-family:var(--ui);overflow:hid
 .hint{position:absolute;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));text-align:center;font:400 11px var(--ui);color:var(--muted);text-shadow:0 1px 2px #000}
 @media (pointer:coarse){.hint{display:none}}
 @media (max-width:520px){.bar{width:110px}.stats div{min-width:52px;padding:4px 8px}#zone{top:calc(72px + env(safe-area-inset-top,0px))}}
+.stats button{pointer-events:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:5px 10px;font:700 12px var(--ui);cursor:pointer;display:flex;align-items:center;gap:6px}
+.stats button svg{width:18px;height:18px;color:var(--gold)}
+.stats button:focus-visible,#bag button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+#bag[hidden]{display:none}
+#bag{position:fixed;inset:0;background:rgba(1,10,14,.72);display:grid;place-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));z-index:5;pointer-events:auto}
+.bagp{width:min(820px,100%);max-height:100%;overflow:auto;background:linear-gradient(160deg,#0b2e38,#061b22 60%);border:1px solid rgba(242,198,107,.35);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6),inset 0 0 40px rgba(111,231,255,.06);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:14px;padding:14px}
+.bagp header{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bagp h2{margin:0;font:700 24px/1 var(--display);letter-spacing:.08em;color:var(--gold);flex:1}
+.bagp .cur{display:flex;gap:12px;font:600 12px var(--ui);color:var(--muted);font-variant-numeric:tabular-nums}
+.bagp .cur b{color:var(--ink)}
+.bagp .cur .gd b{color:var(--gold)}
+.bagp button{font:600 12px var(--ui);color:var(--ink);background:rgba(111,231,255,.08);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+.bagp button.pri{background:linear-gradient(#c99a3c,#7a5113);border-color:var(--gold);color:#fff8e6}
+.bagp button:disabled{opacity:.45;cursor:not-allowed}
+#bagClose{width:34px;height:34px;padding:0;font-size:18px;line-height:1}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sect{font:600 10px var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+#bagStats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+#bagStats div{background:rgba(0,0,0,.25);border:1px solid rgba(150,230,255,.12);border-radius:8px;padding:6px;text-align:center}
+#bagStats span{display:block;font:600 9px var(--ui);color:var(--muted)}
+#bagStats b{font:700 14px var(--ui);font-variant-numeric:tabular-nums}
+#bagEq{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.eqslot{display:flex;flex-direction:column;align-items:center;gap:4px}
+.eqslot span{font:600 10px var(--ui);color:var(--muted)}
+#bagGrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}
+.tile{position:relative;aspect-ratio:1;width:100%;max-width:64px;border-radius:8px;display:grid;place-items:center;padding:0;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.08),rgba(0,0,0,.35));border:1px solid rgba(255,255,255,.12);color:var(--r-common);cursor:pointer}
+.tile svg{width:62%;height:62%}
+.tile.empty{cursor:default;border-style:dashed;border-color:rgba(150,230,255,.12);color:rgba(150,230,255,.2)}
+.tile.r1{color:var(--r-rare);border-color:rgba(95,180,255,.55)}
+.tile.r2{color:var(--r-epic);border-color:rgba(197,139,255,.6)}
+.tile.r3{color:var(--r-legend);border-color:rgba(255,179,71,.7);box-shadow:inset 0 0 10px rgba(255,179,71,.25)}
+.tile.sel{outline:2px solid var(--gold);outline-offset:1px}
+.tile.glow.t1{box-shadow:0 0 10px rgba(111,184,255,.6)}
+.tile.glow.t2{box-shadow:0 0 12px rgba(255,199,90,.7)}
+.tile.glow.t3{box-shadow:0 0 14px rgba(210,139,255,.8)}
+.tile .pl{position:absolute;right:3px;top:2px;font:700 10px var(--ui);color:#fff;text-shadow:0 1px 2px #000}
+#bagDetail{background:rgba(0,0,0,.22);border:1px solid rgba(150,230,255,.12);border-radius:10px;padding:12px;min-height:150px}
+.dhead{display:flex;gap:10px;align-items:center}
+.dhead .tile{width:52px;flex:none}
+.dhead h3{margin:0;font:700 18px/1.15 var(--display);letter-spacing:.03em}
+.rn0{color:var(--r-common)}.rn1{color:var(--r-rare)}.rn2{color:var(--r-epic)}.rn3{color:var(--r-legend)}
+.muted{color:var(--muted);font-size:12px;margin:4px 0 0}
+.on{color:var(--cyan)}
+.stl{list-style:none;margin:10px 0;padding:0;display:grid;gap:4px}
+.stl li{display:flex;gap:8px;font-size:13px;font-variant-numeric:tabular-nums}
+.stl li span{color:var(--muted);flex:1}
+.stl em{font-style:normal;font-weight:700}
+.stl em.up{color:#6dff9c}.stl em.down{color:var(--hurt)}
+.up-box{background:rgba(242,198,107,.08);border:1px solid rgba(242,198,107,.25);border-radius:8px;padding:8px 10px;font-size:12px}
+.up-box b{display:block;font:700 15px var(--display);color:var(--gold)}
+.up-box span{display:block;color:var(--muted)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.bmsg{min-height:18px;font:600 13px var(--ui);opacity:0;transition:opacity .3s}
+.bmsg.show{opacity:1}.bmsg.ok{color:#6dff9c}.bmsg.bad{color:var(--hurt)}
+@media (max-width:640px){.bagp{grid-template-columns:1fr}#bagGrid{grid-template-columns:repeat(6,minmax(0,1fr))}}
 #err{position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font:400 14px/1.5 var(--ui);color:var(--ink)}
 </style>
 
@@ -96,7 +151,7 @@ body{background:var(--abyss);color:var(--ink);font-family:var(--ui);overflow:hid
   </div>
   <div class="stats">
     <div class="g"><span>Vàng</span><b id="gold">0</b></div>
-    <div><span>Vật phẩm</span><b id="items">0</b></div>
+    <button id="btnBag" aria-label="Mở túi đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 016 0v2"/></svg>Túi <b id="items">0</b></button>
   </div>
   <div id="zone"><h1>Vực Lam</h1><p>Bãi san hô lân quang</p></div>
   <div id="log"></div>
@@ -106,8 +161,31 @@ body{background:var(--abyss);color:var(--ink);font-family:var(--ui);overflow:hid
     <button id="btnSkill" aria-label="Kỹ năng Lốc Triều"><div class="cd" id="skillCd"></div><span>Lốc<br>Triều</span></button>
     <button id="btnAtk" aria-label="Đánh thường">Đánh</button>
   </div>
-  <div class="hint">WASD di chuyển · Space đánh · Q kỹ năng · F tự động</div>
+  <div class="hint">WASD di chuyển · Space đánh · Q kỹ năng · F tự động · I túi đồ</div>
   <div class="exp"><i id="expBar"></i><span id="expTxt">EXP 0%</span></div>
+</div>
+
+<div id="bag" hidden role="dialog" aria-modal="true" aria-labelledby="bagTitle">
+  <div class="bagp">
+    <header>
+      <h2 id="bagTitle">Hành trang</h2>
+      <div class="cur"><span class="gd">Vàng <b id="bagGold">0</b></span><span>Đá Cường Hóa <b id="bagStones">0</b></span><span>Túi <b id="bagCount">0</b></span></div>
+      <button id="bagBest">Mặc đồ tốt nhất</button>
+      <button id="bagClose" aria-label="Đóng túi đồ">×</button>
+    </header>
+    <div class="col">
+      <div class="sect">Chỉ số</div>
+      <div id="bagStats"></div>
+      <div class="sect">Đang mặc</div>
+      <div id="bagEq"></div>
+      <div id="bagDetail"></div>
+      <div id="bagMsg" class="bmsg" role="status"></div>
+    </div>
+    <div class="col">
+      <div class="sect">Túi đồ</div>
+      <div id="bagGrid"></div>
+    </div>
+  </div>
 </div>
 
 <script type="importmap">
@@ -200,11 +278,9 @@ const U = { uTime: { value: 0 } };
 // stylized standard material: adds a coloured rim light
 function stylized(params, rim = 0x7fefff, rimStr = 0.5, rimPow = 2.6) {
   const m = new THREE.MeshStandardMaterial(params);
-  m.userData.rim = { c: new THREE.Color(rim), s: rimStr, p: rimPow };
+  m.userData.u = { uRim: { value: new THREE.Color(rim) }, uRimStr: { value: rimStr }, uRimPow: { value: rimPow } };
   m.onBeforeCompile = (s) => {
-    s.uniforms.uRim = { value: m.userData.rim.c };
-    s.uniforms.uRimStr = { value: m.userData.rim.s };
-    s.uniforms.uRimPow = { value: m.userData.rim.p };
+    Object.assign(s.uniforms, m.userData.u);
     s.fragmentShader = 'uniform vec3 uRim; uniform float uRimStr; uniform float uRimPow;\n' + s.fragmentShader.replace('#include <opaque_fragment>',
       `{ float fr = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), uRimPow);
          outgoingLight += uRim * fr * uRimStr; }
@@ -535,46 +611,144 @@ function updateParticles(dt) {
 const hero = { pos: new THREE.Vector3(0, 0, 4), face: Math.PI, hp: 500, maxHp: 500, lv: 1, exp: 0, gold: 0, items: 0, atkT: 0, atkCd: 0, skillCd: 0, skillT: 0 };
 const heroG = new THREE.Group(); scene.add(heroG);
 const heroBody = new THREE.Group(); heroG.add(heroBody);
-const heroBlob = blob(2.4); scene.add(heroBlob);
-// KayKit Knight (CC0, Kay Lousberg) recoloured to the abyss palette
+const heroBlob = blob(1.0); scene.add(heroBlob);
+// Hero: Quaternius UAL mannequin (CC0) for skeleton + animations, with an original ornate armor set built in code
 const mixer = { m: null, acts: {}, cur: null };
-const HERO_H = 2.3;
-function knightMaterial(src) {
-  const m = stylized({ map: src.map, roughness: 0.5, metalness: 0.0, envMapIntensity: 0.85, side: THREE.DoubleSide }, 0x8fe6ff, 0.35, 2.8);
-  const base = m.onBeforeCompile;
-  m.onBeforeCompile = (s) => {
-    base(s);
-    s.fragmentShader = s.fragmentShader
-      .replace('#include <map_fragment>', `#include <map_fragment>
-        { vec3 c = diffuseColor.rgb; float red = c.r - max(c.g, c.b);
-          if (red > 0.3 && c.g < 0.2) diffuseColor.rgb = mix(vec3(0.03, 0.06, 0.28), vec3(0.16, 0.30, 0.95), clamp(c.r * 1.1, 0.0, 1.0));
-          float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
-          if (sat < 0.06 && c.r > 0.15) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.40, 0.55), 0.45); }`)
-      .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
-        { vec3 c = diffuseColor.rgb; float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
-          bool steel = sat < 0.12 && c.b > 0.15;
-          metalnessFactor = steel ? 0.75 : 0.05; roughnessFactor = steel ? 0.35 : 0.65; }`);
+const HERO_SCALE = 0.25;               // the user asked for a hero 4x smaller than before
+const HERO_H = 2.3 * HERO_SCALE;       // world height of the armored hero
+const heroMats = {
+  suit: stylized({ color: 0x141c38, roughness: 0.75 }, 0x5d7dff, 0.25, 3),
+  steel: stylized({ color: 0xa9bdd2, metalness: 0.92, roughness: 0.26, envMapIntensity: 1.25 }, 0x8fe6ff, 0.45, 2.6),
+  dark: stylized({ color: 0x27345a, metalness: 0.85, roughness: 0.34, envMapIntensity: 1.1 }, 0x7fb8ff, 0.35, 2.6),
+  gold: stylized({ color: 0xe0ac4c, metalness: 1.0, roughness: 0.28, envMapIntensity: 1.5 }, 0xffe0a0, 0.45, 2.4),
+  cape: stylized({ color: 0x1b2f8f, roughness: 0.7, side: THREE.DoubleSide, emissive: 0x0a1650, emissiveIntensity: 0.4 }, 0x9f8bff, 0.5, 2),
+  glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(0x7fe9ff).multiplyScalar(2.6) }),
+  blade: stylized({ color: 0xcfe6ff, metalness: 0.95, roughness: 0.15, envMapIntensity: 1.8 }, 0x9ff4ff, 0.9, 1.8)
+};
+function buildArmor(model) {
+  model.updateMatrixWorld(true);
+  const bone = n => model.getObjectByName(n);
+  const P = n => bone(n).getWorldPosition(new THREE.Vector3());
+  const Y = new THREE.Vector3(0, 1, 0);
+  const fwd = P('ball_l').sub(P('foot_l')).setY(0).normalize();
+  const right = new THREE.Vector3().crossVectors(Y, fwd).normalize();
+  const basis = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, Y, fwd));
+  // place a mesh built in the hero frame (x = side, y = up, z = forward) at a world point, then parent it to a bone
+  const put = (boneName, geo, mat, pos, extraQ) => {
+    const m = new THREE.Mesh(geo, mat); m.position.copy(pos); m.quaternion.copy(basis); if (extraQ) m.quaternion.multiply(extraQ);
+    bone(boneName).attach(m); return m;
   };
-  return m;
+  const off = (p, x, y, z) => p.clone().addScaledVector(right, x).addScaledVector(Y, y).addScaledVector(fwd, z);
+  const eul = (x, y, z) => new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z));
+  // limb segment: geometry along +Y, stretched between two bones
+  const seg = (a, b, rTop, rBot, mat, inset = 0.0, len = 1) => {
+    const A = P(a), B = P(b); const d = B.clone().sub(A); const L = d.length() * len;
+    const g = new THREE.CylinderGeometry(rBot, rTop, L, 12, 1); g.translate(0, L / 2 + inset, 0);
+    const m = new THREE.Mesh(g, mat); m.position.copy(A); m.quaternion.setFromUnitVectors(Y, d.normalize());
+    bone(a).attach(m); return m;
+  };
+  const M = heroMats;
+  for (const s of ['l', 'r']) {
+    const side = P('upperarm_' + s).sub(P('spine_03')).dot(right) > 0 ? 1 : -1;
+    // pauldron: three overlapping lames, gold trim and a pair of spikes
+    const sh = P('upperarm_' + s);
+    for (let i = 0; i < 3; i++) {
+      const g = new THREE.SphereGeometry(0.135 - i * 0.012, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.55);
+      g.scale(1.15, 0.8, 1.05);
+      put('upperarm_' + s, g, i === 0 ? M.steel : M.dark, off(sh, side * (0.03 + i * 0.025), 0.06 - i * 0.05, 0), eul(0, 0, -side * (0.35 + i * 0.12)));
+    }
+    const trim = put('upperarm_' + s, new THREE.TorusGeometry(0.13, 0.012, 6, 24), M.gold, off(sh, side * 0.03, 0.05, 0), eul(Math.PI / 2, 0, -side * 0.35)); trim.scale.set(1.15, 1.05, 1);
+    for (let k = 0; k < 2; k++) put('upperarm_' + s, new THREE.ConeGeometry(0.022, 0.16 - k * 0.04, 6), M.gold, off(sh, side * (0.1 + k * 0.03), 0.15 - k * 0.03, -0.02 + k * 0.05), eul(0, 0, -side * (0.55 + k * 0.2)));
+    // arms
+    seg('upperarm_' + s, 'lowerarm_' + s, 0.052, 0.048, M.dark, 0.02, 0.85);
+    put('lowerarm_' + s, new THREE.SphereGeometry(0.05, 12, 8), M.steel, P('lowerarm_' + s));
+    seg('lowerarm_' + s, 'hand_' + s, 0.058, 0.045, M.steel, 0.0, 1.0);
+    const cuff = new THREE.TorusGeometry(0.058, 0.011, 6, 18); cuff.rotateX(Math.PI / 2);
+    { const A = P('lowerarm_' + s), B = P('hand_' + s); const c = new THREE.Mesh(cuff, M.gold); c.position.lerpVectors(A, B, 0.82); c.quaternion.setFromUnitVectors(Y, B.clone().sub(A).normalize()); bone('lowerarm_' + s).attach(c); }
+    put('hand_' + s, new THREE.SphereGeometry(0.045, 10, 8).scale(1, 0.8, 1.3), M.dark, P('hand_' + s).lerp(P('middle_01_' + s), 0.5));
+    // legs
+    seg('thigh_' + s, 'calf_' + s, 0.07, 0.078, M.dark, 0.0, 0.92);
+    const knee = P('calf_' + s);
+    put('calf_' + s, new THREE.SphereGeometry(0.058, 12, 8), M.steel, off(knee, 0, 0, 0.03));
+    put('calf_' + s, new THREE.ConeGeometry(0.02, 0.08, 6), M.gold, off(knee, 0, 0.01, 0.09), eul(Math.PI / 2, 0, 0));
+    seg('calf_' + s, 'foot_' + s, 0.06, 0.05, M.steel, 0.0, 1.0);
+    { const A = P('foot_' + s), B = P('ball_' + s); const L = A.distanceTo(B) + 0.06;
+      const g = new THREE.BoxGeometry(0.085, 0.07, L); const m = new THREE.Mesh(g, M.steel);
+      m.position.lerpVectors(A, B, 0.5).addScaledVector(Y, -0.02); m.quaternion.copy(basis); bone('foot_' + s).attach(m); }
+  }
+  // cuirass, abdomen bands, gorget and chest gem
+  const chest = P('spine_03'), neck = P('neck_01');
+  put('spine_03', new THREE.SphereGeometry(0.17, 24, 16).scale(1.2, 1.12, 0.82), M.steel, off(chest, 0, 0.05, 0.02));
+  put('spine_03', new THREE.TorusGeometry(0.075, 0.018, 8, 20), M.gold, off(neck, 0, -0.03, 0), eul(Math.PI / 2, 0, 0));
+  put('spine_03', new THREE.OctahedronGeometry(0.035).scale(1, 1.4, 0.6), M.glow, off(chest, 0, 0.08, 0.15));
+  const ridge = new THREE.BoxGeometry(0.018, 0.2, 0.02); put('spine_03', ridge, M.gold, off(chest, 0, 0.02, 0.155), eul(-0.25, 0, 0));
+  put('spine_02', new THREE.CylinderGeometry(0.155, 0.15, 0.08, 18), M.dark, off(P('spine_02'), 0, -0.02, 0.0));
+  put('spine_01', new THREE.CylinderGeometry(0.15, 0.155, 0.08, 18), M.dark, off(P('spine_01'), 0, 0.02, 0.0));
+  const pel = P('pelvis');
+  put('pelvis', new THREE.TorusGeometry(0.16, 0.022, 8, 24).scale(1, 1, 0.8), M.gold, off(pel, 0, 0.05, 0), eul(Math.PI / 2, 0, 0));
+  put('pelvis', new THREE.BoxGeometry(0.07, 0.05, 0.02), M.gold, off(pel, 0, 0.05, 0.13));
+  // tassets: hanging plates around the hips
+  for (let i = -2; i <= 2; i++) {
+    const a = i * 0.5; const g = new THREE.BoxGeometry(0.11, 0.24, 0.015); g.translate(0, -0.12, 0);
+    const host = i < 0 ? 'thigh_l' : i > 0 ? 'thigh_r' : 'pelvis';
+    const hostSide = i === 0 ? 0 : P(host).sub(pel).dot(right);
+    const sideHost = i === 0 ? 'pelvis' : (Math.sign(hostSide) === Math.sign(Math.sin(a)) ? host : (host === 'thigh_l' ? 'thigh_r' : 'thigh_l'));
+    put(sideHost, g, i % 2 ? M.dark : M.steel, off(pel, Math.sin(a) * 0.15, 0.02, Math.cos(a) * 0.14), eul(0.22, a, 0));
+  }
+  // cape from the shoulders
+  { const g = new THREE.CylinderGeometry(0.2, 0.34, 1.0, 18, 8, true, Math.PI * 0.62, Math.PI * 0.76); g.translate(0, -0.5, 0);
+    const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); p.setZ(i, p.getZ(i) - y * y * 0.12); } g.computeVertexNormals();
+    hero.cape = put('spine_03', g, M.cape, off(chest, 0, 0.12, -0.05)); }
+  // helmet with visor glow, crest fin and swept side wings
+  const head = P('Head'); const hc = off(head, 0, 0.1, 0.02);
+  put('Head', new THREE.SphereGeometry(0.125, 24, 16).scale(1, 1.1, 1.12), M.steel, hc);
+  put('Head', new THREE.SphereGeometry(0.128, 24, 12, Math.PI * 0.15, Math.PI * 0.7, Math.PI * 0.45, Math.PI * 0.4).scale(1, 1.1, 1.12), M.dark, hc, eul(0, Math.PI, 0));
+  put('Head', new THREE.BoxGeometry(0.13, 0.014, 0.02), M.glow, off(hc, 0, -0.005, 0.128));
+  const fin = new THREE.Shape(); fin.moveTo(0, 0); fin.quadraticCurveTo(0.02, 0.2, -0.14, 0.34); fin.quadraticCurveTo(-0.08, 0.15, -0.22, 0.02); fin.lineTo(0, 0);
+  const finG = new THREE.ExtrudeGeometry(fin, { depth: 0.012, bevelEnabled: false }); finG.translate(0, 0, -0.006);
+  put('Head', finG, M.gold, off(hc, 0, 0.09, 0.06), eul(0, -Math.PI / 2, 0));
+  for (const sd of [-1, 1]) {
+    const w = new THREE.Shape(); w.moveTo(0, 0); w.quadraticCurveTo(0.08, 0.1, 0.22, 0.12); w.quadraticCurveTo(0.12, 0.04, 0.2, -0.02); w.quadraticCurveTo(0.1, -0.01, 0, -0.04); w.lineTo(0, 0);
+    const wg = new THREE.ExtrudeGeometry(w, { depth: 0.01, bevelEnabled: false });
+    put('Head', wg, M.gold, off(hc, sd * 0.12, 0.02, -0.02), eul(0, sd > 0 ? -2.6 : -0.54, sd * 0.15));
+  }
+  // greatsword in the right hand: grip axis runs across the knuckles
+  { const h = 'hand_r'; const knuck = P('index_01_r').lerp(P('pinky_01_r'), 0.5);
+    const grip = P('index_01_r').sub(P('pinky_01_r')).normalize();
+    const palm = P(h).lerp(knuck, 0.6);
+    const sw = new THREE.Group();
+    const bladeS = new THREE.Shape(); bladeS.moveTo(-0.035, 0); bladeS.lineTo(0.035, 0); bladeS.lineTo(0.03, 0.85); bladeS.lineTo(0, 0.98); bladeS.lineTo(-0.03, 0.85); bladeS.lineTo(-0.035, 0);
+    const blade = new THREE.Mesh(new THREE.ExtrudeGeometry(bladeS, { depth: 0.012, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 1 }), M.blade);
+    blade.position.set(0, 0.16, -0.006); sw.add(blade);
+    const rune = new THREE.Mesh(new THREE.PlaneGeometry(0.012, 0.72), M.glow); rune.position.set(0, 0.56, 0.021); sw.add(rune);
+    const rune2 = rune.clone(); rune2.position.z = -0.021; sw.add(rune2);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.035, 0.05), M.gold); guard.position.y = 0.14; sw.add(guard);
+    for (const sd of [-1, 1]) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.09, 6), M.gold); c.position.set(sd * 0.15, 0.17, 0); c.rotation.z = -sd * 0.9; sw.add(c); }
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.24, 8), M.dark); handle.position.y = 0.01; sw.add(handle);
+    const pom = new THREE.Mesh(new THREE.OctahedronGeometry(0.032), M.glow); pom.position.y = -0.13; sw.add(pom);
+    sw.position.copy(palm).addScaledVector(grip, -0.03);
+    sw.quaternion.setFromUnitVectors(Y, grip);
+    bone(h).attach(sw); hero.sword = sw; hero.swordRunes = [rune, rune2, pom]; }
+  // under-suit for the mannequin itself
+  model.traverse(o => { if (o.isSkinnedMesh) { o.material = M.suit; o.frustumCulled = false; } });
 }
-const swordGlowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0x6fe7ff).multiplyScalar(1.2), transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
-// the model ships as base64 JSON because artifact hosting only serves web file types
-fetch('assets/knight.json').then(r => r.json()).then(j => {
+fetch('assets/hero.json').then(r => r.json()).then(j => {
   const bin = Uint8Array.from(atob(j.data), c => c.charCodeAt(0));
   return new Promise((res, rej) => new GLTFLoader().parse(bin.buffer, '', res, rej));
 }).then((gltf) => {
   const model = gltf.scene;
-  model.traverse(o => { if (o.isMesh) { o.frustumCulled = false; o.material = knightMaterial(o.material); } });
+  buildArmor(model);
   const box = new THREE.Box3().setFromObject(model); const h = box.max.y - box.min.y;
-  model.scale.setScalar(HERO_H / h); model.position.y = -box.min.y * (HERO_H / h);
+  const k = HERO_H / h;
+  model.scale.setScalar(k); model.position.y = -box.min.y * k;
   heroBody.add(model);
-  const sword = model.getObjectByName('2H_Sword');
-  if (sword) { const ms = []; sword.traverse(o => { if (o.isMesh) ms.push(o); }); for (const o of ms) { const g = new THREE.Mesh(o.geometry, swordGlowMat); g.scale.setScalar(1.06); o.add(g); } }
+  model.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
   mixer.m = new THREE.AnimationMixer(model);
   for (const c of gltf.animations) mixer.acts[c.name] = mixer.m.clipAction(c);
-  mixer.m.addEventListener('finished', () => fadeTo('Jump_Idle', 0.25));
-  fadeTo('Jump_Idle', 0);
-}).catch(() => logLine('Không tải được mô hình nhân vật.', 'sys'));
+  mixer.m.addEventListener('finished', () => fadeTo('Sword_Idle', 0.25));
+  fadeTo('Sword_Idle', 0);
+  applyGearVisuals();
+}).catch((e) => { console.error(e); logLine('Không tải được mô hình nhân vật.', 'sys'); });
 function fadeTo(name, dur, once = false, speed = 1) {
   const a = mixer.acts[name]; if (!a) return;
   a.reset(); a.timeScale = speed; a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = once;
@@ -620,7 +794,7 @@ const wingMat = new THREE.ShaderMaterial({
     }`
 });
 const wingGeo = new THREE.PlaneGeometry(3.2, 4.2); wingGeo.translate(1.45, 0.6, 0);
-const wings = new THREE.Group(); wings.position.set(0, HERO_H * 0.6, -0.32); wings.scale.setScalar(1.05); heroBody.add(wings);
+const wings = new THREE.Group(); wings.position.set(0, HERO_H * 0.66, -0.3 * HERO_H / 2.3); wings.scale.setScalar(1.0 * HERO_H / 2.3 * 1.15); heroBody.add(wings);
 const wingR = new THREE.Mesh(wingGeo, wingMat); wingR.position.x = 0.1; wings.add(wingR);
 const wingL = new THREE.Mesh(wingGeo, wingMat); wingL.scale.x = -1; wingL.position.x = -0.1; wings.add(wingL);
 
@@ -635,7 +809,7 @@ const auraMat = new THREE.ShaderMaterial({
       float glow = smoothstep(0.9, 0.0, r) * 0.25;
       gl_FragColor = vec4(uC * (ring + runes + glow) * 0.9, 1.0); }`
 });
-const aura = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6).rotateX(-Math.PI / 2), auraMat);
+const aura = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5).rotateX(-Math.PI / 2), auraMat);
 aura.position.y = 0.04; scene.add(aura);
 
 // slash arc effect
@@ -795,7 +969,6 @@ const RARITY = [
   { n: 'Sử thi', c: 0xc58bff, css: 'var(--r-epic)' },
   { n: 'Huyền thoại', c: 0xffb347, css: 'var(--r-legend)' }
 ];
-const ITEMS = ['Ngọc Hải Lam', 'Vảy Triều Dâng', 'Giáp Sóng Bạc', 'Kích San Hô', 'Lông Vũ Nguyệt Quang', 'Nhẫn Bọt Biển', 'Mũ Ngọc Trai', 'Đá Cường Hóa'];
 const beamGeo = new THREE.CylinderGeometry(0.12, 0.3, 3.2, 12, 1, true); beamGeo.translate(0, 1.6, 0);
 const beamMatBase = new THREE.ShaderMaterial({
   uniforms: { uC: { value: new THREE.Color() }, uTime: U.uTime }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
@@ -805,20 +978,28 @@ const beamMatBase = new THREE.ShaderMaterial({
 const loots = [];
 function dropLoot(x, z, mobLv) {
   const roll = rand();
-  const isGold = roll < 0.45;
-  let r = 0; const q = rand();
-  if (!isGold) r = q < 0.02 ? 3 : q < 0.12 ? 2 : q < 0.4 ? 1 : 0;
+  const kind = roll < 0.42 ? 'gold' : roll < 0.62 ? 'stone' : 'gear';
+  let r = 0, gear = null;
+  if (kind === 'gear') {
+    const q = rand(); r = q < 0.02 ? 3 : q < 0.12 ? 2 : q < 0.4 ? 1 : 0;
+    const sr = rand(); const slot = sr < 0.3 ? 'weapon' : sr < 0.52 ? 'armor' : sr < 0.72 ? 'helm' : sr < 0.92 ? 'ring' : 'wings';
+    gear = makeGear(slot, slot === 'wings' ? Math.max(1, r) : r, mobLv);
+    r = gear.r; if (r >= 1 && rand() < 0.4) gear.plus = ri(1, r + 1);
+  }
+  const isGold = kind === 'gold';
   const R = RARITY[r];
   const g = new THREE.Group();
-  const col = new THREE.Color(isGold ? 0xffd36a : R.c);
-  const gem = new THREE.Mesh(isGold ? new THREE.CylinderGeometry(0.16, 0.16, 0.05, 16) : new THREE.OctahedronGeometry(0.18), new THREE.MeshStandardMaterial({ color: col, metalness: 0.8, roughness: 0.2, emissive: col, emissiveIntensity: isGold ? 0.6 : 1.4 }));
+  const col = new THREE.Color(isGold ? 0xffd36a : kind === 'stone' ? 0x7fe9ff : R.c);
+  const geo = isGold ? new THREE.CylinderGeometry(0.16, 0.16, 0.05, 16) : kind === 'stone' ? new THREE.IcosahedronGeometry(0.14) : new THREE.OctahedronGeometry(0.18);
+  const gem = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, metalness: 0.8, roughness: 0.2, emissive: col, emissiveIntensity: isGold ? 0.6 : 1.4 }));
   gem.position.y = 0.45; g.add(gem);
-  if (!isGold && r >= 1) { const bm = beamMatBase.clone(); bm.uniforms.uC.value = col.clone().multiplyScalar(1.2); g.add(new THREE.Mesh(beamGeo, bm)); }
+  if (gear && r >= 1) { const bm = beamMatBase.clone(); bm.uniforms.uC.value = col.clone().multiplyScalar(1.2); g.add(new THREE.Mesh(beamGeo, bm)); }
   const ox = rr(-0.8, 0.8), oz = rr(-0.8, 0.8);
   g.position.set(x + ox, 0, z + oz); scene.add(g);
-  const name = isGold ? `${ri(8, 20) * mobLv} Vàng` : pick(ITEMS) + (r >= 2 ? ` +${ri(3, 9)}` : '');
-  const el = document.createElement('div'); el.className = 'lbl loot-lbl'; el.style.color = isGold ? 'var(--gold)' : R.css; el.textContent = name; labelsEl.appendChild(el);
-  loots.push({ g, gem, x: x + ox, z: z + oz, name, r, isGold, el, t: 0, amount: isGold ? parseInt(name) : 0 });
+  const amount = isGold ? ri(8, 20) * mobLv : kind === 'stone' ? 1 : 0;
+  const name = isGold ? `${amount} Vàng` : kind === 'stone' ? 'Đá Cường Hóa' : gear.name + (gear.plus ? ` +${gear.plus}` : '');
+  const el = document.createElement('div'); el.className = 'lbl loot-lbl'; el.style.color = isGold ? 'var(--gold)' : kind === 'stone' ? 'var(--cyan)' : R.css; el.textContent = name; labelsEl.appendChild(el);
+  loots.push({ g, gem, x: x + ox, z: z + oz, name, r, kind, gear, el, t: 0, amount });
 }
 
 // ---------- HUD ----------
@@ -835,7 +1016,7 @@ function updateHud() {
   hud.hpBar.style.transform = `scaleX(${hero.hp / hero.maxHp})`;
   hud.hpTxt.textContent = `${Math.ceil(hero.hp)} / ${hero.maxHp}`;
   hud.gold.textContent = hero.gold.toLocaleString('vi-VN');
-  hud.items.textContent = hero.items;
+  hud.items.textContent = hero.inv.length;
   const f = hero.exp / expNeed(hero.lv);
   hud.expBar.style.transform = `scaleX(${f})`;
   hud.expTxt.textContent = `EXP ${(f * 100).toFixed(1)}%`;
@@ -849,6 +1030,169 @@ function floatText(x, y, z, text, cls) {
   setTimeout(() => d.remove(), 950);
 }
 setTimeout(() => { $('zone').style.opacity = '0'; }, 4500);
+
+// ---------- items, equipment, enhancement, save ----------
+const SLOTS = {
+  weapon: { n: 'Vũ khí', names: ['Kiếm Triều Dâng', 'Đại Kiếm Vực Sâu', 'Kiếm Hải Lam', 'Kiếm Răng Kình'], base: { atk: 12 } },
+  helm: { n: 'Mũ', names: ['Mũ Ngọc Trai', 'Mũ Vỏ Ốc Bạc', 'Mũ Rồng Biển'], base: { def: 4, hp: 30 } },
+  armor: { n: 'Giáp', names: ['Giáp Sóng Bạc', 'Giáp Vảy Rồng Biển', 'Giáp Lân Quang'], base: { def: 8, hp: 60 } },
+  ring: { n: 'Nhẫn', names: ['Nhẫn Bọt Biển', 'Nhẫn Lân Quang', 'Nhẫn Thủy Triều'], base: { hp: 40, crit: 2 } },
+  wings: { n: 'Cánh', names: ['Cánh Sóng Lam', 'Cánh Nguyệt Quang', 'Cánh Thủy Tinh'], base: { atk: 6, def: 4, hp: 40 } }
+};
+const SLOT_ORDER = ['weapon', 'helm', 'armor', 'ring', 'wings'];
+const STAT_N = { atk: 'Tấn công', def: 'Phòng thủ', hp: 'Máu', crit: 'Chí mạng %' };
+const RMULT = [1, 1.45, 2.1, 3];
+const BAG_MAX = 40;
+let uidN = 1; const uid = () => 'i' + Date.now().toString(36) + (uidN++);
+function makeGear(slot, r, lv, name) {
+  const base = {}; for (const k in SLOTS[slot].base) base[k] = k === 'crit' ? SLOTS[slot].base[k] * (r + 1) : Math.round(SLOTS[slot].base[k] * RMULT[r] * (1 + lv * 0.08));
+  return { id: uid(), slot, r, lv, name: name || pick(SLOTS[slot].names), base, plus: 0 };
+}
+const plusMult = p => 1 + p * 0.1 + p * p * 0.006;
+function gearStats(g) { const o = {}; for (const k in g.base) o[k] = k === 'crit' ? +(g.base[k] + g.plus * 0.5).toFixed(1) : Math.round(g.base[k] * plusMult(g.plus)); return o; }
+const gearScore = g => { const s = gearStats(g); return (s.atk || 0) * 3 + (s.def || 0) * 2.5 + (s.hp || 0) * 0.25 + (s.crit || 0) * 4; };
+const sellPrice = g => Math.round((20 + g.lv * 6) * RMULT[g.r] * (1 + g.plus * 0.3));
+const upRate = p => p < 6 ? 1 : [0.9, 0.8, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3][p - 6];
+const upCost = p => ({ stones: 1 + Math.floor(p / 3), gold: Math.round(80 * Math.pow(p + 1, 1.6)) });
+
+hero.inv = []; hero.eq = {}; hero.stones = 0;
+function heroStats() {
+  const st = { atk: 10 + hero.lv * 3, def: hero.lv, hp: 400 + hero.lv * 60, crit: 15 };
+  for (const s of SLOT_ORDER) { const g = hero.eq[s]; if (!g) continue; const gs = gearStats(g); for (const k in gs) st[k] += gs[k]; }
+  return st;
+}
+function recalc(heal) { const st = heroStats(); const f = hero.hp / hero.maxHp; hero.maxHp = st.hp; hero.hp = heal ? st.hp : Math.max(1, Math.min(st.hp, f * st.hp)); hero.st = st; }
+
+// glow tiers like classic MMO enhancement: +7 blue, +10 gold, +13 violet
+const tier = p => p >= 13 ? 3 : p >= 10 ? 2 : p >= 7 ? 1 : 0;
+const TIER_COL = [0x7fe9ff, 0x6fb8ff, 0xffc75a, 0xd28bff];
+const WING_COL = [[0xeafcff, 0x2f6bff, 0x9ff0ff], [0xe6f6ff, 0x1d8bff, 0x7fd8ff], [0xf6e8ff, 0x8a3dff, 0xd8a8ff], [0xfff4d8, 0xff9d1f, 0xffe08a]];
+function applyGearVisuals() {
+  const w = hero.eq.weapon, a = Math.max(hero.eq.armor?.plus || 0, hero.eq.helm?.plus || 0);
+  const wt = tier(w?.plus || 0);
+  heroMats.glow.color.setHex(TIER_COL[wt]).multiplyScalar(2.2 + wt * 0.6);
+  const at = tier(a);
+  heroMats.steel.userData.u.uRim.value.setHex(at ? TIER_COL[at] : 0x8fe6ff); heroMats.steel.userData.u.uRimStr.value = [0.45, 0.9, 1.1, 1.3][at];
+  heroMats.dark.userData.u.uRim.value.setHex(at ? TIER_COL[at] : 0x7fb8ff); heroMats.dark.userData.u.uRimStr.value = [0.35, 0.7, 0.9, 1.1][at];
+  heroMats.gold.userData.u.uRimStr.value = [0.45, 0.6, 0.9, 1.0][at];
+  const wg = hero.eq.wings; wings.visible = !!wg;
+  if (wg) { const c = WING_COL[wg.r]; wingMat.uniforms.uRoot.value.setHex(c[0]); wingMat.uniforms.uTip.value.setHex(c[1]); wingMat.uniforms.uEdge.value.setHex(c[2]); wingMat.uniforms.uB.value = 0.62 + wg.plus * 0.03; }
+  hero.glowTier = Math.max(wt, at);
+}
+
+const SAVE_KEY = 'vuclam-save-v1';
+function saveGame() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ lv: hero.lv, exp: hero.exp, gold: hero.gold, stones: hero.stones, inv: hero.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, hero.eq[s] || null])) }));
+  } catch (e) { /* storage may be blocked; the game still runs */ }
+}
+function loadGame() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (!d) return false;
+    Object.assign(hero, { lv: d.lv | 0 || 1, exp: d.exp || 0, gold: d.gold || 0, stones: d.stones || 0, inv: Array.isArray(d.inv) ? d.inv : [] });
+    hero.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) hero.eq[s] = d.eq[s];
+    return true;
+  } catch (e) { return false; }
+}
+if (!loadGame()) {
+  hero.eq.weapon = makeGear('weapon', 0, 1, 'Kiếm Tân Binh');
+  hero.eq.wings = makeGear('wings', 0, 1, 'Cánh Sơ Khai');
+  hero.stones = 3;
+}
+recalc(true);
+setInterval(saveGame, 5000);
+
+function addItem(g) {
+  if (hero.inv.length >= BAG_MAX) { const p = sellPrice(g); hero.gold += p; logLine(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, 'sys'); return; }
+  hero.inv.push(g);
+}
+
+// ---------- bag UI ----------
+const ICONS = {
+  weapon: '<path d="M19 3l-9.5 9.5M19 3h-3.5M19 3v3.5M9.5 12.5l2 2M6 14l4 4M8 16l-4 4" />',
+  helm: '<path d="M5 15a7 7 0 0114 0v3H5zM12 4v4M8.5 15h7" />',
+  armor: '<path d="M7 4l5 2 5-2 3 4-3 2v10H7V10L4 8zM12 6v14" />',
+  ring: '<circle cx="12" cy="14" r="6"/><path d="M9 4h6l-3 4z"/>',
+  wings: '<path d="M12 12C9 6 5 5 2 6c2 2 2 5 5 6-2 1-3 3-2 5 3-1 5-3 7-5zM12 12c3-6 7-7 10-6-2 2-2 5-5 6 2 1 3 3 2 5-3-1-5-3-7-5z"/>',
+  stone: '<path d="M12 3l7 6-7 12L5 9z M5 9h14 M12 3l-3 6 3 12 3-12z"/>'
+};
+const icon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${ICONS[k]}</svg>`;
+const bagEl = $('bag'), bagGrid = $('bagGrid'), bagEq = $('bagEq'), bagStats = $('bagStats'), bagDetail = $('bagDetail'), bagMsg = $('bagMsg');
+let selId = null;
+const findItem = id => { for (const s of SLOT_ORDER) if (hero.eq[s] && hero.eq[s].id === id) return { g: hero.eq[s], equipped: true }; const g = hero.inv.find(x => x.id === id); return g ? { g, equipped: false } : null; };
+const fmt = n => n.toLocaleString('vi-VN');
+function tileHtml(g, extra = '') {
+  return `<button class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' glow t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${icon(g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}</button>`;
+}
+function renderBag() {
+  const st = hero.st;
+  bagStats.innerHTML = `<div><span>Cấp</span><b>${hero.lv}</b></div><div><span>Tấn công</span><b>${st.atk}</b></div><div><span>Phòng thủ</span><b>${st.def}</b></div><div><span>Máu</span><b>${fmt(st.hp)}</b></div><div><span>Chí mạng</span><b>${st.crit}%</b></div>`;
+  bagEq.innerHTML = SLOT_ORDER.map(s => `<div class="eqslot"><span>${SLOTS[s].n}</span>${hero.eq[s] ? tileHtml(hero.eq[s]) : `<div class="tile empty">${icon(s)}</div>`}</div>`).join('');
+  const cells = hero.inv.map(g => tileHtml(g)).join('') + '<div class="tile empty"></div>'.repeat(Math.max(0, BAG_MAX - hero.inv.length));
+  bagGrid.innerHTML = cells;
+  $('bagCount').textContent = `${hero.inv.length}/${BAG_MAX}`;
+  $('bagGold').textContent = fmt(hero.gold);
+  $('bagStones').textContent = hero.stones;
+  renderDetail();
+}
+function statLines(g, cmp) {
+  const s = gearStats(g), c = cmp ? gearStats(cmp) : null;
+  return Object.keys(s).map(k => { const d = c ? s[k] - (c[k] || 0) : 0; return `<li><span>${STAT_N[k]}</span><b>${s[k]}</b>${c && d ? `<em class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '+' : ''}${+d.toFixed(1)}</em>` : ''}</li>`; }).join('');
+}
+function renderDetail() {
+  const f = selId && findItem(selId);
+  if (!f) { bagDetail.innerHTML = '<p class="muted">Chọn một món đồ để xem chỉ số, mặc vào hoặc cường hóa.</p>'; return; }
+  const { g, equipped } = f; const cur = hero.eq[g.slot];
+  const cost = upCost(g.plus), rate = upRate(g.plus);
+  const canUp = g.plus < 15;
+  bagDetail.innerHTML = `
+    <div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 class="rn${g.r}">${g.name}${g.plus ? ' +' + g.plus : ''}</h3>
+      <p class="muted">${SLOTS[g.slot].n} · ${RARITY[g.r].n} · cấp ${g.lv}${equipped ? ' · <b class="on">Đang mặc</b>' : ''}</p></div></div>
+    <ul class="stl">${statLines(g, !equipped && cur ? cur : null)}</ul>
+    ${canUp ? `<div class="up-box"><div><b>+${g.plus} → +${g.plus + 1}</b><span>Tỉ lệ thành công ${Math.round(rate * 100)}%${g.plus >= 9 ? ' · thất bại sẽ giảm 1 cấp' : ''}</span>
+      <span>Cần ${cost.stones} Đá Cường Hóa · ${fmt(cost.gold)} vàng</span></div></div>` : '<p class="muted">Đã đạt cấp cường hóa tối đa +15.</p>'}
+    <div class="acts">
+      <button id="actEquip">${equipped ? 'Tháo ra' : 'Mặc vào'}</button>
+      ${canUp ? `<button id="actUp" class="pri"${hero.stones < cost.stones || hero.gold < cost.gold ? ' disabled' : ''}>Cường hóa</button>` : ''}
+      ${equipped ? '' : `<button id="actSell">Bán · ${fmt(sellPrice(g))} vàng</button>`}
+    </div>`;
+  $('actEquip').onclick = () => { equipToggle(g, equipped); };
+  if (canUp) $('actUp').onclick = () => enhance(g);
+  if (!equipped) $('actSell').onclick = () => { hero.inv = hero.inv.filter(x => x !== g); hero.gold += sellPrice(g); selId = null; flashMsg(`Đã bán ${g.name}.`); afterChange(); };
+}
+function afterChange() { recalc(false); applyGearVisuals(); updateHud(); renderBag(); saveGame(); }
+function equipToggle(g, equipped) {
+  if (equipped) { if (hero.inv.length >= BAG_MAX) { flashMsg('Túi đầy, không tháo được.'); return; } delete hero.eq[g.slot]; hero.inv.push(g); }
+  else { const old = hero.eq[g.slot]; hero.inv = hero.inv.filter(x => x !== g); if (old) hero.inv.push(old); hero.eq[g.slot] = g; }
+  afterChange();
+}
+function enhance(g) {
+  const cost = upCost(g.plus); if (hero.stones < cost.stones || hero.gold < cost.gold) return;
+  hero.stones -= cost.stones; hero.gold -= cost.gold;
+  const ok = rand() < upRate(g.plus);
+  if (ok) { g.plus++; flashMsg(`Thành công! ${g.name} +${g.plus}`, 'ok'); }
+  else if (g.plus >= 9) { g.plus--; flashMsg(`Thất bại. ${g.name} giảm còn +${g.plus}.`, 'bad'); }
+  else flashMsg('Thất bại. Đồ giữ nguyên cấp.', 'bad');
+  if (ok && Object.values(hero.eq).includes(g)) burst(hero.pos.x, heroG.position.y + HERO_H * 0.6, hero.pos.z, 30, new THREE.Color(TIER_COL[tier(g.plus)]), 3, 0.3, 0.9);
+  afterChange();
+}
+let msgT = 0;
+function flashMsg(t, cls = '') { bagMsg.textContent = t; bagMsg.className = 'bmsg show ' + cls; clearTimeout(msgT); msgT = setTimeout(() => { bagMsg.className = 'bmsg'; }, 2200); }
+function bestGear() {
+  let n = 0;
+  for (const s of SLOT_ORDER) {
+    const cand = hero.inv.filter(g => g.slot === s).sort((a, b) => gearScore(b) - gearScore(a))[0];
+    if (cand && (!hero.eq[s] || gearScore(cand) > gearScore(hero.eq[s]))) { equipToggle(cand, false); n++; }
+  }
+  flashMsg(n ? `Đã mặc ${n} món tốt hơn.` : 'Đang mặc đồ tốt nhất rồi.');
+}
+bagGrid.addEventListener('click', e => { const b = e.target.closest('.tile[data-id]'); if (b) { selId = b.dataset.id; renderBag(); } });
+bagEq.addEventListener('click', e => { const b = e.target.closest('.tile[data-id]'); if (b) { selId = b.dataset.id; renderBag(); } });
+$('bagClose').onclick = () => toggleBag(false);
+$('bagBest').onclick = bestGear;
+$('btnBag').onclick = () => toggleBag(true);
+function toggleBag(v) { bagEl.hidden = !v; if (v) { renderBag(); $('bagClose').focus(); } }
+addEventListener('keydown', e => { if (e.code === 'KeyI') toggleBag(bagEl.hidden); if (e.code === 'Escape' && !bagEl.hidden) toggleBag(false); });
 
 // ---------- input ----------
 const input = { x: 0, z: 0, keys: {} };
@@ -880,7 +1224,7 @@ const joyEnd = e => { if (e.pointerId !== joyId) return; joyId = null; input.x =
 joy.addEventListener('pointerup', joyEnd); joy.addEventListener('pointercancel', joyEnd);
 
 // ---------- combat ----------
-function heroDamage(base) { const crit = rand() < 0.18; const d = Math.round((base + hero.lv * 3) * rr(0.85, 1.15) * (crit ? 2 : 1)); return [d, crit]; }
+function heroDamage(mult) { const st = hero.st; const crit = rand() < st.crit / 100; const d = Math.round(st.atk * mult * rr(0.85, 1.15) * (crit ? 2 : 1)); return [d, crit]; }
 function hitMob(m, dmg, crit) {
   if (m.dead) return;
   m.hp -= dmg; m.flash = 1; m.aggro = true;
@@ -900,7 +1244,7 @@ function gainExp(n) {
   hero.exp += n;
   while (hero.exp >= expNeed(hero.lv)) {
     hero.exp -= expNeed(hero.lv); hero.lv++;
-    hero.maxHp += 60; hero.hp = hero.maxHp;
+    recalc(true);
     levelFx = 1.6;
     floatText(hero.pos.x, 3.4, hero.pos.z, 'LÊN CẤP!', 'big');
     logLine(`Đạt cấp ${hero.lv}. Sức mạnh tăng lên.`, 'sys');
@@ -911,7 +1255,7 @@ function gainExp(n) {
 let levelFx = 0;
 function attack() {
   if (hero.atkCd > 0) return;
-  hero.atkCd = 0.6; hero.atkT = 0.001; fadeTo(rand() < 0.5 ? '2H_Melee_Attack_Slice' : '2H_Melee_Attack_Chop', 0.08, true, 1.7);
+  hero.atkCd = 0.6; hero.atkT = 0.001; fadeTo('Sword_Attack', 0.06, true, 1.6);
   slash.visible = true; slashMat.uniforms.uT.value = 0;
   slash.position.set(hero.pos.x, heroG.position.y + 0.9, hero.pos.z);
   slash.rotation.y = hero.face - Math.PI / 2;
@@ -921,18 +1265,18 @@ function attack() {
       const dx = m.x - hero.pos.x, dz = m.z - hero.pos.z, d = Math.hypot(dx, dz);
       if (d > 2.6) continue;
       let da = Math.atan2(dx, dz) - hero.face; da = Math.atan2(Math.sin(da), Math.cos(da));
-      if (Math.abs(da) < 1.25 || d < 0.9) { const [dmg, c] = heroDamage(22); hitMob(m, dmg, c); }
+      if (Math.abs(da) < 1.25 || d < 0.9) { const [dmg, c] = heroDamage(1.0); hitMob(m, dmg, c); }
     }
   }, 120);
 }
 function skill() {
   if (hero.skillCd > 0) return;
-  hero.skillCd = 6; hero.skillT = 0.001; fadeTo('2H_Melee_Attack_Spin', 0.08, true, 1.5);
+  hero.skillCd = 6; hero.skillT = 0.001; fadeTo('Spell_Simple_Shoot', 0.08, true, 1.4);
   skillRing.visible = true; skillMat.uniforms.uT.value = 0;
   skillRing.position.set(hero.pos.x, 0.6, hero.pos.z);
   for (let i = 0; i < 70; i++) { const a = rr(0, 6.28), s = rr(4, 9); emit(hero.pos.x, 1, hero.pos.z, Math.cos(a) * s, rr(0, 2), Math.sin(a) * s, new THREE.Color(i % 3 ? 0xb98cff : 0x7fe9ff), 0.45, 0.7, 0, 0.9); }
   setTimeout(() => {
-    for (const m of mobs) { if (m.dead) continue; if (Math.hypot(m.x - hero.pos.x, m.z - hero.pos.z) < 4.6) { const [dmg, c] = heroDamage(48); hitMob(m, dmg, c); } }
+    for (const m of mobs) { if (m.dead) continue; if (Math.hypot(m.x - hero.pos.x, m.z - hero.pos.z) < 4.6) { const [dmg, c] = heroDamage(2.2); hitMob(m, dmg, c); } }
   }, 180);
 }
 
@@ -975,7 +1319,7 @@ function updateHero(dt, t) {
     let da = want - hero.face; da = Math.atan2(Math.sin(da), Math.cos(da)); hero.face += da * Math.min(1, dt * 10);
   }
   const moving = mag > 0.12;
-  heroG.position.set(hero.pos.x, 0.75 + Math.sin(t * 2.2) * 0.12, hero.pos.z);
+  heroG.position.set(hero.pos.x, 0.35 + Math.sin(t * 2.2) * 0.06, hero.pos.z);
   heroG.rotation.y = hero.face;
   heroBody.rotation.x = lerp(heroBody.rotation.x, moving ? 0.22 : 0.0, dt * 5);
   // wings flap
@@ -1008,6 +1352,10 @@ function updateHero(dt, t) {
     const c = Math.cos(hero.face), sn = Math.sin(hero.face);
     emit(hero.pos.x + lx * c + lz * sn, heroG.position.y + ly, hero.pos.z - lx * sn + lz * c, rr(-0.2, 0.2), rr(-0.6, -0.1), rr(-0.2, 0.2), new THREE.Color(rand() < 0.3 ? 0xffffff : 0x7fd8ff), rr(0.12, 0.25), rr(0.8, 1.6), 0, 0.99);
   }
+  if (hero.sword && hero.glowTier > 0 && rand() < dt * 18 * hero.glowTier) {
+    const p = hero.sword.localToWorld(new THREE.Vector3(0, rr(0.3, 1.1), 0));
+    emit(p.x, p.y, p.z, rr(-0.2, 0.2), rr(0.1, 0.5), rr(-0.2, 0.2), new THREE.Color(TIER_COL[hero.glowTier]), rr(0.08, 0.16), rr(0.5, 1), 0, 0.98);
+  }
   if (levelFx > 0) { levelFx -= dt; auraMat.uniforms.uC.value.setHex(0xffd36a); } else auraMat.uniforms.uC.value.setHex(0x4fc8ff);
 }
 
@@ -1036,7 +1384,7 @@ function updateMobs(dt, t) {
       else {
         m.face = Math.atan2(hero.pos.x - m.x, hero.pos.z - m.z);
         m.atkCd -= dt;
-        if (m.atkCd <= 0) { m.atkCd = rr(1.4, 2.2); m.lunge = 0.3; const dmg = ri(4, 9) + m.lv; hero.hp = Math.max(1, hero.hp - dmg); floatText(hero.pos.x, 2.6, hero.pos.z, '-' + dmg, 'me'); }
+        if (m.atkCd <= 0) { m.atkCd = rr(1.4, 2.2); m.lunge = 0.3; const dmg = Math.max(1, Math.round((ri(6, 12) + m.lv * 3) - hero.st.def * 0.5)); hero.hp = Math.max(1, hero.hp - dmg); floatText(hero.pos.x, 2.6, hero.pos.z, '-' + dmg, 'me'); }
       }
     } else {
       m.wait -= dt;
@@ -1085,10 +1433,11 @@ function updateLoot(dt, t) {
     l.gem.rotation.y = t * 2; l.gem.position.y = 0.45 + Math.sin(t * 3 + i) * 0.08 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
     if (Math.hypot(l.x - hero.pos.x, l.z - hero.pos.z) < 0.9 || l.t > 40) {
       if (l.t <= 40) {
-        if (l.isGold) { hero.gold += l.amount; logLine(`Nhặt được <b>${l.name}</b>`, 'rarity-0'); }
-        else { hero.items++; logLine(`Nhặt được <b>[${l.name}]</b> · ${RARITY[l.r].n}`, 'rarity-' + l.r); }
-        burst(l.x, 0.5, l.z, 10, new THREE.Color(l.isGold ? 0xffd36a : RARITY[l.r].c), 2, 0.25, 0.5);
-        updateHud();
+        if (l.kind === 'gold') { hero.gold += l.amount; logLine(`Nhặt được <b>${l.name}</b>`, 'rarity-0'); }
+        else if (l.kind === 'stone') { hero.stones += 1; logLine('Nhặt được <b>[Đá Cường Hóa]</b>', 'sys'); }
+        else { addItem(l.gear); logLine(`Nhặt được <b>[${l.name}]</b> · ${RARITY[l.r].n}`, 'rarity-' + l.r); }
+        burst(l.x, 0.5, l.z, 10, new THREE.Color(l.kind === 'gold' ? 0xffd36a : l.kind === 'stone' ? 0x7fe9ff : RARITY[l.r].c), 2, 0.25, 0.5);
+        updateHud(); if (!bagEl.hidden) renderBag();
       }
       scene.remove(l.g); l.el.remove(); loots.splice(i, 1);
     }
@@ -1109,7 +1458,7 @@ function updateLabels() {
     m.label.bar.style.transform = `scaleX(${m.hp / m.maxHp})`;
   }
   for (const l of loots) place(l.el, l.x, 1.05, l.z);
-  place(heroLabel.el, hero.pos.x, heroG.position.y + HERO_H + 1.0, hero.pos.z);
+  place(heroLabel.el, hero.pos.x, heroG.position.y + HERO_H + 0.55, hero.pos.z);
 }
 
 // ---------- post-processing ----------
@@ -1157,12 +1506,12 @@ function frame() {
   shafts.position.set(hero.pos.x * 0.6, 0, hero.pos.z * 0.6);
   // camera
   const portrait = innerHeight > innerWidth;
-  const dist = (portrait ? 1.25 : 1) * (PREVIEW ? 0.6 : 1);
+  const dist = (portrait ? 1.25 : 1) * (PREVIEW ? 0.2 : 1);
   if (PREVIEW) hero.face = 0;
   camTarget.set(hero.pos.x, 1.0, hero.pos.z);
   camPos.set(hero.pos.x, 11.5 * dist, hero.pos.z + 10 * dist);
   camera.position.lerp(camPos, Math.min(1, dt * 4));
-  camera.lookAt(camera.position.x, PREVIEW ? 2.2 : 1.0, camera.position.z - 10 * dist);
+  camera.lookAt(camera.position.x, PREVIEW ? heroG.position.y + HERO_H * 0.75 : 1.0, camera.position.z - 10 * dist);
   updateLabels();
   composer.render(dt);
   // adaptive quality: drop pixel ratio if the device struggles

@@ -187,3 +187,20 @@ nâng cấp +1…+15 phát sáng, auto-hunt, lưu game.
 - [ ] Cánh bị mỏng khi nhìn ngang; cân nhắc thêm lớp cánh thứ hai hoặc billboard.
 - [ ] Người dùng mở link trên điện thoại, báo FPS và cảm nhận.
 - [ ] Túi đồ, trang bị, nâng cấp +1…+15, lưu game (localStorage).
+
+## 10. Nhân vật tỷ lệ thật + hệ thống đồ (2026-11-19)
+
+- **Nhân vật:** thay KayKit chibi bằng **Quaternius Universal Animation Library (UAL1) mannequin, CC0**,
+  tải từ bản sao LFS `media.githubusercontent.com/media/dragon-fish/parkour-game/HEAD/assets/animations/ual1_standard.glb`
+  (quaternius.com không truy cập được từ cloud). Giữ 7 động tác: Sword_Idle, Sword_Attack, Spell_Simple_Shoot, Hit_Chest,
+  Swim_Idle_Loop, Jump_Loop, Idle_Loop. File gốc có ~6700 accessor thừa, xóa đi còn 870 KB → `assets/hero.json` (base64).
+- **Bộ giáp tự dựng bằng code** (`buildArmor`), gắn vào xương nên chạy theo động tác: mũ có mào và hai cánh vàng,
+  khe mắt phát sáng, giáp vai 3 lớp có gai, giáp ngực + ngọc, đai, váy giáp, ống tay/chân, áo choàng, đại kiếm có rãnh rune phát sáng.
+  Thiết kế là của riêng mình, không chép MU.
+- **Kích thước:** người dùng yêu cầu nhỏ đi 4 lần → `HERO_SCALE = 0.25` (cao ~0.58 đơn vị). Trên màn hình nhân vật khá nhỏ
+  so với quái; đổi `HERO_SCALE` nếu muốn to hơn.
+- **Túi đồ / trang bị / cường hóa / lưu game:** 5 ô trang bị (vũ khí, mũ, giáp, nhẫn, cánh), túi 40 ô, 4 độ hiếm,
+  quái rơi vàng / Đá Cường Hóa / trang bị. Cường hóa +1…+15 (tỉ lệ 100% đến +6, giảm dần còn 30%, từ +9 thất bại thì giảm 1 cấp).
+  Phát sáng theo cấp: +7 xanh, +10 vàng, +13 tím (vũ khí, giáp, hạt sáng quanh kiếm); màu cánh theo độ hiếm.
+  Nút "Mặc đồ tốt nhất", bán đồ, túi đầy thì tự bán. Lưu bằng localStorage (`vuclam-save-v1`) mỗi 5 giây.
+  Phím I mở túi. Ảnh: `screenshot-tui-do.png`, `screenshot-nhan-vat.png`.
