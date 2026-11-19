@@ -204,3 +204,6 @@ nâng cấp +1…+15 phát sáng, auto-hunt, lưu game.
   Phát sáng theo cấp: +7 xanh, +10 vàng, +13 tím (vũ khí, giáp, hạt sáng quanh kiếm); màu cánh theo độ hiếm.
   Nút "Mặc đồ tốt nhất", bán đồ, túi đầy thì tự bán. Lưu bằng localStorage (`vuclam-save-v1`) mỗi 5 giây.
   Phím I mở túi. Ảnh: `screenshot-tui-do.png`, `screenshot-nhan-vat.png`.
+- **Cập nhật kích thước:** người dùng xem xong yêu cầu x2 → `HERO_SCALE = 0.5` (cao ~1,15 đơn vị). Quái đồng bộ theo
+  bằng `size` trong `MOB_TYPES` (sứa 0.5, cá gai 0.65); độ cao bay, tầm đánh (1.7), tầm kỹ năng (3.0), khoảng cách
+  quái tấn công (1.0), vệt chém, vòng kỹ năng, hào quang và bóng cũng thu nhỏ tương ứng.

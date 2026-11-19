@@ -611,10 +611,10 @@ function updateParticles(dt) {
 const hero = { pos: new THREE.Vector3(0, 0, 4), face: Math.PI, hp: 500, maxHp: 500, lv: 1, exp: 0, gold: 0, items: 0, atkT: 0, atkCd: 0, skillCd: 0, skillT: 0 };
 const heroG = new THREE.Group(); scene.add(heroG);
 const heroBody = new THREE.Group(); heroG.add(heroBody);
-const heroBlob = blob(1.0); scene.add(heroBlob);
+const heroBlob = blob(1.5); scene.add(heroBlob);
 // Hero: Quaternius UAL mannequin (CC0) for skeleton + animations, with an original ornate armor set built in code
 const mixer = { m: null, acts: {}, cur: null };
-const HERO_SCALE = 0.25;               // the user asked for a hero 4x smaller than before
+const HERO_SCALE = 0.5;                // half the original size (user tuned: 1/4, then x2)
 const HERO_H = 2.3 * HERO_SCALE;       // world height of the armored hero
 const heroMats = {
   suit: stylized({ color: 0x141c38, roughness: 0.75 }, 0x5d7dff, 0.25, 3),
@@ -809,7 +809,7 @@ const auraMat = new THREE.ShaderMaterial({
       float glow = smoothstep(0.9, 0.0, r) * 0.25;
       gl_FragColor = vec4(uC * (ring + runes + glow) * 0.9, 1.0); }`
 });
-const aura = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5).rotateX(-Math.PI / 2), auraMat);
+const aura = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2).rotateX(-Math.PI / 2), auraMat);
 aura.position.y = 0.04; scene.add(aura);
 
 // slash arc effect
@@ -825,10 +825,10 @@ const slashMat = new THREE.ShaderMaterial({
       float fade = 1.0 - smoothstep(0.65, 1.0, uT);
       gl_FragColor = vec4((uC * band * 1.6 + vec3(1.0) * core * 2.5) * trail * fade, 1.0); }`
 });
-const slash = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 4.6).rotateX(-Math.PI / 2), slashMat);
+const slash = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2).rotateX(-Math.PI / 2), slashMat);
 slash.visible = false; scene.add(slash);
 const skillMat = slashMat.clone(); skillMat.uniforms.uC.value = new THREE.Color(0xb98cff);
-const skillRing = new THREE.Mesh(new THREE.PlaneGeometry(9.5, 9.5).rotateX(-Math.PI / 2), skillMat);
+const skillRing = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 6.4).rotateX(-Math.PI / 2), skillMat);
 skillRing.visible = false; scene.add(skillRing);
 
 // ---------- mobs ----------
@@ -912,8 +912,8 @@ function makeFish() {
 }
 
 const MOB_TYPES = {
-  jelly: { name: 'Sứa Lân Quang', hp: 70, exp: 14, color: '#d7b6ff', y: 1.5, speed: 0.9, lv: [3, 6], make: makeJelly },
-  fish: { name: 'Cá Gai Hỏa', hp: 110, exp: 22, color: '#ffc89a', y: 0.7, speed: 1.4, lv: [5, 8], make: makeFish }
+  jelly: { name: 'Sứa Lân Quang', hp: 70, exp: 14, color: '#d7b6ff', y: 0.95, size: 0.5, speed: 0.9, lv: [3, 6], make: makeJelly },
+  fish: { name: 'Cá Gai Hỏa', hp: 110, exp: 22, color: '#ffc89a', y: 0.45, size: 0.65, speed: 1.4, lv: [5, 8], make: makeFish }
 };
 const mobs = [];
 const zones = [
@@ -935,9 +935,9 @@ function spawnAll() { for (const z of zones) for (let i = 0; i < z.n; i++) {
   const v = T.make();
   const lv = ri(T.lv[0], T.lv[1]);
   const [x, zz] = spawnPos(z);
-  const m = { ...v, T, zone: z, lv, maxHp: Math.round(T.hp * (1 + (lv - 3) * 0.15)), hp: 0, x, z: zz, tx: x, tz: zz, face: rr(0, 6.28), state: 'idle', wait: rr(0, 3), flash: 0, dead: 0, respawn: 0, aggro: false, atkCd: 0, phase: rr(0, 6.28), scale: z.kind === 'fish' ? rr(0.9, 1.15) : rr(0.85, 1.2) };
+  const m = { ...v, T, zone: z, lv, maxHp: Math.round(T.hp * (1 + (lv - 3) * 0.15)), hp: 0, x, z: zz, tx: x, tz: zz, face: rr(0, 6.28), state: 'idle', wait: rr(0, 3), flash: 0, dead: 0, respawn: 0, aggro: false, atkCd: 0, phase: rr(0, 6.28), scale: T.size * (z.kind === 'fish' ? rr(0.9, 1.15) : rr(0.85, 1.2)) };
   m.hp = m.maxHp;
-  m.shadow = blob(z.kind === 'fish' ? 1.6 : 1.3); scene.add(m.shadow);
+  m.shadow = blob((z.kind === 'fish' ? 1.6 : 1.3) * T.size); scene.add(m.shadow);
   m.label = makeLabel(`${T.name} · Lv ${lv}`, T.color);
   scene.add(m.group);
   mobs.push(m);
@@ -1228,7 +1228,7 @@ function heroDamage(mult) { const st = hero.st; const crit = rand() < st.crit / 
 function hitMob(m, dmg, crit) {
   if (m.dead) return;
   m.hp -= dmg; m.flash = 1; m.aggro = true;
-  const y = m.T.y * m.scale + 0.9;
+  const y = m.T.y + 0.6;
   floatText(m.x, y, m.z, dmg, crit ? 'crit' : '');
   burst(m.x, m.T.y, m.z, crit ? 16 : 8, new THREE.Color(m.kind === 'jelly' ? 0xd7a6ff : 0xffb070), 4, 0.35, 0.5);
   if (m.hp <= 0) killMob(m);
@@ -1257,15 +1257,15 @@ function attack() {
   if (hero.atkCd > 0) return;
   hero.atkCd = 0.6; hero.atkT = 0.001; fadeTo('Sword_Attack', 0.06, true, 1.6);
   slash.visible = true; slashMat.uniforms.uT.value = 0;
-  slash.position.set(hero.pos.x, heroG.position.y + 0.9, hero.pos.z);
+  slash.position.set(hero.pos.x, heroG.position.y + HERO_H * 0.5, hero.pos.z);
   slash.rotation.y = hero.face - Math.PI / 2;
   setTimeout(() => {
     for (const m of mobs) {
       if (m.dead) continue;
       const dx = m.x - hero.pos.x, dz = m.z - hero.pos.z, d = Math.hypot(dx, dz);
-      if (d > 2.6) continue;
+      if (d > 1.7) continue;
       let da = Math.atan2(dx, dz) - hero.face; da = Math.atan2(Math.sin(da), Math.cos(da));
-      if (Math.abs(da) < 1.25 || d < 0.9) { const [dmg, c] = heroDamage(1.0); hitMob(m, dmg, c); }
+      if (Math.abs(da) < 1.25 || d < 0.6) { const [dmg, c] = heroDamage(1.0); hitMob(m, dmg, c); }
     }
   }, 120);
 }
@@ -1273,10 +1273,10 @@ function skill() {
   if (hero.skillCd > 0) return;
   hero.skillCd = 6; hero.skillT = 0.001; fadeTo('Spell_Simple_Shoot', 0.08, true, 1.4);
   skillRing.visible = true; skillMat.uniforms.uT.value = 0;
-  skillRing.position.set(hero.pos.x, 0.6, hero.pos.z);
+  skillRing.position.set(hero.pos.x, heroG.position.y + HERO_H * 0.4, hero.pos.z);
   for (let i = 0; i < 70; i++) { const a = rr(0, 6.28), s = rr(4, 9); emit(hero.pos.x, 1, hero.pos.z, Math.cos(a) * s, rr(0, 2), Math.sin(a) * s, new THREE.Color(i % 3 ? 0xb98cff : 0x7fe9ff), 0.45, 0.7, 0, 0.9); }
   setTimeout(() => {
-    for (const m of mobs) { if (m.dead) continue; if (Math.hypot(m.x - hero.pos.x, m.z - hero.pos.z) < 4.6) { const [dmg, c] = heroDamage(2.2); hitMob(m, dmg, c); } }
+    for (const m of mobs) { if (m.dead) continue; if (Math.hypot(m.x - hero.pos.x, m.z - hero.pos.z) < 3.0) { const [dmg, c] = heroDamage(2.2); hitMob(m, dmg, c); } }
   }, 180);
 }
 
@@ -1301,10 +1301,10 @@ function updateHero(dt, t) {
     if (target) {
       const dx = target.x - hero.pos.x, dz = target.z - hero.pos.z, d = Math.hypot(dx, dz);
       if (target.loot) { if (d > 0.3) { mx = dx / d; mz = dz / d; mag = 1; } }
-      else if (d > 1.9) { mx = dx / d; mz = dz / d; mag = 1; }
+      else if (d > 1.2) { mx = dx / d; mz = dz / d; mag = 1; }
       else {
         hero.face = Math.atan2(dx, dz);
-        let near = 0; for (const m of mobs) if (!m.dead && Math.hypot(m.x - hero.pos.x, m.z - hero.pos.z) < 4.2) near++;
+        let near = 0; for (const m of mobs) if (!m.dead && Math.hypot(m.x - hero.pos.x, m.z - hero.pos.z) < 2.8) near++;
         if (near >= 2 && hero.skillCd <= 0) skill(); else attack();
       }
     }
@@ -1319,7 +1319,7 @@ function updateHero(dt, t) {
     let da = want - hero.face; da = Math.atan2(Math.sin(da), Math.cos(da)); hero.face += da * Math.min(1, dt * 10);
   }
   const moving = mag > 0.12;
-  heroG.position.set(hero.pos.x, 0.35 + Math.sin(t * 2.2) * 0.06, hero.pos.z);
+  heroG.position.set(hero.pos.x, 0.55 + Math.sin(t * 2.2) * 0.1, hero.pos.z);
   heroG.rotation.y = hero.face;
   heroBody.rotation.x = lerp(heroBody.rotation.x, moving ? 0.22 : 0.0, dt * 5);
   // wings flap
@@ -1380,7 +1380,7 @@ function updateMobs(dt, t) {
     let moving = false;
     if (m.aggro) {
       if (dh > 14) m.aggro = false;
-      else if (dh > 1.6) { m.tx = hero.pos.x; m.tz = hero.pos.z; moving = true; }
+      else if (dh > 1.0) { m.tx = hero.pos.x; m.tz = hero.pos.z; moving = true; }
       else {
         m.face = Math.atan2(hero.pos.x - m.x, hero.pos.z - m.z);
         m.atkCd -= dt;
@@ -1407,7 +1407,7 @@ function updateMobs(dt, t) {
     let y = m.T.y;
     if (m.kind === 'jelly') {
       const pulse = Math.sin(t * 2.6 + m.phase);
-      y += Math.sin(t * 1.3 + m.phase) * 0.25 + pulse * 0.08;
+      y += Math.sin(t * 1.3 + m.phase) * 0.12 + pulse * 0.04;
       m.bell.scale.set(1 + pulse * 0.08, 1 - pulse * 0.12, 1 + pulse * 0.08);
       m.mats[0].uniforms.uFlash.value = m.flash;
       g.rotation.set(Math.sin(t * 0.9 + m.phase) * 0.12, t * 0.3 + m.phase, Math.cos(t * 0.8 + m.phase) * 0.12);
@@ -1453,7 +1453,7 @@ function updateLabels() {
   };
   for (const m of mobs) {
     if (m.dead) continue;
-    place(m.label.el, m.x, m.T.y * m.scale + (m.kind === 'jelly' ? 0.95 : 0.85), m.z);
+    place(m.label.el, m.x, m.T.y + (m.kind === 'jelly' ? 1.0 : 0.85) * m.scale + 0.15, m.z);
     m.label.hpEl.style.visibility = m.hp < m.maxHp ? 'visible' : 'hidden';
     m.label.bar.style.transform = `scaleX(${m.hp / m.maxHp})`;
   }
@@ -1506,7 +1506,7 @@ function frame() {
   shafts.position.set(hero.pos.x * 0.6, 0, hero.pos.z * 0.6);
   // camera
   const portrait = innerHeight > innerWidth;
-  const dist = (portrait ? 1.25 : 1) * (PREVIEW ? 0.2 : 1);
+  const dist = (portrait ? 1.25 : 1) * (PREVIEW ? 0.35 : 1);
   if (PREVIEW) hero.face = 0;
   camTarget.set(hero.pos.x, 1.0, hero.pos.z);
   camPos.set(hero.pos.x, 11.5 * dist, hero.pos.z + 10 * dist);
