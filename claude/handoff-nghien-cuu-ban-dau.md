@@ -179,7 +179,11 @@ nâng cấp +1…+15 phát sáng, auto-hunt, lưu game.
   joystick + nút trên điện thoại, WASD/Space/Q/F trên máy tính; bloom, tone mapping, MSAA, tự hạ độ phân giải nếu FPS thấp.
 
 ### Điểm yếu đã biết / việc tiếp theo
-- [ ] Nhân vật chính dựng bằng khối cơ bản, còn đơn giản → thử mô hình CC0 (Quaternius/KayKit) hoặc AI image-to-3D.
+- [x] Đã thay nhân vật bằng **KayKit Adventurers – Knight (CC0, Kay Lousberg)**, lấy từ GitHub `KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0`.
+  Đã cắt còn 7 động tác (Jump_Idle để lơ lửng, 2H_Melee_Attack_Slice/Chop, 2H_Melee_Attack_Spin, 2H_Melee_Idle, Cheer, Hit_A) bằng `@gltf-transform`.
+  Lưu dạng base64 trong `assets/knight.json` vì artifact không phục vụ file `.glb`. Áo choàng đỏ đổi sang xanh, giáp thép tối hơn bằng shader.
+  Xem cận cảnh nhân vật: thêm `#nhan-vat` vào cuối link.
+  Hạn chế: phong cách chibi (đầu to) khác tỷ lệ người thật như MU. Quaternius (tỷ lệ thật hơn) không tải được từ cloud.
 - [ ] Cánh bị mỏng khi nhìn ngang; cân nhắc thêm lớp cánh thứ hai hoặc billboard.
 - [ ] Người dùng mở link trên điện thoại, báo FPS và cảm nhận.
 - [ ] Túi đồ, trang bị, nâng cấp +1…+15, lưu game (localStorage).

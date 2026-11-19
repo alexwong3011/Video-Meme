@@ -123,6 +123,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ---------- utilities ----------
 let seed = 20261119;
@@ -533,70 +534,57 @@ function updateParticles(dt) {
 // ---------- hero ----------
 const hero = { pos: new THREE.Vector3(0, 0, 4), face: Math.PI, hp: 500, maxHp: 500, lv: 1, exp: 0, gold: 0, items: 0, atkT: 0, atkCd: 0, skillCd: 0, skillT: 0 };
 const heroG = new THREE.Group(); scene.add(heroG);
-const heroBody = new THREE.Group(); heroG.add(heroBody); heroBody.scale.setScalar(1.35);
+const heroBody = new THREE.Group(); heroG.add(heroBody);
 const heroBlob = blob(2.4); scene.add(heroBlob);
-{
-  const armor = stylized({ color: 0x1f3d78, metalness: 0.85, roughness: 0.3, envMapIntensity: 1.4 }, 0x7fdcff, 0.9, 2.2);
-  const plate = stylized({ color: 0xd8e6f2, metalness: 0.9, roughness: 0.22, envMapIntensity: 1.6 }, 0x9fe8ff, 0.7, 2.4);
-  const gold = stylized({ color: 0xe0b45a, metalness: 1.0, roughness: 0.28, envMapIntensity: 1.8 }, 0xffe3a0, 0.6, 2.6);
-  const cloth = stylized({ color: 0x24135a, roughness: 0.8, side: THREE.DoubleSide }, 0xa98bff, 0.6, 2.0);
-  const glowBlue = new THREE.MeshBasicMaterial({ color: new THREE.Color(0x7fe9ff).multiplyScalar(3.5) });
-  const add = (geo, mat, x, y, z, sx = 1, sy = 1, sz = 1, parent = heroBody) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); parent.add(m); return m; };
-  // legs (hanging, slightly back since floating)
-  for (const s of [-1, 1]) {
-    const leg = new THREE.Group(); leg.position.set(0.13 * s, 0.92, 0); leg.rotation.x = 0.28 + (s > 0 ? 0.1 : -0.05); heroBody.add(leg);
-    add(new THREE.CylinderGeometry(0.1, 0.08, 0.5, 10), armor, 0, -0.25, 0, 1, 1, 1, leg);
-    add(new THREE.SphereGeometry(0.1, 12, 8), gold, 0, -0.5, 0.02, 1, 1, 1, leg);
-    add(new THREE.CylinderGeometry(0.085, 0.065, 0.45, 10), plate, 0, -0.75, 0, 1, 1, 1, leg);
-    add(new THREE.ConeGeometry(0.08, 0.25, 8), plate, 0, -1.0, 0.03, 1, 1, 1, leg).rotation.x = Math.PI;
-  }
-  // skirt / tassets
-  const sk = add(new THREE.CylinderGeometry(0.2, 0.36, 0.42, 14, 1, true), cloth, 0, 0.88, 0);
-  add(new THREE.CylinderGeometry(0.205, 0.205, 0.07, 14), gold, 0, 1.08, 0);
-  // torso
-  add(new THREE.CylinderGeometry(0.25, 0.19, 0.55, 14), armor, 0, 1.38, 0);
-  add(new THREE.SphereGeometry(0.24, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), plate, 0, 1.43, 0.04, 1.05, 0.9, 0.85).rotation.x = Math.PI / 2 - 0.2;
-  add(new THREE.OctahedronGeometry(0.06), glowBlue, 0, 1.47, 0.24);
-  // pauldrons
-  for (const s of [-1, 1]) {
-    add(new THREE.SphereGeometry(0.17, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), plate, 0.32 * s, 1.62, 0, 1.15, 1, 1);
-    const trim = add(new THREE.TorusGeometry(0.155, 0.022, 8, 20), gold, 0.32 * s, 1.58, 0, 1.15, 1, 1); trim.rotation.x = Math.PI / 2;
-    const spike = add(new THREE.ConeGeometry(0.05, 0.28, 8), gold, 0.38 * s, 1.78, -0.02); spike.rotation.z = -0.5 * s;
-  }
-  // head + helmet
-  add(new THREE.SphereGeometry(0.15, 16, 12), plate, 0, 1.86, 0, 1, 1.1, 1);
-  const visor = add(new THREE.BoxGeometry(0.2, 0.035, 0.05), glowBlue, 0, 1.86, 0.135);
-  const crest = add(new THREE.ConeGeometry(0.05, 0.42, 8), gold, 0, 2.08, -0.04); crest.rotation.x = -0.5;
-  for (const s of [-1, 1]) { const h = add(new THREE.ConeGeometry(0.035, 0.32, 6), gold, 0.15 * s, 1.98, -0.02); h.rotation.set(-0.6, 0, -0.9 * s); }
-  // cape
-  const capeGeo = new THREE.CylinderGeometry(0.3, 0.42, 1.15, 16, 6, true, Math.PI * 0.6, Math.PI * 0.8); capeGeo.translate(0, -0.575, 0);
-  const cape = new THREE.Mesh(capeGeo, cloth); cape.position.set(0, 1.62, 0.02); heroBody.add(cape);
-  hero.cape = cape;
-  // arms
-  hero.arms = [];
-  for (const s of [-1, 1]) {
-    const arm = new THREE.Group(); arm.position.set(0.36 * s, 1.55, 0); heroBody.add(arm);
-    add(new THREE.CylinderGeometry(0.075, 0.065, 0.42, 10), armor, 0, -0.21, 0, 1, 1, 1, arm);
-    add(new THREE.CylinderGeometry(0.085, 0.07, 0.3, 10), plate, 0, -0.5, 0.0, 1, 1, 1, arm);
-    add(new THREE.SphereGeometry(0.07, 10, 8), gold, 0, -0.66, 0, 1, 1, 1, arm);
-    arm.rotation.z = 0.18 * s; arm.rotation.x = s > 0 ? -0.5 : 0.1;
-    hero.arms.push(arm);
-  }
-  // weapon: tide glaive in right arm
-  const weapon = new THREE.Group(); weapon.position.set(0, -0.66, 0.02); hero.arms[1].add(weapon);
-  add(new THREE.CylinderGeometry(0.025, 0.025, 1.6, 8), gold, 0, 0.1, 0, 1, 1, 1, weapon);
-  const bladeShape = new THREE.Shape(); bladeShape.moveTo(0, 0); bladeShape.quadraticCurveTo(0.16, 0.25, 0.04, 0.85); bladeShape.lineTo(0, 0.95); bladeShape.lineTo(-0.05, 0.6); bladeShape.quadraticCurveTo(-0.08, 0.2, 0, 0);
-  const blade = new THREE.Mesh(new THREE.ExtrudeGeometry(bladeShape, { depth: 0.02, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments: 1 }), plate);
-  blade.position.set(0, 0.88, -0.015); weapon.add(blade);
-  const core = new THREE.Mesh(new THREE.ShapeGeometry(bladeShape), glowBlue); core.scale.set(0.45, 0.85, 1); core.position.set(0.005, 0.95, 0.012); weapon.add(core);
-  const gem = add(new THREE.OctahedronGeometry(0.07), glowBlue, 0, 0.86, 0, 1, 1.4, 1, weapon);
-  weapon.rotation.x = Math.PI / 2 + 0.25;
-  hero.weapon = weapon; hero.bladeTip = core;
+// KayKit Knight (CC0, Kay Lousberg) recoloured to the abyss palette
+const mixer = { m: null, acts: {}, cur: null };
+const HERO_H = 2.3;
+function knightMaterial(src) {
+  const m = stylized({ map: src.map, roughness: 0.5, metalness: 0.0, envMapIntensity: 0.85, side: THREE.DoubleSide }, 0x8fe6ff, 0.35, 2.8);
+  const base = m.onBeforeCompile;
+  m.onBeforeCompile = (s) => {
+    base(s);
+    s.fragmentShader = s.fragmentShader
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        { vec3 c = diffuseColor.rgb; float red = c.r - max(c.g, c.b);
+          if (red > 0.3 && c.g < 0.2) diffuseColor.rgb = mix(vec3(0.03, 0.06, 0.28), vec3(0.16, 0.30, 0.95), clamp(c.r * 1.1, 0.0, 1.0));
+          float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
+          if (sat < 0.06 && c.r > 0.15) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.40, 0.55), 0.45); }`)
+      .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
+        { vec3 c = diffuseColor.rgb; float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
+          bool steel = sat < 0.12 && c.b > 0.15;
+          metalnessFactor = steel ? 0.75 : 0.05; roughnessFactor = steel ? 0.35 : 0.65; }`);
+  };
+  return m;
+}
+const swordGlowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0x6fe7ff).multiplyScalar(1.2), transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
+// the model ships as base64 JSON because artifact hosting only serves web file types
+fetch('assets/knight.json').then(r => r.json()).then(j => {
+  const bin = Uint8Array.from(atob(j.data), c => c.charCodeAt(0));
+  return new Promise((res, rej) => new GLTFLoader().parse(bin.buffer, '', res, rej));
+}).then((gltf) => {
+  const model = gltf.scene;
+  model.traverse(o => { if (o.isMesh) { o.frustumCulled = false; o.material = knightMaterial(o.material); } });
+  const box = new THREE.Box3().setFromObject(model); const h = box.max.y - box.min.y;
+  model.scale.setScalar(HERO_H / h); model.position.y = -box.min.y * (HERO_H / h);
+  heroBody.add(model);
+  const sword = model.getObjectByName('2H_Sword');
+  if (sword) { const ms = []; sword.traverse(o => { if (o.isMesh) ms.push(o); }); for (const o of ms) { const g = new THREE.Mesh(o.geometry, swordGlowMat); g.scale.setScalar(1.06); o.add(g); } }
+  mixer.m = new THREE.AnimationMixer(model);
+  for (const c of gltf.animations) mixer.acts[c.name] = mixer.m.clipAction(c);
+  mixer.m.addEventListener('finished', () => fadeTo('Jump_Idle', 0.25));
+  fadeTo('Jump_Idle', 0);
+}).catch(() => logLine('Không tải được mô hình nhân vật.', 'sys'));
+function fadeTo(name, dur, once = false, speed = 1) {
+  const a = mixer.acts[name]; if (!a) return;
+  a.reset(); a.timeScale = speed; a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = once;
+  if (mixer.cur && mixer.cur !== a) { a.play(); mixer.cur.crossFadeTo(a, dur, false); } else a.play();
+  mixer.cur = a;
 }
 
 // wings: one procedural fan of feathers per side, drawn in a shader so feathers never pile up into a white blob
 const wingMat = new THREE.ShaderMaterial({
-  uniforms: { uTime: U.uTime, uRoot: { value: new THREE.Color(0xeafcff) }, uTip: { value: new THREE.Color(0x2f6bff) }, uEdge: { value: new THREE.Color(0x9ff0ff) }, uB: { value: 1.0 } },
+  uniforms: { uTime: U.uTime, uRoot: { value: new THREE.Color(0xeafcff) }, uTip: { value: new THREE.Color(0x2f6bff) }, uEdge: { value: new THREE.Color(0x9ff0ff) }, uB: { value: 0.62 } },
   transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
   vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `uniform float uTime, uB; uniform vec3 uRoot, uTip, uEdge; varying vec2 vP;
@@ -632,7 +620,7 @@ const wingMat = new THREE.ShaderMaterial({
     }`
 });
 const wingGeo = new THREE.PlaneGeometry(3.2, 4.2); wingGeo.translate(1.45, 0.6, 0);
-const wings = new THREE.Group(); wings.position.set(0, 1.6, -0.22); heroBody.add(wings);
+const wings = new THREE.Group(); wings.position.set(0, HERO_H * 0.6, -0.32); wings.scale.setScalar(1.05); heroBody.add(wings);
 const wingR = new THREE.Mesh(wingGeo, wingMat); wingR.position.x = 0.1; wings.add(wingR);
 const wingL = new THREE.Mesh(wingGeo, wingMat); wingL.scale.x = -1; wingL.position.x = -0.1; wings.add(wingL);
 
@@ -864,7 +852,8 @@ setTimeout(() => { $('zone').style.opacity = '0'; }, 4500);
 
 // ---------- input ----------
 const input = { x: 0, z: 0, keys: {} };
-let auto = true;
+const PREVIEW = location.hash === '#nhan-vat';
+let auto = !PREVIEW;
 const btnAuto = $('btnAuto');
 function setAuto(v) { auto = v; btnAuto.setAttribute('aria-pressed', String(v)); }
 btnAuto.addEventListener('click', () => setAuto(!auto));
@@ -922,7 +911,7 @@ function gainExp(n) {
 let levelFx = 0;
 function attack() {
   if (hero.atkCd > 0) return;
-  hero.atkCd = 0.55; hero.atkT = 0.001;
+  hero.atkCd = 0.6; hero.atkT = 0.001; fadeTo(rand() < 0.5 ? '2H_Melee_Attack_Slice' : '2H_Melee_Attack_Chop', 0.08, true, 1.7);
   slash.visible = true; slashMat.uniforms.uT.value = 0;
   slash.position.set(hero.pos.x, heroG.position.y + 0.9, hero.pos.z);
   slash.rotation.y = hero.face - Math.PI / 2;
@@ -938,7 +927,7 @@ function attack() {
 }
 function skill() {
   if (hero.skillCd > 0) return;
-  hero.skillCd = 6; hero.skillT = 0.001;
+  hero.skillCd = 6; hero.skillT = 0.001; fadeTo('2H_Melee_Attack_Spin', 0.08, true, 1.5);
   skillRing.visible = true; skillMat.uniforms.uT.value = 0;
   skillRing.position.set(hero.pos.x, 0.6, hero.pos.z);
   for (let i = 0; i < 70; i++) { const a = rr(0, 6.28), s = rr(4, 9); emit(hero.pos.x, 1, hero.pos.z, Math.cos(a) * s, rr(0, 2), Math.sin(a) * s, new THREE.Color(i % 3 ? 0xb98cff : 0x7fe9ff), 0.45, 0.7, 0, 0.9); }
@@ -988,30 +977,21 @@ function updateHero(dt, t) {
   const moving = mag > 0.12;
   heroG.position.set(hero.pos.x, 0.75 + Math.sin(t * 2.2) * 0.12, hero.pos.z);
   heroG.rotation.y = hero.face;
-  heroBody.rotation.x = lerp(heroBody.rotation.x, moving ? 0.32 : 0.05, dt * 5);
+  heroBody.rotation.x = lerp(heroBody.rotation.x, moving ? 0.22 : 0.0, dt * 5);
   // wings flap
   const flap = Math.sin(t * 2.2 + 0.6);
   wingR.rotation.set(-0.5 + flap * 0.08, -0.12 - flap * 0.22 - (moving ? 0.25 : 0), 0.05 + flap * 0.1);
   wingL.rotation.set(-0.5 + flap * 0.08, 0.12 + flap * 0.22 + (moving ? 0.25 : 0), -0.05 - flap * 0.1);
-  hero.cape.rotation.x = (moving ? 0.22 : 0.04) + Math.sin(t * 3) * 0.03;
-  // arm swing
-  const ra = hero.arms[1], la = hero.arms[0];
+  if (mixer.m) mixer.m.update(dt);
   if (hero.atkT > 0) {
-    hero.atkT += dt; const k = clamp(hero.atkT / 0.32, 0, 1);
-    const e = k < 0.3 ? -k / 0.3 : (k - 0.3) / 0.7;
-    ra.rotation.set(-1.6 + e * 0.4, 0, 0.2 - (e * 1.8 - 0.4));
-    hero.weapon.rotation.y = e * 1.2;
+    hero.atkT += dt; const k = clamp(hero.atkT / 0.38, 0, 1);
     slashMat.uniforms.uT.value = k;
     if (k >= 1) { hero.atkT = 0; slash.visible = false; }
-  } else {
-    ra.rotation.x = lerp(ra.rotation.x, -0.5 + Math.sin(t * 2.2) * 0.05, dt * 6); ra.rotation.z = lerp(ra.rotation.z, 0.2, dt * 6); hero.weapon.rotation.y = lerp(hero.weapon.rotation.y, 0, dt * 6);
   }
-  la.rotation.x = 0.1 + Math.sin(t * 2.2 + 1) * 0.08;
   if (hero.skillT > 0) {
-    hero.skillT += dt; const k = clamp(hero.skillT / 0.5, 0, 1);
-    heroBody.rotation.y = k * Math.PI * 2;
+    hero.skillT += dt; const k = clamp(hero.skillT / 0.6, 0, 1);
     skillMat.uniforms.uT.value = k; skillRing.rotation.y = -k * 4;
-    if (k >= 1) { hero.skillT = 0; heroBody.rotation.y = 0; skillRing.visible = false; }
+    if (k >= 1) { hero.skillT = 0; skillRing.visible = false; }
   }
   hero.atkCd = Math.max(0, hero.atkCd - dt);
   hero.skillCd = Math.max(0, hero.skillCd - dt);
@@ -1129,7 +1109,7 @@ function updateLabels() {
     m.label.bar.style.transform = `scaleX(${m.hp / m.maxHp})`;
   }
   for (const l of loots) place(l.el, l.x, 1.05, l.z);
-  place(heroLabel.el, hero.pos.x, heroG.position.y + 3.3, hero.pos.z);
+  place(heroLabel.el, hero.pos.x, heroG.position.y + HERO_H + 1.0, hero.pos.z);
 }
 
 // ---------- post-processing ----------
@@ -1177,11 +1157,12 @@ function frame() {
   shafts.position.set(hero.pos.x * 0.6, 0, hero.pos.z * 0.6);
   // camera
   const portrait = innerHeight > innerWidth;
-  const dist = portrait ? 1.25 : 1;
+  const dist = (portrait ? 1.25 : 1) * (PREVIEW ? 0.6 : 1);
+  if (PREVIEW) hero.face = 0;
   camTarget.set(hero.pos.x, 1.0, hero.pos.z);
   camPos.set(hero.pos.x, 11.5 * dist, hero.pos.z + 10 * dist);
   camera.position.lerp(camPos, Math.min(1, dt * 4));
-  camera.lookAt(camera.position.x, 1.0, camera.position.z - 10 * dist);
+  camera.lookAt(camera.position.x, PREVIEW ? 2.2 : 1.0, camera.position.z - 10 * dist);
   updateLabels();
   composer.render(dt);
   // adaptive quality: drop pixel ratio if the device struggles
