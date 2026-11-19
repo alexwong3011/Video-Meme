@@ -13,6 +13,69 @@ Làm thử một game mobile 3D **offline**, thể loại ARPG góc nhìn chéo 
 **Bản quyền:** chỉ lấy cùng thể loại và cảm giác. Không dùng tên, nhân vật, bản đồ, thiết kế cánh
 hay vật phẩm của MU (Devil Square, Atlans, Pouch of Blessing…). Thế giới và tên gọi phải là của riêng mình.
 
+## 1b. Mục tiêu đã làm rõ (2026-11-19) — ƯU TIÊN HƠN mục 1
+
+- Bản **đơn giản** so với MU. Không cần hành động và chuyển động chi tiết.
+- **Tiêu chí số 1: hình ảnh có tính nghệ thuật cao và sắc nét** như ảnh mẫu.
+- Chuyển động chỉ cần: **vung tay tấn công**, **lơ lửng khi đeo cánh**. Không cần animation đi bộ.
+- Nội dung ban đầu: **1 map nhỏ, 1 bãi quái vài chục con**.
+- Vòng lặp chơi: **đánh quái → lên cấp → rơi đồ → mặc đồ, nâng cấp → đánh quái mạnh hơn**.
+
+### Phân tích lại theo mục tiêu mới
+
+**Nhận định chính:** độ "nghệ thuật, sắc nét" trong ảnh mẫu không đến từ số đa giác, mà đến từ
+màu sắc, ánh sáng, vật liệu phát sáng (emission), bloom, chỉnh màu và hiệu ứng hạt.
+Đây là những thứ làm bằng **shader + hậu kỳ + VFX**, tức là phần code được, không cần họa sĩ 3D.
+
+**Chiến thuật đồ họa:**
+1. **Một shader phong cách chung** cho mọi mô hình (toon/hand-painted + rim light + emission).
+   Mô hình lấy từ nhiều nguồn khác nhau sẽ nhìn đồng bộ.
+2. **Hậu kỳ URP:** bloom, color grading (LUT), vignette, fog dưới nước, caustics ánh sáng đáy biển.
+3. **Độ sắc nét trên điện thoại:** render scale 1.0, MSAA 4x, không dùng TAA, texture đủ độ phân giải,
+   sharpen nhẹ, UI vẽ ở độ phân giải gốc.
+4. **Map dưới đáy biển rất có lợi:** nhân vật lơ lửng và quái cá/sứa/cua đều "trôi",
+   nên chuyển động làm bằng code (procedural) thay vì hoạt ảnh xương.
+
+**Chuyển động — gần như không cần hoạt ảnh xương:**
+| Đối tượng | Cách làm |
+|---|---|
+| Nhân vật lơ lửng | Code: nhấp nhô lên xuống, nghiêng theo hướng bay, cánh vỗ nhẹ (shader hoặc xương đơn giản) |
+| Vung tay tấn công | 1 clip từ Mixamo + vệt chém (trail) + chớp sáng khi trúng |
+| Quái bơi, trôi | Code: nhấp nhô, uốn thân bằng vertex shader (kiểu cá bơi) |
+| Quái chết | Shader tan biến (dissolve) + hạt sáng + rơi đồ |
+| Trúng đòn | Chớp trắng, lùi nhẹ, số sát thương bay lên |
+
+**Hệ thống game (phần code, AI làm tốt nhất):**
+- Chỉ số nhân vật, đường cong kinh nghiệm, lên cấp, cộng điểm.
+- Spawner bãi quái: vài chục con, hồi sinh theo thời gian, vùng quái mạnh/yếu.
+- AI quái: lang thang, phát hiện, đuổi, tấn công, quay về.
+- Bảng rơi đồ theo độ hiếm (thường/hiếm/huyền thoại), đồ có chỉ số ngẫu nhiên.
+- Túi đồ, trang bị (vũ khí, giáp, cánh), nâng cấp +1…+15 có hiệu ứng phát sáng tăng dần.
+- **Tự động đánh (auto-hunt)** — rất hợp với game grinding trên điện thoại.
+- Lưu game cục bộ (JSON), dữ liệu quái và đồ bằng ScriptableObject.
+
+**Phần nhìn thấy của trang bị — giữ đơn giản:**
+- Chỉ **vũ khí** và **cánh** đổi mô hình. Giáp chỉ đổi màu/độ phát sáng bằng shader.
+- Icon đồ vật tạo bằng AI ảnh, xử lý cho đồng bộ khung và nền.
+
+**Quy trình tài nguyên đồ họa (không có họa sĩ 3D):**
+concept bằng AI ảnh → image-to-3D (Hunyuan3D/Tripo/Meshy) → Blender dọn dẹp
+(Claude viết **script Python cho Blender** để giảm đa giác, đặt tâm, xuất FBX hàng loạt)
+→ Unity với shader chung → hậu kỳ.
+
+**Rủi ro lớn nhất:** mô hình **nhân vật chính** do AI tạo có thể không đủ đẹp.
+Phương án: dùng £20 mua **một** gói nhân vật/giáp phong cách fantasy trên Asset Store (khi giảm giá)
+thay vì trả phí Google Play — Play Console chỉ cần khi phát hành, còn thử trên máy thì cài APK miễn phí.
+
+**Yêu cầu phần cứng và kỹ năng:**
+- PC Windows: GPU tầm GTX 1060/RTX 2060 trở lên, RAM 16GB, SSD trống ~50GB.
+- Điện thoại Android tầm trung để thử.
+- Người dùng cần biết thao tác cơ bản: mở project Unity, bấm Play, kéo thả prefab, build APK;
+  trong Blender chỉ cần chạy script Claude viết sẵn.
+
+**Ước lượng:** bản chơi được (1 map, 3–4 loại quái, ~30 con, rơi đồ, lên cấp, auto-hunt)
+khoảng 1–3 tháng làm bán thời gian.
+
 ## 2. Điều kiện của người dùng (đã chốt)
 
 | Câu hỏi | Trả lời |
@@ -74,33 +137,27 @@ Lưu ý: tài nguyên miễn phí từ nhiều nguồn sẽ lệch phong cách. 
 - Cách khác: nối máy Windows vào phiên qua Remote Control để Claude chạy lệnh trực tiếp trên máy.
 - Mã game Unity sẽ để trong một thư mục riêng của repo (ví dụ `game/`), kèm `.gitignore` cho Unity.
 
-## 7. Kế hoạch bản chơi thử (mức A)
+## 7. Kế hoạch (cập nhật theo mục tiêu mới)
 
-**Bước 0 — Chuẩn bị (người dùng làm trên Windows)**
-1. Cài Unity Hub, Unity 6 LTS, kèm Android Build Support (gồm OpenJDK, Android SDK và NDK).
-2. Cài Blender, Git, VS Code.
-3. Tạo tài khoản Mixamo (dùng tài khoản Adobe miễn phí).
-4. Bật Developer Options và USB debugging trên điện thoại Android.
+**Bước 0 — Chuẩn bị (người dùng, trên Windows):** Unity Hub + Unity 6 LTS (kèm Android Build Support),
+Blender, Git, VS Code, tài khoản Mixamo, bật USB debugging trên Android.
 
-**Bước 1 — Khung dự án**
-- Tạo project Unity 3D URP trong `game/`, cấu hình cho mobile, thêm `.gitignore`.
-- Camera góc chéo cố định đi theo nhân vật, joystick ảo, nút chiêu.
+**Bước 1 — Khung dự án + "góc nhìn đẹp" trước tiên:** project URP trong `game/`, camera chéo cố định,
+shader phong cách chung, hậu kỳ (bloom, color grading, fog, caustics), map đáy biển nhỏ.
+Mục tiêu: một ảnh chụp màn hình đạt cảm giác như ảnh mẫu trước khi làm gameplay.
 
-**Bước 2 — Lối chơi cốt lõi** (tạm dùng khối hộp thay cho mô hình)
-- Di chuyển, đánh thường, 3 chiêu có thời gian hồi.
-- 3 loại quái với AI đơn giản (đuổi, tấn công, chết, rơi đồ).
-- Máu, năng lượng, kinh nghiệm, lên cấp.
+**Bước 2 — Nhân vật:** mô hình + cánh phát sáng, lơ lửng bằng code, 1 clip vung tay, joystick ảo.
 
-**Bước 3 — Thay đồ họa thật**
-- Bản đồ đáy biển (đá, san hô, ánh sáng xanh) từ tài nguyên miễn phí và AI.
-- Nhân vật chính gắn xương bằng Mixamo, cánh phát sáng làm bằng particle và shader.
-- Hiệu ứng chiêu thức, rung màn hình, số sát thương bay lên.
+**Bước 3 — Bãi quái:** 3–4 loại quái trôi/bơi, spawner ~30 con, AI quái, trúng đòn, chết tan biến.
 
-**Bước 4 — Chạy trên điện thoại**
-- Build APK, thử trên máy thật, đo FPS, tối ưu overdraw và draw call.
+**Bước 4 — Vòng lặp grinding:** kinh nghiệm, lên cấp, rơi đồ theo độ hiếm, túi đồ, trang bị,
+nâng cấp +1…+15 phát sáng, auto-hunt, lưu game.
+
+**Bước 5 — Điện thoại:** build APK, đo FPS, tối ưu.
 
 ## 8. Việc tiếp theo
 
-- [ ] Người dùng cài đặt xong Bước 0 và báo phiên bản Unity đã cài.
-- [ ] Đặt tên và ý tưởng thế giới riêng cho game (không dùng tên MU).
+- [ ] Người dùng cài xong Bước 0 và báo phiên bản Unity.
+- [ ] Đặt tên và ý tưởng thế giới riêng (không dùng tên MU).
+- [ ] Quyết định dùng £20 cho gói nhân vật trên Asset Store hay thử AI trước.
 - [ ] Claude tạo khung dự án Unity trong `game/` (Bước 1).
