@@ -161,3 +161,25 @@ nâng cấp +1…+15 phát sáng, auto-hunt, lưu game.
 - [ ] Đặt tên và ý tưởng thế giới riêng (không dùng tên MU).
 - [ ] Quyết định dùng £20 cho gói nhân vật trên Asset Store hay thử AI trước.
 - [ ] Claude tạo khung dự án Unity trong `game/` (Bước 1).
+
+## 9. Đổi hướng: làm bằng web 3D (2026-11-19)
+
+- Máy người dùng **không có card đồ họa** → bỏ Unity, chuyển sang **Three.js (WebGL)**, Claude viết toàn bộ bằng code.
+- Phiên cloud render được WebGL2 qua headless Chromium (SwiftShader), nên Claude tự chụp màn hình để kiểm tra hình ảnh.
+- Kiểm tra cục bộ: `npm i three@0.160.0` trong scratchpad, chạy `python3 -m http.server` trong thư mục demo,
+  Playwright chặn URL jsdelivr và trả file từ `node_modules` (jsdelivr bị proxy chặn trong cloud).
+
+### Demo đã làm: `game/demo-day-bien/index.html`
+- Link chơi thử (artifact, riêng tư): https://claude.ai/artifact/3NUHdxYh66beQxqLDat1os
+- Ảnh chụp: `game/demo-day-bien/screenshot.png`
+- Nội dung: map đáy biển nhỏ (cát + caustics bằng shader, đá pha lê, san hô phát sáng, rong biển lay động,
+  cổng đá cổ có cổng sáng), nhân vật "Hải Kỵ" dựng bằng khối cơ bản + giáp kim loại + cánh quạt lông vũ vẽ bằng shader,
+  lơ lửng, vung kích; 29 quái (Sứa Lân Quang, Cá Gai Hỏa) có AI lang thang/đuổi đánh, hồi sinh;
+  rơi đồ theo độ hiếm có cột sáng, nhặt đồ, vàng, kinh nghiệm, lên cấp; tự động đánh; kỹ năng "Lốc Triều";
+  joystick + nút trên điện thoại, WASD/Space/Q/F trên máy tính; bloom, tone mapping, MSAA, tự hạ độ phân giải nếu FPS thấp.
+
+### Điểm yếu đã biết / việc tiếp theo
+- [ ] Nhân vật chính dựng bằng khối cơ bản, còn đơn giản → thử mô hình CC0 (Quaternius/KayKit) hoặc AI image-to-3D.
+- [ ] Cánh bị mỏng khi nhìn ngang; cân nhắc thêm lớp cánh thứ hai hoặc billboard.
+- [ ] Người dùng mở link trên điện thoại, báo FPS và cảm nhận.
+- [ ] Túi đồ, trang bị, nâng cấp +1…+15, lưu game (localStorage).
