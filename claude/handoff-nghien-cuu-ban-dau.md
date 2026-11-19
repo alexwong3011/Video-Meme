@@ -221,3 +221,13 @@ nâng cấp +1…+15 phát sáng, auto-hunt, lưu game.
   5 tầng sát thương, 11 loại vật phẩm, panel anh hùng, lò cường hóa, tự động, tốc độ x1–x3, tạm dừng, lưu/tải (localStorage `htvb3d_save`).
 - **Chưa làm:** chế độ "Đấu 3 đội (AI)" và "Liên minh 3 đội (AI)"; lưu đám mây (bản gốc dùng capability `db` + `user`);
   ảnh minh họa anh hùng/quái trên màn hình bắt đầu (bản 3D dùng chấm màu).
+
+### Cập nhật: Liên minh 3 đội + lưu đám mây
+- **Lưu đám mây:** artifact khai báo `db` (rules: gốc read view/write owner; `data/users/{self}` write interact) + `user`.
+  Mỗi người lưu ở `data/users/<id>/save`, bản mới nhất (theo `ts`) thắng giữa đám mây và localStorage — y như bản 2D.
+  Người chỉ có quyền xem không ghi được lên đám mây, chỉ lưu trên máy.
+- **Liên minh 3 đội (AI):** `src/f2_coop.js`. Sân "Liên Minh Tam Hải" (2 làn nhập vào Thánh Vật), chọn tối đa 3 anh hùng,
+  bắt đầu theo tiến độ / +5 / +10 đợt; 2 đội AI Hồng Liên (xông xáo) và Thanh Phong (chi viện) với bot cùng sức mạnh trung bình;
+  chat nhanh + chiến thuật (Chặn đầu / Săn boss); EXP chia đều ×0.3; đội nào hạ quái thì nhặt đồ; Thánh Vật bắn hỏa pháo,
+  hấp thu linh hồn lên cấp, hồi 10%/đợt; bảng tổng kết MVP. Hệ số COOP* giữ nguyên bản gốc.
+- **Chưa làm:** chế độ "Đấu 3 đội (AI)" đối kháng.

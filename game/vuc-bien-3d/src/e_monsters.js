@@ -140,7 +140,7 @@ function syncMob3(e, dt, t) {
   const v = e.v; if (!v) return;
   const p = V(e.x, e.y, 0);
   // face direction of travel
-  const ahead = posAt(Math.min(PATH_LEN, e.d + 8)); const want = Math.atan2(ahead.x - (e.x - e.ox), ahead.y - (e.y - e.oy)); let d = want - v.face; d = Math.atan2(Math.sin(d), Math.cos(d)); v.face += d * Math.min(1, dt * 6);
+  const LN = LANES[e.lane || 0] || LANES[0]; const ahead = posAtL(LN, Math.min(LN.len, e.d + 8)); const want = Math.atan2(ahead.x - (e.x - e.ox), ahead.y - (e.y - e.oy)); let d = want - v.face; d = Math.atan2(Math.sin(d), Math.cos(d)); v.face += d * Math.min(1, dt * 6);
   v.g.position.set(p.x, v.h - (v.kind === 'crab' ? v.h : 0) + (v.kind === 'boss' ? 0 : 0), p.z);
   if (v.kind !== 'crab') v.g.position.y = v.kind === 'jelly' ? v.h * 0.6 : v.h * 0.5;
   v.g.rotation.y = v.face;

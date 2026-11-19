@@ -65,12 +65,12 @@ function syncDrops(dt, t) { for (const d of S.drops) { if (!d.m) continue; const
 const camTarget = new THREE.Vector3(); let camDist = 20; const PITCH = 0.98;
 function fitCamera() {
   const portrait = innerHeight > innerWidth; camera.fov = portrait ? 40 : 34; camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  const topM = 70 / innerHeight * 2, botM = 92 / innerHeight * 2; const corners = [V(45, 250), V(495, 250), V(45, 830), V(495, 830)];
+  const topM = (MAPS[CUR_MAP] && MAPS[CUR_MAP].coop ? 116 : 70) / innerHeight * 2, botM = 92 / innerHeight * 2; const coop = MAPS[CUR_MAP] && MAPS[CUR_MAP].coop; const yT = coop ? 200 : 250, yB = coop ? 810 : 830; const corners = [V(45, yT), V(coop ? 520 : 495, yT), V(45, yB), V(coop ? 520 : 495, yB)];
   camTarget.set(0, 0, 0);
   for (let it = 0; it < 4; it++) {
     let lo = 4, hi = 80; for (let k = 0; k < 24; k++) { const mid = (lo + hi) / 2; placeCam(mid); camera.updateMatrixWorld(); let ok = true; for (const c of corners) { tA.copy(c).project(camera); if (Math.abs(tA.x) > 1.02 || tA.y > 1 - topM || tA.y < -1 + botM) { ok = false; break; } } if (ok) hi = mid; else lo = mid; }
     camDist = hi; placeCam(camDist); camera.updateMatrixWorld();
-    const yt = tA.copy(V(270, 250)).project(camera).y, yb = tB.copy(V(270, 830)).project(camera).y; const want = ((1 - topM) + (-1 + botM)) / 2; const have = (yt + yb) / 2;
+    const yt = tA.copy(V(270, yT)).project(camera).y, yb = tB.copy(V(270, yB)).project(camera).y; const want = ((1 - topM) + (-1 + botM)) / 2; const have = (yt + yb) / 2;
     camTarget.z += (want - have) * camDist * 0.35;
   }
 }
@@ -100,7 +100,12 @@ document.querySelectorAll('[data-ic]').forEach(s => s.outerHTML = icon(s.dataset
 function pulseInv(k) { const b = invBtn[k]; if (!b) return; b.classList.add('pulse'); setTimeout(() => b.classList.remove('pulse'), 300); }
 const lastInv = {};
 function updateHud() {
-  $('hWave').firstChild.nodeValue = 'ĐỢT ' + S.wave; $('hMap').textContent = S.auto ? '● TỰ ĐỘNG' : MAPS[CUR_MAP].name; $('hMap').style.color = S.auto ? '#7dff9a' : '';
+  const coop = MODE === 'coop';
+  $('hWave').firstChild.nodeValue = 'ĐỢT ' + S.wave; $('hMap').textContent = coop ? '🛡 LIÊN MINH' : S.auto ? '● TỰ ĐỘNG' : MAPS[CUR_MAP].name; $('hMap').style.color = coop ? '#9dffb4' : S.auto ? '#7dff9a' : '';
+  $('teams').classList.toggle('hide', !coop); $('chat').classList.toggle('hide', !coop); $('log').classList.toggle('hide', coop); $('bossbar').classList.toggle('coop', coop);
+  if (coop) { const mvp = [0, 1, 2].sort((a, b) => S.score[b] - S.score[a])[0];
+    $('teams').innerHTML = [1, 0, 2].map(t => `<div class="${t === 0 ? 'me' : ''}" style="--c:${TEAMS[t].col}"><b>${mvp === t && S.score[t] > 0 ? '👑 ' : ''}${TEAMS[t].short} ${S.tmode[t] === 'hunt' ? '⚔' : '🛡'}</b><big>${S.score[t]}</big><small>quái hạ · đồ ${S.loot[t]}</small></div>`).join(''); }
+  document.querySelector('.orb small').textContent = coop ? 'THÁNH VẬT' : 'THÁNH THẠCH';
   const prog = S.phase === 'fight' ? Math.min(1, S.waveDone / S.waveTotal) : 0; $('hProg').style.transform = `scaleX(${prog})`;
   $('hProgT').textContent = S.phase === 'fight' ? `${S.waveDone} / ${S.waveTotal}` : 'Chuẩn bị...';
   $('hProgS').textContent = S.phase === 'fight' ? 'Quái còn lại: ' + (S.waveTotal - S.waveDone) : 'Đợt kế tiếp sau ' + Math.max(0, Math.ceil(S.breakT)) + 's';
@@ -108,15 +113,18 @@ function updateHud() {
   if (boss) { $('bossName').textContent = ET[boss.t].name.toUpperCase(); $('bossHp').style.transform = `scaleX(${Math.max(0, boss.hp / boss.max)})`; }
   $('hpTxt').textContent = Math.round(S.hp); $('hpFill').style.transform = `scaleY(${S.hp / 100})`;
   for (const k of IKEYS) if (lastInv[k] !== S.inv[k]) { lastInv[k] = S.inv[k]; const n = S.inv[k]; invBtn[k].querySelector('b').textContent = n > 999 ? Math.floor(n / 1000) + 'k' : n; invBtn[k].style.opacity = n ? 1 : 0.55; }
-  $('bAuto').classList.toggle('on', S.auto); $('bAuto').setAttribute('aria-pressed', String(S.auto)); $('bAutoT').textContent = S.auto ? 'BẬT' : 'TẮT';
+  $('bAuto').classList.toggle('on', S.auto && !coop); $('bAuto').setAttribute('aria-pressed', String(S.auto)); $('bAuto').firstChild.nodeValue = coop ? 'CHAT' : 'TỰ ĐỘNG'; $('bAutoT').textContent = coop ? '💬' : S.auto ? 'BẬT' : 'TẮT';
   $('bSpd').classList.toggle('on', S.speed > 1); $('bSpdT').textContent = 'x' + S.speed;
-  $('callWave').classList.toggle('hide', !(S.phase === 'break' && !S.auto && S.running));
+  $('callWave').classList.toggle('hide', !(S.phase === 'break' && !S.auto && S.running && !coop));
+  relicLbl.style.display = coop ? '' : 'none';
 }
+const relicLbl = document.createElement('div'); relicLbl.className = 'lbl relic'; labelsEl.appendChild(relicLbl); relicLbl.style.display = 'none';
 function updateHeroLabels() {
+  if (MODE === 'coop') { const [sx0, sy] = toScreen(V(SH.x, SH.y, 3.1)); const sx = Math.min(innerWidth - 50, Math.max(50, sx0)); relicLbl.style.transform = `translate(${sx}px,${sy}px) translate(-50%,-100%)`; const RL = S.relic; relicLbl.innerHTML = `THÁNH VẬT Lv ${RL.lv}<i style="--x:${RL.lv >= RLMAX ? 100 : Math.min(100, RL.exp / rneed(RL.lv) * 100)}%"></i>`; }
   S.heroes.forEach((h, i) => { const h3 = HERO3D[i]; if (!h3 || !h3.label) return; const P = S.hpos[i]; const [sx, sy, vis] = toScreen(V(P.x, P.y, -0.02));
     const L = h3.label; if (!vis) { L.el.style.display = 'none'; return; } L.el.style.display = ''; L.el.style.transform = `translate(${sx}px,${sy + 4}px) translate(-50%,0)`;
-    const txt = (h.evo ? '★ ' : '') + 'Lv ' + h.lv; if (L.n.textContent !== txt) { L.n.textContent = txt; L.n.style.color = h.evo ? '#ffe08a' : UT[h.type].col; }
-    L.badge.classList.toggle('hide', !upgradable(h)); L.mp.style.transform = `scaleX(${h.mp / maxMP(h)})`; });
+    const bot = teamOf(i) !== 0; const txt = (h.evo ? '★ ' : '') + 'Lv ' + h.lv; if (L.n.textContent !== txt) { L.n.textContent = txt; L.n.style.color = bot ? TEAMS[teamOf(i)].col : h.evo ? '#ffe08a' : UT[h.type].col; }
+    L.el.style.opacity = bot ? 0.75 : 1; L.badge.classList.toggle('hide', bot || !upgradable(h)); L.mp.style.transform = `scaleX(${h.mp / maxMP(h)})`; });
 }
 
 // ---------- hero panel (same controls as the original) ----------
@@ -148,7 +156,7 @@ function refreshPanel() { if (S.sel < 0) return; const h = S.heroes[S.sel], T = 
   const bw = $('bWing'); if (h.wing >= WMAX) { bw.innerHTML = 'Cánh đã đạt cấp tối đa<small>+150% sát thương</small>'; bw.disabled = true; } else { bw.innerHTML = `${h.wing ? 'Nâng cấp' : 'Chế tạo'} ${WNAME[h.wing + 1]} — ${WCOST[h.wing]} lông vũ<small>+${Math.round((WINGM[h.wing + 1] - 1) * 100)}% sát thương</small>`; bw.disabled = S.inv.f < WCOST[h.wing]; }
 }
 panel.addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; const a = b.dataset.a; if (S.sel < 0) return; const h = S.heroes[S.sel];
-  if (a === 'close') { closePanel(); return; } else if (a === 'prev' || a === 'next') S.sel = (S.sel + (a === 'prev' ? 4 : 1)) % 5;
+  if (a === 'close') { closePanel(); return; } else if (a === 'prev' || a === 'next') { const ids = S.heroes.map((h, k) => k).filter(k => teamOf(k) === 0); const q = ids.indexOf(S.sel); S.sel = ids[(q + (a === 'prev' ? ids.length - 1 : 1)) % ids.length]; }
   else if (a === 'str' || a === 'agi') spendPt(h, a); else if (a === 'autopts') autoPts(h); else if (SK.includes(a)) useStone(S.sel, a); else if (a === 'jb1' || a === 'jbA') useJewel(S.sel, 'jb', a === 'jbA'); else if (a === 'js1' || a === 'jsA') useJewel(S.sel, 'js', a === 'jsA');
   else if (a === 'pd1' || a === 'pdA') upgradeAcc(S.sel, 'pd', a === 'pdA'); else if (a === 'rg1' || a === 'rgA') upgradeAcc(S.sel, 'rg', a === 'rgA'); else if (a === 'forge') { openForge(); return; } else if (a === 'wing') craftWing(S.sel); else if (a === 'evo') evolve(S.sel); else if (a === 'sc1' || a === 'scA') useSilence(S.sel, a === 'scA');
   refreshPanel(); });
@@ -162,42 +170,76 @@ forge.addEventListener('click', ev => { const b = ev.target.closest('button'); i
 
 // ---------- save / load ----------
 const SKEY = 'htvb3d_save'; let SAVE = null;
-function snapshot() { return { v: 1, ts: Date.now(), wave: S.wave, hp: Math.max(1, Math.round(S.hp)), auto: S.auto, speed: S.speed, inv: { ...S.inv }, best, heroes: S.heroes.map(h => ({ type: h.type, lv: h.lv, exp: Math.floor(h.exp), pts: h.pts, str: h.str, agi: h.agi, st: { ...h.st }, wing: h.wing, jb: h.jb, js: h.js, pend: h.pend, ring: h.ring, sc: h.sc || 0, evo: h.evo || 0 })) }; }
-function clearBoard() { for (const e of S.en) removeMob3(e, false); for (const p of S.pr) removeProj3(p); for (const d of S.drops) removeDrop3(d); for (const s of S.sk) if (s.v && s.v !== true) scene.remove(s.v); }
-function applySave(d) { clearBoard(); S = newState(); S.wave = d.wave || 1; S.hp = d.hp || 100; S.auto = !!d.auto; S.speed = d.speed || 1; S.inv = Object.assign({ c: 0, p: 0, d: 0, t: 0, x: 0, f: 0, jb: 0, js: 0, pd: 0, rg: 0, sc: 0 }, d.inv || {});
+const Store = { db: null, uid: null, writing: false, pending: null };
+function snapshot() { const sp = MODE === 'coop' ? SPPROG : { wave: S.wave, hp: S.hp }; return { v: 1, ts: Date.now(), wave: sp.wave, hp: Math.max(1, Math.round(sp.hp)), auto: S.auto, speed: S.speed, inv: { ...S.inv }, relic: { ...(S.relic || { lv: 1, exp: 0 }) }, best, heroes: S.profile.map(h => ({ type: h.type, lv: h.lv, exp: Math.floor(h.exp), pts: h.pts, str: h.str, agi: h.agi, st: { ...h.st }, wing: h.wing, jb: h.jb, js: h.js, pend: h.pend, ring: h.ring, sc: h.sc || 0, evo: h.evo || 0 })) }; }
+function clearBoard() { if (!S) return; for (const e of S.en) removeMob3(e, false); for (const p of S.pr) removeProj3(p); for (const d of S.drops) removeDrop3(d); for (const s of S.sk) if (s.v && s.v !== true) scene.remove(s.v); for (const f of (S.rfb || [])) scene.remove(f.m); }
+function applySave(d) { clearBoard(); MODE = 'sp'; S = newState(); S.wave = d.wave || 1; S.hp = d.hp || 100; S.auto = !!d.auto; S.speed = d.speed || 1; S.inv = Object.assign({ c: 0, p: 0, d: 0, t: 0, x: 0, f: 0, jb: 0, js: 0, pd: 0, rg: 0, sc: 0 }, d.inv || {}); S.relic = Object.assign({ lv: 1, exp: 0 }, d.relic || {});
   (d.heroes || []).forEach(o => { const i = HORDER.indexOf(o.type); if (i < 0) return; Object.assign(S.heroes[i], { lv: o.lv || 1, exp: o.exp || 0, pts: o.pts || 0, str: o.str || 0, agi: o.agi || 0, st: Object.assign({ c: 0, p: 0, d: 0, t: 0, x: 0 }, o.st || {}), wing: Math.min(WMAX, o.wing || 0), jb: o.jb || 0, js: o.js || 0, pend: Math.min(ACCMAX, o.pend || 0), ring: Math.min(ACCMAX, o.ring || 0), sc: o.sc || 0, evo: o.evo ? 1 : 0 }); });
   setMap(mapFor(S.wave)); S.breakT = S.auto ? 1.5 : 15; }
-function readSave() { try { const l = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (l && l.v) return l; } catch (e) { } return null; }
-function saveGame(quiet) { if (S.over || S.hp <= 0) return false; const d = snapshot(); SAVE = d; try { localStorage.setItem(SKEY, JSON.stringify(d)); } catch (e) { return false; } if (quiet) log('Đã tự động lưu (đợt ' + d.wave + ')', '#9fe8d0'); return true; }
-function updateStartUI() { SAVE = readSave(); if (SAVE && SAVE.best > best) best = SAVE.best; const c = $('contBtn'); if (SAVE) { c.classList.remove('hide'); c.textContent = 'TIẾP TỤC · ĐỢT ' + SAVE.wave; } else c.classList.add('hide'); if (best) $('bestTxt').textContent = 'Kỷ lục: đợt ' + best; }
+// cloud save: each player's own private document, newest copy wins (same scheme as the 2D original)
+async function initStore() { try { if (window.claude && typeof window.claude.use === 'function') { const db = await window.claude.use('db'); const u = await window.claude.use('user'); if (db && u) { const id = await u.id(); if (id) { Store.db = db; Store.uid = id; } } } } catch (e) { } await refreshSave(); }
+async function readSave() { let b = null; try { const l = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (l && l.v) b = l; } catch (e) { }
+  if (Store.db) { try { const s = await Promise.race([Store.db.doc(`data/users/${Store.uid}/save`).get(), new Promise((_, r) => setTimeout(() => r('timeout'), 9000))]); if (s && s.exists) { const d = s.data(); if (d && d.v && (!b || d.ts > b.ts)) b = JSON.parse(JSON.stringify(d)); } } catch (e) { } }
+  return b; }
+async function refreshSave() { SAVE = await readSave(); if (SAVE && SAVE.best > best) best = SAVE.best; updateStartUI(); }
+async function saveGame(quiet) { if (MODE === 'sp' && (S.over || S.hp <= 0)) return false; const d = snapshot(); SAVE = d; let local = false; try { localStorage.setItem(SKEY, JSON.stringify(d)); local = true; } catch (e) { }
+  let cloud = false; if (Store.db) { Store.pending = d; if (!Store.writing) { Store.writing = true; while (Store.pending) { const x = Store.pending; Store.pending = null; try { await Store.db.doc(`data/users/${Store.uid}/save`).set(x); cloud = true; } catch (e) { cloud = false; } } Store.writing = false; } else cloud = true; }
+  if (quiet) log(MODE === 'coop' ? 'Đã lưu tiến trình nhân vật & vật phẩm' : 'Đã tự động lưu (đợt ' + d.wave + ')', '#9fe8d0');
+  return { local, cloud, any: local || cloud }; }
+function updateStartUI() { const c = $('contBtn'); if (SAVE) { c.classList.remove('hide'); c.textContent = 'TIẾP TỤC · ĐỢT ' + SAVE.wave; } else c.classList.add('hide'); if (best) $('bestTxt').textContent = 'Kỷ lục: đợt ' + best;
+  $('cloudTxt').textContent = Store.db ? 'Tiến trình được lưu lên tài khoản của bạn — mở trên máy khác vẫn chơi tiếp được.' : 'Tiến trình chỉ lưu trên trình duyệt này.'; }
 
 // ---------- start / pause / input ----------
 $('legend').innerHTML = HORDER.map(t => `<div><i style="color:${UT[t].col};background:${UT[t].col}"></i><span><b style="color:${UT[t].col}">${UT[t].name}</b>${UT[t].skill}</span></div>`).join('');
-function beginRun() { $('startOv').classList.add('hide'); $('overOv').classList.add('hide'); $('pauseOv').classList.add('hide'); $('hud').classList.remove('hide'); S.running = true; if (!HERO3D.length || HERO3D.length !== S.heroes.length) buildHeroes3D(); fitCamera(); updateHud(); }
-$('playBtn').onclick = () => { clearBoard(); S = newState(); setMap(0); beginRun(); log('Bảo vệ Thánh Thạch! Chạm vào anh hùng để nâng cấp.', '#9fe8d0'); };
+function beginRun() { $('startOv').classList.add('hide'); $('overOv').classList.add('hide'); $('pauseOv').classList.add('hide'); $('mpSelOv').classList.add('hide'); $('mpEndOv').classList.add('hide'); $('hud').classList.remove('hide'); S.running = true; buildHeroes3D(); fitCamera(); renderChat(); updateHud(); }
+function toMenu() { const d = snapshot(); closePanel(); closeForge(); closeMp(); applySave(d); buildHeroes3D(); fitCamera(); $('hud').classList.add('hide'); for (const h3 of HERO3D) if (h3.label) h3.label.el.style.visibility = 'hidden'; $('startOv').classList.remove('hide'); updateStartUI(); }
+$('playBtn').onclick = () => { clearBoard(); MODE = 'sp'; S = newState(); setMap(0); beginRun(); log('Bảo vệ Thánh Thạch! Chạm vào anh hùng để nâng cấp.', '#9fe8d0'); };
 $('contBtn').onclick = () => { if (!SAVE) return; applySave(SAVE); beginRun(); log('Đã tải bản lưu – Đợt ' + S.wave, '#9fe8d0'); };
 $('loadBtn').onclick = () => { if (!SAVE) return; applySave(SAVE); beginRun(); };
-$('againBtn').onclick = () => { clearBoard(); S = newState(); setMap(0); beginRun(); };
-function setPaused(p) { S.paused = p; $('pauseOv').classList.toggle('hide', !p); if (p) { $('pauseInfo').innerHTML = `Đợt <b>${S.wave}</b> · Thánh Thạch <b>${Math.round(S.hp)}</b>/100` + (SAVE ? `<br>Bản lưu gần nhất: đợt ${SAVE.wave}` : ''); $('autoBtn').textContent = 'Tự động: ' + (S.auto ? 'BẬT' : 'TẮT'); $('autoBtn').classList.toggle('on', S.auto); $('saveMsg').textContent = ''; $('newGameBtn').textContent = 'Chơi mới'; $('newGameBtn').dataset.c = ''; } }
+$('againBtn').onclick = () => { clearBoard(); MODE = 'sp'; S = newState(); setMap(0); beginRun(); };
+function setPaused(p) { S.paused = p; $('pauseOv').classList.toggle('hide', !p); if (p) { $('newGameBtn').classList.toggle('hide', MODE === 'coop'); $('menuBtn').textContent = MODE === 'coop' ? 'Rời trận & về menu' : 'Về menu chính'; $('pauseInfo').innerHTML = (MODE === 'coop' ? 'Liên minh 3 đội · ' : '') + `Đợt <b>${S.wave}</b> · ${MODE === 'coop' ? 'Thánh Vật' : 'Thánh Thạch'} <b>${Math.round(S.hp)}</b>/100` + (SAVE ? `<br>Bản lưu gần nhất: đợt ${SAVE.wave}` : ''); $('autoBtn').textContent = 'Tự động: ' + (S.auto ? 'BẬT' : 'TẮT'); $('autoBtn').classList.toggle('on', S.auto); $('saveMsg').textContent = ''; $('newGameBtn').textContent = 'Chơi mới'; $('newGameBtn').dataset.c = ''; } }
 $('bPause').onclick = () => setPaused(true);
 $('resumeBtn').onclick = () => setPaused(false);
-$('saveBtn').onclick = () => { $('saveMsg').textContent = saveGame(false) ? 'Đã lưu trên trình duyệt này (đợt ' + S.wave + ').' : 'Không lưu được: trình duyệt đang chặn lưu dữ liệu.'; };
+$('saveBtn').onclick = async () => { $('saveMsg').textContent = 'Đang lưu...'; const r = await saveGame(false); $('saveMsg').textContent = r && r.any ? `Đã lưu đợt ${SAVE.wave} lúc ${new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}${Store.db ? (r.cloud ? ' (đám mây + máy này)' : ' (chỉ máy này)') : ''}.` : 'Không lưu được trên trình duyệt này.'; };
 $('autoBtn').onclick = () => { S.auto = !S.auto; $('autoBtn').textContent = 'Tự động: ' + (S.auto ? 'BẬT' : 'TẮT'); $('autoBtn').classList.toggle('on', S.auto); };
-$('menuBtn').onclick = () => { saveGame(false); setPaused(false); S.running = false; closePanel(); closeForge(); $('hud').classList.add('hide'); updateStartUI(); $('startOv').classList.remove('hide'); };
-$('newGameBtn').onclick = () => { const b = $('newGameBtn'); if (!b.dataset.c) { b.dataset.c = '1'; b.textContent = 'Chạm lần nữa để xác nhận'; return; } try { localStorage.removeItem(SKEY); } catch (e) { } SAVE = null; clearBoard(); S = newState(); setMap(0); beginRun(); };
-$('bAuto').onclick = () => { S.auto = !S.auto; log(S.auto ? 'Tự động: BẬT — tự gọi đợt & cộng điểm (không dùng vật phẩm)' : 'Tự động: TẮT', S.auto ? '#7dff9a' : '#d8ccb0'); };
+$('menuBtn').onclick = async () => { await saveGame(true); setPaused(false); toMenu(); };
+$('newGameBtn').onclick = () => { const b = $('newGameBtn'); if (!b.dataset.c) { b.dataset.c = '1'; b.textContent = 'Chạm lần nữa để xác nhận'; return; } try { localStorage.removeItem(SKEY); } catch (e) { } SAVE = null; if (Store.db) Store.db.doc(`data/users/${Store.uid}/save`).delete().catch(() => { }); clearBoard(); MODE = 'sp'; S = newState(); setMap(0); beginRun(); };
+$('bAuto').onclick = () => { if (MODE === 'coop') { if (mpMenu.classList.contains('hide')) openMp(); else closeMp(); return; } S.auto = !S.auto; log(S.auto ? 'Tự động: BẬT — tự gọi đợt & cộng điểm (không dùng vật phẩm)' : 'Tự động: TẮT', S.auto ? '#7dff9a' : '#d8ccb0'); };
 $('bSpd').onclick = () => { S.speed = S.speed % 3 + 1; };
 $('callWave').onclick = () => { if (S.phase === 'break') S.breakT = 0; };
 renderer.domElement.addEventListener('pointerdown', ev => { if (!S.running || S.paused) return; const x = ev.clientX, y = ev.clientY;
-  for (const d of S.drops) { if (d.state !== 'ground' || !d.m) continue; const [sx, sy] = toScreen(d.m.position); if (Math.hypot(sx - x, sy - y) < 28) { collect(d); return; } }
-  let hi = -1, bd = 46; S.heroes.forEach((h, i) => { const P = S.hpos[i]; const [sx, sy] = toScreen(V(P.x, P.y, 0.6)); const dd = Math.hypot(sx - x, sy - y); if (dd < bd) { bd = dd; hi = i; } });
+  for (const d of S.drops) { if (d.state !== 'ground' || !d.m || d.owner) continue; const [sx, sy] = toScreen(d.m.position); if (Math.hypot(sx - x, sy - y) < 28) { collect(d); return; } }
+  let hi = -1, bd = 46; S.heroes.forEach((h, i) => { if (teamOf(i) !== 0) return; const P = S.hpos[i]; const [sx, sy] = toScreen(V(P.x, P.y, 0.6)); const dd = Math.hypot(sx - x, sy - y); if (dd < bd) { bd = dd; hi = i; } });
   if (hi >= 0) { if (S.sel === hi) closePanel(); else openPanel(hi); return; }
-  closePanel(); closeForge(); });
+  closePanel(); closeForge(); closeMp(); });
 addEventListener('keydown', e => { if (!S.running) return; if (e.code === 'Escape') { if (!panel.classList.contains('hide') || !forge.classList.contains('hide')) { closePanel(); closeForge(); } else setPaused(!S.paused); } if (e.code === 'Space' && S.phase === 'break') { e.preventDefault(); S.breakT = 0; } });
-document.addEventListener('visibilitychange', () => { if (document.hidden && S.running && !S.over) saveGame(false); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && S.running && !S.over) { saveGame(false); if (!S.paused) setPaused(true); } });
+
+// ---------- alliance UI: chat, tactics, hero pick, results ----------
+const chatEl = $('chat');
+function renderChat() { if (MODE !== 'coop') { chatEl.innerHTML = ''; return; } chatEl.innerHTML = S.chat.slice(-4).map(m => { const nm = m.team >= 0 ? `<b style="color:${TEAMS[m.team].col}">[${m.team === 0 ? 'Bạn' : TEAMS[m.team].cap}]</b> ` : ''; const sp = document.createElement('span'); sp.textContent = m.text; return `<div style="${m.col ? 'color:' + m.col : ''}">${nm}${sp.innerHTML}</div>`; }).join(''); }
+const mpMenu = $('mpMenu');
+function openMp() { closePanel(); closeForge(); mpMenu.classList.remove('hide'); refreshMp(); }
+function closeMp() { mpMenu.classList.add('hide'); }
+function refreshMp() { mpMenu.querySelectorAll('[data-m]').forEach(b => { if (['lane', 'hunt'].includes(b.dataset.m)) b.classList.toggle('on', S.tmode[0] === b.dataset.m); });
+  const qc = $('qchat'); if (!qc.dataset.b) { qc.dataset.b = '1'; qc.innerHTML = QUICKC.map(([k, tx]) => `<button data-q="${k}">${tx}</button>`).join(''); } }
+mpMenu.addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; if (b.dataset.m === 'close') { closeMp(); return; }
+  if (b.dataset.m) { S.tmode[0] = b.dataset.m; sysChat('Chiến thuật đội bạn: ' + (b.dataset.m === 'lane' ? 'Chặn đầu' : 'Săn boss & quái'), '#9fe8ff'); refreshMp(); return; }
+  if (b.dataset.q) { playerSay(b.dataset.q); closeMp(); } });
+function renderMpSel() { const mo = $('mpOff'); mo.innerHTML = [[0, 'Theo tiến độ'], [5, '+5 đợt'], [10, '+10 đợt']].map(([v, l]) => `<button class="btn2${MPOFF === v ? ' on' : ''}" data-o="${v}" style="margin:2px">${l}</button>`).join(''); mo.querySelectorAll('button').forEach(b => b.onclick = () => { MPOFF = +b.dataset.o; renderMpSel(); });
+  $('mpGrid').innerHTML = HORDER.map(k => { const h = S.profile.find(x => x.type === k); const on = MPPICK.includes(k); return `<button class="mpc${on ? ' on' : ''}" data-k="${k}" aria-pressed="${on}"><i style="color:${UT[k].col};background:${UT[k].col}"></i><span><b style="color:${h.evo ? '#ffe08a' : UT[k].col}">${hname(h)}</b><br>Lv ${h.lv} · ${WNAME[h.wing]}</span></button>`; }).join('');
+  $('mpGrid').querySelectorAll('.mpc').forEach(b => b.onclick = () => { const k = b.dataset.k; if (MPPICK.includes(k)) MPPICK = MPPICK.filter(x => x !== k); else if (MPPICK.length < 3) MPPICK.push(k); renderMpSel(); });
+  $('mpGo').disabled = !MPPICK.length; $('mpGo').textContent = `VÀO TRẬN (${MPPICK.length}/3)`;
+  $('mpInfo').innerHTML = `Bắt đầu từ <b>đợt ${Math.max(1, S.wave + MPOFF)}</b>. Đồng minh: <b style="color:${TEAMS[1].col}">Hồng Liên</b> (AI xông xáo) và <b style="color:${TEAMS[2].col}">Thanh Phong</b> (AI chi viện). Cấp độ, EXP và vật phẩm nhận được sẽ được giữ lại.`; }
+function openMpSel() { const d = SAVE || snapshot(); applySave(d); MPPICK = []; renderMpSel(); $('startOv').classList.add('hide'); $('mpSelOv').classList.remove('hide'); }
+$('coopBtn').onclick = openMpSel;
+$('mpBack').onclick = () => { $('mpSelOv').classList.add('hide'); $('startOv').classList.remove('hide'); };
+$('mpGo').onclick = () => { if (!MPPICK.length) return; startCoop(MPPICK.slice()); };
+$('mpAgain').onclick = () => { $('mpEndOv').classList.add('hide'); toMenu(); $('startOv').classList.add('hide'); openMpSel(); };
+$('mpHome').onclick = () => { $('mpEndOv').classList.add('hide'); toMenu(); };
 
 // ---------- main loop ----------
-setMap(0); fitCamera(); updateStartUI();
+setMap(0); fitCamera(); updateStartUI(); initStore();
 const clock = new THREE.Clock(); let panelT = 0, fpsAcc = 0, fpsN = 0, fpsCheck = 0;
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05); const t = clock.elapsedTime; U.uTime.value = t;
@@ -210,7 +252,7 @@ function frame() {
   updateParticles(sim || dt * 0.3); updateFx(sim || dt); updateBolts(sim || dt);
   // shrine
   const cr = shrine.userData.crystal; cr.position.y = 1.25 + Math.sin(t * 1.6) * 0.08; cr.rotation.y = t * 0.6;
-  shrineCrystalMat.emissive.setHex(S.shrineHit > 0 ? 0xff3a3a : 0x3fe0ff); shrineCrystalMat.emissiveIntensity = 1.2 + 0.4 * Math.sin(t * 3);
+  shrineCrystalMat.emissive.setHex(S.shrineHit > 0 ? 0xff3a3a : MODE === 'coop' ? 0xffa030 : 0x3fe0ff); shrineCrystalMat.color.setHex(MODE === 'coop' ? 0xffe0a0 : 0x9ff8ff); shrineCrystalMat.emissiveIntensity = 1.2 + 0.4 * Math.sin(t * 3);
   for (let i = 0; i < 4; i++) { const s = shrine.userData['s' + i]; const a = t * 0.8 + i * Math.PI / 2; s.position.set(Math.cos(a) * 0.55, 1.1 + Math.sin(t * 2 + i) * 0.12, Math.sin(a) * 0.55); s.rotation.y = a; }
   // vents on the lava map
   for (const a of ambient) if (a.kind === 'vent' && Math.random() < dt * 4) emit(a.x + (Math.random() - 0.5) * 0.3, 0.05, a.z + (Math.random() - 0.5) * 0.2, 0, 0.6 + Math.random() * 0.5, 0, Math.random() < 0.5 ? '#ff7a2a' : '#ffd060', 0.07, 1.4, 0, 0.99);

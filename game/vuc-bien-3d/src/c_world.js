@@ -175,12 +175,14 @@ const lavaPoolMat = new THREE.ShaderMaterial({ uniforms: { uTime: U.uTime }, tra
 
 // path, shrine and hero dais
 const PC = { x: 270, y: 515, r: 112 };
-let PATH = [], segs = [], PATH_LEN = 0;
-function buildPath(p) { PATH = p; segs = []; PATH_LEN = 0; for (let i = 0; i < p.length - 1; i++) { const [x1, y1] = p[i], [x2, y2] = p[i + 1]; const l = Math.hypot(x2 - x1, y2 - y1); segs.push({ x1, y1, x2, y2, l, s: PATH_LEN }); PATH_LEN += l; } }
-function posAt(d) { for (const s of segs) { if (d <= s.s + s.l) { const k = (d - s.s) / s.l; return { x: s.x1 + (s.x2 - s.x1) * k, y: s.y1 + (s.y2 - s.y1) * k, dx: Math.sign(s.x2 - s.x1), dy: Math.sign(s.y2 - s.y1) }; } } const s = segs[segs.length - 1]; return { x: s.x2, y: s.y2, dx: 0, dy: 0 }; }
+// lanes: single-player has one, the alliance arena has two that merge at the relic
+let LANES = [], segs = [], KEEP = [];
+function mkLane(p) { const sg = []; let L = 0; for (let i = 0; i < p.length - 1; i++) { const [x1, y1] = p[i], [x2, y2] = p[i + 1]; const l = Math.hypot(x2 - x1, y2 - y1); sg.push({ x1, y1, x2, y2, l, s: L }); L += l; } return { path: p, segs: sg, len: L }; }
+function setLanes(paths) { LANES = paths.map(mkLane); segs = LANES.flatMap(l => l.segs); }
+function posAtL(ln, d) { for (const s of ln.segs) { if (d <= s.s + s.l) { const k = (d - s.s) / s.l; return { x: s.x1 + (s.x2 - s.x1) * k, y: s.y1 + (s.y2 - s.y1) * k }; } } const s = ln.segs[ln.segs.length - 1]; return { x: s.x2, y: s.y2 }; }
 function distSeg(px, py, s) { const dx = s.x2 - s.x1, dy = s.y2 - s.y1; let k = ((px - s.x1) * dx + (py - s.y1) * dy) / (dx * dx + dy * dy); k = clamp(k, 0, 1); return Math.hypot(px - (s.x1 + dx * k), py - (s.y1 + dy * k)); }
 let SH = { x: 0, y: 0 };
-function isFree(x, y, m) { if (y > BOARD_H - 20 || y < 70 || x < 10 || x > W - 10) return false; for (const s of segs) if (distSeg(x, y, s) < m) return false; if (Math.hypot(x - PC.x, y - PC.y) < PC.r + m * 0.6) return false; if (Math.hypot(x - SH.x, y - SH.y) < m + 30) return false; return true; }
+function isFree(x, y, m) { if (y > BOARD_H - 20 || y < 70 || x < 10 || x > W - 10) return false; for (const s of segs) if (distSeg(x, y, s) < m) return false; for (const k of KEEP) if (Math.hypot(x - k.x, y - k.y) < k.r + m * 0.6) return false; return true; }
 const roadMat = new THREE.ShaderMaterial({ uniforms: { uA: { value: new THREE.Color() }, uB: { value: new THREE.Color() }, uTime: U.uTime },
   vertexShader: 'varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
   fragmentShader: NOISE_GLSL + `uniform vec3 uA, uB; varying vec3 vW; void main(){ vec2 p = vW.xz * 6.0; float n = fbm(p); float peb = smoothstep(0.62, 0.7, n2(p * 3.0));
@@ -222,18 +224,38 @@ const dais = new THREE.Group(); scene.add(dais);
   const glow = new THREE.Mesh(new THREE.PlaneGeometry(PC.r * K * 2.1, PC.r * K * 2.1).rotateX(-Math.PI / 2), daisMat); glow.position.y = 0.09; dais.add(glow);
 }
 
+// alliance arena geometry (same coordinates as the 2D original)
+const COOPL = [[-40, 505], [145, 505], [145, 232], [382, 232], [382, 505], [432, 505]], COOPR = [[-40, 505], [145, 505], [145, 780], [382, 780], [382, 505], [432, 505]];
+const COOPREL = { x: 478, y: 590 }, COOPC = [{ x: 263, y: 505 }, { x: 263, y: 356 }, { x: 263, y: 654 }];
+function COOPPOS(t, n) { const c = COOPC[t]; return n >= 3 ? [{ x: c.x - 47, y: c.y + 4 }, { x: c.x + 47, y: c.y + 4 }, { x: c.x, y: c.y - 6 }] : n === 2 ? [{ x: c.x - 30, y: c.y + 2 }, { x: c.x + 30, y: c.y + 2 }] : [{ x: c.x, y: c.y }]; }
+const TEAMS = [
+  { name: 'Đội Bạn', short: 'ĐỘI BẠN', col: '#4ad0ff', cap: 'Bạn' },
+  { name: 'Hồng Liên', short: 'HỒNG LIÊN', col: '#ff6a5a', cap: 'HắcLong', pers: 'aggr' },
+  { name: 'Thanh Phong', short: 'THANH PHONG', col: '#7dff6a', cap: 'TuyếtVân', pers: 'coop' }];
+const coopPads = new THREE.Group(); scene.add(coopPads); coopPads.visible = false;
+{
+  for (let t = 0; t < 3; t++) { const c = COOPC[t], col = new THREE.Color(TEAMS[t].col); const g = new THREE.Group(); g.position.copy(V(c.x, c.y + 14)); coopPads.add(g);
+    const ring = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 2.8).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({ uniforms: { uTime: U.uTime, uC: { value: col } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexShader: daisMat.vertexShader, fragmentShader: daisMat.fragmentShader }));
+    ring.scale.set(1, 1, 0.62); ring.position.y = 0.06; g.add(ring);
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.36, 0.05, 40), stylized({ color: 0x3e5664, roughness: 0.8, flatShading: true }, TEAMS[t].col, 0.3)); disc.scale.set(1, 1, 0.62); disc.position.y = 0.025; g.add(disc);
+    for (const P of COOPPOS(t, 3)) { const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.38, 0.1, 18), stylized({ color: 0x6a8494, roughness: 0.7 }, TEAMS[t].col, 0.6)); pad.position.copy(V(P.x, P.y, 0.05)); coopPads.add(pad); } }
+}
 const MAPS = [
   { name: 'Vực Biển Cổ', theme: 'sea', path: [[460, -40], [460, 700], [95, 700], [95, 300], [350, 300]], shrine: { x: 386, y: 302 },
     ground: [0x0d3a3e, 0x2b5551, 0x061a1e, 0x3fc0d0], road: [0x2f5a55, 0x557e77], rock: [0x4fae94, 0x1f5d63, 0x0b2a33, 0x9ff2d8], rune: 0x5af0ff, fog: 0x06262e, weed: [0x2f9e6e, 0x4fc48a, 0x1f7a6a, 0x7ad19a] },
   { name: 'Rừng Tảo U Linh', theme: 'kelp', path: [[70, -40], [70, 290], [470, 290], [470, 720], [70, 720], [70, 792]], shrine: { x: 70, y: 806 },
     ground: [0x0c2a1a, 0x2a4a30, 0x041208, 0x6fe08a], road: [0x2f4a36, 0x4a654c], rock: [0x6a9a5c, 0x2f5a3a, 0x0e2416, 0xb8ffb0], rune: 0x7dff9a, fog: 0x07241a, weed: [0x3a9a3a, 0x5ac45a, 0x2a7a3a, 0x8ad16a, 0x6ab84a] },
   { name: 'Hố Thẳm Dung Nham', theme: 'lava', path: [[-40, 270], [465, 270], [465, 710], [80, 710], [80, 442]], shrine: { x: 80, y: 428 },
-    ground: [0x1a1012, 0x2e2224, 0x0a0606, 0xff8a50], road: [0x3a2c2a, 0x55423c], rock: [0x5a4a46, 0x3a2c2a, 0x160e0c, 0xff7a3a], rune: 0xff7a3a, fog: 0x1a0c0a, weed: [] }
+    ground: [0x1a1012, 0x2e2224, 0x0a0606, 0xff8a50], road: [0x3a2c2a, 0x55423c], rock: [0x5a4a46, 0x3a2c2a, 0x160e0c, 0xff7a3a], rune: 0xff7a3a, fog: 0x1a0c0a, weed: [] },
+  { name: 'Liên Minh Tam Hải', theme: 'sea', paths: [COOPL, COOPR], shrine: COOPREL, coop: true,
+    ground: [0x0c2c3e, 0x2a5066, 0x061824, 0x8fd8ff], road: [0x33586a, 0x4b7486], rock: [0x7a9aa8, 0x46647a, 0x1e3240, 0xbfe8ff], rune: 0x9fe8ff, fog: 0x07202c, weed: [0x2f8e9e, 0x4fb4c4, 0x1f6a7a] }
 ];
 let CUR_MAP = -1;
 const ambient = [];      // animated scenery entries
 function setMap(i) {
-  CUR_MAP = i; const M = MAPS[i]; buildPath(M.path); SH = M.shrine;
+  CUR_MAP = i; const M = MAPS[i]; setLanes(M.paths || [M.path]); SH = M.shrine;
+  KEEP = M.coop ? [...COOPC.map(c => ({ x: c.x, y: c.y + 14, r: 82 })), { x: SH.x, y: SH.y, r: 60 }] : [{ x: PC.x, y: PC.y, r: PC.r }, { x: SH.x, y: SH.y, r: 30 }];
+  dais.visible = !M.coop; coopPads.visible = !!M.coop; shrine.scale.setScalar(M.coop ? 1.35 : 1);
   while (world.children.length) { const c = world.children.pop(); c.traverse(o => { if (o.geometry && o.geometry !== weedGeo && o.geometry !== blobGeo) o.geometry.dispose(); }); }
   ambient.length = 0;
   groundU.uA.value.setHex(M.ground[0]); groundU.uB.value.setHex(M.ground[1]); groundU.uP.value.setHex(M.ground[2]); groundU.uC.value.setHex(M.ground[3]); groundU.uLava.value = M.theme === 'lava' ? 1 : 0;
@@ -242,7 +264,7 @@ function setMap(i) {
   daisMat.uniforms.uC.value.setHex(M.rune);
   shrine.position.copy(V(SH.x, SH.y));
   R = mulberry32(77 + i * 13);
-  buildRoad(world, M.path);
+  for (const p of (M.paths || [M.path])) buildRoad(world, p);
   const rockPal = M.rock;
   const rocks = (n, rmin, rmax, m) => { let tr = 0, k = 0; while (k < n && tr++ < 800) { const x = rr(0, W), y = rr(60, BOARD_H); if (!isFree(x, y, m)) continue; const p = V(x, y); const r = rr(rmin, rmax);
     const mesh = new THREE.Mesh(rockGeo(r, rr(0.8, 1.6) * r, rr(0.8, 1.6), rockPal), rockMat); mesh.position.copy(p); mesh.rotation.y = rr(0, 6.28); world.add(mesh); const b = blob(r * 3.2); b.position.set(p.x, 0.02, p.z); world.add(b); k++; } };

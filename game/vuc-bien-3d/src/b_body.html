@@ -9,6 +9,8 @@
       <div class="prog"><div class="pbar"><i id="hProg"></i><span id="hProgT">Chuẩn bị...</span></div><div class="ptxt" id="hProgS"></div></div>
     </div>
   </div>
+  <div id="teams" class="hide"></div>
+  <div id="chat" class="hide" aria-live="polite"></div>
   <div id="bossbar" class="hide"><b id="bossName"></b><div><i id="bossHp"></i></div></div>
   <div id="log"></div>
   <div id="banner"></div>
@@ -86,7 +88,40 @@
     <p id="bestTxt" style="font-size:12px;opacity:.8;margin-bottom:0"></p>
     <button class="btn alt hide" id="contBtn">TIẾP TỤC</button>
     <button class="btn" id="playBtn">CHƠI MỚI</button>
+    <button class="btn coop" id="coopBtn">LIÊN MINH 3 ĐỘI (AI)</button>
+    <p id="cloudTxt" style="font-size:11px;color:#93c6cf;margin:6px 0 0"></p>
     <p id="loadTxt" style="font-size:11px;color:#93c6cf">Đang tải mô hình anh hùng...</p>
+  </div>
+</div>
+
+<div class="panel hide" id="mpMenu">
+  <div class="ph2"><div class="pname" style="color:#4ad0ff">Chiến thuật & Chat</div><button data-m="close" aria-label="Đóng">✕</button></div>
+  <div class="sec2"><span>Chiến thuật đội bạn</span></div>
+  <div class="btns"><button data-m="lane">🛡 Chặn đầu<small>Ưu tiên quái đi đầu</small></button><button data-m="hunt">⚔ Săn boss<small>Boss & quái máu thấp</small></button></div>
+  <div class="sec2"><span>Chat nhanh với đồng minh</span></div>
+  <div id="qchat"></div>
+</div>
+
+<div class="ov hide" id="mpSelOv">
+  <div class="card">
+    <div class="sub">CHẾ ĐỘ LIÊN MINH</div>
+    <h1 style="font-size:32px">Liên Minh Tam Hải</h1>
+    <p>3 đội <b>hợp sức</b> chống đàn quái thú, chung một <b>Thánh Vật Liên Minh</b>. Đàn quái đông hơn, boss xuất hiện nhiều hơn. <b>Quái do đội nào hạ thì đội đó được nhặt đồ</b>. Chọn tối đa <b>3 anh hùng</b>:</p>
+    <div class="mpg" id="mpGrid"></div>
+    <div class="sec">Đợt bắt đầu</div>
+    <div class="dmgl" id="mpOff"></div>
+    <p id="mpInfo" style="font-size:11.5px"></p>
+    <button class="btn2" id="mpBack">◀ Quay lại</button>
+    <button class="btn" id="mpGo" disabled>VÀO TRẬN</button>
+  </div>
+</div>
+
+<div class="ov hide" id="mpEndOv">
+  <div class="card">
+    <h2 style="color:#9fe8ff;text-shadow:0 0 12px rgba(80,200,255,.5)">Kết Thúc Trận</h2>
+    <div id="mpEndTxt" style="font-size:12.5px;text-align:left"></div>
+    <button class="btn2" id="mpHome">Về menu</button>
+    <button class="btn" id="mpAgain">ĐẤU TIẾP</button>
   </div>
 </div>
 
