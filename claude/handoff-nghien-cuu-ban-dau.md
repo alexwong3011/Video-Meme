@@ -207,3 +207,17 @@ nâng cấp +1…+15 phát sáng, auto-hunt, lưu game.
 - **Cập nhật kích thước:** người dùng xem xong yêu cầu x2 → `HERO_SCALE = 0.5` (cao ~1,15 đơn vị). Quái đồng bộ theo
   bằng `size` trong `MOB_TYPES` (sứa 0.5, cá gai 0.65); độ cao bay, tầm đánh (1.7), tầm kỹ năng (3.0), khoảng cách
   quái tấn công (1.0), vệt chém, vòng kỹ năng, hào quang và bóng cũng thu nhỏ tương ứng.
+
+## 11. Game chính: Huyền Thoại Vực Biển 3D (wave defense) — 2026-11-19
+
+- Người dùng hài lòng với template demo, yêu cầu làm lại game 2D của họ
+  (artifact "Huyền Thoại Vực Biển II – Ngũ Anh Hùng", https://claude.ai/artifact/AaobrjiRdMF1MYPhafNxPz) bằng nền 3D.
+- **Bản 3D:** `game/vuc-bien-3d/index.html` — link: https://claude.ai/artifact/KFavMyLHwiW4NeuNQKqhg8
+  Nguồn tách phần ở `game/vuc-bien-3d/src/` (xem README trong đó), ảnh ở `screenshots/`.
+- **Cách port:** logic chạy trong hệ tọa độ 2D gốc (540×960 px) với **công thức giữ nguyên** (hstats, rates, roll,
+  hpMult, buildWave, need, drop rate, kỹ năng, nguyên tố, tiến hóa); chỉ phần vẽ chuyển sang 3D qua `V(x,y,h)` (1/60 đơn vị/px).
+- **Đã có:** 5 anh hùng 3D (giáp/vũ khí/mũ/cánh riêng, cánh 5 cấp, tiến hóa có hào quang vàng), 4 loại quái + 5 boss 3D,
+  3 bản đồ (Vực Biển Cổ / Rừng Tảo U Linh / Hố Thẳm Dung Nham, đổi mỗi 10 đợt), boss mỗi 5 đợt, 10 kỹ năng có hiệu ứng 3D,
+  5 tầng sát thương, 11 loại vật phẩm, panel anh hùng, lò cường hóa, tự động, tốc độ x1–x3, tạm dừng, lưu/tải (localStorage `htvb3d_save`).
+- **Chưa làm:** chế độ "Đấu 3 đội (AI)" và "Liên minh 3 đội (AI)"; lưu đám mây (bản gốc dùng capability `db` + `user`);
+  ảnh minh họa anh hùng/quái trên màn hình bắt đầu (bản 3D dùng chấm màu).

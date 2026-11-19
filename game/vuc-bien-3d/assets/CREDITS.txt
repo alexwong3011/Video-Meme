@@ -1,0 +1,3 @@
+hero.json — Quaternius "Universal Animation Library" (UAL1) mannequin and animations.
+License: CC0 1.0 (public domain). Author: Quaternius (quaternius.com). Trimmed to 7 animations.
+All armor, wings, sword and effects are generated in code (index.html).

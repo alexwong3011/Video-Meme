@@ -1,0 +1,118 @@
+
+<div id="game"></div>
+<div class="vignette"></div>
+<div id="labels"></div>
+<div id="hud" class="hide">
+  <div class="top">
+    <div class="wavebox">
+      <div class="wv" id="hWave">ĐỢT 1<small id="hMap">Vực Biển Cổ</small></div>
+      <div class="prog"><div class="pbar"><i id="hProg"></i><span id="hProgT">Chuẩn bị...</span></div><div class="ptxt" id="hProgS"></div></div>
+    </div>
+  </div>
+  <div id="bossbar" class="hide"><b id="bossName"></b><div><i id="bossHp"></i></div></div>
+  <div id="log"></div>
+  <div id="banner"></div>
+  <button id="callWave" class="hide">GỌI ĐỢT NGAY</button>
+  <div class="bottom">
+    <div class="orb" aria-label="Máu Thánh Thạch"><i id="hpFill"></i><b><span id="hpTxt">100</span><small>THÁNH THẠCH</small></b></div>
+    <div class="inv" id="inv"></div>
+    <div class="ctl">
+      <button id="bAuto" aria-pressed="false">TỰ ĐỘNG<big id="bAutoT">TẮT</big></button>
+      <button id="bSpd">TỐC ĐỘ<big id="bSpdT">x1</big></button>
+      <button id="bPause">TẠM<big>❚❚</big></button>
+    </div>
+  </div>
+</div>
+
+<div class="panel hide" id="panel">
+  <div class="ph"><div class="port" id="pPort"></div>
+    <div class="pinfo"><div class="pname" id="pName"></div><div class="plv" id="pLv"></div><div class="xp"><i id="pXp"></i></div><div class="xpt" id="pXpT"></div></div>
+    <div class="pnav"><button data-a="close" aria-label="Đóng">✕</button><button data-a="prev" aria-label="Anh hùng trước">◀</button><button data-a="next" aria-label="Anh hùng sau">▶</button></div>
+  </div>
+  <div class="stats">
+    <div>Sát thương<b id="sDmg"></b></div><div>Tốc đánh<b id="sSpd"></b></div><div>Tầm đánh<b id="sRng"></b></div><div>Siêu đòn TB<b id="sAvg"></b></div>
+    <div class="cc">Chí mạng ×1.5<b id="sC"></b></div><div class="cp">Hoàn hảo ×2<b id="sP"></b></div><div class="cd">Nhân đôi ×2<b id="sD"></b></div><div class="ct">Nhân ba ×3<b id="sT"></b></div><div class="cx">Thần phạt ×10<b id="sX"></b></div><div>Mana<b id="sMP" style="color:#5ab0ff"></b></div><div>Tăng thêm<b id="sBon" style="color:#ffb347"></b></div>
+  </div>
+  <div class="sec2"><span>Tiến hóa: <span id="sEvo" style="color:#ffe08a"></span></span><span id="sCap" style="color:#9a907a;font-weight:600"></span></div>
+  <div class="evt" id="sEvoT"></div>
+  <div class="btns"><button data-a="evo" class="sevo" id="bEvo"></button></div>
+  <div class="sec2"><span>Điểm tiềm năng: <span id="sPts"></span></span><span id="sSkill" style="color:#bfb49a;font-weight:600"></span></div>
+  <div class="btns">
+    <button data-a="str">Sức Mạnh <span id="sStr"></span><small>+6% sát thương</small></button>
+    <button data-a="agi">Nhanh Nhẹn <span id="sAgi"></span><small>+3% tốc đánh</small></button>
+    <button data-a="autopts">Tự cộng hết<small>2 SM : 1 NN</small></button>
+  </div>
+  <div class="sec2"><span>Khảm linh thạch</span><button data-a="forge" style="border:1.5px solid #ffd23a;background:linear-gradient(#6a4a18,#2a1806);color:#ffe9a8;border-radius:7px;font-weight:800;font-size:10.5px;padding:3px 8px;cursor:pointer">⚒ Cường hóa</button></div>
+  <div class="btns five">
+    <button data-a="c" class="sc">Sơ Cấp<br>(<span id="iC"></span>)<small>+5% CM</small></button>
+    <button data-a="p" class="sp">Cao Cấp<br>(<span id="iP"></span>)<small>+5% HH</small></button>
+    <button data-a="d" class="sd">Huyền Bí<br>(<span id="iD"></span>)<small>+2% ×2</small></button>
+    <button data-a="t" class="st">Tối Thượng<br>(<span id="iT"></span>)<small>+1% ×3</small></button>
+    <button data-a="x" class="sx">Thần Thánh<br>(<span id="iX"></span>)<small>+0.5% ×10</small></button>
+  </div>
+  <div class="sec2"><span>Ngọc & Trang sức</span><span style="color:#9a907a;font-weight:600">trang sức tối đa cấp 30</span></div>
+  <div class="accr"><span data-ic="jb"></span><div class="at"><b style="color:#fff1b8">Ngọc Ban Phước</b> · có <span id="aJB"></span><br>Đã dùng <b id="uJB"></b> → <span style="color:#fff1b8">+<span id="pJB"></span>% ST</span></div><button data-a="jb1">Dùng 1</button><button data-a="jbA">Dùng hết</button></div>
+  <div class="accr"><span data-ic="js"></span><div class="at"><b style="color:#ff8ad8">Ngọc Linh Hồn</b> · có <span id="aJS"></span><br>Đã dùng <b id="uJS"></b> → <span style="color:#ff8ad8">+<span id="pJS"></span>% ST</span></div><button data-a="js1">Dùng 1</button><button data-a="jsA">Dùng hết</button></div>
+  <div class="accr"><span data-ic="pd"></span><div class="at"><b style="color:#ffb347">Dây Chuyền Thần Linh</b> · có <span id="aPD"></span><br>Cấp <b id="lPD"></b>/30 · <span style="color:#ffb347">+<span id="bPD"></span>% tấn công</span> · hồi <span id="mPD" style="color:#5ab0ff"></span> Mana/quái hạ</div><button data-a="pd1">Nâng 1</button><button data-a="pdA">Nâng hết</button></div>
+  <div class="accr"><span data-ic="rg"></span><div class="at"><b style="color:#7fffd4">Nhẫn Uy Danh</b> · có <span id="aRG"></span><br>Cấp <b id="lRG"></b>/30 · <span style="color:#7fffd4">+<span id="bRG"></span>% tầm đánh</span></div><button data-a="rg1">Nâng 1</button><button data-a="rgA">Nâng hết</button></div>
+  <div class="accr"><span data-ic="sc"></span><div class="at"><b style="color:#e6dcff">Pha Lê Tĩnh Lặng</b> · có <span id="aSC"></span> <span style="color:#9a907a">(siêu hiếm)</span><br>Đã dùng <b id="uSC"></b> → <span style="color:#e6dcff" id="pSC"></span></div><button data-a="sc1">Dùng 1</button><button data-a="scA">Dùng hết</button></div>
+  <div class="sec2"><span>Kỹ năng nguyên tố</span><span style="color:#9a907a;font-weight:600">tự thi triển khi hồi xong</span></div>
+  <div id="pSkills"></div>
+  <div class="sec2"><span>Vật phẩm đã dùng</span></div>
+  <div class="used" id="pUsed"></div>
+  <div class="sec2"><span>Cánh: <span id="sWing"></span></span><span style="color:#ffd85a">Lông vũ: <span id="iF"></span></span></div>
+  <div class="btns"><button data-a="wing" class="sw" id="bWing"></button></div>
+</div>
+
+<div class="panel hide" id="forge">
+  <div class="ph2"><div class="pname" style="color:#ffd85a">⚒ Lò Cường Hóa</div><button data-f="close" aria-label="Đóng">✕</button></div>
+  <div class="fsub">Hợp <b style="color:#f2d27a">3 linh thạch</b> cấp thấp → <b style="color:#f2d27a">1 linh thạch</b> cấp cao hơn.</div>
+  <div id="forgeRows"></div>
+  <button class="fall" data-f="chain">Cường hóa liên hoàn (hợp hết từ thấp lên cao)</button>
+</div>
+
+<div class="ov" id="startOv">
+  <div class="card">
+    <div class="sub">PHẦN II · NGŨ ANH HÙNG · 3D</div>
+    <h1>Huyền Thoại Vực Biển</h1>
+    <p>Năm anh hùng trấn giữ <b>Thánh Thạch</b>. Hạ quái để nhận <b>EXP</b>, lên cấp nhận <b>3 điểm tiềm năng</b>. Chạm vào anh hùng để cộng điểm, khảm <b>linh thạch</b> và chế tạo <b>cánh</b>.</p>
+    <div class="legend" id="legend"></div>
+    <div class="sec">Sát thương</div>
+    <div class="dmgl"><span style="color:#c8915a">Thường</span><span style="color:#4aa8ff">Chí mạng ×1.5</span><span style="color:#4cff6a">Hoàn hảo ×2</span><span style="color:#c87aff">Nhân đôi ×2</span><span style="color:#ff4a4a">Nhân ba ×3</span><span style="color:#ffd23a">Thần phạt ×10</span></div>
+    <p style="font-size:11.5px;margin:4px 0 0">Mỗi tầng tung riêng và <b>nhân chồng lên nhau</b>: đủ 5 tầng = ×1.5×2×2×3×10 = <b style="color:#ffd23a">×180</b>.</p>
+    <div class="sec">Nguyên tố & trạng thái</div>
+    <div class="dmgl" style="font-weight:700;font-size:11px;line-height:1.5"><span style="color:#7fe8ff">❄ Băng: Đóng băng (+30% ST nhận)</span><span style="color:#c8a8ff">⚡ Sét: Tê liệt (+20%)</span><span style="color:#ff7a2a">🔥 Lửa: Thiêu đốt (+15%)</span><span style="color:#3ab0ff">💧 Nước: Ướt (+35% từ Băng/Sét), đẩy lùi</span></div>
+    <p style="font-size:11.5px;margin:4px 0 0">Mỗi anh hùng có <b>2 kỹ năng</b> (mở ở Lv 3 và Lv 10), tự thi triển khi hồi xong và đủ <b style="color:#5ab0ff">Mana</b> (30 / 55). Bản đồ đổi mỗi 10 đợt, <b>boss</b> xuất hiện mỗi 5 đợt.</p>
+    <p id="bestTxt" style="font-size:12px;opacity:.8;margin-bottom:0"></p>
+    <button class="btn alt hide" id="contBtn">TIẾP TỤC</button>
+    <button class="btn" id="playBtn">CHƠI MỚI</button>
+    <p id="loadTxt" style="font-size:11px;color:#93c6cf">Đang tải mô hình anh hùng...</p>
+  </div>
+</div>
+
+<div class="ov hide" id="pauseOv">
+  <div class="card">
+    <h2 style="color:#f2d27a;text-shadow:0 0 12px rgba(255,200,80,.4)">Tạm Dừng</h2>
+    <p id="pauseInfo"></p>
+    <button class="btn" id="resumeBtn">TIẾP TỤC</button><br>
+    <button class="btn2" id="saveBtn">Lưu game</button><button class="btn2" id="autoBtn">Tự động: TẮT</button><br>
+    <button class="btn2" id="menuBtn">Về menu chính</button><button class="btn2 danger" id="newGameBtn">Chơi mới</button>
+    <p id="saveMsg" style="font-size:12px;min-height:18px;color:#9fe8d0"></p>
+  </div>
+</div>
+
+<div class="ov hide" id="overOv">
+  <div class="card">
+    <h2>Thánh Thạch Đã Vỡ!</h2>
+    <p id="overTxt"></p>
+    <button class="btn alt hide" id="loadBtn">TẢI BẢN LƯU</button>
+    <button class="btn" id="againBtn">CHƠI MỚI</button>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
