@@ -252,3 +252,12 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - **Bộ đồ**: Sóng Bạc / Vảy Rồng Biển / Dung Nham (mỗi map một bộ), hiệu ứng 2 và 4 món; cường hóa +15 giữ nguyên.
 - **Lưu**: localStorage `vuclam-save-v2` + đám mây `data/users/<id>/save` (bản mới nhất thắng). Bản lưu cũ v1 được chuyển sang (chọn lớp, giữ cấp/vàng/đồ; cánh cũ đổi thành lông vũ).
 - Tự động: chỉ đánh quái ≤ cấp+4 (trừ quái đang đánh mình), né boss nếu máu quá thấp. Chết: hồi sinh sau 3 giây, mất 3% EXP.
+
+## 14. Vực Lam – làm lại đồ họa theo template gốc (artifact 3NUHdxYh66beQxqLDat1os, v6)
+
+- Lý do: bản 13 dựng trên engine game phòng thủ → mất vẻ đẹp của template (commit 4d5125b). Người dùng muốn đồ họa **hoàn toàn theo template**, không liên quan game kia.
+- Làm lại: toàn bộ renderer, nền đáy biển (caustics, ánh sáng quanh hero), đá/san hô/rong/cổng, tia sáng, bụi phát sáng, hero (CC0 + giáp code, cánh shader), sứa/cá, hiệu ứng chém/skill đều lấy nguyên code template; mỗi map chỉ đổi bảng màu (`MAPS[i].pal`) và tham số.
+- Giữ nguyên nội dung: 5 lớp × 3 kỹ năng, 3 map + boss, cánh từ lông vũ, linh thạch, bộ đồ, cường hóa, lưu đám mây.
+- Thay đổi gameplay hình ảnh: luôn có cánh (Cánh Sơ Khai) để bay lơ lửng như template; vàng/nguyên liệu/đồ rơi xuống đất, đi qua để nhặt.
+- Nguồn: `game/demo-day-bien/src/` (ghép `cat a_head.html b_body.html c_engine.js d_hero.js e_mobs.js f_data.js g_game.js h_ui.js > ../index.html`). Bản cũ lưu ở `src_v1/`.
+- Đã test headless (lớp Băng mới chơi, Cung Thủ lv32 map 2 + boss): không lỗi. Chưa đo FPS trên điện thoại thật, chưa cân bằng chi tiết.

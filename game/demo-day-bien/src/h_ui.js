@@ -30,9 +30,9 @@ function updateHud() {
 }
 function updateLabels() {
   const place = (el, x, y, z) => { const [sx, sy, vis] = toScreen(tmpV.set(x, y, z)); if (!vis || sx < -80 || sx > innerWidth + 80 || sy < -40 || sy > innerHeight + 40) { el.style.display = 'none'; return; } el.style.display = ''; el.style.transform = `translate(${sx}px,${sy}px) translate(-50%,-100%)`; };
-  for (const m of mobs) { if (m.dead) continue; place(m.el, m.x, m.v.top * (m.v.g.scale.x) + (m.T.y || 0) + 0.2, m.z); if (!m.boss) m.hpEl.style.visibility = m.hp < m.maxHp ? 'visible' : 'hidden'; m.bar.style.transform = `scaleX(${Math.max(0, m.hp / m.maxHp)})`; }
-  for (const l of loots) place(l.el, l.x, 1.0, l.z);
-  heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H + 0.5, S.pos.z);
+  for (const m of mobs) { if (m.dead) continue; place(m.el, m.x, m.T.y + (m.kind === 'jelly' ? 1.0 : 0.85) * m.scale + 0.15, m.z); if (!m.boss) m.hpEl.style.visibility = m.hp < m.maxHp ? 'visible' : 'hidden'; m.bar.style.transform = `scaleX(${Math.max(0, m.hp / m.maxHp)})`; }
+  for (const l of loots) place(l.el, l.x, 1.05, l.z);
+  heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H + 0.55, S.pos.z);
 }
 
 // ---------- input ----------
@@ -118,7 +118,7 @@ function equipToggle(g, equipped) { if (equipped) { if (S.inv.length >= BAG_MAX)
 function enhance(g) { const cost = upCost(g.plus); if (S.mats.e < cost.stones || S.gold < cost.gold) return; S.mats.e -= cost.stones; S.gold -= cost.gold; const ok = Math.random() < upRate(g.plus);
   if (ok) g.plus++; else if (g.plus >= 9) g.plus--; afterChange();
   flash(ok ? `Thành công! ${g.name} +${g.plus}` : g.plus >= 8 ? `Thất bại. ${g.name} còn +${g.plus}.` : 'Thất bại. Đồ giữ nguyên cấp.', ok ? 'ok' : 'bad');
-  if (ok && Object.values(S.eq).includes(g)) burst(S.pos.x, S.pos.z, '#' + new THREE.Color(TIER_COL[tier(g.plus)]).getHexString(), 30, 3, 0.07, 0.8); }
+  if (ok && Object.values(S.eq).includes(g)) burst(S.pos.x, heroG.position.y + HERO_H * 0.6, S.pos.z, 30, new THREE.Color(TIER_COL[tier(g.plus)]), 3, 0.3, 0.9); }
 function bestGear() { let n = 0; for (const s of SLOT_ORDER) { const cand = S.inv.filter(g => g.slot === s).sort((a, b) => gearScore(b) - gearScore(a))[0]; if (cand && (!S.eq[s] || gearScore(cand) > gearScore(S.eq[s]))) { const old = S.eq[s]; S.inv = S.inv.filter(x => x !== cand); if (old) S.inv.push(old); S.eq[s] = cand; n++; } } afterChange(); flash(n ? `Đã mặc ${n} món tốt hơn.` : 'Đang mặc đồ tốt nhất rồi.'); }
 function renderStones() {
   const r = rates();
@@ -128,7 +128,7 @@ function renderStones() {
   <div class="sect" style="margin:12px 0 6px">Lò cường hóa: 3 viên cấp thấp → 1 viên cấp cao</div>
   ${FORGE.map(([f, t]) => `<div class="row">${mIcon(f)}<div class="t"><b style="color:${MATS[f].col}">3 × ${MATS[f].name.replace('Linh Thạch ', '')}</b> → <b style="color:${MATS[t].col}">1 × ${MATS[t].name.replace('Linh Thạch ', '')}</b> · có ${S.mats[f]}</div>${mIcon(t)}<button class="pb" data-f1="${f}"${S.mats[f] < 3 ? ' disabled' : ''}>Hợp 1</button><button class="pb" data-fa="${f}"${S.mats[f] < 3 ? ' disabled' : ''}>Hợp hết</button></div>`).join('')}
   <button class="pb pri" id="fChain" style="width:100%;margin-top:4px">Cường hóa liên hoàn (hợp hết từ thấp lên cao)</button><div class="msg" role="status"></div>`;
-  const socket = (k, all) => { let n = 0; while (S.mats[k] > 0 && canStone(k) && (all || n < 1)) { S.mats[k]--; S.st[k]++; n++; } if (n) { ring(S.pos.x, S.pos.z, 0.1, 1.4, MATS[k].col, 0.5); burst(S.pos.x, S.pos.z, MATS[k].col, 14, 2, 0.06, 0.9); } afterChange(); flash(n ? `Đã khảm ${n} ${MATS[k].name}.` : 'Tầng này đã đạt giới hạn.', n ? 'ok' : 'bad'); };
+  const socket = (k, all) => { let n = 0; while (S.mats[k] > 0 && canStone(k) && (all || n < 1)) { S.mats[k]--; S.st[k]++; n++; } if (n) { fxRing(S.pos.x, S.pos.z, 0, 1.4, MATS[k].col, 0.5); burst(S.pos.x, 0.9, S.pos.z, 14, C3(MATS[k].col), 2, 0.3, 0.6); } afterChange(); flash(n ? `Đã khảm ${n} ${MATS[k].name}.` : 'Tầng này đã đạt giới hạn.', n ? 'ok' : 'bad'); };
   const forgeAll = (f, all) => { const t = FORGE.find(p => p[0] === f)[1]; let n = 0; while (S.mats[f] >= 3 && (all || n < 1)) { S.mats[f] -= 3; S.mats[t]++; n++; } return n; };
   bagBody.querySelectorAll('[data-s1]').forEach(b => b.onclick = () => socket(b.dataset.s1, false)); bagBody.querySelectorAll('[data-sa]').forEach(b => b.onclick = () => socket(b.dataset.sa, true));
   bagBody.querySelectorAll('[data-f1]').forEach(b => b.onclick = () => { forgeAll(b.dataset.f1, false); afterChange(); }); bagBody.querySelectorAll('[data-fa]').forEach(b => b.onclick = () => { forgeAll(b.dataset.fa, true); afterChange(); });
@@ -142,7 +142,7 @@ function renderWing() {
     ${nx ? `<div class="row">${mIcon('f')}<div class="t"><b style="color:var(--gold)">${w ? 'Nâng cấp' : 'Chế tạo'} ${WNAME[nx]}</b> — cần ${WCOST[w]} lông vũ (đang có ${S.mats.f})<br>Sát thương ×${WINGM[nx]} · Phòng thủ +${WDEF[nx]} · Máu +${WHP[nx]}</div><button class="pb pri" id="wCraft"${S.mats.f < WCOST[w] ? ' disabled' : ''}>${w ? 'Nâng cấp' : 'Chế tạo'}</button></div>` : '<p class="muted"><b style="color:var(--gold)">Cánh đã đạt cấp tối đa.</b></p>'}
     <div class="sect" style="margin-top:10px">Các cấp cánh</div>
     ${WNAME.slice(1).map((n, i) => `<div class="row"><div class="t"><b style="color:${i + 1 <= w ? 'var(--gold)' : '#93c6cf'}">${n}</b> · ${WCOST[i]} lông vũ · ×${WINGM[i + 1]} sát thương · +${WDEF[i + 1]} phòng thủ · +${WHP[i + 1]} máu</div>${i + 1 <= w ? '<b style="color:#6dff9c">✓</b>' : ''}</div>`).join('')}<div class="msg" role="status"></div>`;
-  if (nx) $('wCraft').onclick = () => { if (S.mats.f < WCOST[S.wing]) return; S.mats.f -= WCOST[S.wing]; S.wing++; pillar(S.pos.x, S.pos.z, '#ffd85a', 1.2, 1); burst(S.pos.x, S.pos.z, '#fff0b0', 40, 4, 0.08, 1.2); banner(WNAME[S.wing].toUpperCase() + '!', 'gold'); afterChange(); };
+  if (nx) $('wCraft').onclick = () => { if (S.mats.f < WCOST[S.wing]) return; S.mats.f -= WCOST[S.wing]; S.wing++; fxBeam(S.pos.x, S.pos.z, '#ffd85a', 1.4, 1); burst(S.pos.x, 1.2, S.pos.z, 40, C3('#fff0b0'), 4, 0.4, 0.9); banner(WNAME[S.wing].toUpperCase() + '!', 'gold'); afterChange(); };
 }
 function renderSkills() {
   const C = CLS[S.cls];
@@ -155,11 +155,11 @@ function renderSkills() {
 // ---------- map panel ----------
 function openMap() { closeBag(); $('mapP').classList.remove('hide');
   $('mapList').innerHTML = MAPS.map((M, i) => { const lo = Math.min(...M.zones.map(z => z.lv[0])), hi = Math.max(...M.zones.map(z => z.lv[1])); const ok = S.lv >= M.req; const here = i === S.map;
-    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.rune).getHexString()}"></span><span><b>${M.name}</b>Quái cấp ${lo}–${hi} · Boss ${MT[M.boss.k].name} (Lv ${M.boss.lv})<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
+    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>Quái cấp ${lo}–${hi} · Boss ${MT[M.boss.k].name} (Lv ${M.boss.lv})<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
   $('mapList').querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { const i = +b.dataset.m; closeMap(); travel(i); }); $('mapClose').focus(); }
 function closeMap() { $('mapP').classList.add('hide'); }
 $('mapClose').onclick = closeMap;
-function travel(i) { for (const p of projs) scene.remove(p.m); projs.length = 0; for (const s of sks) if (s.v) scene.remove(s.v); sks.length = 0; S.bossT = 60; setMap(i); showZone(); saveGame(); pillar(0, 8, '#9fe8ff', 1.4, 1.2); }
+function travel(i) { for (const p of projs) scene.remove(p.m); projs.length = 0; for (const s of sks) if (s.type === 'meteor') scene.remove(s.m); sks.length = 0; S.bossT = 60; setMap(i); showZone(); saveGame(); fxBeam(0, 8, '#9fe8ff', 1.4, 1.2); }
 
 // ---------- save (browser + cloud) ----------
 const SKEY = 'vuclam-save-v2', OLDKEY = 'vuclam-save-v1';
@@ -224,11 +224,11 @@ function frame() {
     if (zoneT > 0) { zoneT -= dt; if (zoneT <= 0) $('zone').style.opacity = 0; }
   }
   if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) $('banner').classList.remove('show'); }
-  updateParticles(dt); updateFx(dt); updateBolts(dt);
+  updateParticles(dt); updateFx(dt);
   if (S) { const portrait = innerHeight > innerWidth; const dist = portrait ? 1.2 : 1; camPos.set(S.pos.x, 11 * dist, S.pos.z + 9.5 * dist); if (fitCam) { camera.position.copy(camPos); fitCam = false; } camera.position.lerp(camPos, Math.min(1, dt * 4));
     if (S.shake > 0) { S.shake -= dt; camera.position.x += (Math.random() - 0.5) * S.shake * 0.4; camera.position.y += (Math.random() - 0.5) * S.shake * 0.4; }
     camera.lookAt(camera.position.x, 1.0, camera.position.z - 9.5 * dist);
-    moteMats.forEach(m => m.userData.pts.position.set(S.pos.x, 0, S.pos.z)); shafts.position.set(S.pos.x * 0.7, 0, S.pos.z * 0.7); updateLabels(); }
+    moteMats.forEach(m => m.uniforms.uCenter.value.copy(S.pos)); shafts.position.set(S.pos.x * 0.6, 0, S.pos.z * 0.6); updateLabels(); }
   else { camera.position.set(Math.sin(t * 0.08) * 14, 10, Math.cos(t * 0.08) * 14); camera.lookAt(0, 0.5, 0); }
   aura.visible = !!S;
   composer.render(dt);

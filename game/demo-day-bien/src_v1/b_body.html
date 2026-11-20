@@ -1,0 +1,97 @@
+
+<div id="game"></div>
+<div class="vignette"></div>
+<div id="labels"></div>
+<div id="hud" class="hide">
+  <div class="card">
+    <div class="lv"><span>Cấp</span><b id="hLv">1</b><em id="hIcon">⚡</em></div>
+    <div>
+      <div class="hname" id="hName">Lôi Thánh Kỵ</div>
+      <div class="bar hpb"><i id="hpBar"></i><span id="hpTxt"></span></div>
+      <div class="bar mpb"><i id="mpBar"></i><span id="mpTxt"></span></div>
+    </div>
+  </div>
+  <div class="tr">
+    <div class="g"><span>Vàng</span><b id="hGold">0</b></div>
+    <button id="bBag" aria-label="Mở túi đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 016 0v2"/></svg><span id="hBag">0</span></button>
+    <button id="bMap" aria-label="Mở bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg>Bản đồ</button>
+    <button id="bMenu" aria-label="Mở menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>
+  </div>
+  <div id="bossInfo"></div>
+  <div id="bossbar" class="hide"><b id="bossName"></b><div><i id="bossHp"></i></div></div>
+  <div id="zone"><h1 id="zoneName"></h1><p id="zoneSub"></p></div>
+  <div id="banner"></div>
+  <div id="log"></div>
+  <div id="joy" aria-label="Cần điều khiển di chuyển"><div id="joyKnob"></div></div>
+  <div class="actions">
+    <button id="bAuto" aria-pressed="true" aria-label="Bật hoặc tắt tự động đánh">Tự<br>động</button>
+    <button class="sk" id="sk2"><div class="cd"></div><span class="ic"></span><small></small><span class="cdt"></span></button>
+    <button class="sk" id="sk1"><div class="cd"></div><span class="ic"></span><small></small><span class="cdt"></span></button>
+    <button class="sk" id="sk0"><div class="cd"></div><span class="ic"></span><small></small><span class="cdt"></span></button>
+    <button id="bAtk" aria-label="Đánh thường">Đánh</button>
+  </div>
+  <div class="hint">WASD di chuyển · Space đánh · 1 2 3 kỹ năng · F tự động · I túi đồ · M bản đồ</div>
+  <div class="exp"><i id="expBar"></i><span id="expTxt"></span></div>
+</div>
+
+<div class="pnl hide" id="bag" role="dialog" aria-modal="true" aria-labelledby="bagTitle">
+  <header>
+    <h2 id="bagTitle">Hành trang</h2>
+    <div class="cur"><span class="gd">Vàng <b id="bGold">0</b></span><span>Đá Cường Hóa <b id="bE">0</b></span><span>Lông vũ <b id="bF">0</b></span></div>
+    <button class="x" id="bagClose" aria-label="Đóng">×</button>
+  </header>
+  <div class="tabs" role="tablist">
+    <button role="tab" data-t="gear" aria-selected="true">Trang bị</button>
+    <button role="tab" data-t="stone" aria-selected="false">Linh thạch</button>
+    <button role="tab" data-t="wing" aria-selected="false">Cánh</button>
+    <button role="tab" data-t="skill" aria-selected="false">Kỹ năng</button>
+  </div>
+  <div class="body" id="bagBody"></div>
+</div>
+
+<div class="pnl hide" id="mapP" role="dialog" aria-modal="true" aria-labelledby="mapTitle" style="max-width:520px;max-height:560px">
+  <header><h2 id="mapTitle">Bản đồ Vực Lam</h2><button class="x" id="mapClose" aria-label="Đóng">×</button></header>
+  <div class="body maps" id="mapList"></div>
+</div>
+
+<div class="ov" id="startOv">
+  <div class="ocard">
+    <div class="sub">ARPG ĐÁY BIỂN</div>
+    <h1>Vực Lam</h1>
+    <p>Chọn một trong <b>5 lớp anh hùng</b>, cày quái qua <b>3 vùng biển</b>, hạ <b>boss</b> để lấy đồ hiếm. Ghép lông vũ thành <b>cánh</b>, khảm <b>linh thạch</b> để mở 5 tầng sát thương (tối đa ×180), mặc đủ <b>bộ đồ</b> để nhận hiệu ứng.</p>
+    <p id="bestTxt" class="small"></p>
+    <button class="btn alt hide" id="contBtn">TIẾP TỤC</button>
+    <button class="btn" id="newBtn">CHƠI MỚI</button>
+    <p id="cloudTxt" class="small"></p>
+    <p id="loadTxt" class="small">Đang tải mô hình nhân vật...</p>
+  </div>
+</div>
+
+<div class="ov hide" id="classOv">
+  <div class="ocard">
+    <div class="sub">CHỌN LỚP NHÂN VẬT</div>
+    <h1 style="font-size:34px">Anh hùng của bạn</h1>
+    <p id="classNote">Mỗi lớp có giáp, vũ khí, đòn thường và 3 kỹ năng riêng (mở ở cấp 1, 10 và 25).</p>
+    <div class="classes" id="classList"></div>
+    <button class="btn" id="classGo" disabled>BẮT ĐẦU</button>
+    <br><button class="pb" id="classBack" style="margin-top:8px">◀ Quay lại</button>
+  </div>
+</div>
+
+<div class="ov hide" id="menuOv">
+  <div class="ocard" style="max-width:380px">
+    <h1 style="font-size:32px">Menu</h1>
+    <p id="menuInfo"></p>
+    <button class="btn" id="mResume">TIẾP TỤC</button><br>
+    <button class="pb" id="mSave" style="margin-top:10px">Lưu game</button>
+    <button class="pb" id="mHome" style="margin-top:10px">Về màn hình chính</button>
+    <p id="mMsg" class="small" style="min-height:18px"></p>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>

@@ -3,11 +3,11 @@
 // GAME DATA — classes, skills, maps, monsters, items, sets, stones, wings
 // =====================================================================
 const CLS = {
-  thunder: { name: 'Lôi Thánh Kỵ', icon: '⚡', col: '#b98cff', el: 'thunder', melee: true, range: 1.9, rate: 0.6, atk: 1.0, hp: 1.15, desc: 'Giáo sét, giáp dày. Đòn thường có 20% phóng sét lan sang 2 quái gần.' },
-  fire: { name: 'Hỏa Kiếm Sĩ', icon: '🔥', col: '#ff7a1a', el: 'fire', melee: true, range: 1.8, rate: 0.62, atk: 1.15, hp: 1.05, desc: 'Đại kiếm lửa, sát thương cao. Đòn thường thiêu đốt mục tiêu.' },
-  ice: { name: 'Băng Pháp Sư', icon: '❄', col: '#6fe8ff', el: 'ice', melee: false, range: 6.5, rate: 0.72, atk: 1.1, hp: 0.9, proj: 'shard', ps: 9, desc: 'Phép băng tầm xa, làm chậm và đóng băng quái.' },
-  elf: { name: 'Lục Cung Thủ', icon: '🏹', col: '#7dff9a', el: 'water', melee: false, range: 7.5, rate: 0.36, atk: 0.82, hp: 0.9, proj: 'arrow', ps: 14, crit: 0.2, desc: 'Bắn cực nhanh, chí mạng gốc 20%. Tên nước làm Ướt.' },
-  holy: { name: 'Thánh Quang Tư Tế', icon: '✦', col: '#ffd85a', el: 'holy', melee: false, range: 6.5, rate: 0.78, atk: 1.0, hp: 1.0, proj: 'holy', ps: 8, splash: 1.3, desc: 'Cầu thánh quang nổ lan, có kỹ năng hồi máu.' }
+  thunder: { name: 'Lôi Thánh Kỵ', icon: '⚡', col: '#b98cff', glow: '#c8b0ff', el: 'thunder', melee: true, range: 1.9, rate: 0.6, atk: 1.0, hp: 1.15, desc: 'Giáo sét, giáp dày. Đòn thường có 20% phóng sét lan sang 2 quái gần.' },
+  fire: { name: 'Hỏa Kiếm Sĩ', icon: '🔥', col: '#ff7a1a', glow: '#7fe9ff', el: 'fire', melee: true, range: 1.8, rate: 0.62, atk: 1.15, hp: 1.05, desc: 'Đại kiếm lửa, sát thương cao. Đòn thường thiêu đốt mục tiêu.' },
+  ice: { name: 'Băng Pháp Sư', icon: '❄', col: '#6fe8ff', glow: '#9ff4ff', el: 'ice', melee: false, range: 6.5, rate: 0.72, atk: 1.1, hp: 0.9, proj: 'shard', ps: 9, desc: 'Phép băng tầm xa, làm chậm và đóng băng quái.' },
+  elf: { name: 'Lục Cung Thủ', icon: '🏹', col: '#7dff9a', glow: '#9fffc0', el: 'water', melee: false, range: 7.5, rate: 0.36, atk: 0.82, hp: 0.9, proj: 'arrow', ps: 14, crit: 0.2, desc: 'Bắn cực nhanh, chí mạng gốc 20%. Tên nước làm Ướt.' },
+  holy: { name: 'Thánh Quang Tư Tế', icon: '✦', col: '#ffd85a', glow: '#fff0a0', el: 'holy', melee: false, range: 6.5, rate: 0.78, atk: 1.0, hp: 1.0, proj: 'holy', ps: 8, splash: 1.3, desc: 'Cầu thánh quang nổ lan, có kỹ năng hồi máu.' }
 };
 const CORDER = ['thunder', 'fire', 'ice', 'elf', 'holy'];
 const ELC = { ice: '#7fe8ff', thunder: '#c8a8ff', fire: '#ff7a2a', water: '#3ab0ff', holy: '#ffd85a' };
@@ -65,30 +65,41 @@ const SETS = {
 };
 const PLAIN = { weapon: ['Kiếm Hải Lam', 'Kích San Hô', 'Thương Triều Dâng'], helm: ['Mũ Ngọc Trai', 'Mũ Vỏ Ốc Bạc'], armor: ['Giáp Lân Quang', 'Giáp Vỏ Sò'], ring: ['Nhẫn Bọt Biển', 'Nhẫn Lân Quang'] };
 
-// monsters (sizes match a 1.15-unit hero)
+// monsters: only the template's luminous jelly and spiked fish, recoloured per sea
 const MT = {
-  jelly: { name: 'Sứa Lân Quang', hp: 60, atk: 1.0, exp: 14, speed: 0.9, model: 'jelly', y: 0.95 },
-  spikefish: { name: 'Cá Gai Hỏa', hp: 95, atk: 1.15, exp: 20, speed: 1.4, model: 'spikefish', y: 0.45 },
-  angler: { name: 'Cá Lồng Đèn', hp: 120, atk: 1.2, exp: 24, speed: 1.1, model: 'angler', y: 0.42 },
-  eel: { name: 'Lươn Lôi', hp: 90, atk: 1.3, exp: 22, speed: 1.9, model: 'eel', y: 0.3 },
-  crab: { name: 'Cua Giáp Đá', hp: 260, atk: 1.4, exp: 40, speed: 0.8, model: 'crab', y: 0 },
-  lavacrab: { name: 'Cua Dung Nham', hp: 320, atk: 1.6, exp: 48, speed: 0.85, model: 'crab', y: 0, tint: 0xff4a0a },
-  lavafish: { name: 'Cá Gai Dung Nham', hp: 220, atk: 1.7, exp: 44, speed: 1.6, model: 'spikefish', y: 0.45, tint: 0xff3a00 },
-  shadeshark: { name: 'Cá Mập Bóng Đêm', hp: 420, atk: 1.9, exp: 60, speed: 1.4, model: 'shark', y: 0.5, scale: 0.42 },
-  jqueen: { name: 'Sứa Mẫu Hậu', hp: 60, atk: 1.0, exp: 14, model: 'jqueen', boss: true, y: 1.1 },
-  serpent: { name: 'Hải Long Xà', hp: 90, atk: 1.3, exp: 22, model: 'serpent', boss: true, y: 0.6 },
-  turtle: { name: 'Cự Quy Dung Nham', hp: 320, atk: 1.6, exp: 48, model: 'turtle', boss: true, y: 0 }
+  jelly: { name: 'Sứa Lân Quang', model: 'jelly', hp: 60, atk: 1.0, exp: 14, speed: 0.9, size: 0.5, y: 0.95, color: '#d7b6ff', pal: {} },
+  jellyBlue: { name: 'Sứa Lam Băng', model: 'jelly', hp: 80, atk: 1.1, exp: 18, speed: 1.0, size: 0.55, y: 1.0, color: '#9fe8ff', pal: { h1: 0.55, h2: 0.48 } },
+  fish: { name: 'Cá Gai Hỏa', model: 'fish', hp: 95, atk: 1.15, exp: 20, speed: 1.4, size: 0.65, y: 0.45, color: '#ffc89a', pal: {} },
+  fishNight: { name: 'Cá Gai Đêm', model: 'fish', hp: 120, atk: 1.2, exp: 24, speed: 1.5, size: 0.7, y: 0.45, color: '#a8c8ff', pal: { back: 0x0e1a3a, belly: 0x3a6aff, stripe: 0x9fe8ff, fin: 0x5a8aff, finE: 0x1a3aff, rim: 0x9fe8ff, eye: 0x9ff4ff } },
+  jellyGreen: { name: 'Sứa Tảo Lục', model: 'jelly', hp: 90, atk: 1.3, exp: 22, speed: 1.0, size: 0.55, y: 1.0, color: '#b0ffb0', pal: { h1: 0.33, h2: 0.45 } },
+  fishMoss: { name: 'Cá Gai Rêu', model: 'fish', hp: 120, atk: 1.25, exp: 24, speed: 1.5, size: 0.7, y: 0.45, color: '#c8ff9a', pal: { back: 0x14301a, belly: 0x6ad84a, stripe: 0xd8ff8a, fin: 0x8ae05a, finE: 0x2a8a1a, rim: 0xd8ffb0, eye: 0xd8ff6a } },
+  jellyAmber: { name: 'Sứa Hổ Phách', model: 'jelly', hp: 140, atk: 1.4, exp: 34, speed: 1.0, size: 0.62, y: 1.05, color: '#ffd28a', pal: { h1: 0.1, h2: 0.14 } },
+  fishGold: { name: 'Cá Gai Hoàng Kim', model: 'fish', hp: 180, atk: 1.4, exp: 36, speed: 1.4, size: 0.78, y: 0.5, color: '#ffe08a', pal: { back: 0x3a2a08, belly: 0xffc83a, stripe: 0xfff0a0, fin: 0xffd84a, finE: 0xc88a0a, rim: 0xfff4c0 } },
+  jellyRed: { name: 'Sứa Hỏa Ngục', model: 'jelly', hp: 200, atk: 1.6, exp: 44, speed: 1.0, size: 0.6, y: 1.0, color: '#ffa08a', pal: { h1: 0.0, h2: 0.08 } },
+  fishLava: { name: 'Cá Gai Dung Nham', model: 'fish', hp: 240, atk: 1.7, exp: 48, speed: 1.6, size: 0.75, y: 0.45, color: '#ffa060', pal: { back: 0x1a0606, belly: 0xff4a0a, stripe: 0xffb03a, fin: 0xff5a1a, finE: 0xff2a00, rim: 0xffc080, eye: 0xffe04a } },
+  jellyAsh: { name: 'Sứa Tro Tàn', model: 'jelly', hp: 300, atk: 1.8, exp: 58, speed: 1.1, size: 0.66, y: 1.05, color: '#e0a8ff', pal: { h1: 0.92, h2: 0.06, l2: 0.55 } },
+  fishBlack: { name: 'Cá Gai Hắc Diệm', model: 'fish', hp: 360, atk: 1.9, exp: 64, speed: 1.6, size: 0.82, y: 0.5, color: '#ff8aa0', pal: { back: 0x0a0408, belly: 0x5a0a2a, stripe: 0xff3a6a, fin: 0x8a1a3a, finE: 0xff1a4a, rim: 0xff8ab0, eye: 0xff3a6a } },
+  bossJelly: { name: 'Sứa Mẫu Hậu', model: 'jelly', hp: 60, atk: 1.0, exp: 14, speed: 0.9, size: 1.5, y: 1.6, color: '#ffb0f0', boss: true, pal: { h1: 0.86, h2: 0.55, crown: true } },
+  bossFish: { name: 'Cá Gai Lục Vương', model: 'fish', hp: 90, atk: 1.3, exp: 22, speed: 1.1, size: 2.0, y: 0.9, color: '#c8ff9a', boss: true, pal: { back: 0x0e2a14, belly: 0x5ad84a, stripe: 0xffe08a, fin: 0xffc84a, finE: 0xc88a0a, rim: 0xfff0b0, eye: 0xff3a3a, crown: true } },
+  bossLava: { name: 'Sứa Hỏa Vương', model: 'jelly', hp: 320, atk: 1.6, exp: 48, speed: 0.9, size: 1.7, y: 1.7, color: '#ffb080', boss: true, pal: { h1: 0.02, h2: 0.12, crown: true, gem: 0xffd23a } }
 };
+// each sea uses the template's seabed, coral, rocks, kelp and gate, with its own palette
 const MAPS = [
-  { name: 'Bãi San Hô Lân Quang', req: 1, theme: 'sea', ground: [0x0d3a3e, 0x2b5551, 0x061a1e, 0x3fc0d0], rock: [0x4fae94, 0x1f5d63, 0x0b2a33, 0x9ff2d8], fog: 0x06262e, rune: 0x5af0ff, weed: [0x2f9e6e, 0x4fc48a, 0x1f7a6a, 0x7ad19a], set: 'song',
-    zones: [{ k: 'jelly', x: -5, z: 5, r: 4.5, n: 9, lv: [1, 4] }, { k: 'spikefish', x: 9, z: -1, r: 4.5, n: 8, lv: [4, 8] }, { k: 'jelly', x: 7, z: -8.5, r: 5, n: 7, lv: [7, 11] }, { k: 'angler', x: -8, z: -8, r: 5, n: 8, lv: [10, 14] }],
-    boss: { k: 'jqueen', x: 0, z: -15.5, lv: 15, respawn: 180 } },
-  { name: 'Rừng Tảo U Linh', req: 15, theme: 'kelp', ground: [0x0c2a1a, 0x2a4a30, 0x041208, 0x6fe08a], rock: [0x6a9a5c, 0x2f5a3a, 0x0e2416, 0xb8ffb0], fog: 0x07241a, rune: 0x7dff9a, weed: [0x3a9a3a, 0x5ac45a, 0x2a7a3a, 0x8ad16a, 0x6ab84a], set: 'vay',
-    zones: [{ k: 'eel', x: -5, z: 5, r: 4.5, n: 9, lv: [15, 19] }, { k: 'angler', x: 9, z: -1, r: 4.5, n: 8, lv: [18, 23] }, { k: 'crab', x: 7, z: -8.5, r: 5, n: 6, lv: [22, 27] }, { k: 'eel', x: -8, z: -8, r: 5, n: 8, lv: [26, 31] }],
-    boss: { k: 'serpent', x: 0, z: -15.5, lv: 33, respawn: 210 } },
-  { name: 'Hố Thẳm Dung Nham', req: 30, theme: 'lava', ground: [0x1a1012, 0x2e2224, 0x0a0606, 0xff8a50], rock: [0x5a4a46, 0x3a2c2a, 0x160e0c, 0xff7a3a], fog: 0x1a0c0a, rune: 0xff7a3a, weed: [], set: 'dung',
-    zones: [{ k: 'lavacrab', x: -5, z: 5, r: 4.5, n: 8, lv: [30, 35] }, { k: 'lavafish', x: 9, z: -1, r: 4.5, n: 8, lv: [34, 40] }, { k: 'shadeshark', x: 7, z: -8.5, r: 5, n: 5, lv: [38, 44] }, { k: 'lavacrab', x: -8, z: -8, r: 5, n: 8, lv: [42, 50] }],
-    boss: { k: 'turtle', x: 0, z: -15.5, lv: 52, respawn: 240 } }
+  { name: 'Bãi San Hô Lân Quang', req: 1, set: 'song',
+    pal: { sa: [0.045, 0.13, 0.15], sb: [0.17, 0.30, 0.29], pt: [0.03, 0.10, 0.13], ca: [0.25, 0.75, 0.85], fog: 0x06262e, bg: 0x072c35, rock: [0x4fae94, 0x1f5d63, 0x0b2a33, 0x9ff2d8], weed: [0x2f9e6e, 0x4fc48a, 0x1f7a6a, 0x7ad19a, 0x3fb3a0], weedH: 1, weedE: 0x0c3d2a, stone: 0x5f8f99, rune: 0x6fe7ff, portal: [0x0d5a99, 0x66f2ff],
+      coral: [[0xff4f9a, 0xffb0e0], [0x9a5bff, 0xd8b8ff], [0xff7a3d, 0xffd08a], [0x3fd1c8, 0xb8fff4]], sponge: [0xffb43d, 0xff6a5a, 0xc8ff6a], fan: [0xff5fa8, 0xb07bff, 0xffa34d], mote: [0x7fdcef, 0xbff4ff] },
+    zones: [{ k: 'jelly', x: -5, z: 5, r: 4.5, n: 9, lv: [1, 4] }, { k: 'fish', x: 9, z: -1, r: 4.5, n: 8, lv: [4, 8] }, { k: 'jellyBlue', x: 7, z: -8.5, r: 5, n: 7, lv: [7, 11] }, { k: 'fishNight', x: -8, z: -8, r: 5, n: 8, lv: [10, 14] }],
+    boss: { k: 'bossJelly', x: 0, z: -12.5, lv: 15, respawn: 180 } },
+  { name: 'Rừng Tảo U Linh', req: 15, set: 'vay',
+    pal: { sa: [0.035, 0.12, 0.08], sb: [0.13, 0.27, 0.17], pt: [0.02, 0.08, 0.05], ca: [0.35, 0.85, 0.5], fog: 0x062418, bg: 0x072c1e, rock: [0x6fbf7c, 0x24603a, 0x0a2a16, 0xc8ffc0], weed: [0x2fae5a, 0x4fd47a, 0x1f8a4a, 0x8ae07a, 0x3fc38a], weedH: 1.5, weedE: 0x0c4a1a, stone: 0x6a9a7a, rune: 0x7dff9a, portal: [0x0d7a3a, 0x9affb0],
+      coral: [[0x3fd1c8, 0xb8fff4], [0xb0ff5a, 0xf4ffc0], [0x6aff8a, 0xd8ffb0], [0xffd23a, 0xfff0a0]], sponge: [0xc8ff6a, 0xffd23a, 0x6affc8], fan: [0x6aff8a, 0x3fd1c8, 0xd8ff6a], mote: [0x9fffb8, 0xd8ffe0] },
+    zones: [{ k: 'jellyGreen', x: -5, z: 5, r: 4.5, n: 9, lv: [15, 19] }, { k: 'fishMoss', x: 9, z: -1, r: 4.5, n: 8, lv: [18, 23] }, { k: 'jellyAmber', x: 7, z: -8.5, r: 5, n: 7, lv: [22, 27] }, { k: 'fishGold', x: -8, z: -8, r: 5, n: 8, lv: [26, 31] }],
+    boss: { k: 'bossFish', x: 0, z: -12.5, lv: 33, respawn: 210 } },
+  { name: 'Hố Thẳm Dung Nham', req: 30, set: 'dung',
+    pal: { sa: [0.09, 0.04, 0.04], sb: [0.24, 0.12, 0.09], pt: [0.05, 0.02, 0.02], ca: [0.9, 0.42, 0.18], fog: 0x1e0c0a, bg: 0x241010, rock: [0xa0604a, 0x4a2a24, 0x160a08, 0xffb07a], weed: [0x8a2a1a, 0xc8401a, 0x5a1a10, 0xe0603a], weedH: 0.8, weedE: 0x4a0a00, stone: 0x6a4a44, rune: 0xff8a3a, portal: [0x8a1a04, 0xffb05a],
+      coral: [[0xff4a1a, 0xffd08a], [0xff7a3d, 0xfff0a0], [0xd02a4a, 0xffa0b0], [0xffb43d, 0xfff4c0]], sponge: [0xff6a3a, 0xffb43d, 0xd02a4a], fan: [0xff5a2a, 0xffa34d, 0xff3a6a], mote: [0xffa070, 0xffd8b0] },
+    zones: [{ k: 'jellyRed', x: -5, z: 5, r: 4.5, n: 8, lv: [30, 35] }, { k: 'fishLava', x: 9, z: -1, r: 4.5, n: 8, lv: [34, 40] }, { k: 'jellyAsh', x: 7, z: -8.5, r: 5, n: 7, lv: [38, 44] }, { k: 'fishBlack', x: -8, z: -8, r: 5, n: 8, lv: [42, 50] }],
+    boss: { k: 'bossLava', x: 0, z: -12.5, lv: 52, respawn: 240 } }
 ];
 
 // formulas
