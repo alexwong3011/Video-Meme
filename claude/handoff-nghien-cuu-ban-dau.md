@@ -356,3 +356,4 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - Chờ người dùng chọn trước khi áp vào game (có thể áp thêm cho bot/NPC).
 - Người dùng chọn: **viền tím glow, dày 40%, cỡ nhân vật +60%** (giờ là mặc định của trang A/B).
 - Cánh B (`wingB` trong ab.js, không viền): lông tách rõ (khe giữa lông rộng hơn, mép lông và sống lông mảnh, sáng), giảm phần thân lông để không chói trên nền sáng; hiệu ứng: dải sáng quét gốc→ngọn, ánh xà cừ trên sống lông, đốm lấp lánh đầu lông, hạt sáng rơi từ mép cánh; nút bật/tắt riêng.
+- Cánh B v2: bỏ dải sáng và ánh xà cừ (khó thấy), thay bằng **sóng cầu vồng** lan từ thân ra ngọn cánh (uniform `uRb` độ mạnh, `uRs` tốc độ; thanh trượt "Cầu vồng" 0–100% (80% mặc định), "Tốc độ sóng"); hạt sáng rơi đổi màu cầu vồng; giữ lấp lánh đầu lông.
