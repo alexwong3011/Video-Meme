@@ -301,7 +301,7 @@ function applyGearVisuals() {
   S.glowTier = Math.max(wt, at);
 }
 function updateHero(dt, t) {
-  if (S.dead > 0) { S.dead -= dt; if (S.dead <= 0) { S.pos.set(0, 0, 8); recalc(true); heroG.visible = true; fxBeam(0, 8, '#9fe8ff', 1.2); } return; }
+  if (S.dead > 0) { S.dead -= dt; if (S.dead <= 0) { S.dead = 0; S.pos.set(0, 0, 8); recalc(true); heroG.visible = true; fxBeam(0, 8, '#9fe8ff', 1.2); } return; }
   let mx = input.x, mz = input.z;
   if (input.keys.KeyW || input.keys.ArrowUp) mz -= 1; if (input.keys.KeyS || input.keys.ArrowDown) mz += 1; if (input.keys.KeyA || input.keys.ArrowLeft) mx -= 1; if (input.keys.KeyD || input.keys.ArrowRight) mx += 1;
   let mag = Math.hypot(mx, mz); const manual = mag > 0.12; const Cl = CLS[S.cls];
