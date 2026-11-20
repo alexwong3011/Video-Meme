@@ -322,3 +322,9 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - **Giao dịch** bằng vàng: mua đồ trong túi bot, bán đồ của bạn cho bot (giá tốt hơn bán thường, bot cần đủ vàng).
 - **Bùa** (siêu hiếm, 1% mỗi quái): Bùa Chiến Thần +1% sát thương, Bùa Sinh Mệnh +1% máu, Bùa Linh Lực +1% mana; có tác dụng khi nằm trong túi, cộng dồn (giới hạn bởi 40 ô túi). Bot cũng nhặt và bán bùa.
 - **Bỏ giới hạn cấp** vào map; bản đồ ghi "nguy hiểm" nếu cấp bạn thấp hơn quái quá 20.
+
+## 18. Vực Lam – túi 120 ô, xếp chồng, 20 bot
+
+- `BAG_MAX = 120`. Vật phẩm cùng loại không phải trang bị (hiện là bùa) xếp chồng trong 1 ô với số lượng `n` (`stackKey`, `stackInto`, `takeOne` trong g_game.js); bán 1 hoặc cả chồng; giao dịch mua/bán từng lá. Bản lưu cũ tự gộp bùa rời. Hiệu lực bùa tối đa `CHARM_CAP = 100` lá mỗi loại (+100%).
+- 20 bot (thêm ThầnPhong, VôSong; bản lưu cũ tự bổ sung). Tối đa 8 bot cùng map đánh quái, 10 ở thành. Bot tự mua bán với nhau (`botMarket`, ~1 giao dịch mỗi 5 giây khắp thế giới); ở thành có thông báo 🛒 khi giao dịch diễn ra.
+- Sửa: nhặt bùa giờ cập nhật chỉ số ngay.

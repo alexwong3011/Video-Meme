@@ -2,7 +2,7 @@
 // =====================================================================
 // SHARED WORLD — AI bots that farm like players, parties, town NPCs, trading
 // =====================================================================
-const BOT_NAMES = ['LongHuyết', 'ThiênKiếm', 'BăngTâm', 'HỏaPhượng', 'LụcCung', 'TiểuLong', 'MinhNguyệt', 'HắcVũ', 'KimLân', 'PhongVân', 'TuyếtLiên', 'ThanhPhong', 'LôiĐiện', 'HoaRơi', 'ÁnhDương', 'DạXoa', 'NgọcTiêu', 'BạchHổ'];
+const BOT_NAMES = ['LongHuyết', 'ThiênKiếm', 'BăngTâm', 'HỏaPhượng', 'LụcCung', 'TiểuLong', 'MinhNguyệt', 'HắcVũ', 'KimLân', 'PhongVân', 'TuyếtLiên', 'ThanhPhong', 'LôiĐiện', 'HoaRơi', 'ÁnhDương', 'DạXoa', 'NgọcTiêu', 'BạchHổ', 'ThầnPhong', 'VôSong'];
 const SAY_TOWN = ['Ai đi Sa Mạc farm không?', 'Bán Bùa Chiến Thần, giá tốt!', 'Cần tổ đội đánh boss!', 'Vừa lên cấp, vui quá', 'Thu mua Linh Thạch nè', 'Ai có Lông Vũ Thần bán không?', 'Nghỉ tí rồi đi cày tiếp', 'Olympus quái đông lắm', 'Đồ +9 ai mua không?', 'Tối nay đi Thiên Giới nhé'];
 const SAY_HUNT = ['Quái đông quá!', 'Boss sắp ra rồi', 'Hút máu ngon', 'Rơi đồ xịn rồi!', 'Cẩn thận tinh anh!', 'Cày tiếp nào', 'Gom quái lại đi'];
 const SAY_NO = ['Bận cày rồi bạn ơi', 'Để lúc khác nhé', 'Mình đang có nhóm rồi', 'Cấp chênh quá'];
@@ -11,7 +11,7 @@ function newBots() { return BOT_NAMES.map((name, i) => ({ id: 'b' + i, name, cls
   gold: ri(2000, 20000), map: Math.random() < 0.45 ? TOWN : 0, stT: rr(20, 200), inv: [], kills: 0 })).map(b => { if (b.map !== TOWN) b.map = pickMapFor(b.lv); for (let k = 0; k < 3; k++) botLoot(b, true); return b; }); }
 function pickMapFor(lv) { let best = 0; for (let i = 0; i < MAPS.length; i++) if (!MAPS[i].town && MAPS[i].lo <= lv + 10) best = i; return Math.random() < 0.3 && best > 0 ? best - 1 : best; }
 function botLoot(b, force) { if (b.inv.length >= 10) b.inv.shift();
-  if (!force && Math.random() < 0.08) { b.inv.push(makeCharm(pick(['dmg', 'hp', 'mp']), b.lv)); return; }
+  if (!force && Math.random() < 0.08) { const c = makeCharm(pick(['dmg', 'hp', 'mp']), b.lv); if (!stackInto(b.inv, c)) b.inv.push(c); return; }
   const q = Math.random(), r = q < 0.08 ? 3 : q < 0.3 ? 2 : q < 0.65 ? 1 : 0; const g = makeGear(Math.random() < 0.35 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, Math.max(1, b.lv - ri(0, 20)), r >= 1 && Math.random() < 0.4 ? MAPS[pickMapFor(b.lv)].set : null); if (r >= 1 && Math.random() < 0.5) g.plus = ri(1, 3 + r * 2); b.inv.push(g); }
 function botGain(b, xp) { b.exp += xp; let up = false; while (b.lv < MAXLV && b.exp >= expNeed(b.lv)) { b.exp -= expNeed(b.lv); b.lv++; up = true; }
   const e = ents.get(b.id); if (up && e) { const st = botStats(b); e.maxHp = st.hp; e.hp = st.hp; fxRing(e.pos.x, e.pos.z, 0, 1.4, '#ffd27a', 0.6); e.el.querySelector('.nm').innerHTML = botName(b); } }
@@ -53,7 +53,7 @@ function spawnBot(b, x, z) { if (!heroGLTF || ents.has(b.id)) return; const st =
   ents.set(b.id, e); fxBeam(x, z, '#9fe8ff', 0.9, 0.7); return e; }
 function despawnBot(id, beam) { const e = ents.get(id); if (!e) return; if (beam) fxBeam(e.pos.x, e.pos.z, '#9fe8ff', 0.9, 0.7); charRemove(e.C); e.el.remove(); e.alive = false; ents.delete(id); for (const m of mobs) if (m.tgt === e) m.tgt = null; }
 function syncBots() { // who stands in the player's current map
-  const want = new Set(); const cap = isTown() ? 9 : 6; let n = 0;
+  const want = new Set(); const cap = isTown() ? 10 : 8; let n = 0;
   for (const b of S.bots) if (inParty(b)) { b.map = S.map; want.add(b.id); n++; }
   for (const b of S.bots) if (!want.has(b.id) && b.map === S.map && n < cap) { want.add(b.id); n++; }
   for (const id of [...ents.keys()]) if (!want.has(id)) despawnBot(id, true);
@@ -66,10 +66,17 @@ function worldTick() { // once a second: the off-screen world keeps playing
     if (b.map !== TOWN && !ents.has(b.id)) { botGain(b, expNeed(b.lv) / lvSeconds(b.lv) * 0.5); b.gold += Math.round((5 + b.lv) * rr(2, 6)); if (Math.random() < 0.025) botLoot(b); }
     if (b.stT <= 0) { if (b.map === TOWN) { b.map = pickMapFor(b.lv); b.stT = rr(150, 400); } else { b.map = TOWN; b.stT = rr(50, 140); } } }
   if (S.party && S.party.leader !== 'me' && !S.bots.some(b => b.id === S.party.leader)) S.party = null;
+  botMarket();
   syncBots();
   // bots sometimes invite the player
   S.invT = (S.invT ?? 40) - 1; if (S.invT <= 0) { S.invT = rr(60, 120); if (!S.party && !inviteOpen) { const c = [...ents.values()].filter(e => !e.dead); if (c.length) offerInvite(pick(c).b); } }
 }
+// bots trade with each other: the market keeps moving even when you are away
+function botMarket() { if (Math.random() > 0.2) return; const sellers = S.bots.filter(b => b.inv.length && !inParty(b)); if (!sellers.length) return; const s = pick(sellers);
+  const buyers = S.bots.filter(b => b !== s && b.map === s.map && !inParty(b)); if (!buyers.length) return; const b = pick(buyers); const g = pick(s.inv);
+  const price = Math.round((g.slot === 'charm' ? 2500 + g.lv * 100 : sellPrice(g) * 2) * rr(0.8, 1.2)); if (b.gold < price) return;
+  const item = takeOne(s.inv, g); b.gold -= price; s.gold += price; if (!stackInto(b.inv, item)) { b.inv.push(item); if (b.inv.length > 12) b.inv.shift(); }
+  if (s.map === S.map) { const e = ents.get(b.id); if (e) botSay(e, 'Mua được ' + item.name + '!'); if (isTown() && Math.random() < 0.5) log(`🛒 ${b.name} mua [${item.name}] của ${s.name} giá ${fmt(price)} vàng.`, '#c8b88a'); } }
 function botMove(e, tx, tz, dt, sp) { const dx = tx - e.pos.x, dz = tz - e.pos.z, d = Math.hypot(dx, dz); if (d < 0.05) return false;
   let ux = dx / d, uz = dz / d; if (!los(e.pos.x, e.pos.z, tx, tz)) { if (!e.nav || Math.hypot(e.nav.tx - tx, e.nav.tz - tz) > 1 || S.time - e.nav.t > 1.5) { const pts = findPath(e.pos.x, e.pos.z, tx, tz); e.nav = { tx, tz, t: S.time, pts: pts || [[tx, tz]], i: 0 }; }
     const N = e.nav; while (N.i < N.pts.length - 1 && Math.hypot(N.pts[N.i][0] - e.pos.x, N.pts[N.i][1] - e.pos.z) < 0.35) N.i++; const w = N.pts[N.i], wd = Math.hypot(w[0] - e.pos.x, w[1] - e.pos.z) || 1; ux = (w[0] - e.pos.x) / wd; uz = (w[1] - e.pos.z) / wd; }

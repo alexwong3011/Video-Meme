@@ -91,7 +91,7 @@ $('bagClose').onclick = closeBag;
 bagEl.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; renderBag(); });
 const fmt = n => n.toLocaleString('vi-VN');
 const findItem = id => { for (const s of SLOT_ORDER) if (S.eq[s] && S.eq[s].id === id) return { g: S.eq[s], equipped: true }; const g = S.inv.find(x => x.id === id); return g ? { g, equipped: false } : null; };
-function tileHtml(g, extra = '') { return `<button style="${g.charm ? 'color:' + CHARMS[g.charm].col : ''}" class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${gIcon(g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
+function tileHtml(g, extra = '') { return `<button style="${g.charm ? 'color:' + CHARMS[g.charm].col : ''}" class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${gIcon(g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${qty(g) > 1 ? `<span class="qt">×${qty(g)}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
 function flash(t, cls = '') { const m = bagBody.querySelector('.msg'); if (!m) return; m.textContent = t; m.className = 'msg show ' + cls; clearTimeout(msgT); msgT = setTimeout(() => { m.className = 'msg'; }, 2200); }
 function afterChange(heal) { recalc(heal); applyGearVisuals(); applyPetMount(); updateHud(); renderBag(); saveGame(); }
 function renderBag() {
@@ -127,8 +127,10 @@ function renderDetail() {
   const box = $('detail'); const f = selId && findItem(selId);
   if (!f) { box.innerHTML = '<p class="muted">Chọn một món đồ để xem chỉ số, mặc vào, cường hóa hoặc bán.</p>'; return; }
   const { g, equipped } = f;
-  if (g.slot === 'charm') { const C = CHARMS[g.charm]; box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${C.col}">${g.name}</h3><p class="muted">Bùa siêu hiếm · ${C.d} khi mang trong túi · cộng dồn</p></div></div>
-      <div class="acts"><button class="pb" id="aSell">Bán · ${fmt(sellPrice(g))} vàng</button></div>`; $('aSell').onclick = () => { S.inv = S.inv.filter(x => x !== g); S.gold += sellPrice(g); selId = null; afterChange(); }; return; }
+  if (g.slot === 'charm') { const C = CHARMS[g.charm]; box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${C.col}">${g.name} ×${qty(g)}</h3><p class="muted">Bùa siêu hiếm · ${C.d} mỗi lá khi mang trong túi · cộng dồn tối đa ${CHARM_CAP} lá (đang có tác dụng ${HS.charms[g.charm]}%) · xếp chồng trong 1 ô</p></div></div>
+      <div class="acts"><button class="pb" id="aSell">Bán 1 · ${fmt(sellPrice(g))} vàng</button>${qty(g) > 1 ? `<button class="pb" id="aSellAll">Bán cả ${qty(g)} · ${fmt(sellPrice(g) * qty(g))} vàng</button>` : ''}</div>`;
+    $('aSell').onclick = () => { takeOne(S.inv, g); S.gold += sellPrice(g); if (!S.inv.includes(g)) selId = null; afterChange(); };
+    const all = $('aSellAll'); if (all) all.onclick = () => { S.gold += sellPrice(g) * qty(g); S.inv = S.inv.filter(x => x !== g); selId = null; afterChange(); }; return; }
   const cur = S.eq[g.slot]; const cost = upCost(g.plus), rate = upRate(g.plus); const canUp = g.plus < 15;
   box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</h3>
     <p class="muted">${SLOTS[g.slot].n} · ${RARITY[g.r].n} · cấp ${g.lv}${g.set ? ' · ' + SETS[g.set].n : ''}${equipped ? ' · <b style="color:var(--cyan)">Đang mặc</b>' : ''}</p></div></div>
@@ -209,7 +211,7 @@ function charAt(cx, cy) { let best = null, bd = 44; const test = (pos, h, o) => 
   for (const e of npcEnts) test(e.pos, HERO_H * 0.55, e); for (const e of ents.values()) if (!e.dead) test(e.pos, 0.55 + HERO_H * 0.55, e); return best; }
 function npcAct(id) { if (id === 'smith') openBag('gear'); else if (id === 'pets') openBag('pet'); else if (id === 'guide') openMap(); else openWorld(id); }
 const botTag = b => `<b style="color:${CLS[b.cls].col}">${CLS[b.cls].icon} ${b.name}</b> · ${CLS[b.cls].name} · Lv ${b.lv}`;
-const itemLine = g => g.slot === 'charm' ? `<b style="color:${CHARMS[g.charm].col}">${g.name}</b> · ${CHARMS[g.charm].d}` : `<b style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</b> · ${SLOTS[g.slot].n} cấp ${g.lv} · ${Object.entries(gearStats(g)).map(([k, v]) => STAT_N[k] + ' ' + v).join(', ')}`;
+const itemLine = g => g.slot === 'charm' ? `<b style="color:${CHARMS[g.charm].col}">${g.name}${qty(g) > 1 ? ' ×' + qty(g) : ''}</b> · ${CHARMS[g.charm].d} · giá mỗi lá` : `<b style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</b> · ${SLOTS[g.slot].n} cấp ${g.lv} · ${Object.entries(gearStats(g)).map(([k, v]) => STAT_N[k] + ' ' + v).join(', ')}`;
 const buyPrice = g => Math.round((g.slot === 'charm' ? 3000 + g.lv * 120 : sellPrice(g) * 2.6) * (g.pm || (g.pm = rr(0.85, 1.25))));
 const offerPrice = (g, b) => Math.round((g.slot === 'charm' ? 1800 + g.lv * 70 : sellPrice(g) * 1.6) * (0.85 + (b.hue * 7 % 1) * 0.4));
 function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; const B = $('wBody'); const here = [...ents.values()].filter(e => !e.dead).map(e => e.b);
@@ -239,10 +241,10 @@ function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; co
       <div class="sect" style="margin:10px 0 6px">${b.name} bán</div>${b.inv.length ? b.inv.map((g, i) => `<div class="row">${tileHtml(g, 'tabindex="-1"')}<div class="t">${itemLine(g)}</div><button class="pb pri" data-buy="${i}"${S.gold < buyPrice(g) ? ' disabled' : ''}>Mua ${fmt(buyPrice(g))}</button></div>`).join('') : '<p class="muted">Họ chưa có gì để bán.</p>'}
       <div class="sect" style="margin:12px 0 6px">Bạn bán cho ${b.name}</div>${mine.length ? mine.map(g => `<div class="row">${tileHtml(g, 'tabindex="-1"')}<div class="t">${itemLine(g)}</div><button class="pb" data-sell="${g.id}"${b.gold < offerPrice(g, b) ? ' disabled' : ''}>Bán ${fmt(offerPrice(g, b))}</button></div>`).join('') : '<p class="muted">Túi đồ trống.</p>'}<div class="msg" role="status"></div>`;
     const say = t => { const e = ents.get(b.id); if (e) botSay(e, t); };
-    B.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => { const g = b.inv[+x.dataset.buy]; const p = buyPrice(g); if (!g || S.gold < p || S.inv.length >= BAG_MAX) { log(S.inv.length >= BAG_MAX ? 'Túi đầy.' : 'Không đủ vàng.', '#ff9a9a'); return; }
-      S.gold -= p; b.gold += p; b.inv.splice(+x.dataset.buy, 1); delete g.pm; S.inv.push(g); log(`Đã mua [${g.name}] của ${b.name} giá ${fmt(p)} vàng.`, '#7dff9a'); say('Cảm ơn nhé!'); afterChange(); renderWorldPanel(); });
+    B.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => { const g = b.inv[+x.dataset.buy]; const p = buyPrice(g); if (!g || S.gold < p || (S.inv.length >= BAG_MAX && !S.inv.some(q => stackKey(q) && stackKey(q) === stackKey(g)))) { log(S.inv.length >= BAG_MAX ? 'Túi đầy.' : 'Không đủ vàng.', '#ff9a9a'); return; }
+      S.gold -= p; b.gold += p; const got = takeOne(b.inv, g); delete got.pm; addItem(got); log(`Đã mua [${g.name}] của ${b.name} giá ${fmt(p)} vàng.`, '#7dff9a'); say('Cảm ơn nhé!'); afterChange(); renderWorldPanel(); });
     B.querySelectorAll('[data-sell]').forEach(x => x.onclick = () => { const g = S.inv.find(q => q.id === x.dataset.sell); if (!g) return; const p = offerPrice(g, b); if (b.gold < p) return;
-      S.inv = S.inv.filter(q => q !== g); S.gold += p; b.gold -= p; b.inv.push(g); if (b.inv.length > 12) b.inv.shift(); log(`Đã bán [${g.name}] cho ${b.name} được ${fmt(p)} vàng.`, '#ffd86a'); say('Món này ngon!'); afterChange(); renderWorldPanel(); }); }
+      const sold = takeOne(S.inv, g); S.gold += p; b.gold -= p; if (!stackInto(b.inv, sold)) { b.inv.push(sold); if (b.inv.length > 12) b.inv.shift(); } log(`Đã bán [${g.name}] cho ${b.name} được ${fmt(p)} vàng.`, '#ffd86a'); say('Món này ngon!'); afterChange(); renderWorldPanel(); }); }
   else if (wMode === 'shop') { $('wTitle').textContent = 'Hermes · Thương Nhân';
     const goods = [['e', 1, 300 + S.lv * 6], ['e', 10, 2800 + S.lv * 55], ['f', 1, 2500 + S.lv * 25], ['c', 1, 6000 + S.lv * 40]];
     B.innerHTML = `<p class="muted" style="margin-top:0">Nguyên liệu bán sẵn. Muốn bán đồ, hãy giao dịch với người chơi khác ở chợ Agora (giá tốt hơn bán thường).</p>${goods.map(([k, n, p], i) => `<div class="row">${mIcon(k)}<div class="t"><b style="color:${MATS[k].col}">${MATS[k].name} ×${n}</b><br>${MATS[k].desc}</div><button class="pb pri" data-g="${i}"${S.gold < p ? ' disabled' : ''}>Mua ${fmt(p)}</button></div>`).join('')}`;
@@ -259,7 +261,8 @@ let SAVE = null, OLD = null, running = false, best = 0;
 function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: d.lv || 1, exp: d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
   S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s];
-  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null; S.lvLog = d.lvLog || [];
+  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
+  { const inv = []; for (const g of S.inv) if (!stackInto(inv, g)) inv.push(g); S.inv = inv; } // older saves: merge loose charms into stacks S.lvLog = d.lvLog || [];
   for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
   }
 async function initStore() { try { if (window.claude && typeof window.claude.use === 'function') { const db = await window.claude.use('db'); const u = await window.claude.use('user'); if (db && u) { const id = await u.id(); if (id) { Store.db = db; Store.uid = id; } } } } catch (e) { } await refreshSave(); }
@@ -288,7 +291,7 @@ $('classGo').onclick = () => { if (!pickCls) return; S = newState(pickCls);
   $('classOv').classList.add('hide'); startRun(true); };
 function startRun(fresh) {
   $('startOv').classList.add('hide'); $('classOv').classList.add('hide'); $('menuOv').classList.add('hide'); $('hud').classList.remove('hide');
-  if (!S.bots) S.bots = newBots(); S.map = TOWN; recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); applyPetMount(); showZone(); updateHud(); fitCam = true;
+  if (!S.bots) S.bots = newBots(); else if (S.bots.length < BOT_NAMES.length) { const fresh = newBots(); for (const b of fresh) if (!S.bots.some(q => q.id === b.id)) S.bots.push(b); } S.map = TOWN; recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); applyPetMount(); showZone(); updateHud(); fitCam = true;
   if (fresh) log('Chào mừng đến Vực Lam! Chạm vào nền để di chuyển, chạm vào quái để đánh. Tự động đánh đang bật. Mở túi đồ để khảm linh thạch và chế cánh.', '#9fe8ff');
   saveGame();
 }

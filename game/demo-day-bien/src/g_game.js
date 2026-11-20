@@ -26,7 +26,7 @@ function heroStats() {
   const b = { atkP: 0, hpP: 0, defP: 0, dmgP: 0, crit: 0 }; const sc = setCounts();
   for (const k in sc) { const T = SETS[k]; if (sc[k] >= 2) for (const x in T.b2) b[x] += T.b2[x]; if (sc[k] >= 4) for (const x in T.b4) b[x] += T.b4[x]; }
   st.atk = Math.round(st.atk * (1 + b.atkP)); st.hp = Math.round(st.hp * (1 + b.hpP)); st.def = Math.round(st.def * (1 + b.defP)); st.crit += b.crit;
-  const ch = { dmg: 0, hp: 0, mp: 0 }; for (const g of S.inv) if (g.slot === 'charm') ch[g.charm]++; st.charms = ch; st.hp = Math.round(st.hp * (1 + ch.hp * 0.01)); st.mp = Math.round(st.mp * (1 + ch.mp * 0.01));
+  const ch = { dmg: 0, hp: 0, mp: 0 }; for (const g of S.inv) if (g.slot === 'charm') ch[g.charm] += qty(g); for (const k in ch) ch[k] = Math.min(CHARM_CAP, ch[k]); st.charms = ch; st.hp = Math.round(st.hp * (1 + ch.hp * 0.01)); st.mp = Math.round(st.mp * (1 + ch.mp * 0.01));
   st.dmgMul = WINGM[S.wing] * (1 + b.dmgP) * (1 + ch.dmg * 0.01); st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
   st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * 0.6 * (1 + (Mt ? Mt.spd : 0)); return st;
 }
@@ -227,8 +227,13 @@ function dropLoot(x, z, it) {
   loots.push({ g, gem, x: x + ox, z: z + oz, it, el, t: 0, name, col });
 }
 function removeLoot(l) { scene.remove(l.g); l.el.remove(); }
-const BAG_MAX = 40;
-function addItem(g) { if (S.inv.length >= BAG_MAX) { const p = sellPrice(g); S.gold += p; log(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, '#6fe7ff'); return; } S.inv.push(g); }
+const BAG_MAX = 120, CHARM_CAP = 100;
+// stackable items (charms; not personal equipment) share one slot and carry a count n
+const stackKey = g => g.slot === 'charm' ? 'charm:' + g.charm : null;
+const qty = g => g.n || 1;
+function stackInto(list, g) { const k = stackKey(g); if (!k) return false; const s = list.find(q => q !== g && stackKey(q) === k); if (!s) return false; s.n = qty(s) + qty(g); return true; }
+function takeOne(list, g) { if (qty(g) > 1) { g.n--; return Object.assign({}, g, { id: uid(), n: 1 }); } const i = list.indexOf(g); if (i >= 0) list.splice(i, 1); return g; }
+function addItem(g) { if (stackInto(S.inv, g)) return; if (S.inv.length >= BAG_MAX) { const p = sellPrice(g); S.gold += p; log(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, '#6fe7ff'); return; } S.inv.push(g); }
 function updateLoot(dt, t) {
   for (let i = loots.length - 1; i >= 0; i--) { const l = loots[i]; l.t += dt;
     l.gem.rotation.y = t * 2; l.gem.position.y = 0.45 + Math.sin(t * 3 + i) * 0.08 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
@@ -238,7 +243,7 @@ function updateLoot(dt, t) {
       if (l.t <= 40) { const it = l.it;
         if (it.kind === 'gold') { S.gold += it.amount; }
         else if (it.kind === 'mat') { S.mats[it.k] += it.amount; log(`Nhặt được [${l.name}]`, MATS[it.k].col); }
-        else { addItem(it.gear); log(`Nhặt được [${l.name}] · ${RARITY[it.gear.r].n}${it.gear.set ? ' · ' + SETS[it.gear.set].n : ''}`, it.gear.set ? SETS[it.gear.set].col : RARITY[it.gear.r].css); }
+        else { addItem(it.gear); if (it.gear.charm) recalc(); log(`Nhặt được [${l.name}] · ${RARITY[it.gear.r].n}${it.gear.set ? ' · ' + SETS[it.gear.set].n : ''}`, it.gear.set ? SETS[it.gear.set].col : RARITY[it.gear.r].css); }
         burst(l.x, 0.5, l.z, 6, l.col, 2, 0.25, 0.5); }
       removeLoot(l); loots.splice(i, 1); } }
 }
