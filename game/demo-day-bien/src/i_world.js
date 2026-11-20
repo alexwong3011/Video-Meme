@@ -92,7 +92,7 @@ function botMove(e, tx, tz, dt, sp) { const dx = tx - e.pos.x, dz = tz - e.pos.z
 function botSay(e, txt) { e.sayEl.textContent = txt; e.sayEl.style.display = 'block'; e.sayHide = S.time + 3.5; }
 function botHitMob(m, dmg, e) { if (m.dead) return; const crit = Math.random() < 0.12; dmg *= DMG_SCALE * rr(0.9, 1.1) * (crit ? 1.8 : 1) * vuln(m, CLS[e.b.cls].el) * lvDealK(m.lv - e.b.lv);
   m.hp -= dmg; m.flash = 1; m.aggro = true; if (!m.tgt || Math.random() < 0.35) m.tgt = e;
-  if (textN < 22) fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), crit ? '#ffd0a0' : '#b8c4cc', crit ? 14 : 12, null, m.T.y + 0.9 * Math.max(1, m.scale));
+  if (textN < 22) fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), crit ? '#ffd0a0' : '#b8c4cc', dmgSize(crit ? 14 : 12), null, m.T.y + 0.9 * Math.max(1, m.scale));
   burst(m.x, mobH(m), m.z, 4, C3(m.T.color), 3, 0.3, 0.4); if (m.hp <= 0) killMob(m, e); }
 function botTakeDmg(e, dmg) { const st = botStats(e.b); dmg *= 1 - st.def / (st.def + 10 * e.b.lv + 100); e.hp -= dmg; e.lastHit = S.time;
   if (e.hp <= 0) { e.dead = 6; e.hp = 0; e.C.g.visible = false; e.C.shadow.visible = false; burst(e.pos.x, 1, e.pos.z, 30, C3('#ff6a6a'), 4, 0.4, 0.7); for (const m of mobs) if (m.tgt === e) { m.tgt = null; m.aggro = false; }

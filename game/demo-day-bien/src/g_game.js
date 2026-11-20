@@ -162,12 +162,14 @@ function setMobLv(m, lv) { m.lv = lv; m.maxHp = mobHp(lv) * (m.zone.hk || 1); m.
 function removeMob(m) { scene.remove(m.group); scene.remove(m.shadow); m.el.remove(); }
 const mobH = m => m.T.y + m.T.hh * m.scale;
 function vuln(m, el) { let k = 1; if (m.frzT > 0) k *= 1.3; if (m.shockT > 0) k *= 1.2; if (m.burnT > 0) k *= 1.15; if (m.wetT > 0) k *= (el === 'ice' || el === 'thunder') ? 1.35 : 1.1; return k; }
+const DMG_TEXT = 0.6; // damage numbers at 60% of their old size (min 9px)
+const dmgSize = px => Math.max(9, Math.round(px * DMG_TEXT));
 function hitMob(m, mult, el, show = true) {
   if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m * lvDealK(m.lv - S.lv);
   m.hp -= dmg; m.flash = 1; m.aggro = true; m.tgt = null; recover(REC.hpHit, REC.mpHit); show = show && textN < 34;
   if (show) { const y = m.T.y + 0.9 * Math.max(1, m.scale);
-    fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), r.ty === 'n' ? '' : DMGC[r.ty], { n: 17, c: 22, p: 23, d: 24, t: 26, x: 30 }[r.ty] + Math.max(0, r.L - 1) * 2, r.ty === 'n' ? null : { glow: r.ty === 'x' || r.L >= 3, life: 1.1 }, y);
-    if (r.L >= 2) fxText(m.x, m.z, (r.L >= 3 ? 'SIÊU ĐÒN ' : '') + '×' + (Math.round(r.m * 10) / 10), DMGC[r.ty], 13, { life: 1.3, glow: true }, y + 0.55);
+    fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), r.ty === 'n' ? '' : DMGC[r.ty], dmgSize({ n: 17, c: 22, p: 23, d: 24, t: 26, x: 30 }[r.ty] + Math.max(0, r.L - 1) * 2), r.ty === 'n' ? null : { glow: r.ty === 'x' || r.L >= 3, life: 1.1 }, y);
+    if (r.L >= 2) fxText(m.x, m.z, (r.L >= 3 ? 'SIÊU ĐÒN ' : '') + '×' + (Math.round(r.m * 10) / 10), DMGC[r.ty], dmgSize(13), { life: 1.3, glow: true }, y + 0.55);
     burst(m.x, mobH(m), m.z, r.ty !== 'n' ? 10 : 4, C3(m.T.color), 4, 0.35, 0.5);
     if (r.L >= 4) { fxRing(m.x, m.z, 0, 1.6, DMGC[r.ty], 0.4); S.shake = Math.max(S.shake || 0, 0.12); } }
   if (m.hp <= 0) killMob(m);
@@ -314,7 +316,7 @@ function castSkill(j, pref) {
   if (zoneSk.includes(sk.id)) { const live = sks.filter(o => o.sk === sk.id); if (live.length >= 3) { const o = live[0]; o.done = true; if (o.m && o.type === 'meteor') scene.remove(o.m); } }
   S.mp -= skMp(sk); S.skCd[j] = skCd(sk); S.atkCd = 1 / HS.aps; S.castT = Math.min(0.3, 1 / HS.aps); fadeTo(H3.attack || 'Sword_Attack', 0.04, true, Math.max(1.4, HS.aps * 0.5));
   if (tg) S.face = Math.atan2(tg.x - S.pos.x, tg.z - S.pos.z);
-  const col = ELC[sk.el]; if (S.time - skNameT[j] > 2.5) { skNameT[j] = S.time; fxText(S.pos.x, S.pos.z, sk.name + '!', col, 15, { glow: true, life: 1.3 }, HERO_H + 1.3); }
+  const col = ELC[sk.el]; // skill names are no longer shown when casting
   const nP = Math.round(40 * Math.min(1, skCd(sk) / 0.8));
   for (let i = 0; i < nP; i++) { const a = rr(0, 6.28), s = rr(3, 7); emit(S.pos.x, heroG.position.y + 0.7, S.pos.z, Math.cos(a) * s, rr(0, 2), Math.sin(a) * s, C3(col), 0.4, 0.6, 0, 0.9); }
   const D = sk.mult, px = S.pos.x, pz = S.pos.z;

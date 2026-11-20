@@ -389,3 +389,8 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 
 - Bấm nút "Tự lượm" mở bảng: công tắc bật/tắt + 10 ô chọn (`LOOT_KINDS` trong g_game.js): Vàng, Đá Cường Hóa, Linh Thạch, Lông Vũ, Đồ Thường/Hiếm/Sử Thi/Huyền Thoại, Đồ Bộ (mọi độ hiếm), Bùa & Soul. Nút nhanh: Chọn tất cả / Chỉ đồ giá trị / Bỏ chọn tất cả. Lưu trong save (`lootF`). Phím L chỉ bật/tắt chung.
 - Khi tự lượm BẬT: chỉ nhặt dòng được chọn (đi qua, tự động tìm đồ, thú cưng hút đồ); dòng không chọn nằm lại rồi biến mất sau 40 giây. Khi TẮT: đi qua thì nhặt mọi thứ như trước.
+
+## 27. Vực Lam – chữ sát thương nhỏ hơn, bỏ tên kỹ năng
+
+- Số sát thương trên quái (của người chơi và bot, cả dòng "SIÊU ĐÒN ×") còn 60% cỡ cũ (`DMG_TEXT = 0.6`, tối thiểu 9px, `dmgSize()` trong g_game.js).
+- Không còn hiện tên kỹ năng khi ra chiêu.
