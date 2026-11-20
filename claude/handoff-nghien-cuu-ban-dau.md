@@ -384,3 +384,8 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - Thân ngựa dựng bằng "sweep" dọc đường cong xương sống (mặt cắt elip thay đổi: mông, eo thon, ngực sâu, cổ cong, đầu dài), chân 2 đoạn có khớp gối/khuỷu, móng; bờm là các dải lụa rủ hai bên cổ, đuôi dải dài, đều gợn sóng theo thời gian; phi nước đại 4 nhịp.
 - A Thiên Mã Bạch Ngọc (trắng ngọc, sừng xoắn vàng, bờm cầu vồng) · B Kỳ Lân Phương Đông (vảy ngọc bích viền vàng, sừng cong, bờm/đuôi lửa vàng, móng lửa) · C Tinh Linh Pha Lê (thân trong suốt, sao bên trong, sừng tinh thể, bờm cực quang) · D Thánh Mã Có Cánh (trắng vàng, giáp ngực, yên, cánh `wingB` sóng cầu vồng).
 - 4 ô camera xoay riêng, nút Phi nước đại / Xoay. Chờ người dùng chọn mẫu để thay `makeUnicorn` trong game.
+
+## 26. Vực Lam – bộ lọc tự lượm đồ
+
+- Bấm nút "Tự lượm" mở bảng: công tắc bật/tắt + 10 ô chọn (`LOOT_KINDS` trong g_game.js): Vàng, Đá Cường Hóa, Linh Thạch, Lông Vũ, Đồ Thường/Hiếm/Sử Thi/Huyền Thoại, Đồ Bộ (mọi độ hiếm), Bùa & Soul. Nút nhanh: Chọn tất cả / Chỉ đồ giá trị / Bỏ chọn tất cả. Lưu trong save (`lootF`). Phím L chỉ bật/tắt chung.
+- Khi tự lượm BẬT: chỉ nhặt dòng được chọn (đi qua, tự động tìm đồ, thú cưng hút đồ); dòng không chọn nằm lại rồi biến mất sau 40 giây. Khi TẮT: đi qua thì nhặt mọi thứ như trước.

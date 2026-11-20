@@ -6,7 +6,7 @@ WNAME[0] = 'Cánh Sơ Khai';
 let S = null;
 function newState(cls) { return { v: 2, cls, lv: 1, exp: 0, gold: 0, mats: { e: 3, c: 0, p: 0, d: 0, t: 0, x: 0, f: 0 }, st: { c: 0, p: 0, d: 0, t: 0, x: 0 }, wing: 0, inv: [], eq: {}, map: 0, auto: true,
   hp: 1, mp: 100, pos: new THREE.Vector3(0, 0, 8), face: Math.PI, atkCd: 0, atkT: 0, skCd: [0, 0, 0], castT: 0, dead: 0, lastHit: -99, time: 0, kills: 0, skillT: 0,
-  pets: [], pet: null, mounts: [], mount: null, playT: 0, autoLoot: true, bossHunt: false, miniT: 70, mini: null, rec: { t: 0, hp: 0, mp: 0 }, lvLog: [] }; }
+  pets: [], pet: null, mounts: [], mount: null, playT: 0, autoLoot: true, lootF: lootDefaults(), bossHunt: false, miniT: 70, mini: null, rec: { t: 0, hp: 0, mp: 0 }, lvLog: [] }; }
 let uidN = 1; const uid = () => 'i' + Date.now().toString(36) + (uidN++);
 function makeGear(slot, r, lv, set) {
   const base = {}; for (const k in SLOTS[slot].base) base[k] = k === 'crit' ? SLOTS[slot].base[k] * (r + 1) : Math.round(SLOTS[slot].base[k] * RMULT[r] * (1 + lv * 0.09));
@@ -227,6 +227,13 @@ function dropLoot(x, z, it) {
   const el = document.createElement('div'); el.className = 'lbl loot-lbl'; el.style.color = cls; el.textContent = name; el.style.display = 'none'; labelsEl.appendChild(el);
   loots.push({ g, gem, x: x + ox, z: z + oz, it, el, t: 0, name, col });
 }
+// loot filter: with auto-loot on, only the chosen kinds are picked up (by walking over, auto-hunt or the pet)
+const LOOT_KINDS = [['gold', 'Vàng', '#ffd36a'], ['e', 'Đá Cường Hóa', '#6fe7ff'], ['stone', 'Linh Thạch', '#c06aff'], ['f', 'Lông Vũ Thần', '#ffd85a'],
+  ['g0', 'Đồ Thường', '#e9f1f2'], ['g1', 'Đồ Hiếm', '#5fb4ff'], ['g2', 'Đồ Sử Thi', '#c58bff'], ['g3', 'Đồ Huyền Thoại', '#ffb347'], ['set', 'Đồ Bộ (mọi độ hiếm)', '#7dffb0'], ['charm', 'Bùa & Soul of Ancient', '#ff9ad8']];
+function lootDefaults() { const o = {}; for (const [k] of LOOT_KINDS) o[k] = true; return o; }
+function lootOk(it) { const F = S.lootF || (S.lootF = lootDefaults());
+  if (it.kind === 'gold') return F.gold; if (it.kind === 'mat') return it.k === 'e' ? F.e : it.k === 'f' ? F.f : F.stone;
+  const g = it.gear; if (g.charm) return F.charm; if (g.set) return F.set; return F['g' + g.r]; }
 function removeLoot(l) { scene.remove(l.g); l.el.remove(); }
 const BAG_MAX = 120, CHARM_CAP = 100;
 // stackable items (charms; not personal equipment) share one slot and carry a count n
@@ -239,8 +246,8 @@ function updateLoot(dt, t) {
   for (let i = loots.length - 1; i >= 0; i--) { const l = loots[i]; l.t += dt;
     l.gem.rotation.y = t * 2; l.gem.position.y = 0.45 + Math.sin(t * 3 + i) * 0.08 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
     const ld = Math.hypot(l.x - S.pos.x, l.z - S.pos.z);
-    if (!S.dead && S.autoLoot && l.t > 0.5 && ld < HS.loot && ld > 0.5) { const k = Math.min(1, dt * 7 / Math.max(ld, 0.6)); l.x += (S.pos.x - l.x) * k * 1.5; l.z += (S.pos.z - l.z) * k * 1.5; l.g.position.set(l.x, 0, l.z); }
-    if ((!S.dead && ld < 0.9) || l.t > 40) {
+    if (!S.dead && S.autoLoot && l.t > 0.5 && ld < HS.loot && ld > 0.5 && lootOk(l.it)) { const k = Math.min(1, dt * 7 / Math.max(ld, 0.6)); l.x += (S.pos.x - l.x) * k * 1.5; l.z += (S.pos.z - l.z) * k * 1.5; l.g.position.set(l.x, 0, l.z); }
+    if ((!S.dead && ld < 0.9 && (!S.autoLoot || lootOk(l.it))) || l.t > 40) {
       if (l.t <= 40) { const it = l.it;
         if (it.kind === 'gold') { S.gold += it.amount; }
         else if (it.kind === 'mat') { S.mats[it.k] += it.amount; log(`Nhặt được [${l.name}]`, MATS[it.k].col); }
@@ -466,7 +473,7 @@ function updateHero(dt, t) {
     // boss hunt: the main boss (then the elite) comes first; shortly before the boss spawns, wait at its gate
     if (!target && S.bossHunt) { const M = MAPS[S.map]; const bm = S.boss && !S.boss.dead ? S.boss : S.mini && !S.mini.dead ? S.mini : null;
       if (bm) target = bm; else if (M.boss && !S.boss && S.bossT < 10) { const gx = M.boss.x, gz = M.boss.z + 2.5; if (Math.hypot(gx - S.pos.x, gz - S.pos.z) > 1.2) target = { x: gx, z: gz, wait: true }; } }
-    if (!target && S.autoLoot) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time)) { best = d; target = l; } }
+    if (!target && S.autoLoot) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time) && lootOk(l.it)) { best = d; target = l; } }
     if (!target) for (const m of mobs) { if (m.dead || m.noReach > S.time) continue; if (m.boss && HS.hp < m.atk * 6) continue; if (!m.aggro && m.lv > S.lv + 4) continue; const d = Math.hypot(m.x - S.pos.x, m.z - S.pos.z) - (m.aggro ? 3 : 0); if (d < best) { best = d; target = m; } }
     if (target) { const isLoot = !target.T; const dx = target.x - S.pos.x, dz = target.z - S.pos.z, d = Math.hypot(dx, dz); const want = isLoot ? 0.3 : (Cl.melee ? Cl.range - 0.3 + (target.boss ? 0.8 : 0) : Cl.range - 1);
       const sees = isLoot || Cl.melee || los(S.pos.x, S.pos.z, target.x, target.z, 0.15);

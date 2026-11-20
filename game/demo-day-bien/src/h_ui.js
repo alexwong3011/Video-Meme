@@ -44,13 +44,14 @@ $('bAtk').addEventListener('pointerdown', e => { e.preventDefault(); attack(); }
 for (let j = 0; j < 3; j++) $('sk' + j).addEventListener('pointerdown', e => { e.preventDefault(); if (!castSkill(j)) { const sk = SKILLS[S.cls][j]; if (S.lv < sk.lv) log(sk.name + ' mở ở cấp ' + sk.lv + '.', '#93c6cf'); else if (S.mp < skMp(sk)) log('Không đủ Mana.', '#5ab0ff'); } });
 $('bAuto').onclick = () => { S.auto = !S.auto; updateHud(); };
 $('bBoss').onclick = () => { S.bossHunt = !S.bossHunt; log(S.bossHunt ? 'Săn boss: BẬT — khi tự động, ưu tiên lao tới diệt boss và tinh anh, chờ sẵn ở cổng khi boss sắp ra.' : 'Săn boss: TẮT.', '#ff9ab0'); updateHud(); };
-$('bLoot').onclick = () => { S.autoLoot = !S.autoLoot; log(S.autoLoot ? 'Tự lượm đồ: BẬT — nhân vật và thú cưng tự nhặt đồ rơi.' : 'Tự lượm đồ: TẮT — chỉ nhặt khi bạn đi qua đồ.', '#9fe8ff'); updateHud(); };
+$('bLoot').onclick = () => openWorld('loot');
+function toggleLoot() { S.autoLoot = !S.autoLoot; log(S.autoLoot ? 'Tự lượm đồ: BẬT — nhân vật và thú cưng tự nhặt đồ rơi.' : 'Tự lượm đồ: TẮT — chỉ nhặt khi bạn đi qua đồ.', '#9fe8ff'); updateHud(); };
 $('bBag').onclick = () => openBag(); $('bMap').onclick = () => openMap(); $('bMenu').onclick = () => openMenu();
 addEventListener('keydown', e => { if (!S || !running) return; input.keys[e.code] = true;
   if (e.code === 'Escape') { closeBag(); closeMap(); return; }
   if (!$('bag').classList.contains('hide') || !$('mapP').classList.contains('hide')) { if (e.code === 'KeyI') closeBag(); if (e.code === 'KeyM') closeMap(); return; }
   if (e.code === 'Space') { e.preventDefault(); attack(); } if (e.code === 'Digit1') castSkill(0); if (e.code === 'Digit2') castSkill(1); if (e.code === 'Digit3') castSkill(2);
-  if (e.code === 'KeyF') { S.auto = !S.auto; updateHud(); } if (e.code === 'KeyL') $('bLoot').click(); if (e.code === 'KeyB') $('bBoss').click(); if (e.code === 'KeyI') openBag(); if (e.code === 'KeyM') openMap(); });
+  if (e.code === 'KeyF') { S.auto = !S.auto; updateHud(); } if (e.code === 'KeyL') toggleLoot(); if (e.code === 'KeyB') $('bBoss').click(); if (e.code === 'KeyI') openBag(); if (e.code === 'KeyM') openMap(); });
 addEventListener('keyup', e => { input.keys[e.code] = false; });
 // touch / click to move: tap the sea floor to walk there, hold and drag to steer, tap a monster to attack it
 const cvs = renderer.domElement; cvs.style.touchAction = 'none';
@@ -257,6 +258,17 @@ function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; co
         <div class="t"><b style="color:${CLS[r.cls].col}">${CLS[r.cls].icon} ${r.name}</b>${r.party ? ' <span style="color:#7dff9a">◆</span>' : ''} · ${CLS[r.cls].name} · Lv ${r.lv}<br><span class="muted" style="font-size:11px">${r.where}</span></div>
         <div style="text-align:right;font:700 12px var(--ui)"><b style="color:var(--gold)">${fmt(Math.round(r.v))}</b>${k === 'eco' ? `<br><span class="muted" style="font-size:10.5px">vàng ${fmt(r.gold)} · GD ${fmt(r.traded)}</span>` : `<br><span class="muted" style="font-size:10.5px">${unit}</span>`}</div></div>`).join('')}`;
     B.querySelectorAll('[data-rk]').forEach(x => x.onclick = () => { wArg = x.dataset.rk; renderWorldPanel(); }); }
+  else if (wMode === 'loot') { $('wTitle').textContent = 'Tự lượm đồ'; const F = S.lootF;
+    B.innerHTML = `<div class="row" style="border-color:${S.autoLoot ? 'var(--cyan)' : 'rgba(242,198,107,.16)'}"><div class="t"><b style="color:${S.autoLoot ? 'var(--cyan)' : '#93c6cf'};font-size:13px">Tự lượm: ${S.autoLoot ? 'BẬT' : 'TẮT'}</b><br>${S.autoLoot ? 'Nhân vật, chế độ tự động và thú cưng chỉ nhặt các dòng được chọn bên dưới. Dòng không chọn sẽ nằm lại trên đất.' : 'Đang tắt: chỉ nhặt khi bạn tự đi qua đồ (nhặt mọi thứ).'}</div><button class="pb pri" id="lMaster">${S.autoLoot ? 'Tắt' : 'Bật'}</button></div>
+      <div class="sect" style="margin:10px 0 6px">Chọn dòng đồ sẽ nhặt</div>
+      <div class="lgrid">${LOOT_KINDS.map(([k, n, c]) => `<label class="lchk"><input type="checkbox" data-lk="${k}"${F[k] ? ' checked' : ''}><span style="color:${c}">${n}</span></label>`).join('')}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"><button class="pb" id="lAll">Chọn tất cả</button><button class="pb" id="lGood">Chỉ đồ giá trị</button><button class="pb" id="lNone">Bỏ chọn tất cả</button></div>
+      <p class="muted">"Chỉ đồ giá trị" = Sử thi, Huyền thoại, Đồ bộ, Bùa & Soul, Linh thạch, Lông vũ.</p>`;
+    $('lMaster').onclick = () => { toggleLoot(); renderWorldPanel(); };
+    B.querySelectorAll('[data-lk]').forEach(x => x.onchange = () => { F[x.dataset.lk] = x.checked; saveGame(); });
+    const setAll = f => { for (const [k] of LOOT_KINDS) F[k] = f(k); saveGame(); renderWorldPanel(); };
+    $('lAll').onclick = () => setAll(() => true); $('lNone').onclick = () => setAll(() => false);
+    $('lGood').onclick = () => setAll(k => ['g2', 'g3', 'set', 'charm', 'stone', 'f'].includes(k)); }
   else if (wMode === 'shop') { $('wTitle').textContent = 'Hermes · Thương Nhân';
     const goods = [['e', 1, 300 + S.lv * 6], ['e', 10, 2800 + S.lv * 55], ['f', 1, 2500 + S.lv * 25], ['c', 1, 6000 + S.lv * 40]];
     B.innerHTML = `<p class="muted" style="margin-top:0">Nguyên liệu bán sẵn. Muốn bán đồ, hãy giao dịch với người chơi khác ở chợ Agora (giá tốt hơn bán thường).</p>${goods.map(([k, n, p], i) => `<div class="row">${mIcon(k)}<div class="t"><b style="color:${MATS[k].col}">${MATS[k].name} ×${n}</b><br>${MATS[k].desc}</div><button class="pb pri" data-g="${i}"${S.gold < p ? ' disabled' : ''}>Mua ${fmt(p)}</button></div>`).join('')}`;
@@ -280,10 +292,10 @@ function rankRows(k) { const where = m => MAPS[m] ? MAPS[m].name : '';
 const SKEY = 'vuclam-save-v2', OLDKEY = 'vuclam-save-v1';
 const Store = { db: null, uid: null, writing: false, pending: null };
 let SAVE = null, OLD = null, running = false, best = 0;
-function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, bossHunt: !!S.bossHunt, traded: S.traded || 0, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
+function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, lootF: S.lootF, bossHunt: !!S.bossHunt, traded: S.traded || 0, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: d.lv || 1, exp: d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
   S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s];
-  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.bossHunt = !!d.bossHunt; S.traded = d.traded || 0; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
+  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.lootF = Object.assign(lootDefaults(), d.lootF || {}); S.bossHunt = !!d.bossHunt; S.traded = d.traded || 0; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
   { const inv = []; for (const g of S.inv) if (!stackInto(inv, g)) inv.push(g); S.inv = inv; } // older saves: merge loose charms into stacks S.lvLog = d.lvLog || [];
   for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
   }
