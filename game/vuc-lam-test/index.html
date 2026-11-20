@@ -25,6 +25,17 @@ body{background:var(--abyss);color:var(--ink);font-family:var(--ui);overflow:hid
 .lbl .hp.b{width:90px;height:6px;visibility:visible}
 .lbl .hp i{display:block;height:100%;width:100%;background:linear-gradient(#ff8a7a,#c92f2f);transform-origin:left}
 .lbl.loot{font:700 11px var(--ui);text-shadow:0 1px 2px #000,0 0 5px #000}
+.tile .qt{position:absolute;right:3px;bottom:2px;font:800 10.5px var(--ui);color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000}
+.lbl.bot .nm{color:#bfe8ff}.lbl.npc .nm{color:#ffd86a;font-size:12px}
+.lbl .say{display:none;margin:3px auto 0;max-width:160px;white-space:normal;background:rgba(4,20,26,.82);border:1px solid rgba(111,231,255,.35);border-radius:8px;padding:3px 7px;font:600 10.5px/1.3 var(--ui);color:#e8f8ff}
+.lbl.npc .say{background:#c99a3c;color:#fff;border:0;width:16px;padding:1px 0;border-radius:50%;font-weight:800}
+#bParty{position:absolute;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:700 11px var(--ui)}
+#bParty.on{border-color:#7dff9a;box-shadow:0 0 12px rgba(125,255,154,.4)}
+#partyF{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));top:92px;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+#partyF div{background:rgba(4,20,26,.7);border:1px solid rgba(111,231,255,.25);border-radius:6px;padding:3px 6px;font:600 10.5px var(--ui);color:#dff4ff;width:118px}
+#partyF i{display:block;height:3px;margin-top:2px;background:linear-gradient(90deg,#7dff9a,#2a9a4a);transform-origin:left}
+#invite{position:absolute;left:50%;top:150px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;font:600 12.5px/1.4 var(--ui);color:var(--ink);text-align:center;pointer-events:auto;z-index:5;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+#invite .acts{display:flex;gap:8px;justify-content:center;margin-top:8px}
 .lbl.hero{font:700 13px/1 var(--display);color:var(--gold);letter-spacing:.06em;text-shadow:0 1px 2px #000,0 0 6px #000}
 .dmg{position:absolute;font:700 17px/1 var(--ui);color:#fff;text-shadow:0 2px 3px #000,0 0 8px rgba(0,0,0,.7);animation:rise .9s cubic-bezier(.2,.7,.3,1) forwards;pointer-events:none;white-space:nowrap}
 .dmg.big{font:700 30px/1 var(--display);color:var(--gold);letter-spacing:.08em}
@@ -201,6 +212,9 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   <div id="zone"><h1 id="zoneName"></h1><p id="zoneSub"></p></div>
   <div id="banner"></div>
   <div id="log"></div>
+  <button id="bParty" aria-label="Nhóm">Nhóm</button>
+  <div id="partyF"></div>
+  <div id="invite" class="hide" role="alertdialog"></div>
   <div class="actions">
     <button id="bLoot" aria-pressed="true" aria-label="Bật hoặc tắt tự lượm đồ">Tự<br>lượm</button>
     <button id="bAuto" aria-pressed="true" aria-label="Bật hoặc tắt tự động đánh">Tự<br>động</button>
@@ -232,6 +246,11 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 <div class="pnl hide" id="mapP" role="dialog" aria-modal="true" aria-labelledby="mapTitle" style="max-width:520px;max-height:560px">
   <header><h2 id="mapTitle">Bản đồ Vực Lam</h2><button class="x" id="mapClose" aria-label="Đóng">×</button></header>
   <div class="body maps" id="mapList"></div>
+</div>
+
+<div class="pnl hide" id="wP" role="dialog" aria-modal="true" aria-labelledby="wTitle" style="max-width:560px;max-height:620px">
+  <header><h2 id="wTitle">Nhóm</h2><button class="x" id="wClose" aria-label="Đóng">×</button></header>
+  <div class="body" id="wBody"></div>
 </div>
 
 <div class="ov" id="startOv">
@@ -709,7 +728,7 @@ const heroMats = {
   glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(0x7fe9ff).multiplyScalar(2.6) }),
   blade: stylized({ color: 0xcfe6ff, metalness: 0.95, roughness: 0.15, envMapIntensity: 1.8 }, 0x9ff4ff, 0.9, 1.8)
 };
-function buildArmor(model, cls) {
+function buildArmor(model, cls, mats, T3) {
   model.updateMatrixWorld(true);
   const bone = n => model.getObjectByName(n);
   const P = n => bone(n).getWorldPosition(new THREE.Vector3());
@@ -731,7 +750,7 @@ function buildArmor(model, cls) {
     const m = new THREE.Mesh(g, mat); m.position.copy(A); m.quaternion.setFromUnitVectors(Y, d.normalize());
     bone(a).attach(m); return m;
   };
-  const M = heroMats;
+  const M = mats || heroMats, HT = T3 || H3;
   for (const s of ['l', 'r']) {
     const side = P('upperarm_' + s).sub(P('spine_03')).dot(right) > 0 ? 1 : -1;
     // pauldron: three overlapping lames, gold trim and a pair of spikes
@@ -820,8 +839,8 @@ function buildArmor(model, cls) {
       const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, -0.45, 0), new THREE.Vector3(0, 0, -0.28), new THREE.Vector3(0, 0.45, 0));
       bow.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 18, 0.013, 6), M.gold)); bow.add(new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.9, 4), M.glow));
       for (const sd of [-1, 1]) { const g = new THREE.Mesh(new THREE.OctahedronGeometry(0.025), M.glow); g.position.y = sd * 0.45; bow.add(g); }
-      bow.position.copy(l.palm); bow.quaternion.setFromUnitVectors(Y, l.grip); bone('hand_l').attach(bow); const t2 = new THREE.Object3D(); t2.position.copy(l.palm); bone('hand_l').attach(t2); H3.tip = t2; }
-    else { const r = hand('r'); sw.add(tip); sw.position.copy(r.palm).addScaledVector(r.grip, -0.03); sw.quaternion.setFromUnitVectors(Y, r.grip); bone('hand_r').attach(sw); H3.tip = tip; } }
+      bow.position.copy(l.palm); bow.quaternion.setFromUnitVectors(Y, l.grip); bone('hand_l').attach(bow); const t2 = new THREE.Object3D(); t2.position.copy(l.palm); bone('hand_l').attach(t2); HT.tip = t2; }
+    else { const r = hand('r'); sw.add(tip); sw.position.copy(r.palm).addScaledVector(r.grip, -0.03); sw.quaternion.setFromUnitVectors(Y, r.grip); bone('hand_r').attach(sw); HT.tip = tip; } }
   // under-suit for the mannequin itself
   model.traverse(o => { if (o.isSkinnedMesh) { o.material = M.suit; o.frustumCulled = false; } });
 }
@@ -1476,45 +1495,54 @@ const MAPS = [
       coral: [[0xff4f9a, 0xffb0e0], [0x9a5bff, 0xd8b8ff], [0xff7a3d, 0xffd08a], [0x3fd1c8, 0xb8fff4]], sponge: [0xffb43d, 0xff6a5a, 0xc8ff6a], fan: [0xff5fa8, 0xb07bff, 0xffa34d], mote: [0x7fdcef, 0xbff4ff] },
     zones: [{ k: 'jelly', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fish', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'jellyBlue', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishNight', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossJelly', x: 0, z: -12.5, off: 8, respawn: 180 } },
-  { name: 'Rừng Tảo U Linh', req: 70, lo: 70, hi: 170, set: 'vay', env: 'sea', culture: 'Biển Sâu', mini: 'seaSerpent',
+  { name: 'Rừng Tảo U Linh', req: 1, lo: 70, hi: 170, set: 'vay', env: 'sea', culture: 'Biển Sâu', mini: 'seaSerpent',
     pal: { sa: [0.035, 0.12, 0.08], sb: [0.13, 0.27, 0.17], pt: [0.02, 0.08, 0.05], ca: [0.35, 0.85, 0.5], fog: 0x062418, bg: 0x072c1e, rock: [0x6fbf7c, 0x24603a, 0x0a2a16, 0xc8ffc0], weed: [0x2fae5a, 0x4fd47a, 0x1f8a4a, 0x8ae07a, 0x3fc38a], weedH: 1.5, weedE: 0x0c4a1a, stone: 0x6a9a7a, rune: 0x7dff9a, portal: [0x0d7a3a, 0x9affb0],
       coral: [[0x3fd1c8, 0xb8fff4], [0xb0ff5a, 0xf4ffc0], [0x6aff8a, 0xd8ffb0], [0xffd23a, 0xfff0a0]], sponge: [0xc8ff6a, 0xffd23a, 0x6affc8], fan: [0x6aff8a, 0x3fd1c8, 0xd8ff6a], mote: [0x9fffb8, 0xd8ffe0] },
     zones: [{ k: 'jellyGreen', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fishMoss', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'seaSerpent', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishGold', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossFish', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Hố Thẳm Dung Nham', req: 150, lo: 150, hi: 250, set: 'dung', env: 'sea', culture: 'Biển Lửa', mini: 'fireSpirit',
+  { name: 'Hố Thẳm Dung Nham', req: 1, lo: 150, hi: 250, set: 'dung', env: 'sea', culture: 'Biển Lửa', mini: 'fireSpirit',
     pal: { sa: [0.09, 0.04, 0.04], sb: [0.24, 0.12, 0.09], pt: [0.05, 0.02, 0.02], ca: [0.9, 0.42, 0.18], fog: 0x1e0c0a, bg: 0x241010, rock: [0xa0604a, 0x4a2a24, 0x160a08, 0xffb07a], weed: [0x8a2a1a, 0xc8401a, 0x5a1a10, 0xe0603a], weedH: 0.8, weedE: 0x4a0a00, stone: 0x6a4a44, rune: 0xff8a3a, portal: [0x8a1a04, 0xffb05a],
       coral: [[0xff4a1a, 0xffd08a], [0xff7a3d, 0xfff0a0], [0xd02a4a, 0xffa0b0], [0xffb43d, 0xfff4c0]], sponge: [0xff6a3a, 0xffb43d, 0xd02a4a], fan: [0xff5a2a, 0xffa34d, 0xff3a6a], mote: [0xffa070, 0xffd8b0] },
     zones: [{ k: 'jellyRed', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fishLava', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'fireSpirit', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishBlack', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossLava', x: 0, z: -12.5, off: 8, respawn: 240 } },
-  { name: 'Sa Mạc Hoàng Kim', culture: 'Ai Cập', req: 230, lo: 230, hi: 330, set: 'sa', env: 'desert', exposure: 0.78, mini: 'sphinx',
+  { name: 'Sa Mạc Hoàng Kim', culture: 'Ai Cập', req: 1, lo: 230, hi: 330, set: 'sa', env: 'desert', exposure: 0.78, mini: 'sphinx',
     pal: { sa: [0.154, 0.105, 0.055], sb: [0.242, 0.176, 0.094], pt: [0.187, 0.127, 0.066], ca: [0.06, 0.05, 0.03], fog: 0x8a6a4a, bg: 0xa08060, fogD: 0.011, rock: [0xd8b07a, 0x8a6a3a, 0x4a3420, 0xffe0a0], weed: [0x8a9a3a, 0xa0a848, 0x6a7a2a], weedH: 0.5, weedE: 0x2a2a0a, stone: 0xc8a46a, rune: 0x6fe7ff, portal: [0x0d5a99, 0x66f2ff], coral: [[0x8a9a3a, 0xc8d070]], sponge: [0xc8a050], fan: [0xa0a040], mote: [0xffe0a0, 0xfff0d0], moteRise: [0.15, 0.4], hemi: [0xfff0d8, 0x6a4a2a, 1.1], sun: [0xfff0c8, 2.2], light: 0xffc87a, shaft: [0.3, 0.24, 0.12], spk: 0.6 },
     zones: [{ k: 'scarab', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'mummy', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'apep', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'sandGolem', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossApep', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Thánh Địa Olympus', culture: 'Hy Lạp', req: 310, lo: 310, hi: 410, set: 'olym', env: 'olympus', exposure: 0.68, mini: 'griffin',
+  { name: 'Thánh Địa Olympus', culture: 'Hy Lạp', req: 1, lo: 310, hi: 410, set: 'olym', env: 'olympus', exposure: 0.68, mini: 'griffin',
     pal: { sa: [0.121, 0.132, 0.094], sb: [0.198, 0.209, 0.160], pt: [0.099, 0.143, 0.066], ca: [0.05, 0.06, 0.05], fog: 0x6a8098, bg: 0x7a90a8, fogD: 0.012, rock: [0xd8d4c8, 0x8a8a80, 0x4a4a44, 0xffffff], weed: [0x6a8a3a, 0x8aa050], weedH: 0.5, weedE: 0x1a2a0a, stone: 0xe8e4d8, rune: 0xffd86a, portal: [0x8a6a10, 0xffe8a0], coral: [[0x6a8a3a, 0xb0c880]], sponge: [0x8a9a5a], fan: [0x8aa050], mote: [0xfff0c8, 0xffffff], moteRise: [0.2, 0.6], hemi: [0xe8f4ff, 0x4a5a3a, 1.15], sun: [0xfff4e0, 2.3], light: 0xffe0a0, shaft: [0.3, 0.28, 0.2], spk: 0.2 },
     zones: [{ k: 'harpy', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'cyclops', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'gorgon', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'shade', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossTitan', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Rừng Trúc Linh Hồ', culture: 'Đông Á', req: 390, lo: 390, hi: 490, set: 'ho', env: 'bamboo', exposure: 0.9, mini: 'tengu',
+  { name: 'Rừng Trúc Linh Hồ', culture: 'Đông Á', req: 1, lo: 390, hi: 490, set: 'ho', env: 'bamboo', exposure: 0.9, mini: 'tengu',
     pal: { sa: [0.088, 0.132, 0.066], sb: [0.165, 0.209, 0.110], pt: [0.231, 0.165, 0.176], ca: [0.04, 0.06, 0.03], fog: 0x5a7a6a, bg: 0x6a8a7a, fogD: 0.03, rock: [0x8a9a8a, 0x4a5a4a, 0x2a3a2a, 0xd8f0d8], weed: [0x4a8a3a, 0x6aaa4a], weedH: 0.6, weedE: 0x0a2a0a, stone: 0x7a8a7a, rune: 0xff8ab0, portal: [0x8a1a4a, 0xffa8d8], coral: [[0x4a8a3a, 0xa0d070]], sponge: [0x6a9a4a], fan: [0x6aaa4a], mote: [0xffb8d8, 0xffffff], moteRise: [-0.25, 0.5], hemi: [0xd8fff0, 0x2a4a2a, 1.5], sun: [0xfff0e0, 2.4], light: 0xffb8d8, shaft: [0.2, 0.26, 0.2], spk: 0.0 },
     zones: [{ k: 'kitsune', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'oni', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'yurei', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'jadeDragon', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossLong', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Đầm Lầy U Minh', culture: 'Đông Âu', req: 470, lo: 470, hi: 570, set: 'dam', env: 'swamp', exposure: 1.0, mini: 'zmey',
+  { name: 'Đầm Lầy U Minh', culture: 'Đông Âu', req: 1, lo: 470, hi: 570, set: 'dam', env: 'swamp', exposure: 1.0, mini: 'zmey',
     pal: { sa: [0.044, 0.055, 0.039], sb: [0.088, 0.105, 0.066], pt: [0.028, 0.066, 0.055], ca: [0.08, 0.16, 0.08], fog: 0x1a2a22, bg: 0x1a2a24, fogD: 0.04, rock: [0x5a6a50, 0x2a3424, 0x10140c, 0x9ab080], weed: [0x4a5a2a, 0x6a7a3a, 0x3a4a1a], weedH: 0.7, weedE: 0x0a1a00, stone: 0x4a5a48, rune: 0x7dff9a, portal: [0x0d5a2a, 0x9affb0], coral: [[0x4a5a2a, 0x8a9a5a]], sponge: [0x5a6a3a], fan: [0x4a5a2a], mote: [0x9affb0, 0xd8ffe0], moteRise: [0.1, 0.3], hemi: [0x9ab8a0, 0x10180c, 1.2], sun: [0xb0d0b8, 1.6], light: 0x7dff9a, shaft: [0.1, 0.16, 0.1], spk: 0.0 },
     zones: [{ k: 'wisp', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'leshy', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'bogBeetle', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'rusalka', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossLeshy', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Băng Nguyên Bắc Âu', culture: 'Bắc Âu', req: 550, lo: 550, hi: 650, set: 'bac', env: 'snow', exposure: 0.78, mini: 'huginn',
+  { name: 'Băng Nguyên Bắc Âu', culture: 'Bắc Âu', req: 1, lo: 550, hi: 650, set: 'bac', env: 'snow', exposure: 0.78, mini: 'huginn',
     pal: { sa: [0.198, 0.226, 0.259], sb: [0.286, 0.319, 0.352], pt: [0.165, 0.198, 0.242], ca: [0.03, 0.04, 0.05], fog: 0x4a5a78, bg: 0x1a2a44, fogD: 0.016, rock: [0xe8f0f8, 0x8a98a8, 0x4a5464, 0xffffff], weed: [0x9ab0a0], weedH: 0.4, weedE: 0x1a2a2a, stone: 0x6a7888, rune: 0x6fe7ff, portal: [0x0d4a99, 0x9ff2ff], coral: [[0x9ab0c0, 0xffffff]], sponge: [0xc8d8e8], fan: [0xb0c0d0], mote: [0xffffff, 0xe8f4ff], moteRise: [-0.7, -1.1], hemi: [0xdff0ff, 0x3a4a5a, 1.15], sun: [0xe8f4ff, 2.0], light: 0x9fe8ff, shaft: [0.12, 0.18, 0.3], spk: 1.0 },
     zones: [{ k: 'draugr', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'jotunn', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'raven', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'jorm', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossYmir', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Cực Băng Vĩnh Hằng', culture: 'Bắc Cực', req: 630, lo: 630, hi: 730, set: 'cuc', env: 'ice', exposure: 0.82, mini: 'sedna',
+  { name: 'Cực Băng Vĩnh Hằng', culture: 'Bắc Cực', req: 1, lo: 630, hi: 730, set: 'cuc', env: 'ice', exposure: 0.82, mini: 'sedna',
     pal: { sa: [0.132, 0.187, 0.242], sb: [0.231, 0.297, 0.352], pt: [0.088, 0.143, 0.209], ca: [0.1, 0.16, 0.22], fog: 0x2a4a6a, bg: 0x0a1430, fogD: 0.02, rock: [0xbff4ff, 0x6a9ab8, 0x2a4a68, 0xffffff], weed: [0x9ad8f0], weedH: 0.4, weedE: 0x1a3a5a, stone: 0x6a8aa8, rune: 0xc0a8ff, portal: [0x4a2a99, 0xd0b8ff], coral: [[0x9ad8f0, 0xffffff]], sponge: [0xbff4ff], fan: [0x9ad8f0], mote: [0xdff8ff, 0xc0a8ff], moteRise: [-0.4, 0.5], hemi: [0xc8e8ff, 0x1a2a4a, 1.5], sun: [0xd8f0ff, 2.2], light: 0xc0a8ff, shaft: [0.14, 0.2, 0.34], spk: 1.4 },
     zones: [{ k: 'auroraSp', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'crystalBug', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'iceDragon', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'snowBird', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossPhoenixIce', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Thiên Giới Kim Quang', culture: 'Thiên Giới', req: 710, lo: 710, hi: 800, set: 'thien', env: 'heaven', exposure: 0.66, mini: 'fallen',
+  { name: 'Thiên Giới Kim Quang', culture: 'Thiên Giới', req: 1, lo: 710, hi: 800, set: 'thien', env: 'heaven', exposure: 0.66, mini: 'fallen',
     pal: { sa: [0.231, 0.209, 0.171], sb: [0.308, 0.286, 0.237], pt: [0.275, 0.226, 0.132], ca: [0.16, 0.12, 0.05], fog: 0xb89a70, bg: 0xc8aa80, fogD: 0.012, rock: [0xf0e8d8, 0xb8a888, 0x6a5a48, 0xffffff], weed: [0xd8c070], weedH: 0.4, weedE: 0x3a2a0a, stone: 0xf0e8d8, rune: 0xffd86a, portal: [0x8a5a10, 0xfff0a0], coral: [[0xffd86a, 0xffffff]], sponge: [0xffe8a0], fan: [0xffd86a], mote: [0xffe08a, 0xffffff], moteRise: [0.3, 0.8], hemi: [0xfff8e8, 0x8a6a40, 1.05], sun: [0xfff4d8, 2.1], light: 0xffd86a, shaft: [0.36, 0.3, 0.16], spk: 0.5 },
     zones: [{ k: 'phoenix', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'goldGuard', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'seraph', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'goldDragon', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossDe', x: 0, z: -12.5, off: 8, respawn: 210 } }
 ];
+
+// the hub: an ancient Greek city with no monsters, NPCs, and resting bots
+MAPS.push({ name: 'Thành Cổ Hy Lạp', culture: 'Thành chính', town: true, req: 1, lo: 1, hi: 1, env: 'town', exposure: 0.8, zones: [], boss: null, mini: null, set: 'song',
+  pal: { sa: [0.2, 0.18, 0.14], sb: [0.3, 0.27, 0.21], pt: [0.24, 0.2, 0.15], ca: [0.03, 0.03, 0.02], fog: 0x6a7888, bg: 0x7a8aa0, fogD: 0.012, rock: [0xd8d0c0, 0x8a8478, 0x4a4640, 0xffffff], weed: [0x6a8a3a, 0x8aa050], weedH: 0.5, weedE: 0x1a2a0a, stone: 0xd8d0c0, rune: 0xffd86a, portal: [0x8a6a10, 0xffe8a0], coral: [[0x6a8a3a, 0xb0c880]], sponge: [0x8a9a5a], fan: [0x8aa050], mote: [0xfff0c8, 0xffffff], moteRise: [0.15, 0.5], hemi: [0xe8f4ff, 0x5a5a4a, 1.15], sun: [0xfff4e0, 2.3], light: 0xffe0a0, shaft: [0.26, 0.24, 0.18], spk: 0.1 } });
+const TOWN = MAPS.length - 1;
+// charms: carried in the bag, each gives +1% of one stat; super rare (1% per kill)
+const CHARMS = { dmg: { n: 'Bùa Chiến Thần', d: '+1% sát thương', col: '#ff7a5a' }, hp: { n: 'Bùa Sinh Mệnh', d: '+1% máu tối đa', col: '#7dff9a' }, mp: { n: 'Bùa Linh Lực', d: '+1% mana tối đa', col: '#5ab0ff' } };
+const CHARM_RATE = 0.01;
+function makeCharm(kind, lv) { return { id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), slot: 'charm', charm: kind, r: 3, lv, name: CHARMS[kind].n, base: {}, plus: 0, set: null }; }
 
 // formulas ---------------------------------------------------------------
 // Levels: cap 800. Time per level grows exponentially so that, at the reference
@@ -1581,7 +1609,8 @@ function heroStats() {
   const b = { atkP: 0, hpP: 0, defP: 0, dmgP: 0, crit: 0 }; const sc = setCounts();
   for (const k in sc) { const T = SETS[k]; if (sc[k] >= 2) for (const x in T.b2) b[x] += T.b2[x]; if (sc[k] >= 4) for (const x in T.b4) b[x] += T.b4[x]; }
   st.atk = Math.round(st.atk * (1 + b.atkP)); st.hp = Math.round(st.hp * (1 + b.hpP)); st.def = Math.round(st.def * (1 + b.defP)); st.crit += b.crit;
-  st.dmgMul = WINGM[S.wing] * (1 + b.dmgP); st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
+  const ch = { dmg: 0, hp: 0, mp: 0 }; for (const g of S.inv) if (g.slot === 'charm') ch[g.charm] += qty(g); for (const k in ch) ch[k] = Math.min(CHARM_CAP, ch[k]); st.charms = ch; st.hp = Math.round(st.hp * (1 + ch.hp * 0.01)); st.mp = Math.round(st.mp * (1 + ch.mp * 0.01));
+  st.dmgMul = WINGM[S.wing] * (1 + b.dmgP) * (1 + ch.dmg * 0.01); st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
   st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * 0.6 * (1 + (Mt ? Mt.spd : 0)); return st;
 }
 const curPet = () => S && S.pet ? PETS.find(p => p.id === S.pet) : null;
@@ -1695,7 +1724,7 @@ function setMap(i) {
   for (const m of mobs) removeMob(m); mobs.length = 0; for (const l of loots) removeLoot(l); loots.length = 0;
   for (const zn of M.zones) for (let n = 0; n < zn.n; n++) { const [x, z] = spawnPos(zn); addMob(zn.k, zoneLv(zn), x, z, zn); }
   S.bossT = Math.min(S.bossT ?? 60, 60); S.boss = null; S.mini = null; S.miniT = Math.min(S.miniT ?? 40, 40);
-  S.pos.set(0, 0, 8); buildNav(); S.nav = null; S.moveTo = null; S.tapMob = null;
+  S.pos.set(0, 0, 8); buildNav(); if (S.bots) { clearBots(); spawnNpcs(); syncBots(); } S.nav = null; S.moveTo = null; S.tapMob = null;
 }
 
 // ---------- monsters (template jelly & spiked fish) ----------
@@ -1718,7 +1747,7 @@ const mobH = m => m.T.y + m.T.hh * m.scale;
 function vuln(m, el) { let k = 1; if (m.frzT > 0) k *= 1.3; if (m.shockT > 0) k *= 1.2; if (m.burnT > 0) k *= 1.15; if (m.wetT > 0) k *= (el === 'ice' || el === 'thunder') ? 1.35 : 1.1; return k; }
 function hitMob(m, mult, el, show = true) {
   if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m;
-  m.hp -= dmg; m.flash = 1; m.aggro = true; recover(REC.hpHit, REC.mpHit); show = show && textN < 34;
+  m.hp -= dmg; m.flash = 1; m.aggro = true; m.tgt = null; recover(REC.hpHit, REC.mpHit); show = show && textN < 34;
   if (show) { const y = m.T.y + 0.9 * Math.max(1, m.scale);
     fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), r.ty === 'n' ? '' : DMGC[r.ty], { n: 17, c: 22, p: 23, d: 24, t: 26, x: 30 }[r.ty] + Math.max(0, r.L - 1) * 2, r.ty === 'n' ? null : { glow: r.ty === 'x' || r.L >= 3, life: 1.1 }, y);
     if (r.L >= 2) fxText(m.x, m.z, (r.L >= 3 ? 'SIÊU ĐÒN ' : '') + '×' + (Math.round(r.m * 10) / 10), DMGC[r.ty], 13, { life: 1.3, glow: true }, y + 0.55);
@@ -1731,14 +1760,20 @@ function burn(m, mult) { m.burnT = 2.5; m.burnD = Math.max(m.burnD || 0, HS.atk 
 function freeze(m, t, ch) { if (ch !== undefined && Math.random() >= ch * (m.wetT > 0 ? 2 : 1)) return; const d = m.boss ? t * 0.35 : t; if (d > (m.frzT || 0)) m.frzT = d; }
 function shock(m, t) { m.shockT = Math.max(m.shockT || 0, t); m.stunT = Math.max(m.stunT || 0, m.boss ? 0.1 : 0.35); }
 function knock(m, d) { const dx = m.x - S.pos.x, dz = m.z - S.pos.z, l = Math.hypot(dx, dz) || 1; const k = m.boss ? d * 0.2 : d; const nx = m.x + dx / l * k, nz = m.z + dz / l * k; if (!collides(nx, nz, 0.4) && Math.hypot(nx, nz) < 21) { m.x = nx; m.z = nz; } }
-function killMob(m) {
-  m.dead = 1; m.hp = 0; m.respawn = m.boss ? 0 : 2.5; S.kills++; recover(REC.hpKill, REC.mpKill);
+function killMob(m, killer) {
+  m.dead = 1; m.hp = 0; m.respawn = m.boss ? 0 : 2.5;
+  const share = killer && inParty(killer.b) && !S.dead && Math.hypot(killer.pos.x - S.pos.x, killer.pos.z - S.pos.z) < 15;
+  if (!killer) { S.kills++; recover(REC.hpKill, REC.mpKill); }
   burst(m.x, mobH(m), m.z, m.boss ? 80 : 40, C3(m.T.color), m.boss ? 9 : 6, m.boss ? 0.8 : 0.5, 0.9); burst(m.x, mobH(m), m.z, m.boss ? 40 : 20, C3('#ffffff'), 3, 0.3, 0.7);
   if (m.mini) { banner('HẠ TINH ANH ' + m.T.name.toUpperCase() + '!', 'gold'); S.mini = null; S.miniT = MAPS[S.map].boss.respawn / 3; fxBeam(m.x, m.z, '#ffd27a', 1.5, 1.2); }
   const B = m.boss ? 1 : m.mini ? 1 / 3 : 0;
   if (m.boss) { S.shake = 0.5; banner('ĐÃ HẠ ' + m.T.name.toUpperCase() + '!', 'gold'); log('Hạ boss ' + m.T.name + '! Phần thưởng lớn rơi ra.', '#ffd27a'); S.boss = null; S.bossT = MAPS[S.map].boss.respawn; fxBeam(m.x, m.z, '#ffd27a', 2, 1.6); }
-  let xp = mobExp(m.lv) * (B ? 30 * B : 1) * clamp(1 + (m.lv - S.lv) * 0.05, 0.3, 1.5) * (1 + HS.expB); gainExp(Math.round(xp));
+  const xp0 = mobExp(m.lv) * (B ? 30 * B : 1);
+  if (killer) { killer.b.kills++; botGain(killer.b, xp0); killer.b.gold += Math.round((5 + m.lv) * rr(3, 8)); if (Math.random() < 0.02 + B) botLoot(killer.b); if (!share) return; }
+  else for (const b of partyBots()) if (ents.has(b.id)) botGain(b, xp0 * 0.5);
+  let xp = xp0 * clamp(1 + (m.lv - S.lv) * 0.05, 0.3, 1.5) * (1 + HS.expB) * (killer ? 0.5 : 1) * (S.party && S.party.members.length ? 1.1 : 1); gainExp(Math.round(xp));
   const lvl = m.lv, set = MAPS[S.map].set;
+  if (Math.random() < CHARM_RATE) { const c = makeCharm(pick(['dmg', 'hp', 'mp']), lvl); dropLoot(m.x, m.z, { kind: 'gear', gear: c }); log('✦ Siêu hiếm! ' + c.name + ' rơi ra!', CHARMS[c.charm].col); }
   if (B || Math.random() < 0.25) dropLoot(m.x, m.z, { kind: 'gold', amount: Math.round((5 + lvl) * rr(6, 14) * (B ? 25 * B : 1) * (1 + HS.goldB)) });
   const mats = {}; for (const k of MKEYS) if (Math.random() < DROP[k]) mats[k] = 1;
   if (B) { const big = { e: 8, c: 4, p: 3, d: 2, f: 6 }; for (const k in big) { const v = big[k] * B; mats[k] = Math.floor(v) + (Math.random() < v % 1 ? 1 : 0); if (!mats[k]) delete mats[k]; } if (Math.random() < 0.4 * B) mats.t = 1; if (Math.random() < 0.1 * B) mats.x = 1; }
@@ -1767,7 +1802,7 @@ function dropLoot(x, z, it) {
   const g = new THREE.Group(); let col, geo, name, beam = false, cls = '';
   if (it.kind === 'gold') { col = new THREE.Color(0xffd36a); geo = new THREE.CylinderGeometry(0.16, 0.16, 0.05, 16); name = `${it.amount} Vàng`; cls = 'var(--gold)'; }
   else if (it.kind === 'mat') { const M = MATS[it.k]; col = new THREE.Color(M.col); geo = it.k === 'e' ? new THREE.IcosahedronGeometry(0.14) : it.k === 'f' ? FEATHER : new THREE.OctahedronGeometry(0.15).scale(0.8, 1.3, 0.8); name = M.name + (it.amount > 1 ? ' ×' + it.amount : ''); cls = M.col; beam = ['t', 'x', 'f'].includes(it.k); }
-  else { const gr = it.gear; col = new THREE.Color(gr.set ? SETS[gr.set].col : RARITY[gr.r].css); geo = new THREE.OctahedronGeometry(0.18); name = gr.name + (gr.plus ? ` +${gr.plus}` : ''); cls = gr.set ? SETS[gr.set].col : RARITY[gr.r].css; beam = gr.r >= 1; }
+  else { const gr = it.gear; col = new THREE.Color(gr.charm ? CHARMS[gr.charm].col : gr.set ? SETS[gr.set].col : RARITY[gr.r].css); geo = new THREE.OctahedronGeometry(0.18); name = gr.name + (gr.plus ? ` +${gr.plus}` : ''); cls = gr.charm ? CHARMS[gr.charm].col : gr.set ? SETS[gr.set].col : RARITY[gr.r].css; beam = gr.r >= 1; }
   const gem = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, metalness: 0.8, roughness: 0.2, emissive: col, emissiveIntensity: it.kind === 'gold' ? 0.6 : 1.4, side: THREE.DoubleSide })); gem.position.y = 0.45; g.add(gem);
   if (beam) { const bm = beamMatBase.clone(); bm.uniforms.uC.value = col.clone().multiplyScalar(1.2); g.add(new THREE.Mesh(beamGeo, bm)); }
   const ox = rr(-0.8, 0.8), oz = rr(-0.8, 0.8); g.position.set(x + ox, 0, z + oz); scene.add(g);
@@ -1775,8 +1810,13 @@ function dropLoot(x, z, it) {
   loots.push({ g, gem, x: x + ox, z: z + oz, it, el, t: 0, name, col });
 }
 function removeLoot(l) { scene.remove(l.g); l.el.remove(); }
-const BAG_MAX = 40;
-function addItem(g) { if (S.inv.length >= BAG_MAX) { const p = sellPrice(g); S.gold += p; log(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, '#6fe7ff'); return; } S.inv.push(g); }
+const BAG_MAX = 120, CHARM_CAP = 100;
+// stackable items (charms; not personal equipment) share one slot and carry a count n
+const stackKey = g => g.slot === 'charm' ? 'charm:' + g.charm : null;
+const qty = g => g.n || 1;
+function stackInto(list, g) { const k = stackKey(g); if (!k) return false; const s = list.find(q => q !== g && stackKey(q) === k); if (!s) return false; s.n = qty(s) + qty(g); return true; }
+function takeOne(list, g) { if (qty(g) > 1) { g.n--; return Object.assign({}, g, { id: uid(), n: 1 }); } const i = list.indexOf(g); if (i >= 0) list.splice(i, 1); return g; }
+function addItem(g) { if (stackInto(S.inv, g)) return; if (S.inv.length >= BAG_MAX) { const p = sellPrice(g); S.gold += p; log(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, '#6fe7ff'); return; } S.inv.push(g); }
 function updateLoot(dt, t) {
   for (let i = loots.length - 1; i >= 0; i--) { const l = loots[i]; l.t += dt;
     l.gem.rotation.y = t * 2; l.gem.position.y = 0.45 + Math.sin(t * 3 + i) * 0.08 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
@@ -1786,7 +1826,7 @@ function updateLoot(dt, t) {
       if (l.t <= 40) { const it = l.it;
         if (it.kind === 'gold') { S.gold += it.amount; }
         else if (it.kind === 'mat') { S.mats[it.k] += it.amount; log(`Nhặt được [${l.name}]`, MATS[it.k].col); }
-        else { addItem(it.gear); log(`Nhặt được [${l.name}] · ${RARITY[it.gear.r].n}${it.gear.set ? ' · ' + SETS[it.gear.set].n : ''}`, it.gear.set ? SETS[it.gear.set].col : RARITY[it.gear.r].css); }
+        else { addItem(it.gear); if (it.gear.charm) recalc(); log(`Nhặt được [${l.name}] · ${RARITY[it.gear.r].n}${it.gear.set ? ' · ' + SETS[it.gear.set].n : ''}`, it.gear.set ? SETS[it.gear.set].col : RARITY[it.gear.r].css); }
         burst(l.x, 0.5, l.z, 6, l.col, 2, 0.25, 0.5); }
       removeLoot(l); loots.splice(i, 1); } }
 }
@@ -1817,6 +1857,7 @@ function attack(pref) {
 function chain(m0) { const list = [m0]; for (let j = 0; j < 2; j++) { const l = list[list.length - 1]; let b = null, bd = 3; for (const m of mobs) { if (m.dead || list.includes(m)) continue; const d = Math.hypot(m.x - l.x, m.z - l.z); if (d < bd) { bd = d; b = m; } } if (!b) break; list.push(b); }
   fxBolt([heroTip(), ...list.map(m => new THREE.Vector3(m.x, mobH(m), m.z))], '#c8a8ff', 0.22); list.slice(1).forEach(m => { hitMob(m, 0.6, 'thunder'); if (Math.random() < 0.3) shock(m, 1.5); }); }
 function projHit(p, m) {
+  if (p.bot) { if (p.bot.alive) botHitMob(m, p.mult, p.bot); return; }
   const Cl = CLS[S.cls]; if (p.type === 'pet') { hitMob(m, p.mult, 'holy'); burst(m.x, mobH(m), m.z, 6, C3('#ffe08a'), 2, 0.25, 0.4); return; }
   if (p.type === 'holy') { for (const o of mobsNear(m.x, m.z, Cl.splash)) hitMob(o, p.mult, 'holy'); fxRing(m.x, m.z, 0, Cl.splash, '#ffd85a', 0.35); burst(m.x, mobH(m), m.z, 14, C3('#ffe680'), 3, 0.3, 0.5); return; }
   hitMob(m, p.mult, p.el);
@@ -1960,17 +2001,19 @@ function applyGearVisuals() {
 }
 function updateHero(dt, t) {
   S.playT += dt; updatePet(dt, t); updateMount(dt, t, Math.hypot(input.x, input.z) > 0 || !!S.moveTo);
-  if (S.dead > 0) { S.dead -= dt; if (S.dead <= 0) { S.dead = 0; S.pos.set(0, 0, 8); recalc(true); heroG.visible = true; fxBeam(0, 8, '#9fe8ff', 1.2); } return; }
+  if (S.dead > 0) { S.dead -= dt; if (S.dead <= 0) { S.dead = 0; if (!isTown()) travel(TOWN); S.pos.set(0, 0, 8); recalc(true); heroG.visible = true; fxBeam(0, 8, '#9fe8ff', 1.2); } return; }
   let mx = 0, mz = 0;
   if (input.keys.KeyW || input.keys.ArrowUp) mz -= 1; if (input.keys.KeyS || input.keys.ArrowDown) mz += 1; if (input.keys.KeyA || input.keys.ArrowLeft) mx -= 1; if (input.keys.KeyD || input.keys.ArrowRight) mx += 1;
   let mag = Math.hypot(mx, mz); const keys = mag > 0.12; const Cl = CLS[S.cls];
   if (keys) { S.moveTo = null; S.tapMob = null; S.nav = null; }
+  const fol = !keys && !S.moveTo ? followLeaderDir() : null;
+  if (fol) { if (fol[0] || fol[1]) { [mx, mz] = fol; mag = 1; } else if (S.auto && !isTown()) { const m = nearestMob(Cl.range + 0.4); if (m) { S.face = Math.atan2(m.x - S.pos.x, m.z - S.pos.z); for (let j = 2; j >= 0; j--) if (castSkill(j, m)) break; attack(m); } } }
   if (S.tapMob && (S.tapMob.dead || !mobs.includes(S.tapMob))) S.tapMob = null;
   if (!keys && S.moveTo) { // touch / click: walk to the touched point
     const d = Math.hypot(S.moveTo.x - S.pos.x, S.moveTo.z - S.pos.z);
     if (d > 0.25) { [mx, mz] = navDir(S.moveTo.x, S.moveTo.z); mag = 1; if (!S.moveTo.hold && S.nav && S.nav.fail && S.time - S.moveTo.t > 4) S.moveTo = null; }
     else if (!S.moveTo.hold) S.moveTo = null;
-  } else if (!keys && (S.auto || S.tapMob)) {
+  } else if (!fol && !keys && (S.auto || S.tapMob) && !isTown()) {
     let target = S.tapMob, best = 1e9;
     if (!target && S.autoLoot) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time)) { best = d; target = l; } }
     if (!target) for (const m of mobs) { if (m.dead || m.noReach > S.time) continue; if (m.boss && HS.hp < m.atk * 6) continue; if (!m.aggro && m.lv > S.lv + 4) continue; const d = Math.hypot(m.x - S.pos.x, m.z - S.pos.z) - (m.aggro ? 3 : 0); if (d < best) { best = d; target = m; } }
@@ -2007,7 +2050,7 @@ function updateHero(dt, t) {
 const TINT = new THREE.Color();
 function updateMobs(dt, t) {
   const M = MAPS[S.map];
-  if (!S.boss) { S.bossT -= dt; if (S.bossT <= 0) { const b = M.boss; const blv = zoneLv(b); S.boss = addMob(b.k, blv, b.x, b.z, { x: b.x, z: b.z, r: 3 }); banner('BOSS XUẤT HIỆN: ' + MT[b.k].name.toUpperCase(), 'red'); log(`Boss ${MT[b.k].name} (Lv ${blv}) xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); fxBeam(b.x, b.z, '#ff6a8a', 2, 2); S.shake = 0.3; } }
+  if (!S.boss && M.boss) { S.bossT -= dt; if (S.bossT <= 0) { const b = M.boss; const blv = zoneLv(b); S.boss = addMob(b.k, blv, b.x, b.z, { x: b.x, z: b.z, r: 3 }); banner('BOSS XUẤT HIỆN: ' + MT[b.k].name.toUpperCase(), 'red'); log(`Boss ${MT[b.k].name} (Lv ${blv}) xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); fxBeam(b.x, b.z, '#ff6a8a', 2, 2); S.shake = 0.3; } }
   if (!S.mini && M.mini) { S.miniT -= dt; if (S.miniT <= 0) { const zn = pick(M.zones); const [x, z] = spawnPos(zn); S.mini = addMob(M.mini, Math.min(M.hi, zoneLv(zn) + 4), x, z, zn, true);
       banner('TINH ANH XUẤT HIỆN: ' + MT[M.mini].name.toUpperCase(), 'gold'); log(`★ Tinh anh ${MT[M.mini].name} xuất hiện! Phần thưởng bằng 1/3 boss.`, '#ffd27a'); fxBeam(x, z, '#ffd27a', 1.6, 1.4); } }
   for (const m of mobs) {
@@ -2020,14 +2063,18 @@ function updateMobs(dt, t) {
     if (m.shockT > 0 && Math.random() < dt * 6) emit(m.x + rr(-0.3, 0.3), mobH(m) + rr(-0.2, 0.2), m.z + rr(-0.3, 0.3), rr(-0.5, 0.5), rr(-0.5, 0.5), rr(-0.5, 0.5), C3('#d8c0ff'), 0.2, 0.15, 0, 1);
     if (m.wetT > 0 && Math.random() < dt * 3) emit(m.x + rr(-0.2, 0.2), mobH(m), m.z, 0, -1.2, 0, C3('#7fd0ff'), 0.15, 0.5, -2, 1);
     const stopped = m.frzT > 0 || m.stunT > 0; const spd = (m.T.speed || 1.2) * (m.slowT > 0 ? 1 - (m.slow || 0) : 1);
-    const dh = Math.hypot(S.pos.x - m.x, S.pos.z - m.z); let moving = false; const reach = m.boss ? 2.2 : 1.0;
-    if (!m.aggro && !S.dead && dh < (m.boss ? 7 : 4.5) && m.lv >= S.lv - 25) m.aggro = true;
-    if (m.aggro && !S.dead) {
-      if (dh > (m.boss ? 18 : 14)) m.aggro = false;
-      else if (dh > reach) { if (!stopped) { m.tx = S.pos.x; m.tz = S.pos.z; moving = true; } }
-      else if (!stopped) { m.face = Math.atan2(S.pos.x - m.x, S.pos.z - m.z); m.atkCd -= dt;
-        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * (1 - HS.def / (HS.def + 10 * m.lv + 100)))); S.hp -= dmg; S.lastHit = S.time;
-          fxText(S.pos.x, S.pos.z, '-' + dmg, '#ff6b6b', 14, null, HERO_H + 0.9); if (m.boss) { fxRing(m.x, m.z, 0, 3, '#ff6a6a', 0.5, 0, 0.3); S.shake = Math.max(S.shake || 0, 0.2); } if (S.hp <= 0) heroDie(); } }
+    if (m.tgt && (!m.tgt.alive || m.tgt.dead > 0)) m.tgt = null;
+    const dP = Math.hypot(S.pos.x - m.x, S.pos.z - m.z);
+    if (!m.aggro && !S.dead && dP < (m.boss ? 7 : 4.5) && m.lv >= S.lv - 25) { m.aggro = true; m.tgt = null; }
+    if (!m.aggro && ents.size && Math.random() < 0.1) for (const e of ents.values()) if (!e.dead && Math.hypot(e.pos.x - m.x, e.pos.z - m.z) < 3.5) { m.aggro = true; m.tgt = e; break; }
+    const TP = m.tgt ? m.tgt.pos : S.pos, tGone = m.tgt ? false : !!S.dead;
+    const dh = Math.hypot(TP.x - m.x, TP.z - m.z); let moving = false; const reach = m.boss ? 2.2 : 1.0;
+    if (m.aggro && !tGone) {
+      if (dh > (m.boss ? 18 : 14)) { m.aggro = false; m.tgt = null; }
+      else if (dh > reach) { if (!stopped) { m.tx = TP.x; m.tz = TP.z; moving = true; } }
+      else if (!stopped) { m.face = Math.atan2(TP.x - m.x, TP.z - m.z); m.atkCd -= dt;
+        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * (1 - HS.def / (HS.def + 10 * m.lv + 100)))); S.hp -= dmg; S.lastHit = S.time;
+          fxText(S.pos.x, S.pos.z, '-' + dmg, '#ff6b6b', 14, null, HERO_H + 0.9); if (m.boss) { fxRing(m.x, m.z, 0, 3, '#ff6a6a', 0.5, 0, 0.3); S.shake = Math.max(S.shake || 0, 0.2); } if (S.hp <= 0) heroDie(); } } }
     } else if (!stopped) { m.wait -= dt; if (m.wait <= 0) { if (m.state === 'idle') { const a = rr(0, 6.28), d = rr(1, m.zone.r * 0.8); m.tx = m.zone.x + Math.cos(a) * d; m.tz = m.zone.z + Math.sin(a) * d; m.state = 'move'; } else { m.state = 'idle'; m.wait = rr(1.5, 4); } } if (m.state === 'move') moving = true; }
     if (moving && !stopped) { const dx = m.tx - m.x, dz = m.tz - m.z, d = Math.hypot(dx, dz);
       if (d < 0.3) { if (!m.aggro) { m.state = 'idle'; m.wait = rr(1.5, 4); } }
@@ -2051,12 +2098,185 @@ function updateMobs(dt, t) {
 }
 
 // =====================================================================
+// SHARED WORLD — AI bots that farm like players, parties, town NPCs, trading
+// =====================================================================
+const BOT_NAMES = ['LongHuyết', 'ThiênKiếm', 'BăngTâm', 'HỏaPhượng', 'LụcCung', 'TiểuLong', 'MinhNguyệt', 'HắcVũ', 'KimLân', 'PhongVân', 'TuyếtLiên', 'ThanhPhong', 'LôiĐiện', 'HoaRơi', 'ÁnhDương', 'DạXoa', 'NgọcTiêu', 'BạchHổ', 'ThầnPhong', 'VôSong'];
+const SAY_TOWN = ['Ai đi Sa Mạc farm không?', 'Bán Bùa Chiến Thần, giá tốt!', 'Cần tổ đội đánh boss!', 'Vừa lên cấp, vui quá', 'Thu mua Linh Thạch nè', 'Ai có Lông Vũ Thần bán không?', 'Nghỉ tí rồi đi cày tiếp', 'Olympus quái đông lắm', 'Đồ +9 ai mua không?', 'Tối nay đi Thiên Giới nhé'];
+const SAY_HUNT = ['Quái đông quá!', 'Boss sắp ra rồi', 'Hút máu ngon', 'Rơi đồ xịn rồi!', 'Cẩn thận tinh anh!', 'Cày tiếp nào', 'Gom quái lại đi'];
+const SAY_NO = ['Bận cày rồi bạn ơi', 'Để lúc khác nhé', 'Mình đang có nhóm rồi', 'Cấp chênh quá'];
+const isTown = () => !!MAPS[S.map].town;
+function newBots() { return BOT_NAMES.map((name, i) => ({ id: 'b' + i, name, cls: CORDER[i % 5], hue: (i * 0.137) % 1, lv: clamp(Math.round(S.lv * rr(0.6, 1.5) + ri(0, 25)), 1, MAXLV), exp: 0,
+  gold: ri(2000, 20000), map: Math.random() < 0.45 ? TOWN : 0, stT: rr(20, 200), inv: [], kills: 0 })).map(b => { if (b.map !== TOWN) b.map = pickMapFor(b.lv); for (let k = 0; k < 3; k++) botLoot(b, true); return b; }); }
+function pickMapFor(lv) { let best = 0; for (let i = 0; i < MAPS.length; i++) if (!MAPS[i].town && MAPS[i].lo <= lv + 10) best = i; return Math.random() < 0.3 && best > 0 ? best - 1 : best; }
+function botLoot(b, force) { if (b.inv.length >= 10) b.inv.shift();
+  if (!force && Math.random() < 0.08) { const c = makeCharm(pick(['dmg', 'hp', 'mp']), b.lv); if (!stackInto(b.inv, c)) b.inv.push(c); return; }
+  const q = Math.random(), r = q < 0.08 ? 3 : q < 0.3 ? 2 : q < 0.65 ? 1 : 0; const g = makeGear(Math.random() < 0.35 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, Math.max(1, b.lv - ri(0, 20)), r >= 1 && Math.random() < 0.4 ? MAPS[pickMapFor(b.lv)].set : null); if (r >= 1 && Math.random() < 0.5) g.plus = ri(1, 3 + r * 2); b.inv.push(g); }
+function botGain(b, xp) { b.exp += xp; let up = false; while (b.lv < MAXLV && b.exp >= expNeed(b.lv)) { b.exp -= expNeed(b.lv); b.lv++; up = true; }
+  const e = ents.get(b.id); if (up && e) { const st = botStats(b); e.maxHp = st.hp; e.hp = st.hp; fxRing(e.pos.x, e.pos.z, 0, 1.4, '#ffd27a', 0.6); e.el.querySelector('.nm').innerHTML = botName(b); } }
+function botStats(b) { const C = CLS[b.cls], g = 1.7 + b.lv * 0.012; return { atk: (12 + b.lv * 3.2) * C.atk * g, hp: Math.round((380 + b.lv * 55) * C.hp * 1.8), def: b.lv * 3, aps: apsOf(C.aps, asRef(b.lv) * 0.85) }; }
+const inParty = b => !!(S.party && S.party.members.includes(b.id));
+const botName = b => `${inParty(b) ? (S.party.leader === b.id ? '♛ ' : '◆ ') : ''}${b.name} · Lv ${b.lv}`;
+
+// ---------- 3D characters (same armored mannequin as the hero, each bot in its own colours) ----------
+function charMats(hue, cls) { const c = (s, l) => new THREE.Color().setHSL(hue, s, l);
+  return { suit: stylized({ color: c(0.5, 0.1), roughness: 0.75 }, 0x5d7dff, 0.25, 3), steel: stylized({ color: c(0.2, 0.68), metalness: 0.9, roughness: 0.28, envMapIntensity: 1.2 }, 0x8fe6ff, 0.45, 2.6),
+    dark: stylized({ color: c(0.45, 0.2), metalness: 0.85, roughness: 0.34 }, 0x7fb8ff, 0.35, 2.6), gold: heroMats.gold, blade: heroMats.blade,
+    cape: stylized({ color: c(0.7, 0.32), roughness: 0.7, side: THREE.DoubleSide, emissive: c(0.7, 0.08) }, 0x9f8bff, 0.5, 2), glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(CLS[cls].glow).multiplyScalar(2.4) }) }; }
+function makeChar(cls, hue, wingTier) {
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body); scene.add(g);
+  const model = SkeletonUtils.clone(heroGLTF.scene); const T3 = { tip: null }; buildArmor(model, cls, charMats(hue, cls), T3);
+  const box = new THREE.Box3().setFromObject(model); const k = HERO_H / (box.max.y - box.min.y); model.scale.setScalar(k); model.position.y = -box.min.y * k; body.add(model);
+  model.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+  const mx = new THREE.AnimationMixer(model), acts = {}; for (const c of heroGLTF.animations) acts[c.name] = mx.clipAction(c);
+  let wg = null, wR = null, wL = null; if (wingTier >= 0) { const wm = wingMat.clone(); wm.uniforms.uTime = U.uTime; const W = WTIER[Math.min(5, wingTier)]; wm.uniforms.uRoot.value.setHex(W[0]); wm.uniforms.uTip.value.setHex(new THREE.Color().setHSL(hue, 0.9, 0.5).getHex()); wm.uniforms.uEdge.value.setHex(W[2]); wm.uniforms.uB.value = 0.62 + wingTier * 0.05;
+    wg = new THREE.Group(); wg.position.set(0, HERO_H * 0.66, -0.3 * HERO_H / 2.3); wg.scale.setScalar(HERO_H / 2.3 * 1.15 * WSCALE[Math.min(5, wingTier)]); body.add(wg);
+    wR = new THREE.Mesh(wingGeo, wm); wR.position.x = 0.1; wg.add(wR); wL = new THREE.Mesh(wingGeo, wm); wL.scale.x = -1; wL.position.x = -0.1; wg.add(wL); }
+  const shadow = blob(1.5); scene.add(shadow);
+  const C = { g, body, model, mx, acts, cur: null, tip: T3.tip, wR, wL, shadow, melee: CLS[cls].melee, phase: rr(0, 6.28) };
+  C.idle = C.melee ? 'Sword_Idle' : 'Spell_Simple_Idle_Loop'; C.atk = C.melee ? 'Sword_Attack' : 'Spell_Simple_Shoot';
+  mx.addEventListener('finished', () => charPlay(C, C.idle, 0.25)); charPlay(C, C.idle, 0); return C;
+}
+function charPlay(C, name, dur, once = false, speed = 1) { const a = C.acts[name]; if (!a) return; if (C.cur === a && !once) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = once; a.timeScale = speed; a.enabled = true; a.setEffectiveWeight(1);
+  if (C.cur && C.cur !== a) a.crossFadeFrom(C.cur, dur, false); a.play(); C.cur = a; }
+function charPose(C, x, z, face, t, moving) { C.g.position.set(x, 0.55 + Math.sin(t * 2.2 + C.phase) * 0.1, z); C.g.rotation.y = face; C.shadow.position.set(x, 0.03, z);
+  C.body.rotation.x = lerp(C.body.rotation.x, moving ? 0.22 : 0, 0.1); if (C.wR) { const fl = Math.sin(t * 2.2 + C.phase + 0.6); C.wR.rotation.set(-0.5 + fl * 0.08, -0.12 - fl * 0.22 - (moving ? 0.25 : 0), 0.05 + fl * 0.1); C.wL.rotation.set(-0.5 + fl * 0.08, 0.12 + fl * 0.22 + (moving ? 0.25 : 0), -0.05 - fl * 0.1); } }
+function charRemove(C) { scene.remove(C.g); scene.remove(C.shadow); }
+
+// ---------- bots that share the map with the player ----------
+const ents = new Map(); // bot id -> live entity
+function charLabel(html, cls) { const el = document.createElement('div'); el.className = 'lbl ' + cls; el.innerHTML = html; el.style.display = 'none'; labelsEl.appendChild(el); return el; }
+function spawnBot(b, x, z) { if (!heroGLTF || ents.has(b.id)) return; const st = botStats(b); const C = makeChar(b.cls, b.hue, Math.min(5, Math.floor(b.lv / 120)));
+  const el = charLabel(`<div class="nm">${botName(b)}</div><div class="hp"><i></i></div><div class="say"></div>`, 'bot');
+  const e = { b, C, el, bar: el.querySelector('.hp i'), sayEl: el.querySelector('.say'), pos: new THREE.Vector3(x, 0, z), face: rr(0, 6.28), hp: st.hp, maxHp: st.hp, atkCd: 0, skT: rr(2, 4), tgt: null, dead: 0, alive: true, wT: 0, goal: null, sayT: rr(4, 15), nav: null, stuck: 0 };
+  ents.set(b.id, e); fxBeam(x, z, '#9fe8ff', 0.9, 0.7); return e; }
+function despawnBot(id, beam) { const e = ents.get(id); if (!e) return; if (beam) fxBeam(e.pos.x, e.pos.z, '#9fe8ff', 0.9, 0.7); charRemove(e.C); e.el.remove(); e.alive = false; ents.delete(id); for (const m of mobs) if (m.tgt === e) m.tgt = null; }
+function syncBots() { // who stands in the player's current map
+  const want = new Set(); const cap = isTown() ? 10 : 8; let n = 0;
+  for (const b of S.bots) if (inParty(b)) { b.map = S.map; want.add(b.id); n++; }
+  for (const b of S.bots) if (!want.has(b.id) && b.map === S.map && n < cap) { want.add(b.id); n++; }
+  for (const id of [...ents.keys()]) if (!want.has(id)) despawnBot(id, true);
+  for (const id of want) if (!ents.has(id)) { const b = S.bots.find(q => q.id === id); const a = rr(0, 6.28), d = inParty(b) ? 1.5 : rr(3, 12); spawnBot(b, S.pos.x * (inParty(b) ? 1 : 0) + Math.cos(a) * d, (inParty(b) ? S.pos.z : 2) + Math.sin(a) * d); }
+}
+function clearBots() { for (const id of [...ents.keys()]) despawnBot(id, false); }
+let worldT = 0;
+function worldTick() { // once a second: the off-screen world keeps playing
+  for (const b of S.bots) { if (inParty(b)) continue; b.stT -= 1;
+    if (b.map !== TOWN && !ents.has(b.id)) { botGain(b, expNeed(b.lv) / lvSeconds(b.lv) * 0.5); b.gold += Math.round((5 + b.lv) * rr(2, 6)); if (Math.random() < 0.025) botLoot(b); }
+    if (b.stT <= 0) { if (b.map === TOWN) { b.map = pickMapFor(b.lv); b.stT = rr(150, 400); } else { b.map = TOWN; b.stT = rr(50, 140); } } }
+  if (S.party && S.party.leader !== 'me' && !S.bots.some(b => b.id === S.party.leader)) S.party = null;
+  botMarket();
+  syncBots();
+  // bots sometimes invite the player
+  S.invT = (S.invT ?? 40) - 1; if (S.invT <= 0) { S.invT = rr(60, 120); if (!S.party && !inviteOpen) { const c = [...ents.values()].filter(e => !e.dead); if (c.length) offerInvite(pick(c).b); } }
+}
+// bots trade with each other: the market keeps moving even when you are away
+function botMarket() { if (Math.random() > 0.2) return; const sellers = S.bots.filter(b => b.inv.length && !inParty(b)); if (!sellers.length) return; const s = pick(sellers);
+  const buyers = S.bots.filter(b => b !== s && b.map === s.map && !inParty(b)); if (!buyers.length) return; const b = pick(buyers); const g = pick(s.inv);
+  const price = Math.round((g.slot === 'charm' ? 2500 + g.lv * 100 : sellPrice(g) * 2) * rr(0.8, 1.2)); if (b.gold < price) return;
+  const item = takeOne(s.inv, g); b.gold -= price; s.gold += price; if (!stackInto(b.inv, item)) { b.inv.push(item); if (b.inv.length > 12) b.inv.shift(); }
+  if (s.map === S.map) { const e = ents.get(b.id); if (e) botSay(e, 'Mua được ' + item.name + '!'); if (isTown() && Math.random() < 0.5) log(`🛒 ${b.name} mua [${item.name}] của ${s.name} giá ${fmt(price)} vàng.`, '#c8b88a'); } }
+function botMove(e, tx, tz, dt, sp) { const dx = tx - e.pos.x, dz = tz - e.pos.z, d = Math.hypot(dx, dz); if (d < 0.05) return false;
+  let ux = dx / d, uz = dz / d; if (!los(e.pos.x, e.pos.z, tx, tz)) { if (!e.nav || Math.hypot(e.nav.tx - tx, e.nav.tz - tz) > 1 || S.time - e.nav.t > 1.5) { const pts = findPath(e.pos.x, e.pos.z, tx, tz); e.nav = { tx, tz, t: S.time, pts: pts || [[tx, tz]], i: 0 }; }
+    const N = e.nav; while (N.i < N.pts.length - 1 && Math.hypot(N.pts[N.i][0] - e.pos.x, N.pts[N.i][1] - e.pos.z) < 0.35) N.i++; const w = N.pts[N.i], wd = Math.hypot(w[0] - e.pos.x, w[1] - e.pos.z) || 1; ux = (w[0] - e.pos.x) / wd; uz = (w[1] - e.pos.z) / wd; }
+  const st = Math.min(d, sp * dt), nx = e.pos.x + ux * st, nz = e.pos.z + uz * st; if (!collides(nx, e.pos.z, 0.45)) e.pos.x = nx; if (!collides(e.pos.x, nz, 0.45)) e.pos.z = nz;
+  const r = Math.hypot(e.pos.x, e.pos.z); if (r > 21) { e.pos.x *= 21 / r; e.pos.z *= 21 / r; }
+  let da = Math.atan2(ux, uz) - e.face; da = Math.atan2(Math.sin(da), Math.cos(da)); e.face += da * Math.min(1, dt * 8); return true; }
+function botSay(e, txt) { e.sayEl.textContent = txt; e.sayEl.style.display = 'block'; e.sayHide = S.time + 3.5; }
+function botHitMob(m, dmg, e) { if (m.dead) return; const crit = Math.random() < 0.12; dmg *= DMG_SCALE * rr(0.9, 1.1) * (crit ? 1.8 : 1) * vuln(m, CLS[e.b.cls].el);
+  m.hp -= dmg; m.flash = 1; m.aggro = true; if (!m.tgt || Math.random() < 0.35) m.tgt = e;
+  if (textN < 22) fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), crit ? '#ffd0a0' : '#b8c4cc', crit ? 14 : 12, null, m.T.y + 0.9 * Math.max(1, m.scale));
+  burst(m.x, mobH(m), m.z, 4, C3(m.T.color), 3, 0.3, 0.4); if (m.hp <= 0) killMob(m, e); }
+function botTakeDmg(e, dmg) { const st = botStats(e.b); dmg *= 1 - st.def / (st.def + 10 * e.b.lv + 100); e.hp -= dmg; e.lastHit = S.time;
+  if (e.hp <= 0) { e.dead = 6; e.hp = 0; e.C.g.visible = false; e.C.shadow.visible = false; burst(e.pos.x, 1, e.pos.z, 30, C3('#ff6a6a'), 4, 0.4, 0.7); for (const m of mobs) if (m.tgt === e) { m.tgt = null; m.aggro = false; }
+    if (inParty(e.b)) log(`${e.b.name} đã gục ngã, hồi sinh sau 6 giây.`, '#ff9a9a'); } }
+function partyLeaderPos() { if (!S.party) return null; if (S.party.leader === 'me') return S.pos; const e = ents.get(S.party.leader); return e && !e.dead ? e.pos : null; }
+function updateBots(dt, t) {
+  if (!S) return; worldT -= dt; if (worldT <= 0) { worldT = 1; worldTick(); }
+  const town = isTown(); let k = 0;
+  for (const e of ents.values()) { const b = e.b, C = e.C; k++; C.mx.update(dt);
+    if (e.sayHide && S.time > e.sayHide) { e.sayEl.style.display = 'none'; e.sayHide = 0; }
+    if (e.dead > 0) { e.dead -= dt; if (e.dead <= 0) { e.hp = e.maxHp; const L = partyLeaderPos() || S.pos; e.pos.set(L.x + rr(-1.5, 1.5), 0, L.z + rr(-1.5, 1.5)); C.g.visible = C.shadow.visible = true; fxBeam(e.pos.x, e.pos.z, '#9fe8ff', 1); } continue; }
+    const st = botStats(b); e.maxHp = st.hp; if (S.time - (e.lastHit || -9) > 4) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.03 * dt);
+    e.atkCd -= dt; e.skT -= dt; e.sayT -= dt; let moving = false; const sp = HS.spd * 0.95;
+    const party = inParty(b), follow = party && S.party.follow && S.party.leader === 'me';
+    if (e.sayT <= 0) { e.sayT = rr(8, 22); if (Math.random() < 0.6) botSay(e, pick(town ? SAY_TOWN : SAY_HUNT)); }
+    if (town) { if (!e.goal || Math.hypot(e.goal[0] - e.pos.x, e.goal[1] - e.pos.z) < 0.3) { e.wT -= dt; if (e.wT <= 0) { const a = rr(0, 6.28), d = rr(4, 12); e.goal = [Math.cos(a) * d, Math.sin(a) * d + 1]; e.wT = rr(2, 7); } }
+      else moving = botMove(e, e.goal[0], e.goal[1], dt, sp * 0.45); if (party && S.party.leader === 'me') { const d = Math.hypot(S.pos.x - e.pos.x, S.pos.z - e.pos.z); if (d > 2) { e.goal = null; moving = botMove(e, S.pos.x, S.pos.z + 1, dt, sp); } } }
+    else {
+      const range = CLS[b.cls].range + (C.melee ? 0.3 : 0);
+      if (e.tgt && (e.tgt.dead || Math.hypot(e.tgt.x - e.pos.x, e.tgt.z - e.pos.z) > 14)) e.tgt = null;
+      if (!e.tgt) { let best = 12; for (const m of mobs) { if (m.dead) continue; const d = Math.hypot(m.x - e.pos.x, m.z - e.pos.z) - (m.tgt === e ? 4 : 0) - (m.boss ? 2 : 0); if (d < best) { best = d; e.tgt = m; } } }
+      const L = partyLeaderPos();
+      if (follow) { const slot = [...S.party.members].indexOf(b.id), a = S.face + Math.PI + (slot - 1.5) * 0.9; const gx = S.pos.x + Math.sin(a) * 1.2, gz = S.pos.z + Math.cos(a) * 1.2;
+        if (Math.hypot(S.pos.x - e.pos.x, S.pos.z - e.pos.z) > 1.6 || Math.hypot(gx - e.pos.x, gz - e.pos.z) > 0.8) moving = botMove(e, gx, gz, dt, sp * 1.15); }
+      else if (party && L && Math.hypot(L.x - e.pos.x, L.z - e.pos.z) > 9) moving = botMove(e, L.x, L.z, dt, sp * 1.1);
+      else if (e.tgt) { const d = Math.hypot(e.tgt.x - e.pos.x, e.tgt.z - e.pos.z); if (d > range - 0.2) moving = botMove(e, e.tgt.x, e.tgt.z, dt, sp); }
+      else { if (!e.goal || Math.hypot(e.goal[0] - e.pos.x, e.goal[1] - e.pos.z) < 0.4) { const zn = MAPS[S.map].zones.length ? pick(MAPS[S.map].zones) : { x: 0, z: 0, r: 8 }; e.goal = [zn.x + rr(-zn.r, zn.r) * 0.6, zn.z + rr(-zn.r, zn.r) * 0.6]; } moving = botMove(e, e.goal[0], e.goal[1], dt, sp * 0.8); }
+      const m = e.tgt; if (m && !m.dead) { const d = Math.hypot(m.x - e.pos.x, m.z - e.pos.z);
+        if (d <= range + (m.boss ? 1 : 0) && e.atkCd <= 0) { e.atkCd = 1 / st.aps; e.face = Math.atan2(m.x - e.pos.x, m.z - e.pos.z); charPlay(C, C.atk, 0.04, true, Math.max(1.6, st.aps * 0.5));
+          if (C.melee) { setTimeout(() => { if (e.alive && !m.dead) { botHitMob(m, st.atk, e); burst(m.x, mobH(m), m.z, 6, C3(CLS[b.cls].col), 3, 0.3, 0.35); } }, 90); }
+          else { const from = C.tip ? C.tip.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(e.pos.x, 1.2, e.pos.z); const p = { type: CLS[b.cls].proj, m: PROJM[CLS[b.cls].proj](), pos: from.clone(), tgt: m, speed: CLS[b.cls].ps, mult: st.atk, el: CLS[b.cls].el, bot: e }; p.m.position.copy(from); scene.add(p.m); projs.push(p); } }
+        if (e.skT <= 0 && d <= Math.max(range, 5)) { e.skT = rr(2.5, 4.5); const col = ELC[CLS[b.cls].el]; fxRing(m.x, m.z, 0, 2.2, col, 0.45); burst(m.x, 0.5, m.z, 24, C3(col), 5, 0.4, 0.6); charPlay(C, C.atk, 0.04, true, 1.4);
+          for (const o of mobsNear(m.x, m.z, 2.2)) botHitMob(o, st.atk * 1.6, e); } } }
+    charPose(C, e.pos.x, e.pos.z, e.face, t, moving);
+  }
+}
+// ---------- party ----------
+let inviteOpen = false;
+function partyBots() { return S.party ? S.party.members.map(id => S.bots.find(b => b.id === id)).filter(Boolean) : []; }
+function createParty() { S.party = { leader: 'me', members: [], follow: false }; log('Đã lập nhóm. Mời người chơi khác ở gần vào nhóm.', '#9fe8ff'); }
+function leaveParty() { if (!S.party) return; const ids = S.party.members; S.party = null; for (const id of ids) { const b = S.bots.find(q => q.id === id); if (b) { b.stT = rr(30, 120); const e = ents.get(id); if (e) e.el.querySelector('.nm').innerHTML = botName(b); } } log('Đã rời nhóm.', '#9fe8ff'); }
+function inviteBot(b) { if (!S.party) createParty(); if (S.party.leader !== 'me') { log('Chỉ trưởng nhóm mới mời được.', '#ff9a9a'); return; } if (S.party.members.length >= 4) { log('Nhóm đã đủ 5 người.', '#ff9a9a'); return; }
+  if (inParty(b)) return; log(`Đã gửi lời mời tới ${b.name}…`, '#9fe8ff');
+  setTimeout(() => { if (!S || !S.party) return; const ok = Math.random() < (Math.abs(b.lv - S.lv) < 100 ? 0.8 : 0.4);
+    if (ok) { S.party.members.push(b.id); b.map = S.map; syncBots(); const e = ents.get(b.id); if (e) { e.el.querySelector('.nm').innerHTML = botName(b); botSay(e, 'Vào nhóm nè!'); } log(`${b.name} (Lv ${b.lv}) đã vào nhóm.`, '#7dff9a'); }
+    else { const e = ents.get(b.id); const no = pick(SAY_NO); if (e) botSay(e, no); log(`${b.name} từ chối: "${no}"`, '#ff9a9a'); } renderWorldPanel(); }, 1200); }
+function kickBot(id) { if (!S.party || S.party.leader !== 'me') return; S.party.members = S.party.members.filter(x => x !== id); const b = S.bots.find(q => q.id === id); if (b) { b.stT = rr(30, 90); const e = ents.get(id); if (e) e.el.querySelector('.nm').innerHTML = botName(b); } }
+function offerInvite(b) { inviteOpen = true; const box = $('invite'); box.innerHTML = `<b>${b.name}</b> · ${CLS[b.cls].name} Lv ${b.lv}<br>mời bạn vào nhóm cùng cày!<div class="acts"><button class="pb pri" id="invY">Đồng ý</button><button class="pb" id="invN">Từ chối</button></div>`; box.classList.remove('hide');
+  const close = () => { box.classList.add('hide'); inviteOpen = false; clearTimeout(tm); }; const tm = setTimeout(close, 15000);
+  $('invN').onclick = close; $('invY').onclick = () => { close(); if (S.party) return; const others = [...ents.values()].filter(e => e.b !== b && !e.dead).slice(0, ri(0, 2)).map(e => e.b.id);
+    S.party = { leader: b.id, members: [b.id, ...others], follow: true }; syncBots(); for (const id of S.party.members) { const e = ents.get(id); if (e) e.el.querySelector('.nm').innerHTML = botName(e.b); }
+    log(`Đã vào nhóm của ${b.name}. Chế độ theo sát trưởng nhóm: BẬT.`, '#7dff9a'); updateHud(); }; }
+// player as a member following the bot leader (stays within 2 m)
+function followLeaderDir() { if (!S.party || S.party.leader === 'me' || !S.party.follow) return null; const L = partyLeaderPos(); if (!L) return null; const d = Math.hypot(L.x - S.pos.x, L.z - S.pos.z); return d > 1.6 ? navDir(L.x, L.z) : [0, 0]; }
+
+// ---------- town: NPCs and scenery ----------
+const NPCS = [{ id: 'shop', n: 'Hermes · Thương Nhân', cls: 'holy', hue: 0.1, x: -6, z: 1.5 }, { id: 'smith', n: 'Hephaestus · Thợ Rèn', cls: 'fire', hue: 0.02, x: 6, z: 1.5 },
+  { id: 'pets', n: 'Artemis · Chuồng Thú', cls: 'elf', hue: 0.35, x: -6.5, z: -6 }, { id: 'guide', n: 'Iris · Dẫn Đường', cls: 'ice', hue: 0.55, x: 6.5, z: -6 }, { id: 'market', n: 'Agora · Chợ Giao Dịch', cls: 'thunder', hue: 0.75, x: 0, z: 5.5 }];
+const npcEnts = [];
+function spawnNpcs() { clearNpcs(); if (!heroGLTF || !isTown()) return; for (const n of NPCS) { const C = makeChar(n.cls, n.hue, -1); const el = charLabel(`<div class="nm">${n.n}</div><div class="say" style="display:block">!</div>`, 'npc');
+    colliders.push({ x: n.x, z: n.z, r: 0.5 }); npcEnts.push({ n, C, el, pos: new THREE.Vector3(n.x, 0, n.z), face: Math.atan2(-n.x, 8 - n.z) }); } buildNav(); }
+function clearNpcs() { for (const e of npcEnts) { charRemove(e.C); e.el.remove(); } npcEnts.length = 0; }
+function updateNpcs(dt, t) { for (const e of npcEnts) { e.C.mx.update(dt); charPose(e.C, e.pos.x, e.pos.z, e.face, t, false); e.C.g.position.y = 0.0; } }
+REALM.town = function (M) { const marble = M_(0xa8a090, { roughness: 0.6, rim: 0xfff0d0, rimS: 0.2 });
+  // fountain
+  const f = new THREE.Group(); part(new THREE.CylinderGeometry(1.9, 2.05, 0.45, 32), marble, 1, 1, 1, 0, 0.22, 0, f); part(new THREE.CylinderGeometry(1.7, 1.7, 0.06, 32), M_(0x2a7ab8, { roughness: 0.05, metalness: 0.3, emissive: new THREE.Color(0x0a2a4a), rim: 0x9fe8ff, rimS: 0.8 }), 1, 1, 1, 0, 0.42, 0, f);
+  part(new THREE.CylinderGeometry(0.2, 0.3, 1.6, 12), marble, 1, 1, 1, 0, 1.0, 0, f); part(new THREE.CylinderGeometry(0.7, 0.35, 0.2, 20), marble, 1, 1, 1, 0, 1.8, 0, f); part(SPH, M_(0xe0c070, { metalness: 0.8, roughness: 0.25 }), 0.25, 0.25, 0.25, 0, 2.15, 0, f);
+  prop(f, 0, -2, 1.9); scenery.push(() => { for (let i = 0; i < 3; i++) { const a = rr(0, 6.28); emit(Math.cos(a) * 0.2, 2.1, -2 + Math.sin(a) * 0.2, Math.cos(a) * rr(0.6, 1.1), rr(1.6, 2.4), Math.sin(a) * rr(0.6, 1.1), C3(Math.random() < 0.5 ? '#bfe8ff' : '#ffffff'), 0.18, 0.9, 4, 0.99); } });
+  // temple facade behind the gate
+  const tp = new THREE.Group(); part(new THREE.BoxGeometry(14, 0.8, 5), marble, 1, 1, 1, 0, 0.4, 0, tp); for (let i = 0; i < 8; i++) { const c = column(4.2, false, marble); c.position.set(-6 + i * 12 / 7, 0.8, 1.6); tp.add(c); }
+  part(new THREE.BoxGeometry(14.2, 0.5, 4.8), marble, 1, 1, 1, 0, 5.6, 0.2, tp); const tri = new THREE.Shape(); tri.moveTo(-7.2, 0); tri.lineTo(7.2, 0); tri.lineTo(0, 1.5); tri.lineTo(-7.2, 0); part(new THREE.ExtrudeGeometry(tri, { depth: 4.6, bevelEnabled: false }), marble, 1, 1, 1, 0, 5.85, -2.1, tp);
+  part(new THREE.BoxGeometry(5, 0.6, 0.1), glowM(0xffd86a), 1, 1, 1, 0, 6.1, 2.6, tp); tp.position.set(0, 0, -23); world.add(tp);
+  // market stalls with striped canopies and goods
+  const stall = (x, z, c) => { const g = new THREE.Group(); const wood = M_(0x6a4a2a); for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) part(CYL, wood, 0.05, 2.1, 0.05, a * 0.9, 1.05, b * 0.6, g);
+    const cg = new THREE.PlaneGeometry(2.1, 1.6, 8, 1); const col = []; const A = new THREE.Color(c), B = new THREE.Color(0xf4ecd8); const p = cg.attributes.position; for (let i = 0; i < p.count; i++) { const s = Math.floor((p.getX(i) + 1.05) / 2.1 * 8) % 2; const q = s ? A : B; col.push(q.r, q.g, q.b); } cg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    const cn = new THREE.Mesh(cg, windy(M_(0xffffff, { vertexColors: true, side: THREE.DoubleSide, roughness: 0.8 }), 0.02, 2.2)); cn.rotation.x = -Math.PI / 2 + 0.25; cn.position.y = 2.15; g.add(cn);
+    part(new THREE.BoxGeometry(1.8, 0.1, 1.0), wood, 1, 1, 1, 0, 0.85, 0, g); for (let i = 0; i < 5; i++) part(i % 2 ? SPH_LO : new THREE.BoxGeometry(1, 1, 1), M_(pick([0xff8a3a, 0x9adf5a, 0xffd23a, 0xc84a8a, 0x6fe7ff]), { roughness: 0.5 }), 0.12, 0.12, 0.12, rr(-0.7, 0.7), 1.0, rr(-0.35, 0.35), g);
+    g.rotation.y = Math.atan2(-x, -z); prop(g, x, z, 1.0); };
+  stall(-11, 4, 0xc8281a); stall(11, 4, 0x1a5ac8); stall(-12, -4, 0x2a8a3a); stall(12, -4, 0xc89a1a);
+  for (const [x, z] of [[-9, 10], [9, 10], [-15, 0], [15, 0], [-9, -11], [9, -11]]) prop(Math.random() < 0.5 ? oliveTree() : cypress(rr(3, 4)), x, z, 0.4);
+  for (const [x, z] of [[-3, 9], [3, 9], [-4, -9], [4, -9]]) prop(brazier('#ffb04a'), x, z, 0.3);
+  for (let k = 0; k < 20; k++) { const a = k / 20 * 6.283, d = rr(23, 27); world.add(at(Math.random() < 0.6 ? cypress(rr(3.5, 5)) : column(rr(2, 4), Math.random() < 0.5, marble), Math.cos(a) * d, 0, Math.sin(a) * d)); }
+  wisps(8, '#ffe8b0');
+};
+
+// =====================================================================
 // UI — HUD, input, panels, save (local + cloud), start flow, main loop
 // =====================================================================
 const heroLabel = document.createElement('div'); heroLabel.className = 'lbl hero'; heroLabel.style.display = 'none'; labelsEl.appendChild(heroLabel);
 function log(t, col) { const d = document.createElement('div'); d.textContent = t; d.style.color = col || '#e9dfc6'; const L = $('log'); L.appendChild(d); while (L.children.length > 5) L.firstChild.remove(); setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 700); }, 5500); }
 let bannerT = 0; function banner(txt, col) { const b = $('banner'); b.textContent = txt; b.style.color = col === 'red' ? '#ff6a6a' : '#ffd86a'; b.classList.add('show'); bannerT = 2.6; }
-let zoneT = 0; function showZone() { const M = MAPS[S.map]; $('zoneName').textContent = M.name; $('zoneSub').textContent = `Quái cấp ${M.lo}–${M.hi} (theo cấp bạn) · Boss ${MT[M.boss.k].name}`; $('zone').style.opacity = 1; zoneT = 4; }
+let zoneT = 0; function showZone() { const M = MAPS[S.map]; if (M.town) { $('zoneName').textContent = M.name; $('zoneSub').textContent = 'Thành chính · không có quái · NPC, chợ và người chơi nghỉ ngơi'; $('zone').style.opacity = 1; zoneT = 4; return; } $('zoneName').textContent = M.name; $('zoneSub').textContent = `Quái cấp ${M.lo}–${M.hi} (theo cấp bạn) · Boss ${MT[M.boss.k].name}`; $('zone').style.opacity = 1; zoneT = 4; }
 function pulseHud() { }
 
 // ---------- HUD ----------
@@ -2069,7 +2289,8 @@ function updateHud() {
   $('hGold').textContent = S.gold.toLocaleString('vi-VN'); $('hBag').textContent = S.inv.length;
   $('bBag').classList.toggle('dot', upgradeHint());
   const need = expNeed(S.lv); $('expBar').style.transform = `scaleX(${S.lv >= MAXLV ? 1 : S.exp / need})`; $('expTxt').textContent = S.lv >= MAXLV ? 'CẤP TỐI ĐA' : `EXP ${(S.exp / need * 100).toFixed(1)}%`;
-  $('bAuto').setAttribute('aria-pressed', String(S.auto)); $('bLoot').setAttribute('aria-pressed', String(S.autoLoot));
+  $('bAuto').setAttribute('aria-pressed', String(S.auto)); $('bParty').classList.toggle('on', !!S.party);
+  $('partyF').innerHTML = S.party ? partyBots().map(b => { const e = ents.get(b.id); return `<div>${S.party.leader === b.id ? '♛ ' : ''}${b.name} · ${b.lv}<i style="transform:scaleX(${e ? Math.max(0, e.hp / e.maxHp) : 1})"></i></div>`; }).join('') + (S.party.follow ? '<div style="color:#7dff9a">Theo sát trưởng nhóm: BẬT</div>' : '') : ''; $('bLoot').setAttribute('aria-pressed', String(S.autoLoot));
   SKILLS[S.cls].forEach((sk, j) => { const b = $('sk' + j); const lock = S.lv < sk.lv; b.classList.toggle('lock', lock); b.classList.toggle('nomp', !lock && S.mp < skMp(sk));
     b.style.setProperty('--c2', ELC[sk.el] + '99'); b.style.setProperty('--c3', ELC[sk.el] + '55');
     b.querySelector('.ic').textContent = ELI[sk.el]; b.querySelector('small').textContent = lock ? 'Lv ' + sk.lv : sk.name.split(' ').slice(0, 2).join(' ');
@@ -2077,12 +2298,15 @@ function updateHud() {
     b.setAttribute('aria-label', sk.name + (lock ? ' (mở ở cấp ' + sk.lv + ')' : '')); });
   const boss = S.boss && !S.boss.dead ? S.boss : null; $('bossbar').classList.toggle('hide', !boss);
   if (boss) { $('bossName').textContent = boss.T.name.toUpperCase() + ' · Lv ' + boss.lv; $('bossHp').style.transform = `scaleX(${Math.max(0, boss.hp / boss.maxHp)})`; $('bossInfo').textContent = ''; }
+  else if (!MAPS[S.map].boss) $('bossInfo').textContent = '';
   else { const s = Math.max(0, Math.ceil(S.bossT)); $('bossInfo').textContent = `Boss ${MT[MAPS[S.map].boss.k].name} sau ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
 }
 function updateLabels() {
   const place = (el, x, y, z) => { const [sx, sy, vis] = toScreen(tmpV.set(x, y, z)); if (!vis || sx < -80 || sx > innerWidth + 80 || sy < -40 || sy > innerHeight + 40) { el.style.display = 'none'; return; } el.style.display = ''; el.style.transform = `translate(${sx}px,${sy}px) translate(-50%,-100%)`; };
   for (const m of mobs) { if (m.dead) continue; place(m.el, m.x, m.T.y + m.T.lh * m.scale + 0.15, m.z); if (!m.boss && !m.mini) m.hpEl.style.visibility = m.hp < m.maxHp ? 'visible' : 'hidden'; m.bar.style.transform = `scaleX(${Math.max(0, m.hp / m.maxHp)})`; }
   for (const l of loots) place(l.el, l.x, 1.05, l.z);
+  for (const e of ents.values()) { if (e.dead) { e.el.style.display = 'none'; continue; } place(e.el, e.pos.x, e.C.g.position.y + HERO_H + 0.45, e.pos.z); e.bar.style.transform = `scaleX(${e.hp / e.maxHp})`; e.el.querySelector('.hp').style.visibility = e.hp < e.maxHp || inParty(e.b) ? 'visible' : 'hidden'; }
+  for (const e of npcEnts) place(e.el, e.pos.x, HERO_H + 0.35, e.pos.z);
   heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H + 0.55, S.pos.z);
 }
 
@@ -2108,7 +2332,9 @@ function mobAt(cx, cy) { let b = null, bd = 46; for (const m of mobs) { if (m.de
 function showMark(x, z, hex) { marker.position.set(x, 0.06, z); markMat.color.setHex(hex); markT = 0.6; }
 let touchId = null, touchX = 0, touchY = 0;
 function touchMove(cx, cy, hold) { const p = floorAt(cx, cy); if (!p) return; const r = Math.hypot(p.x, p.z); if (r > 20.5) p.multiplyScalar(20.5 / r); S.moveTo = { x: p.x, z: p.z, hold, t: S.time }; S.tapMob = null; showMark(p.x, p.z, 0x9fe8ff); }
-cvs.addEventListener('pointerdown', e => { if (!S || !running || paused || S.dead) return; e.preventDefault(); touchId = e.pointerId; touchX = e.clientX; touchY = e.clientY; cvs.setPointerCapture(e.pointerId);
+cvs.addEventListener('pointerdown', e => { if (!S || !running || paused || S.dead) return; e.preventDefault();
+  const who = charAt(e.clientX, e.clientY); if (who) { if (who.n) npcAct(who.n.id); else openWorld('bot', who.b.id); return; }
+  touchId = e.pointerId; touchX = e.clientX; touchY = e.clientY; cvs.setPointerCapture(e.pointerId);
   const m = mobAt(e.clientX, e.clientY); if (m) { S.tapMob = m; S.moveTo = null; S.nav = null; showMark(m.x, m.z, 0xff7a7a); touchId = null; return; }
   touchMove(e.clientX, e.clientY, true); });
 cvs.addEventListener('pointermove', e => { if (e.pointerId !== touchId || !S) return; touchX = e.clientX; touchY = e.clientY; });
@@ -2120,7 +2346,8 @@ function updateTouch(dt) { if (touchId !== null && S && !S.dead) touchMove(touch
 // ---------- icons ----------
 const GI = {
   weapon: '<path d="M19 3l-9.5 9.5M19 3h-3.5M19 3v3.5M9.5 12.5l2 2M6 14l4 4M8 16l-4 4" />', helm: '<path d="M5 15a7 7 0 0114 0v3H5zM12 4v4M8.5 15h7" />',
-  armor: '<path d="M7 4l5 2 5-2 3 4-3 2v10H7V10L4 8zM12 6v14" />', ring: '<circle cx="12" cy="14" r="6"/><path d="M9 4h6l-3 4z"/>', pendant: '<path d="M6 3c0 6 3 9 6 9s6-3 6-9"/><path d="M12 12l-3 4 3 5 3-5z"/>'
+  armor: '<path d="M7 4l5 2 5-2 3 4-3 2v10H7V10L4 8zM12 6v14" />', ring: '<circle cx="12" cy="14" r="6"/><path d="M9 4h6l-3 4z"/>', pendant: '<path d="M6 3c0 6 3 9 6 9s6-3 6-9"/><path d="M12 12l-3 4 3 5 3-5z"/>',
+  charm: '<path d="M12 2l2.6 6.2L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-.8z"/>'
 };
 const gIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${GI[k]}</svg>`;
 const mIcon = k => { const c = MATS[k].col; if (k === 'f') return `<svg viewBox="0 0 24 24"><path d="M5 20C8 12 13 6 20 3c-1 7-6 13-14 16z" fill="${c}" stroke="#000" stroke-width="1"/><path d="M5 20L17 7" stroke="#fff8d0" stroke-width="1"/></svg>`;
@@ -2135,7 +2362,7 @@ $('bagClose').onclick = closeBag;
 bagEl.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; renderBag(); });
 const fmt = n => n.toLocaleString('vi-VN');
 const findItem = id => { for (const s of SLOT_ORDER) if (S.eq[s] && S.eq[s].id === id) return { g: S.eq[s], equipped: true }; const g = S.inv.find(x => x.id === id); return g ? { g, equipped: false } : null; };
-function tileHtml(g, extra = '') { return `<button class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${gIcon(g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
+function tileHtml(g, extra = '') { return `<button style="${g.charm ? 'color:' + CHARMS[g.charm].col : ''}" class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${gIcon(g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${qty(g) > 1 ? `<span class="qt">×${qty(g)}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
 function flash(t, cls = '') { const m = bagBody.querySelector('.msg'); if (!m) return; m.textContent = t; m.className = 'msg show ' + cls; clearTimeout(msgT); msgT = setTimeout(() => { m.className = 'msg'; }, 2200); }
 function afterChange(heal) { recalc(heal); applyGearVisuals(); applyPetMount(); updateHud(); renderBag(); saveGame(); }
 function renderBag() {
@@ -2170,7 +2397,12 @@ function renderGear() {
 function renderDetail() {
   const box = $('detail'); const f = selId && findItem(selId);
   if (!f) { box.innerHTML = '<p class="muted">Chọn một món đồ để xem chỉ số, mặc vào, cường hóa hoặc bán.</p>'; return; }
-  const { g, equipped } = f; const cur = S.eq[g.slot]; const cost = upCost(g.plus), rate = upRate(g.plus); const canUp = g.plus < 15;
+  const { g, equipped } = f;
+  if (g.slot === 'charm') { const C = CHARMS[g.charm]; box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${C.col}">${g.name} ×${qty(g)}</h3><p class="muted">Bùa siêu hiếm · ${C.d} mỗi lá khi mang trong túi · cộng dồn tối đa ${CHARM_CAP} lá (đang có tác dụng ${HS.charms[g.charm]}%) · xếp chồng trong 1 ô</p></div></div>
+      <div class="acts"><button class="pb" id="aSell">Bán 1 · ${fmt(sellPrice(g))} vàng</button>${qty(g) > 1 ? `<button class="pb" id="aSellAll">Bán cả ${qty(g)} · ${fmt(sellPrice(g) * qty(g))} vàng</button>` : ''}</div>`;
+    $('aSell').onclick = () => { takeOne(S.inv, g); S.gold += sellPrice(g); if (!S.inv.includes(g)) selId = null; afterChange(); };
+    const all = $('aSellAll'); if (all) all.onclick = () => { S.gold += sellPrice(g) * qty(g); S.inv = S.inv.filter(x => x !== g); selId = null; afterChange(); }; return; }
+  const cur = S.eq[g.slot]; const cost = upCost(g.plus), rate = upRate(g.plus); const canUp = g.plus < 15;
   box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</h3>
     <p class="muted">${SLOTS[g.slot].n} · ${RARITY[g.r].n} · cấp ${g.lv}${g.set ? ' · ' + SETS[g.set].n : ''}${equipped ? ' · <b style="color:var(--cyan)">Đang mặc</b>' : ''}</p></div></div>
     <ul class="stl">${statLines(g, !equipped && cur ? cur : null)}</ul>
@@ -2234,23 +2466,76 @@ function renderSkills() {
 
 // ---------- map panel ----------
 function openMap() { closeBag(); $('mapP').classList.remove('hide');
-  $('mapList').innerHTML = MAPS.map((M, i) => { const lo = M.lo, hi = M.hi; const ok = S.lv >= M.req; const here = i === S.map;
-    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>${M.culture ? M.culture + ' · ' : ''}Quái cấp ${lo}–${hi} · Boss ${MT[M.boss.k].name}<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
+  $('mapList').innerHTML = [TOWN, ...MAPS.map((_, i) => i).filter(i => i !== TOWN)].map(i => { const M = MAPS[i]; const lo = M.lo, hi = M.hi; const ok = true; const here = i === S.map; if (M.town) return `<button data-m="${i}" class="${here ? 'here' : ''}"${here ? ' disabled' : ''}><span class="dot" style="background:#ffd86a;box-shadow:0 0 10px #ffd86a"></span><span><b>${M.name}</b>Thành chính · NPC, chợ, nghỉ ngơi · ${here ? 'Đang ở đây' : 'Chạm để về thành'}</span></button>`;
+    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>${M.culture ? M.culture + ' · ' : ''}Quái cấp ${lo}–${hi}${S.lv < lo - 20 ? ' <b style="display:inline;font:inherit;color:#ff8a8a">· nguy hiểm</b>' : ''} · Boss ${MT[M.boss.k].name}<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
   $('mapList').querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { const i = +b.dataset.m; closeMap(); travel(i); }); $('mapClose').focus(); }
 function closeMap() { $('mapP').classList.add('hide'); }
 $('mapClose').onclick = closeMap;
 function travel(i) { for (const p of projs) scene.remove(p.m); projs.length = 0; for (const s of sks) if (s.type === 'meteor') scene.remove(s.m); sks.length = 0; S.bossT = 60; setMap(i); showZone(); saveGame(); fxBeam(0, 8, '#9fe8ff', 1.4, 1.2); }
 
+// ---------- world: party, bot card, trade, NPCs ----------
+let wMode = 'party', wArg = null;
+function openWorld(mode, arg) { closeBag(); closeMap(); wMode = mode; wArg = arg; $('wP').classList.remove('hide'); renderWorldPanel(); }
+function closeWorld() { $('wP').classList.add('hide'); }
+$('wClose').onclick = closeWorld; $('bParty').onclick = () => openWorld('party');
+function charAt(cx, cy) { let best = null, bd = 44; const test = (pos, h, o) => { const [sx, sy, ok] = toScreen(tmpV.set(pos.x, h, pos.z)); const d = Math.hypot(sx - cx, sy - cy); if (ok && d < bd) { bd = d; best = o; } };
+  for (const e of npcEnts) test(e.pos, HERO_H * 0.55, e); for (const e of ents.values()) if (!e.dead) test(e.pos, 0.55 + HERO_H * 0.55, e); return best; }
+function npcAct(id) { if (id === 'smith') openBag('gear'); else if (id === 'pets') openBag('pet'); else if (id === 'guide') openMap(); else openWorld(id); }
+const botTag = b => `<b style="color:${CLS[b.cls].col}">${CLS[b.cls].icon} ${b.name}</b> · ${CLS[b.cls].name} · Lv ${b.lv}`;
+const itemLine = g => g.slot === 'charm' ? `<b style="color:${CHARMS[g.charm].col}">${g.name}${qty(g) > 1 ? ' ×' + qty(g) : ''}</b> · ${CHARMS[g.charm].d} · giá mỗi lá` : `<b style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</b> · ${SLOTS[g.slot].n} cấp ${g.lv} · ${Object.entries(gearStats(g)).map(([k, v]) => STAT_N[k] + ' ' + v).join(', ')}`;
+const buyPrice = g => Math.round((g.slot === 'charm' ? 3000 + g.lv * 120 : sellPrice(g) * 2.6) * (g.pm || (g.pm = rr(0.85, 1.25))));
+const offerPrice = (g, b) => Math.round((g.slot === 'charm' ? 1800 + g.lv * 70 : sellPrice(g) * 1.6) * (0.85 + (b.hue * 7 % 1) * 0.4));
+function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; const B = $('wBody'); const here = [...ents.values()].filter(e => !e.dead).map(e => e.b);
+  if (wMode === 'party') { $('wTitle').textContent = 'Nhóm';
+    const P = S.party, lead = P && P.leader === 'me';
+    B.innerHTML = `<p class="muted" style="margin-top:0">Lập nhóm với người chơi khác cùng map để đánh chung: thành viên ở gần (15m) chia nhau <b style="color:var(--gold)">50% EXP</b> mỗi lần hạ quái, đồ rơi chung, cả nhóm +10% EXP. Bật <b>Theo sát</b> để mọi người luôn ở trong vòng 2m quanh trưởng nhóm.</p>
+    ${P ? `<div class="sect" style="margin:8px 0 6px">Thành viên (${P.members.length + 1}/5)</div>
+      <div class="row"><div class="t">${P.leader === 'me' ? '♛ ' : ''}<b style="color:var(--gold)">Bạn</b> · ${CLS[S.cls].name} · Lv ${S.lv}</div></div>
+      ${partyBots().map(b => `<div class="row"><div class="t">${P.leader === b.id ? '♛ ' : ''}${botTag(b)}</div><button class="pb" data-tr="${b.id}">Giao dịch</button>${lead ? `<button class="pb" data-kick="${b.id}">Mời ra</button>` : ''}</div>`).join('')}
+      <div class="acts" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="pb pri" id="wFollow">Theo sát ${lead ? '(cả nhóm theo bạn)' : 'trưởng nhóm'}: ${P.follow ? 'BẬT' : 'TẮT'}</button><button class="pb" id="wLeave">${lead ? 'Giải tán nhóm' : 'Rời nhóm'}</button></div>`
+      : `<button class="pb pri" id="wCreate" style="margin-top:6px">Lập nhóm</button>`}
+    <div class="sect" style="margin:12px 0 6px">Người chơi ở gần (${here.length})</div>
+    ${here.length ? here.map(b => `<div class="row"><div class="t">${botTag(b)}${inParty(b) ? ' · <span style="color:#7dff9a">cùng nhóm</span>' : ''}</div>${!inParty(b) && (!P || lead) ? `<button class="pb pri" data-inv="${b.id}">Mời</button>` : ''}<button class="pb" data-tr="${b.id}">Giao dịch</button></div>`).join('') : '<p class="muted">Chưa có ai ở map này.</p>'}`;
+    const c = $('wCreate'); if (c) c.onclick = () => { createParty(); renderWorldPanel(); updateHud(); };
+    const f = $('wFollow'); if (f) f.onclick = () => { S.party.follow = !S.party.follow; log('Theo sát: ' + (S.party.follow ? 'BẬT — giữ trong vòng 2m quanh trưởng nhóm.' : 'TẮT.'), '#9fe8ff'); renderWorldPanel(); updateHud(); };
+    const l = $('wLeave'); if (l) l.onclick = () => { leaveParty(); renderWorldPanel(); updateHud(); };
+    B.querySelectorAll('[data-inv]').forEach(b => b.onclick = () => inviteBot(S.bots.find(q => q.id === b.dataset.inv)));
+    B.querySelectorAll('[data-kick]').forEach(b => b.onclick = () => { kickBot(b.dataset.kick); renderWorldPanel(); updateHud(); });
+    B.querySelectorAll('[data-tr]').forEach(b => b.onclick = () => openWorld('trade', b.dataset.tr)); }
+  else if (wMode === 'bot') { const b = S.bots.find(q => q.id === wArg); $('wTitle').textContent = b.name;
+    B.innerHTML = `<p style="margin:0">${botTag(b)}</p><p class="muted">${inParty(b) ? 'Đang cùng nhóm với bạn.' : 'Đã hạ ' + fmt(b.kills) + ' quái.'} Vàng: ${fmt(b.gold)}</p>
+      <div style="display:flex;gap:8px;margin-top:10px">${!inParty(b) ? '<button class="pb pri" id="wInv">Mời vào nhóm</button>' : ''}<button class="pb pri" id="wTr">Giao dịch</button></div>`;
+    const i = $('wInv'); if (i) i.onclick = () => { inviteBot(b); closeWorld(); }; $('wTr').onclick = () => openWorld('trade', b.id); }
+  else if (wMode === 'trade') { const b = S.bots.find(q => q.id === wArg); $('wTitle').textContent = 'Giao dịch';
+    const mine = S.inv.filter(g => !g.lockT);
+    B.innerHTML = `<p style="margin:0">${botTag(b)} · Vàng của họ: <b style="color:var(--gold)">${fmt(b.gold)}</b> · Vàng của bạn: <b style="color:var(--gold)">${fmt(S.gold)}</b></p>
+      <div class="sect" style="margin:10px 0 6px">${b.name} bán</div>${b.inv.length ? b.inv.map((g, i) => `<div class="row">${tileHtml(g, 'tabindex="-1"')}<div class="t">${itemLine(g)}</div><button class="pb pri" data-buy="${i}"${S.gold < buyPrice(g) ? ' disabled' : ''}>Mua ${fmt(buyPrice(g))}</button></div>`).join('') : '<p class="muted">Họ chưa có gì để bán.</p>'}
+      <div class="sect" style="margin:12px 0 6px">Bạn bán cho ${b.name}</div>${mine.length ? mine.map(g => `<div class="row">${tileHtml(g, 'tabindex="-1"')}<div class="t">${itemLine(g)}</div><button class="pb" data-sell="${g.id}"${b.gold < offerPrice(g, b) ? ' disabled' : ''}>Bán ${fmt(offerPrice(g, b))}</button></div>`).join('') : '<p class="muted">Túi đồ trống.</p>'}<div class="msg" role="status"></div>`;
+    const say = t => { const e = ents.get(b.id); if (e) botSay(e, t); };
+    B.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => { const g = b.inv[+x.dataset.buy]; const p = buyPrice(g); if (!g || S.gold < p || (S.inv.length >= BAG_MAX && !S.inv.some(q => stackKey(q) && stackKey(q) === stackKey(g)))) { log(S.inv.length >= BAG_MAX ? 'Túi đầy.' : 'Không đủ vàng.', '#ff9a9a'); return; }
+      S.gold -= p; b.gold += p; const got = takeOne(b.inv, g); delete got.pm; addItem(got); log(`Đã mua [${g.name}] của ${b.name} giá ${fmt(p)} vàng.`, '#7dff9a'); say('Cảm ơn nhé!'); afterChange(); renderWorldPanel(); });
+    B.querySelectorAll('[data-sell]').forEach(x => x.onclick = () => { const g = S.inv.find(q => q.id === x.dataset.sell); if (!g) return; const p = offerPrice(g, b); if (b.gold < p) return;
+      const sold = takeOne(S.inv, g); S.gold += p; b.gold -= p; if (!stackInto(b.inv, sold)) { b.inv.push(sold); if (b.inv.length > 12) b.inv.shift(); } log(`Đã bán [${g.name}] cho ${b.name} được ${fmt(p)} vàng.`, '#ffd86a'); say('Món này ngon!'); afterChange(); renderWorldPanel(); }); }
+  else if (wMode === 'shop') { $('wTitle').textContent = 'Hermes · Thương Nhân';
+    const goods = [['e', 1, 300 + S.lv * 6], ['e', 10, 2800 + S.lv * 55], ['f', 1, 2500 + S.lv * 25], ['c', 1, 6000 + S.lv * 40]];
+    B.innerHTML = `<p class="muted" style="margin-top:0">Nguyên liệu bán sẵn. Muốn bán đồ, hãy giao dịch với người chơi khác ở chợ Agora (giá tốt hơn bán thường).</p>${goods.map(([k, n, p], i) => `<div class="row">${mIcon(k)}<div class="t"><b style="color:${MATS[k].col}">${MATS[k].name} ×${n}</b><br>${MATS[k].desc}</div><button class="pb pri" data-g="${i}"${S.gold < p ? ' disabled' : ''}>Mua ${fmt(p)}</button></div>`).join('')}`;
+    B.querySelectorAll('[data-g]').forEach(x => x.onclick = () => { const [k, n, p] = goods[+x.dataset.g]; if (S.gold < p) return; S.gold -= p; S.mats[k] += n; log(`Đã mua ${MATS[k].name} ×${n}.`, MATS[k].col); afterChange(); renderWorldPanel(); }); }
+  else if (wMode === 'market') { $('wTitle').textContent = 'Chợ Agora'; const list = S.bots.filter(b => b.map === S.map && b.inv.length);
+    B.innerHTML = `<p class="muted" style="margin-top:0">Người chơi đang ở thành và đồ họ rao bán. Chạm "Giao dịch" để mua hoặc bán đồ cho họ bằng vàng.</p>${list.length ? list.map(b => `<div class="row"><div class="t">${botTag(b)}<br>${b.inv.slice(0, 3).map(g => g.slot === 'charm' ? `<span style="color:${CHARMS[g.charm].col}">✦ ${g.name}</span>` : `<span style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</span>`).join(' · ')}${b.inv.length > 3 ? ' …' : ''}</div><button class="pb pri" data-tr="${b.id}">Giao dịch</button></div>`).join('') : '<p class="muted">Chợ đang vắng, quay lại sau nhé.</p>'}`;
+    B.querySelectorAll('[data-tr]').forEach(b => b.onclick = () => openWorld('trade', b.dataset.tr)); }
+}
+
 // ---------- save (browser + cloud) ----------
 const SKEY = 'vuclam-save-v2', OLDKEY = 'vuclam-save-v1';
 const Store = { db: null, uid: null, writing: false, pending: null };
 let SAVE = null, OLD = null, running = false, best = 0;
-function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
+function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: d.lv || 1, exp: d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
   S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s];
-  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.lvLog = d.lvLog || [];
+  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
+  { const inv = []; for (const g of S.inv) if (!stackInto(inv, g)) inv.push(g); S.inv = inv; } // older saves: merge loose charms into stacks S.lvLog = d.lvLog || [];
   for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
-  if (S.map && S.lv < MAPS[S.map].req) S.map = 0; }
+  }
 async function initStore() { try { if (window.claude && typeof window.claude.use === 'function') { const db = await window.claude.use('db'); const u = await window.claude.use('user'); if (db && u) { const id = await u.id(); if (id) { Store.db = db; Store.uid = id; } } } } catch (e) { } await refreshSave(); }
 async function readSave() { let b = null; try { const l = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (l && l.v === 2) b = l; } catch (e) { }
   if (Store.db) { try { const s = await Promise.race([Store.db.doc(`data/users/${Store.uid}/save`).get(), new Promise((_, r) => setTimeout(() => r('timeout'), 9000))]); if (s && s.exists) { const d = s.data(); if (d && d.v === 2 && (!b || d.ts > b.ts)) b = JSON.parse(JSON.stringify(d)); } } catch (e) { } }
@@ -2277,7 +2562,7 @@ $('classGo').onclick = () => { if (!pickCls) return; S = newState(pickCls);
   $('classOv').classList.add('hide'); startRun(true); };
 function startRun(fresh) {
   $('startOv').classList.add('hide'); $('classOv').classList.add('hide'); $('menuOv').classList.add('hide'); $('hud').classList.remove('hide');
-  recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); applyPetMount(); showZone(); updateHud(); fitCam = true;
+  if (!S.bots) S.bots = newBots(); else if (S.bots.length < BOT_NAMES.length) { const fresh = newBots(); for (const b of fresh) if (!S.bots.some(q => q.id === b.id)) S.bots.push(b); } S.map = TOWN; recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); applyPetMount(); showZone(); updateHud(); fitCam = true;
   if (fresh) log('Chào mừng đến Vực Lam! Chạm vào nền để di chuyển, chạm vào quái để đánh. Tự động đánh đang bật. Mở túi đồ để khảm linh thạch và chế cánh.', '#9fe8ff');
   saveGame();
 }
@@ -2308,6 +2593,7 @@ function frame() {
     if (zoneT > 0) { zoneT -= dt; if (zoneT <= 0) $('zone').style.opacity = 0; }
   }
   if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) $('banner').classList.remove('show'); }
+  if (running && !paused && S) { updateBots(dt, t); updateNpcs(dt, t); if (isTown() && !npcEnts.length && heroGLTF) spawnNpcs(); }
   updateParticles(dt); updateFx(dt); for (const f of scenery) f(t, dt);
   if (S) { const portrait = innerHeight > innerWidth; const dist = portrait ? 1.2 : 1; camPos.set(S.pos.x, 11 * dist, S.pos.z + 9.5 * dist); if (fitCam) { camera.position.copy(camPos); fitCam = false; } camera.position.lerp(camPos, Math.min(1, dt * 4));
     if (S.shake > 0) { S.shake -= dt; camera.position.x += (Math.random() - 0.5) * S.shake * 0.4; camera.position.y += (Math.random() - 0.5) * S.shake * 0.4; }
