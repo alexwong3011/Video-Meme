@@ -264,3 +264,42 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - Sửa: game "đứng" sau khi hồi sinh (bộ đếm `S.dead` âm vẫn bị coi là chết).
 - Điều khiển: bỏ joystick → chạm/nhấp nền để đi (giữ & kéo để lái), chạm quái để đánh; vòng sáng đánh dấu điểm chạm. WASD vẫn dùng được trên PC.
 - Tìm đường: lưới A* 0,5m (`buildNav/findPath/navDir` trong g_game.js) dựng lại mỗi map, rút gọn đường bằng kiểm tra tầm nhìn; tự động và chạm-để-đi đều đi vòng đá/san hô. Mục tiêu không tới được bị bỏ qua 6 giây.
+
+## 15. Vực Lam – hướng grind/farm: tốc đánh, cấp 800, thú cưng & thú cưỡi
+
+### Sát thương & tốc đánh
+- Mọi đòn của nhân vật chỉ còn **30%** sát thương cũ (`DMG_SCALE`), tốc đánh gốc **×2** (`CLS.aps = 2 / rate`: Lôi 3.3, Hỏa 3.2, Băng 2.8, Cung 5.6, Thánh 2.6 đòn/giây).
+- Chỉ số **Tốc đánh (AS)**: đòn/giây = gốc + (15 − gốc) × AS/400, tối đa **15 đòn/giây** khi AS = 400.
+- Kỹ năng: hồi chiêu = hệ số ÷ đòn/giây, tối thiểu **0,1 giây**; kỹ năng dùng chung nhịp với đòn thường. Mana (tính theo % mana tối đa) là giới hạn thực sự. Kỹ năng vùng (bão, mưa tên, thiên thạch…) tối đa 3 vùng cùng lúc.
+
+### Lộ trình tốc đánh (mục tiêu: ½ tối đa ở Lv100, tối đa ở Lv400)
+| Nguồn AS | Công thức | Lv100 (đồ Hiếm +7) | Lv400 (đồ Sử thi +11) |
+|---|---|---|---|
+| Cấp nhân vật | 0,1 × cấp | 10 | 40 |
+| Vũ khí | (10 + 0,3 × cấp đồ) × độ hiếm (1/1,15/1,3/1,45) + 1/cấp cường hóa | 46 + 7 | 169 + 11 |
+| Dây chuyền (ô mới) | như vũ khí | 46 + 7 | 169 + 11 |
+| Cánh | 8 × bậc cánh | 16 (bậc 2) | 40 (bậc 5) |
+| Thú cưng | 0 / 15 / 25 / 40 | 15 | 40 |
+| **Tổng** | | **≈147 → 7,5 đòn/giây** | **≈480 → chạm trần 15** |
+- Đồ tốt hơn/cường hóa cao hơn thì chạm trần sớm hơn (khoảng Lv300–350); đồ kém hơn thì muộn hơn.
+
+### EXP & cấp (tối đa 800)
+- Thời gian mỗi cấp = 2,158 × e^(0,006 × cấp) giây (Lv1 ≈ 2 giây, Lv100 ≈ 4 giây, Lv400 ≈ 24 giây, Lv800 ≈ 4,4 phút).
+- Cộng dồn: Lv100 ≈ 5 phút, Lv200 ≈ 14 phút, Lv300 ≈ 30 phút, **Lv400 ≈ 1 giờ**, Lv600 ≈ 3,5 giờ, **Lv800 ≈ 12 giờ**.
+- EXP cần = thời gian × tốc độ giết tham chiếu (0,25 × đòn/giây tham chiếu) × EXP mỗi quái (10 + 3 × cấp). Quái cao cấp hơn bạn cho thêm 5% mỗi cấp (tối đa ×1,5), thấp hơn bị giảm (tối thiểu ×0,3).
+- Thời gian thực phụ thuộc trang bị và cách chơi → Menu hiện "đã chơi" và "cấp/giờ" 10 phút gần nhất để đối chiếu và chỉnh `LVT_A`.
+
+### Quái
+- Map có khoảng cấp (Bãi San Hô 1–220, Rừng Tảo 110–520, Dung Nham 330–800); 4 khu quái tự theo cấp bạn (−3 / 0 / +3 / +6), boss +8.
+- 40 quái mỗi map, hồi sinh 2,5 giây, tự lao vào khi bạn đến gần 4,5m, đánh mỗi 1–1,5 giây. Phòng thủ giảm sát thương theo %: def / (def + 10 × cấp quái + 100).
+
+### Hồi máu / mana khi đánh
+- Mỗi đòn trúng: +0,25% máu, +0,5% mana; mỗi quái chết: +1% máu, +1,5% mana.
+- Giới hạn mỗi giây: 5% máu (thú cưng +1–2%), 12% mana → không bất tử khi đứng giữa bầy quái.
+
+### Thú cưng & thú cưỡi (tab "Thú" trong túi đồ, mua bằng vàng)
+- Thú cưng: Cá Lân Tinh (1.000), Sứa Ngọc Bích (30.000, Lv60), Cá Gai Hoàng Kim (250.000, Lv150, tự bắn), Sứa Thần Hỏa (2 triệu, Lv300). Hút đồ rơi 4–7m, +EXP, +vàng, +tốc đánh.
+- Thú cưỡi: Ó Biển Lam (5.000, Lv20), Cá Kình Bạc (80.000, Lv120), Ó Hoàng Kim (1,5 triệu, Lv280). +35–70% tốc chạy, phòng thủ, máu. Ó biển dựng bằng code (vây gợn sóng), cá kình dùng mô hình cá template.
+
+### Rơi đồ
+- Giảm tỉ lệ rơi vì giết nhanh hơn nhiều (đồ 4,5%, đá cường hóa 6%…); 30% đồ rơi là vũ khí/dây chuyền. Đồ rơi biến mất sau 40 giây.

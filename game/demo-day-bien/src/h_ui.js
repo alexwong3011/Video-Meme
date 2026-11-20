@@ -5,7 +5,7 @@
 const heroLabel = document.createElement('div'); heroLabel.className = 'lbl hero'; heroLabel.style.display = 'none'; labelsEl.appendChild(heroLabel);
 function log(t, col) { const d = document.createElement('div'); d.textContent = t; d.style.color = col || '#e9dfc6'; const L = $('log'); L.appendChild(d); while (L.children.length > 5) L.firstChild.remove(); setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 700); }, 5500); }
 let bannerT = 0; function banner(txt, col) { const b = $('banner'); b.textContent = txt; b.style.color = col === 'red' ? '#ff6a6a' : '#ffd86a'; b.classList.add('show'); bannerT = 2.6; }
-let zoneT = 0; function showZone() { const M = MAPS[S.map]; $('zoneName').textContent = M.name; $('zoneSub').textContent = `Quái cấp ${Math.min(...M.zones.map(z => z.lv[0]))}–${Math.max(...M.zones.map(z => z.lv[1]))} · Boss ${MT[M.boss.k].name}`; $('zone').style.opacity = 1; zoneT = 4; }
+let zoneT = 0; function showZone() { const M = MAPS[S.map]; $('zoneName').textContent = M.name; $('zoneSub').textContent = `Quái cấp ${M.lo}–${M.hi} (theo cấp bạn) · Boss ${MT[M.boss.k].name}`; $('zone').style.opacity = 1; zoneT = 4; }
 function pulseHud() { }
 
 // ---------- HUD ----------
@@ -19,10 +19,10 @@ function updateHud() {
   $('bBag').classList.toggle('dot', upgradeHint());
   const need = expNeed(S.lv); $('expBar').style.transform = `scaleX(${S.lv >= MAXLV ? 1 : S.exp / need})`; $('expTxt').textContent = S.lv >= MAXLV ? 'CẤP TỐI ĐA' : `EXP ${(S.exp / need * 100).toFixed(1)}%`;
   $('bAuto').setAttribute('aria-pressed', String(S.auto));
-  SKILLS[S.cls].forEach((sk, j) => { const b = $('sk' + j); const lock = S.lv < sk.lv; b.classList.toggle('lock', lock); b.classList.toggle('nomp', !lock && S.mp < sk.mp);
+  SKILLS[S.cls].forEach((sk, j) => { const b = $('sk' + j); const lock = S.lv < sk.lv; b.classList.toggle('lock', lock); b.classList.toggle('nomp', !lock && S.mp < skMp(sk));
     b.style.setProperty('--c2', ELC[sk.el] + '99'); b.style.setProperty('--c3', ELC[sk.el] + '55');
     b.querySelector('.ic').textContent = ELI[sk.el]; b.querySelector('small').textContent = lock ? 'Lv ' + sk.lv : sk.name.split(' ').slice(0, 2).join(' ');
-    b.querySelector('.cd').style.transform = `scaleY(${lock ? 0 : S.skCd[j] / sk.cd})`; b.querySelector('.cdt').textContent = !lock && S.skCd[j] > 0 ? Math.ceil(S.skCd[j]) : '';
+    b.querySelector('.cd').style.transform = `scaleY(${lock ? 0 : Math.min(1, S.skCd[j] / skCd(sk))})`; b.querySelector('.cdt').textContent = !lock && S.skCd[j] >= 1 ? Math.ceil(S.skCd[j]) : '';
     b.setAttribute('aria-label', sk.name + (lock ? ' (mở ở cấp ' + sk.lv + ')' : '')); });
   const boss = S.boss && !S.boss.dead ? S.boss : null; $('bossbar').classList.toggle('hide', !boss);
   if (boss) { $('bossName').textContent = boss.T.name.toUpperCase() + ' · Lv ' + boss.lv; $('bossHp').style.transform = `scaleX(${Math.max(0, boss.hp / boss.maxHp)})`; $('bossInfo').textContent = ''; }
@@ -37,7 +37,7 @@ function updateLabels() {
 
 // ---------- input ----------
 $('bAtk').addEventListener('pointerdown', e => { e.preventDefault(); attack(); });
-for (let j = 0; j < 3; j++) $('sk' + j).addEventListener('pointerdown', e => { e.preventDefault(); if (!castSkill(j)) { const sk = SKILLS[S.cls][j]; if (S.lv < sk.lv) log(sk.name + ' mở ở cấp ' + sk.lv + '.', '#93c6cf'); else if (S.mp < sk.mp) log('Không đủ Mana.', '#5ab0ff'); } });
+for (let j = 0; j < 3; j++) $('sk' + j).addEventListener('pointerdown', e => { e.preventDefault(); if (!castSkill(j)) { const sk = SKILLS[S.cls][j]; if (S.lv < sk.lv) log(sk.name + ' mở ở cấp ' + sk.lv + '.', '#93c6cf'); else if (S.mp < skMp(sk)) log('Không đủ Mana.', '#5ab0ff'); } });
 $('bAuto').onclick = () => { S.auto = !S.auto; updateHud(); };
 $('bBag').onclick = () => openBag(); $('bMap').onclick = () => openMap(); $('bMenu').onclick = () => openMenu();
 addEventListener('keydown', e => { if (!S || !running) return; input.keys[e.code] = true;
@@ -68,7 +68,7 @@ function updateTouch(dt) { if (touchId !== null && S && !S.dead) touchMove(touch
 // ---------- icons ----------
 const GI = {
   weapon: '<path d="M19 3l-9.5 9.5M19 3h-3.5M19 3v3.5M9.5 12.5l2 2M6 14l4 4M8 16l-4 4" />', helm: '<path d="M5 15a7 7 0 0114 0v3H5zM12 4v4M8.5 15h7" />',
-  armor: '<path d="M7 4l5 2 5-2 3 4-3 2v10H7V10L4 8zM12 6v14" />', ring: '<circle cx="12" cy="14" r="6"/><path d="M9 4h6l-3 4z"/>'
+  armor: '<path d="M7 4l5 2 5-2 3 4-3 2v10H7V10L4 8zM12 6v14" />', ring: '<circle cx="12" cy="14" r="6"/><path d="M9 4h6l-3 4z"/>', pendant: '<path d="M6 3c0 6 3 9 6 9s6-3 6-9"/><path d="M12 12l-3 4 3 5 3-5z"/>'
 };
 const gIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${GI[k]}</svg>`;
 const mIcon = k => { const c = MATS[k].col; if (k === 'f') return `<svg viewBox="0 0 24 24"><path d="M5 20C8 12 13 6 20 3c-1 7-6 13-14 16z" fill="${c}" stroke="#000" stroke-width="1"/><path d="M5 20L17 7" stroke="#fff8d0" stroke-width="1"/></svg>`;
@@ -85,12 +85,12 @@ const fmt = n => n.toLocaleString('vi-VN');
 const findItem = id => { for (const s of SLOT_ORDER) if (S.eq[s] && S.eq[s].id === id) return { g: S.eq[s], equipped: true }; const g = S.inv.find(x => x.id === id); return g ? { g, equipped: false } : null; };
 function tileHtml(g, extra = '') { return `<button class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${gIcon(g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
 function flash(t, cls = '') { const m = bagBody.querySelector('.msg'); if (!m) return; m.textContent = t; m.className = 'msg show ' + cls; clearTimeout(msgT); msgT = setTimeout(() => { m.className = 'msg'; }, 2200); }
-function afterChange(heal) { recalc(heal); applyGearVisuals(); updateHud(); renderBag(); saveGame(); }
+function afterChange(heal) { recalc(heal); applyGearVisuals(); applyPetMount(); updateHud(); renderBag(); saveGame(); }
 function renderBag() {
   if (bagEl.classList.contains('hide')) return;
   $('bGold').textContent = fmt(S.gold); $('bE').textContent = S.mats.e; $('bF').textContent = S.mats.f;
   bagEl.querySelectorAll('.tabs button').forEach(b => { b.setAttribute('aria-selected', String(b.dataset.t === tab)); b.classList.toggle('dot', (b.dataset.t === 'stone' && (SK.some(k => S.mats[k] > 0 && canStone(k)) || FORGE.some(([f]) => S.mats[f] >= 3))) || (b.dataset.t === 'wing' && S.wing < WMAX && S.mats.f >= WCOST[S.wing])); });
-  if (tab === 'gear') renderGear(); else if (tab === 'stone') renderStones(); else if (tab === 'wing') renderWing(); else renderSkills();
+  if (tab === 'gear') renderGear(); else if (tab === 'stone') renderStones(); else if (tab === 'wing') renderWing(); else if (tab === 'pet') renderPets(); else renderSkills();
 }
 function statLines(g, cmp) { const s = gearStats(g), c = cmp ? gearStats(cmp) : null; return Object.keys(s).map(k => { const d = c ? s[k] - (c[k] || 0) : 0; return `<li><span>${STAT_N[k]}</span><b>${s[k]}</b>${c && d ? `<em class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '+' : ''}${+d.toFixed(1)}</em>` : ''}</li>`; }).join(''); }
 function setInfo() { const sc = HS.sets; const ks = Object.keys(sc); if (!ks.length) return '<p class="muted">Mặc từ 2 món cùng bộ (chấm màu trên ô đồ) để nhận hiệu ứng bộ.</p>';
@@ -100,7 +100,9 @@ function renderGear() {
   bagBody.innerHTML = `<div class="grid2"><div class="col">
     <div class="sect">Chỉ số</div>
     <div class="stats"><div><span>Cấp</span><b>${S.lv}</b></div><div><span>Tấn công</span><b>${fmt(st.atk)}</b></div><div><span>Phòng thủ</span><b>${fmt(st.def)}</b></div><div><span>Máu</span><b>${fmt(st.hp)}</b></div>
-      <div><span>Chí mạng</span><b style="color:#4aa8ff">${(r.crit * 100).toFixed(1)}%</b></div><div><span>Siêu đòn TB</span><b>×${avgMult().toFixed(2)}</b></div><div><span>ST cánh & bộ</span><b>×${st.dmgMul.toFixed(2)}</b></div><div><span>Mana</span><b style="color:#5ab0ff">${st.mp}</b></div></div>
+      <div><span>Chí mạng</span><b style="color:#4aa8ff">${(r.crit * 100).toFixed(1)}%</b></div><div><span>Siêu đòn TB</span><b>×${avgMult().toFixed(2)}</b></div><div><span>ST cánh & bộ</span><b>×${st.dmgMul.toFixed(2)}</b></div><div><span>Mana</span><b style="color:#5ab0ff">${st.mp}</b></div>
+      <div><span>Tốc đánh</span><b style="color:#7dffb0">${st.as} / ${AS_MAX}</b></div><div><span>Đòn / giây</span><b style="color:#7dffb0">${st.aps.toFixed(1)} / ${APS_MAX}</b></div><div><span>Hút máu</span><b>${(REC.hpHit * 100).toFixed(2)}%/đòn</b></div><div><span>Hút mana</span><b>${(REC.mpHit * 100).toFixed(1)}%/đòn</b></div></div>
+    <p class="muted" style="margin:4px 0 0">Hồi từ đánh quái tối đa ${(st.hpCap * 100).toFixed(0)}% máu và ${(REC.mpCap * 100).toFixed(0)}% mana mỗi giây. Tốc đánh đến từ cấp, vũ khí, dây chuyền, cánh và thú.</p>
     <div class="sect">Đang mặc</div>
     <div class="eqrow">${SLOT_ORDER.map(s => `<div class="eqslot"><span>${SLOTS[s].n}</span>${S.eq[s] ? tileHtml(S.eq[s]) : `<div class="tile empty">${gIcon(s)}</div>`}</div>`).join('')}</div>
     ${setInfo()}
@@ -156,18 +158,32 @@ function renderWing() {
     ${WNAME.slice(1).map((n, i) => `<div class="row"><div class="t"><b style="color:${i + 1 <= w ? 'var(--gold)' : '#93c6cf'}">${n}</b> · ${WCOST[i]} lông vũ · ×${WINGM[i + 1]} sát thương · +${WDEF[i + 1]} phòng thủ · +${WHP[i + 1]} máu</div>${i + 1 <= w ? '<b style="color:#6dff9c">✓</b>' : ''}</div>`).join('')}<div class="msg" role="status"></div>`;
   if (nx) $('wCraft').onclick = () => { if (S.mats.f < WCOST[S.wing]) return; S.mats.f -= WCOST[S.wing]; S.wing++; fxBeam(S.pos.x, S.pos.z, '#ffd85a', 1.4, 1); burst(S.pos.x, 1.2, S.pos.z, 40, C3('#fff0b0'), 4, 0.4, 0.9); banner(WNAME[S.wing].toUpperCase() + '!', 'gold'); afterChange(); };
 }
+function renderPets() {
+  const P = curPet(), Mt = curMount();
+  const row = (x, kind) => { const own = (kind === 'pet' ? S.pets : S.mounts).includes(x.id), on = (kind === 'pet' ? S.pet : S.mount) === x.id, lock = S.lv < x.lv;
+    return `<div class="row"><div class="t"><b style="color:${on ? 'var(--gold)' : own ? '#9fe8ff' : '#93c6cf'}">${x.n}</b>${on ? ' · <b style="color:#6dff9c">đang dùng</b>' : ''}<br>${x.d}${own ? '' : `<br><span style="color:${lock ? '#ff9a9a' : 'var(--gold)'}">${lock ? 'Cần cấp ' + x.lv + ' · ' : ''}${fmt(x.price)} vàng</span>`}</div>
+      ${own ? `<button class="pb${on ? '' : ' pri'}" data-${kind}="${x.id}">${on ? 'Cất đi' : kind === 'pet' ? 'Mang theo' : 'Cưỡi'}</button>` : `<button class="pb pri" data-buy${kind}="${x.id}"${lock || S.gold < x.price ? ' disabled' : ''}>Mua</button>`}</div>`; };
+  bagBody.innerHTML = `<p class="muted" style="margin-top:0">Thú cưng bay theo bạn, <b style="color:var(--gold)">hút đồ rơi</b> quanh mình và tăng EXP, vàng, tốc đánh; thú mạnh còn tự bắn quái. Thú cưỡi giúp chạy nhanh và bền hơn.</p>
+  <div class="sect" style="margin:6px 0">Thú cưng${P ? ' · ' + P.n : ''}</div>${PETS.map(x => row(x, 'pet')).join('')}
+  <div class="sect" style="margin:12px 0 6px">Thú cưỡi${Mt ? ' · ' + Mt.n : ''}</div>${MOUNTS.map(x => row(x, 'mount')).join('')}<div class="msg" role="status"></div>`;
+  const buy = (list, own, id) => { const x = list.find(q => q.id === id); if (!x || S.gold < x.price || S.lv < x.lv) return; S.gold -= x.price; own.push(id); return x; };
+  bagBody.querySelectorAll('[data-buypet]').forEach(b => b.onclick = () => { const x = buy(PETS, S.pets, b.dataset.buypet); if (x) { S.pet = x.id; afterChange(); flash('Đã có ' + x.n + '!', 'ok'); } });
+  bagBody.querySelectorAll('[data-buymount]').forEach(b => b.onclick = () => { const x = buy(MOUNTS, S.mounts, b.dataset.buymount); if (x) { S.mount = x.id; afterChange(); fxBeam(S.pos.x, S.pos.z, '#9fe8ff', 1.2); flash('Đã có ' + x.n + '!', 'ok'); } });
+  bagBody.querySelectorAll('[data-pet]').forEach(b => b.onclick = () => { S.pet = S.pet === b.dataset.pet ? null : b.dataset.pet; afterChange(); });
+  bagBody.querySelectorAll('[data-mount]').forEach(b => b.onclick = () => { S.mount = S.mount === b.dataset.mount ? null : b.dataset.mount; afterChange(); });
+}
 function renderSkills() {
   const C = CLS[S.cls];
   bagBody.innerHTML = `<p class="muted" style="margin-top:0"><b style="color:${C.col}">${C.icon} ${C.name}</b> — ${C.desc}</p>
   ${SKILLS[S.cls].map((sk, j) => { const on = S.lv >= sk.lv; return `<div class="skrow${on ? '' : ' lk'}"><div class="ic" style="background:${ELC[sk.el]}22;border:1.5px solid ${ELC[sk.el]}">${ELI[sk.el]}</div><div><b style="color:${ELC[sk.el]};font-size:13.5px">${j + 1}. ${sk.name}</b><span class="el" style="background:${ELC[sk.el]}33;color:${ELC[sk.el]}">${ELN[sk.el]}</span>
-    <span style="color:#9a907a"> · ${sk.cd}s · <span style="color:#5ab0ff">${sk.mp} Mana</span> · ${on ? '<span style="color:#7dff9a">đã mở</span>' : 'mở ở cấp ' + sk.lv}</span><br>${sk.act}</div></div>`; }).join('')}
-  <p class="muted"><b style="color:var(--gold)">Trạng thái:</b> ❄ Đóng băng (đứng yên, +30% ST nhận) · ⚡ Tê liệt (khựng, +20%) · 🔥 Thiêu đốt (cháy dần, +15%) · 💧 Ướt (+35% từ Băng/Sét, +10% khác). Khi bật tự động, nhân vật tự dùng kỹ năng lúc có quái gần.</p>`;
+    <span style="color:#9a907a"> · hồi ${skCd(sk).toFixed(2)}s · <span style="color:#5ab0ff">${skMp(sk)} Mana</span> · ${on ? '<span style="color:#7dff9a">đã mở</span>' : 'mở ở cấp ' + sk.lv}</span><br>${sk.act}</div></div>`; }).join('')}
+  <p class="muted"><b style="color:var(--gold)">Trạng thái:</b> ❄ Đóng băng (đứng yên, +30% ST nhận) · ⚡ Tê liệt (khựng, +20%) · 🔥 Thiêu đốt (cháy dần, +15%) · 💧 Ướt (+35% từ Băng/Sét, +10% khác). Thời gian hồi kỹ năng = hệ số ÷ số đòn mỗi giây (tối thiểu 0.1 giây) — tốc đánh càng cao, ra chiêu càng dày; Mana là giới hạn. Khi bật tự động, nhân vật tự dùng kỹ năng.</p>`;
 }
 
 // ---------- map panel ----------
 function openMap() { closeBag(); $('mapP').classList.remove('hide');
-  $('mapList').innerHTML = MAPS.map((M, i) => { const lo = Math.min(...M.zones.map(z => z.lv[0])), hi = Math.max(...M.zones.map(z => z.lv[1])); const ok = S.lv >= M.req; const here = i === S.map;
-    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>Quái cấp ${lo}–${hi} · Boss ${MT[M.boss.k].name} (Lv ${M.boss.lv})<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
+  $('mapList').innerHTML = MAPS.map((M, i) => { const lo = M.lo, hi = M.hi; const ok = S.lv >= M.req; const here = i === S.map;
+    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>Quái cấp ${lo}–${hi}, tự theo cấp bạn · Boss ${MT[M.boss.k].name}<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
   $('mapList').querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { const i = +b.dataset.m; closeMap(); travel(i); }); $('mapClose').focus(); }
 function closeMap() { $('mapP').classList.add('hide'); }
 $('mapClose').onclick = closeMap;
@@ -177,9 +193,12 @@ function travel(i) { for (const p of projs) scene.remove(p.m); projs.length = 0;
 const SKEY = 'vuclam-save-v2', OLDKEY = 'vuclam-save-v1';
 const Store = { db: null, uid: null, writing: false, pending: null };
 let SAVE = null, OLD = null, running = false, best = 0;
-function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto }; }
+function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: d.lv || 1, exp: d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
-  S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s]; }
+  S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s];
+  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.lvLog = d.lvLog || [];
+  for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
+  if (S.map && S.lv < MAPS[S.map].req) S.map = 0; }
 async function initStore() { try { if (window.claude && typeof window.claude.use === 'function') { const db = await window.claude.use('db'); const u = await window.claude.use('user'); if (db && u) { const id = await u.id(); if (id) { Store.db = db; Store.uid = id; } } } } catch (e) { } await refreshSave(); }
 async function readSave() { let b = null; try { const l = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (l && l.v === 2) b = l; } catch (e) { }
   if (Store.db) { try { const s = await Promise.race([Store.db.doc(`data/users/${Store.uid}/save`).get(), new Promise((_, r) => setTimeout(() => r('timeout'), 9000))]); if (s && s.exists) { const d = s.data(); if (d && d.v === 2 && (!b || d.ts > b.ts)) b = JSON.parse(JSON.stringify(d)); } } catch (e) { } }
@@ -206,11 +225,12 @@ $('classGo').onclick = () => { if (!pickCls) return; S = newState(pickCls);
   $('classOv').classList.add('hide'); startRun(true); };
 function startRun(fresh) {
   $('startOv').classList.add('hide'); $('classOv').classList.add('hide'); $('menuOv').classList.add('hide'); $('hud').classList.remove('hide');
-  recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); showZone(); updateHud(); fitCam = true;
+  recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); applyPetMount(); showZone(); updateHud(); fitCam = true;
   if (fresh) log('Chào mừng đến Vực Lam! Chạm vào nền để di chuyển, chạm vào quái để đánh. Tự động đánh đang bật. Mở túi đồ để khảm linh thạch và chế cánh.', '#9fe8ff');
   saveGame();
 }
-function openMenu() { $('menuOv').classList.remove('hide'); paused = true; $('menuInfo').innerHTML = `${CLS[S.cls].name} · Cấp <b>${S.lv}</b> · ${MAPS[S.map].name}`; $('mMsg').textContent = ''; $('mResume').focus(); }
+function openMenu() { $('menuOv').classList.remove('hide'); paused = true; const h = Math.floor(S.playT / 3600), mi = Math.floor(S.playT / 60) % 60; const L = S.lvLog.filter(e => e[0] >= S.playT - 600); const pace = L.length > 1 ? (L[L.length - 1][1] - L[0][1]) / Math.max(60, L[L.length - 1][0] - L[0][0]) * 3600 : 0;
+  $('menuInfo').innerHTML = `${CLS[S.cls].name} · Cấp <b>${S.lv}</b> / ${MAXLV} · ${MAPS[S.map].name}<br>Đã chơi ${h} giờ ${mi} phút${pace ? ` · tốc độ gần đây ≈ <b>${Math.round(pace)}</b> cấp/giờ` : ''}`; $('mMsg').textContent = ''; $('mResume').focus(); }
 let paused = false;
 $('mResume').onclick = () => { $('menuOv').classList.add('hide'); paused = false; };
 $('mSave').onclick = async () => { $('mMsg').textContent = 'Đang lưu...'; const r = await saveGame(); $('mMsg').textContent = r && r.any ? `Đã lưu lúc ${new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}${Store.db ? (r.cloud ? ' (đám mây + máy này)' : ' (chỉ máy này)') : ''}.` : 'Không lưu được trên trình duyệt này.'; };
