@@ -29,9 +29,6 @@ body{background:var(--abyss);color:var(--ink);font-family:var(--ui);overflow:hid
 .lbl.bot .nm{color:#bfe8ff}.lbl.npc .nm{color:#ffd86a;font-size:12px}
 .lbl .say{display:none;margin:3px auto 0;max-width:160px;white-space:normal;background:rgba(4,20,26,.82);border:1px solid rgba(111,231,255,.35);border-radius:8px;padding:3px 7px;font:600 10.5px/1.3 var(--ui);color:#e8f8ff}
 .lbl.npc .say{background:#c99a3c;color:#fff;border:0;width:16px;padding:1px 0;border-radius:50%;font-weight:800}
-#bParty{position:absolute;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:700 11px var(--ui)}
-#bRank{position:absolute;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(210px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--panel);border:1px solid var(--line);color:var(--gold);font:700 11px var(--ui)}
-#bParty.on{border-color:#7dff9a;box-shadow:0 0 12px rgba(125,255,154,.4)}
 #partyF{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));top:92px;display:flex;flex-direction:column;gap:4px;pointer-events:none}
 #partyF div{background:rgba(4,20,26,.7);border:1px solid rgba(111,231,255,.25);border-radius:6px;padding:3px 6px;font:600 10.5px var(--ui);color:#dff4ff;width:118px}
 #partyF i{display:block;height:3px;margin-top:2px;background:linear-gradient(90deg,#7dff9a,#2a9a4a);transform-origin:left}
@@ -64,9 +61,6 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .tr .g{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 9px;text-align:right}
 .tr .g span{display:block;font:600 8.5px var(--ui);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .tr .g b{font:700 14px var(--ui);color:var(--gold);font-variant-numeric:tabular-nums}
-.tr button{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:4px 9px;font:700 11px var(--ui);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:44px}
-.tr button svg{width:17px;height:17px;color:var(--gold)}
-.tr button.dot::after{content:"";position:absolute;margin:-18px 0 0 22px;width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold)}
 #bossInfo{position:absolute;top:calc(64px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));font:700 10.5px var(--ui);color:#ff9a9a;text-shadow:0 1px 2px #000;text-align:right}
 #bossbar{position:absolute;top:calc(68px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(300px,62vw);padding:3px 10px 6px;background:var(--panel);border:1px solid rgba(255,120,140,.5);border-radius:8px;text-align:center}
 #bossbar b{font:700 13px var(--display);color:#ff9a9a;letter-spacing:.08em}
@@ -90,16 +84,12 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .sk.lock{filter:grayscale(1);opacity:.55}
 .sk.nomp{filter:saturate(.3)}
 #sk0{right:96px;bottom:0}#sk1{right:84px;bottom:66px}#sk2{right:20px;bottom:98px}
-#bAuto,#bLoot{right:146px;bottom:118px;width:50px;height:50px;background:var(--panel);font-size:9.5px;line-height:1.1}
-#bLoot{bottom:176px}
-#bLoot[aria-pressed="true"]{background:radial-gradient(circle at 40% 35%,#3c9ac9,#08304a 75%);border-color:var(--cyan);box-shadow:0 0 14px rgba(111,231,255,.45)}
-#bAuto[aria-pressed="true"]{background:radial-gradient(circle at 40% 35%,#c99a3c,#4a3008 75%);border-color:var(--gold);box-shadow:0 0 14px rgba(242,198,107,.5)}
 .exp{position:absolute;left:0;right:0;bottom:0;height:calc(6px + env(safe-area-inset-bottom,0px));background:rgba(0,0,0,.55)}
 .exp i{position:absolute;left:0;top:0;height:6px;width:100%;background:linear-gradient(90deg,#3fb8ff,#a7f3ff);transform-origin:left;box-shadow:0 0 8px #6fe7ff}
 .exp span{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(9px + env(safe-area-inset-bottom,0px));font:600 10px var(--ui);color:var(--muted);font-variant-numeric:tabular-nums;text-shadow:0 1px 2px #000}
 .hint{position:absolute;left:0;right:0;bottom:calc(13px + env(safe-area-inset-bottom,0px));text-align:center;font:400 10.5px var(--ui);color:var(--muted);text-shadow:0 1px 2px #000;padding-inline:230px}
 @media (pointer:coarse),(max-width:760px){.hint{display:none}}
-@media (max-width:520px){.bar{width:112px}.tr .g{padding:3px 7px}.tr button{min-width:38px;padding:3px 6px}#zone{top:calc(96px + env(safe-area-inset-top,0px))}}
+@media (max-width:520px){.bar{width:112px}.tr .g{padding:3px 7px}#zone{top:calc(96px + env(safe-area-inset-top,0px))}}
 
 /* panels */
 .pnl{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));top:calc(8px + env(safe-area-inset-top,0px));width:min(860px,calc(100vw - 16px));max-height:680px;margin:auto 0;display:flex;flex-direction:column;background:linear-gradient(160deg,#0b2e38,#061b22 60%);border:1px solid rgba(242,198,107,.4);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.65);z-index:5;pointer-events:auto}
@@ -187,6 +177,50 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .maps .dot{width:14px;height:14px;border-radius:50%;flex:none}
 .small{font-size:11px!important;color:#93c6cf!important}
 .hide{display:none!important}
+
+/* ===== HUD v2: two-row header, side columns, ornate medallion buttons ===== */
+.card{padding:6px 12px 6px 6px;border-radius:34px 12px 12px 34px;background:linear-gradient(180deg,rgba(14,36,44,.92),rgba(4,16,22,.92));border:1px solid rgba(242,198,107,.45);box-shadow:0 0 0 1px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08),0 6px 16px rgba(0,0,0,.45);max-width:calc(100vw - 196px)}
+.cmain{min-width:0}.hname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;letter-spacing:.01em}
+.lv{width:50px;height:50px;border:0;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.2),transparent 50%),radial-gradient(circle at 50% 60%,#1d6c80,#041a20 72%);box-shadow:0 0 0 2px #1a1206,0 0 0 4px #d8aa4a,0 0 0 5px #5a3a10,0 0 14px rgba(242,198,107,.45),inset 0 -6px 10px rgba(0,0,0,.5)}
+.bar{width:min(140px,calc(100vw - 280px));border-color:rgba(242,198,107,.35);box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
+.gold{position:absolute;top:calc(70px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));display:flex;align-items:center;gap:5px;padding:3px 11px 3px 5px;border-radius:14px;background:linear-gradient(180deg,rgba(40,28,8,.88),rgba(12,8,2,.88));border:1px solid rgba(242,198,107,.55);box-shadow:0 3px 10px rgba(0,0,0,.4)}
+.gold svg{width:18px;height:18px;color:#ffd86a;filter:drop-shadow(0 0 4px rgba(255,200,80,.6))}
+.gold b{font:700 13px var(--ui);color:#ffe7a8;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.tr{gap:9px;top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}
+.orb{position:relative;width:52px;height:52px;border-radius:50%;border:0;padding:0;cursor:pointer;color:#fbeecb;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  background:radial-gradient(circle at 50% 22%,rgba(255,255,255,.28),transparent 42%),radial-gradient(circle at 50% 62%,var(--o1,#1d5266),var(--o2,#061820) 74%);
+  box-shadow:0 0 0 2px #120c04,0 0 0 4px #c99a3c,0 0 0 5px #4a3008,0 0 16px var(--gl,rgba(111,231,255,.25)),inset 0 2px 4px rgba(255,255,255,.18),inset 0 -8px 12px rgba(0,0,0,.55),0 6px 12px rgba(0,0,0,.5);transition:transform .12s,filter .2s}
+.orb:active{transform:scale(.93)}
+.orb .ico{width:24px;height:24px;filter:drop-shadow(0 1px 1px #000) drop-shadow(0 0 4px rgba(255,220,150,.35))}
+.orb small{font:800 8.5px/1 var(--ui);letter-spacing:.04em;text-shadow:0 1px 2px #000;color:#f4e2b4}
+.orb.sm{width:44px;height:44px}.orb.sm .ico{width:20px;height:20px}.orb.sm small{font-size:7.5px}
+.orb .cnt{position:absolute;top:-6px;right:-8px;min-width:18px;height:16px;padding:0 4px;border-radius:8px;background:#120c04;border:1px solid #c99a3c;font:800 9px/14px var(--ui);color:#ffe7a8}
+.tr button.dot::after{content:"";position:absolute;margin:0;top:-3px;left:-3px;width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.orb.tog[aria-pressed="false"]{filter:grayscale(.85) brightness(.75)}
+.orb.tog[aria-pressed="true"]{box-shadow:0 0 0 2px #120c04,0 0 0 4px #f2c66b,0 0 0 5px #4a3008,0 0 20px var(--gl),inset 0 2px 4px rgba(255,255,255,.22),inset 0 -8px 12px rgba(0,0,0,.5),0 6px 12px rgba(0,0,0,.5)}
+#bParty.on{box-shadow:0 0 0 2px #120c04,0 0 0 4px #7dff9a,0 0 0 5px #0a3a1a,0 0 20px rgba(125,255,154,.45),inset 0 2px 4px rgba(255,255,255,.2),inset 0 -8px 12px rgba(0,0,0,.5)}
+.lcol{position:absolute;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:16px;pointer-events:none}
+.lcol .orb{position:relative;left:auto;bottom:auto;pointer-events:auto}
+#bossInfo{top:calc(74px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));max-width:52vw}
+#bossbar{top:calc(104px + env(safe-area-inset-top,0px))}
+#partyF{top:calc(102px + env(safe-area-inset-top,0px))}
+#bossbar:not(.hide)~#partyF{top:calc(146px + env(safe-area-inset-top,0px))}
+#zone{top:calc(150px + env(safe-area-inset-top,0px))}
+#log{left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(320px,calc(100vw - 236px));gap:2px}
+#log div{font-size:10.5px;line-height:1.3}
+.actions{right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:196px;height:178px;overflow:visible}
+.actions button{overflow:visible}
+#bAtk{width:86px;height:86px;color:#eafcff;font:700 12px var(--display);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;
+  background:radial-gradient(circle at 50% 22%,rgba(255,255,255,.3),transparent 40%),radial-gradient(circle at 50% 62%,#1f7f98,#04222c 74%);
+  box-shadow:0 0 0 2px #120c04,0 0 0 5px #d8aa4a,0 0 0 6px #4a3008,0 0 0 9px rgba(111,231,255,.18),0 0 26px rgba(111,231,255,.45),inset 0 3px 6px rgba(255,255,255,.2),inset 0 -12px 18px rgba(0,0,0,.55)}
+#bAtk .big{width:38px;height:38px;filter:drop-shadow(0 0 6px rgba(160,240,255,.7)) drop-shadow(0 1px 1px #000)}
+#bAtk small{font:700 11px var(--display);letter-spacing:.12em}
+.sk{width:56px;height:56px;border:0;overflow:hidden;background:radial-gradient(circle at 50% 22%,rgba(255,255,255,.3),transparent 42%),radial-gradient(circle at 50% 62%,var(--c2),#0a1426 74%);
+  box-shadow:0 0 0 2px #120c04,0 0 0 4px #c99a3c,0 0 0 5px #4a3008,0 0 16px var(--c3),inset 0 -8px 12px rgba(0,0,0,.5)}
+.sk .ic{font-size:22px;filter:drop-shadow(0 0 6px var(--c3))}
+.sk small{font-size:7.5px;max-width:52px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#sk0{right:100px;bottom:2px}#sk1{right:86px;bottom:74px}#sk2{right:16px;bottom:106px}
+@media (max-width:380px){.orb.sm{width:40px;height:40px}.tr{gap:7px}.lcol .orb{width:48px;height:48px}}
 </style>
 <meta name="description" content="ARPG cày cuốc dưới đáy biển: 5 lớp nhân vật, 3 bãi quái, boss, cánh, linh thạch, bộ đồ.">
 
@@ -196,34 +230,36 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 <div id="hud" class="hide">
   <div class="card">
     <div class="lv"><span>Cấp</span><b id="hLv">1</b><em id="hIcon">⚡</em></div>
-    <div>
+    <div class="cmain">
       <div class="hname" id="hName">Lôi Thánh Kỵ</div>
       <div class="bar hpb"><i id="hpBar"></i><span id="hpTxt"></span></div>
       <div class="bar mpb"><i id="mpBar"></i><span id="mpTxt"></span></div>
     </div>
   </div>
+  <div class="gold"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="5.2"/><path d="M12 9.5v5M10.3 11h3.4"/></svg><b id="hGold">0</b></div>
   <div class="tr">
-    <div class="g"><span>Vàng</span><b id="hGold">0</b></div>
-    <button id="bBag" aria-label="Mở túi đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 016 0v2"/></svg><span id="hBag">0</span></button>
-    <button id="bMap" aria-label="Mở bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg>Bản đồ</button>
-    <button id="bMenu" aria-label="Mở menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>
+    <button class="orb sm" id="bBag" aria-label="Mở túi đồ"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9h10l1.5 11h-13z"/><path d="M9.5 9V7.5a2.5 2.5 0 015 0V9"/><path d="M9 13.5h6"/></svg><span class="cnt" id="hBag">0</span><small>Túi</small></button>
+    <button class="orb sm" id="bMap" aria-label="Mở bản đồ"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5l5-2 6 2 5-2v13l-5 2-6-2-5 2z"/><path d="M9 4.5v13M15 6.5v13"/><circle cx="12" cy="11" r="1.4"/></svg><small>Bản đồ</small></button>
+    <button class="orb sm" id="bMenu" aria-label="Mở menu"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg><small>Menu</small></button>
   </div>
   <div id="bossInfo"></div>
   <div id="bossbar" class="hide"><b id="bossName"></b><div><i id="bossHp"></i></div></div>
   <div id="zone"><h1 id="zoneName"></h1><p id="zoneSub"></p></div>
   <div id="banner"></div>
   <div id="log"></div>
-  <button id="bParty" aria-label="Nhóm">Nhóm</button>
-  <button id="bRank" aria-label="Bảng xếp hạng">BXH</button>
   <div id="partyF"></div>
   <div id="invite" class="hide" role="alertdialog"></div>
+  <div class="lcol">
+    <button class="orb" id="bRank" aria-label="Bảng xếp hạng" style="--o1:#6a4a1a;--o2:#1e1206;--gl:rgba(242,198,107,.35)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4a4 4 0 01-8 0z"/><path d="M8 5H5v1.5A3 3 0 008 9.5M16 5h3v1.5a3 3 0 01-3 3"/><path d="M12 12v4M9 20h6M10 16h4v4h-4z"/></svg><small>BXH</small></button>
+    <button class="orb" id="bParty" aria-label="Nhóm" style="--o1:#1f5a3a;--o2:#06180e;--gl:rgba(125,255,154,.3)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="2.6"/><circle cx="5.8" cy="10" r="2"/><circle cx="18.2" cy="10" r="2"/><path d="M7.5 19a4.5 4.5 0 019 0M2.5 18.5a3.4 3.4 0 015.2-2.8M21.5 18.5a3.4 3.4 0 00-5.2-2.8"/></svg><small>Nhóm</small></button>
+    <button class="orb tog" id="bLoot" aria-pressed="true" aria-label="Bật hoặc tắt tự lượm đồ" style="--o1:#1d5a7a;--o2:#061824;--gl:rgba(111,231,255,.45)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l3 4.5L12 21 9 7.5z"/><path d="M9 7.5h6M5 11l2.5-1M19 11l-2.5-1M6.5 16.5L8.5 15M17.5 16.5L15.5 15"/></svg><small>Tự lượm</small></button>
+    <button class="orb tog" id="bAuto" aria-pressed="true" aria-label="Bật hoặc tắt tự động đánh" style="--o1:#8a5a14;--o2:#241504;--gl:rgba(242,198,107,.5)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18L16.5 7.5M16.5 7.5l.5-3 3-.5-.5 3zM9 15l-2.5-.5L5 16l3 3 1.5-1.5L9 15z"/><path d="M19 13a7 7 0 01-11.6 5.2M5 11a7 7 0 0111.6-5.2"/></svg><small>Tự động</small></button>
+  </div>
   <div class="actions">
-    <button id="bLoot" aria-pressed="true" aria-label="Bật hoặc tắt tự lượm đồ">Tự<br>lượm</button>
-    <button id="bAuto" aria-pressed="true" aria-label="Bật hoặc tắt tự động đánh">Tự<br>động</button>
     <button class="sk" id="sk2"><div class="cd"></div><span class="ic"></span><small></small><span class="cdt"></span></button>
     <button class="sk" id="sk1"><div class="cd"></div><span class="ic"></span><small></small><span class="cdt"></span></button>
     <button class="sk" id="sk0"><div class="cd"></div><span class="ic"></span><small></small><span class="cdt"></span></button>
-    <button id="bAtk" aria-label="Đánh thường">Đánh</button>
+    <button id="bAtk" aria-label="Đánh thường"><svg class="big" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19L17 7M17 7l.6-3.6L21 3l-.4 3.4zM8 16l-2.8-.6L3.5 17l3.5 3.5 1.6-1.7z"/><path d="M19 19L13.5 13.5M5 5l5.5 5.5M19 19l-1.6 1.6M19 19l1.6-1.6"/></svg><small>Đánh</small></button>
   </div>
   <div class="hint">Chạm/nhấp nền để đi · WASD · Space đánh · 1 2 3 kỹ năng · F tự động · L tự lượm · I túi đồ · M bản đồ</div>
   <div class="exp"><i id="expBar"></i><span id="expTxt"></span></div>
@@ -1561,8 +1597,11 @@ const apsRef = L => apsOf(3.2, asRef(L));
 const killRef = L => 0.25 * apsRef(L);                        // reference kills per second used to size EXP
 const mobExp = lv => 10 + 3 * lv;
 const expNeed = lv => Math.round(lvSeconds(lv) * killRef(lv) * mobExp(lv));
-const mobHp = lv => Math.round(60 * (1 + 0.3 * (lv - 1)) * (1 + lv / 250));
-const mobAtk = lv => Math.round(16 + 2.4 * lv);
+const mobHp = lv => Math.round(60 * (1 + 0.3 * (lv - 1)) * (1 + lv / 180));
+const mobAtk = lv => Math.round(16 + 2.4 * lv + lv * lv / 400);
+// level suppression: fighting monsters above your level hurts both ways
+const lvDealK = gap => gap > 0 ? 1 / (1 + gap * 0.012) : 1;   // your damage to a higher-level monster
+const lvTakeK = gap => 1 + Math.max(0, gap) * 0.012;           // its damage to you
 const DMG_SCALE = 0.3;                                         // every hero hit deals 30% of the old damage
 const REC = { hpHit: 0.0025, mpHit: 0.005, hpKill: 0.01, mpKill: 0.015, hpCap: 0.05, mpCap: 0.12 }; // on-hit recovery, capped per second
 // pets: follow the hero, pull loot in, give bonuses; the strongest ones also attack
@@ -1737,7 +1776,7 @@ function addMob(k, lv, x, z, zone, mini = false) {
   const shadow = blob((T.model === 'fish' ? 1.6 : 1.3) * scale); scene.add(shadow); scene.add(v.group);
   const el = document.createElement('div'); el.className = 'lbl'; el.style.display = 'none';
   el.innerHTML = `<div class="nm" style="color:${T.color}">${mini ? '★ ' : ''}${T.name} · Lv ${lv}</div><div class="hp${boss || mini ? ' b' : ''}"><i></i></div>`; labelsEl.appendChild(el);
-  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 30 : mini ? 10 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 3 : mini ? 2 : 1),
+  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 60 : mini ? 15 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 4 : mini ? 2.5 : 1),
     hp: 0, face: rr(0, 6.28), state: 'idle', wait: rr(0, 3), flash: 0, dead: 0, respawn: 0, aggro: false, atkCd: 0, phase: rr(0, 6.28), spawnT: 0.6 };
   m.hp = m.maxHp; mobs.push(m); return m;
 }
@@ -1748,7 +1787,7 @@ function removeMob(m) { scene.remove(m.group); scene.remove(m.shadow); m.el.remo
 const mobH = m => m.T.y + m.T.hh * m.scale;
 function vuln(m, el) { let k = 1; if (m.frzT > 0) k *= 1.3; if (m.shockT > 0) k *= 1.2; if (m.burnT > 0) k *= 1.15; if (m.wetT > 0) k *= (el === 'ice' || el === 'thunder') ? 1.35 : 1.1; return k; }
 function hitMob(m, mult, el, show = true) {
-  if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m;
+  if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m * lvDealK(m.lv - S.lv);
   m.hp -= dmg; m.flash = 1; m.aggro = true; m.tgt = null; recover(REC.hpHit, REC.mpHit); show = show && textN < 34;
   if (show) { const y = m.T.y + 0.9 * Math.max(1, m.scale);
     fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), r.ty === 'n' ? '' : DMGC[r.ty], { n: 17, c: 22, p: 23, d: 24, t: 26, x: 30 }[r.ty] + Math.max(0, r.L - 1) * 2, r.ty === 'n' ? null : { glow: r.ty === 'x' || r.L >= 3, life: 1.1 }, y);
@@ -1758,7 +1797,7 @@ function hitMob(m, mult, el, show = true) {
   if (m.hp <= 0) killMob(m);
 }
 function dot(m, dmg) { if (m.dead) return; m.hp -= dmg; if (m.hp <= 0) killMob(m); }
-function burn(m, mult) { m.burnT = 2.5; m.burnD = Math.max(m.burnD || 0, HS.atk * mult * HS.dmgMul * DMG_SCALE * 0.15); }
+function burn(m, mult) { m.burnT = 2.5; m.burnD = Math.max(m.burnD || 0, HS.atk * mult * HS.dmgMul * DMG_SCALE * 0.15 * lvDealK(m.lv - S.lv)); }
 function freeze(m, t, ch) { if (ch !== undefined && Math.random() >= ch * (m.wetT > 0 ? 2 : 1)) return; const d = m.boss ? t * 0.35 : t; if (d > (m.frzT || 0)) m.frzT = d; }
 function shock(m, t) { m.shockT = Math.max(m.shockT || 0, t); m.stunT = Math.max(m.stunT || 0, m.boss ? 0.1 : 0.35); }
 function knock(m, d) { const dx = m.x - S.pos.x, dz = m.z - S.pos.z, l = Math.hypot(dx, dz) || 1; const k = m.boss ? d * 0.2 : d; const nx = m.x + dx / l * k, nz = m.z + dz / l * k; if (!collides(nx, nz, 0.4) && Math.hypot(nx, nz) < 21) { m.x = nx; m.z = nz; } }
@@ -1927,7 +1966,7 @@ function updSkills(dt) {
         if (k >= 1) { scene.remove(s.m); S.shake = Math.max(S.shake || 0, 0.35); burst(s.x, 0.4, s.z, 60, C3('#ff7a1a'), 8, 0.6, 0.8); burst(s.x, 0.4, s.z, 24, C3('#ffe08a'), 5, 0.4, 0.6); fxRing(s.x, s.z, 0, 2.8, '#ff9a3a', 0.55);
           for (const m of mobsNear(s.x, s.z, 2.4)) { burn(m, 0.6); hitMob(m, s.D, 'fire'); } sks.push({ type: 'firezone', sk: 'meteor', x: s.x, z: s.z, R: 2, t: 0, dur: 2, tick: 0, D: s.D * 0.04 }); s.done = true; } break; }
       case 'firezone': if (Math.random() < dt * 30) { const a = rr(0, 6.28), r = Math.sqrt(Math.random()) * s.R; emit(s.x + Math.cos(a) * r, 0.05, s.z + Math.sin(a) * r, 0, rr(1, 2.2), 0, C3(Math.random() < 0.5 ? '#ff7a1a' : '#ffcf5a'), 0.4, 0.7, 0.3, 0.98); }
-        s.tick -= dt; if (s.tick <= 0) { s.tick = 0.3; for (const m of mobsNear(s.x, s.z, s.R)) { burn(m, 0.4); dot(m, HS.atk * s.D * HS.dmgMul * DMG_SCALE * vuln(m, 'fire')); } } if (s.t >= s.dur) s.done = true; break;
+        s.tick -= dt; if (s.tick <= 0) { s.tick = 0.3; for (const m of mobsNear(s.x, s.z, s.R)) { burn(m, 0.4); dot(m, HS.atk * s.D * HS.dmgMul * DMG_SCALE * vuln(m, 'fire') * lvDealK(m.lv - S.lv)); } } if (s.t >= s.dur) s.done = true; break;
       case 'blizzard': if (s.t < s.dur) for (let n = 0; n < 5; n++) { const a = rr(0, 6.28), r = Math.sqrt(Math.random()) * s.R; emit(s.x + Math.cos(a) * r, rr(0.2, 2.6), s.z + Math.sin(a) * r, Math.cos(a + 1.6) * 2, -1, Math.sin(a + 1.6) * 2, C3('#e8fbff'), 0.22, 0.6, 0, 0.98); }
         s.pulse -= dt; if (s.pulse <= 0 && s.t < s.dur) { s.pulse = 0.8; fxRing(s.x, s.z, 0, s.R, '#9ff0ff', 0.6, 0, 0.3); }
         s.tick -= dt; if (s.tick <= 0 && s.t < s.dur) { s.tick = 0.4; for (const m of mobsNear(s.x, s.z, s.R)) { m.slowT = 1; m.slow = m.boss ? 0.25 : 0.5; freeze(m, 1.2, 0.12); hitMob(m, s.D, 'ice'); } } if (s.t >= s.dur + 0.3) s.done = true; break;
@@ -2067,7 +2106,7 @@ function updateMobs(dt, t) {
     const stopped = m.frzT > 0 || m.stunT > 0; const spd = (m.T.speed || 1.2) * (m.slowT > 0 ? 1 - (m.slow || 0) : 1);
     if (m.tgt && (!m.tgt.alive || m.tgt.dead > 0)) m.tgt = null;
     const dP = Math.hypot(S.pos.x - m.x, S.pos.z - m.z);
-    if (!m.aggro && !S.dead && dP < (m.boss ? 7 : 4.5) && m.lv >= S.lv - 25) { m.aggro = true; m.tgt = null; }
+    if (!m.aggro && !S.dead && dP < (m.boss ? 7 : 4.5) + Math.min(4, Math.max(0, m.lv - S.lv) * 0.02) && m.lv >= S.lv - 25) { m.aggro = true; m.tgt = null; }
     if (!m.aggro && ents.size && Math.random() < 0.1) for (const e of ents.values()) if (!e.dead && Math.hypot(e.pos.x - m.x, e.pos.z - m.z) < 3.5) { m.aggro = true; m.tgt = e; break; }
     const TP = m.tgt ? m.tgt.pos : S.pos, tGone = m.tgt ? false : !!S.dead;
     const dh = Math.hypot(TP.x - m.x, TP.z - m.z); let moving = false; const reach = m.boss ? 2.2 : 1.0;
@@ -2075,7 +2114,7 @@ function updateMobs(dt, t) {
       if (dh > (m.boss ? 18 : 14)) { m.aggro = false; m.tgt = null; }
       else if (dh > reach) { if (!stopped) { m.tx = TP.x; m.tz = TP.z; moving = true; } }
       else if (!stopped) { m.face = Math.atan2(TP.x - m.x, TP.z - m.z); m.atkCd -= dt;
-        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * (1 - HS.def / (HS.def + 10 * m.lv + 100)))); S.hp -= dmg; S.lastHit = S.time;
+        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - m.tgt.b.lv)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - S.lv) * (1 - HS.def / (HS.def + 10 * m.lv + 100)))); S.hp -= dmg; S.lastHit = S.time;
           fxText(S.pos.x, S.pos.z, '-' + dmg, '#ff6b6b', 14, null, HERO_H + 0.9); if (m.boss) { fxRing(m.x, m.z, 0, 3, '#ff6a6a', 0.5, 0, 0.3); S.shake = Math.max(S.shake || 0, 0.2); } if (S.hp <= 0) heroDie(); } } }
     } else if (!stopped) { m.wait -= dt; if (m.wait <= 0) { if (m.state === 'idle') { const a = rr(0, 6.28), d = rr(1, m.zone.r * 0.8); m.tx = m.zone.x + Math.cos(a) * d; m.tz = m.zone.z + Math.sin(a) * d; m.state = 'move'; } else { m.state = 'idle'; m.wait = rr(1.5, 4); } } if (m.state === 'move') moving = true; }
     if (moving && !stopped) { const dx = m.tx - m.x, dz = m.tz - m.z, d = Math.hypot(dx, dz);
@@ -2115,7 +2154,7 @@ function botLoot(b, force) { if (b.inv.length >= 10) b.inv.shift();
   const q = Math.random(), r = q < 0.08 ? 3 : q < 0.3 ? 2 : q < 0.65 ? 1 : 0; const g = makeGear(Math.random() < 0.35 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, Math.max(1, b.lv - ri(0, 20)), r >= 1 && Math.random() < 0.4 ? MAPS[pickMapFor(b.lv)].set : null); if (r >= 1 && Math.random() < 0.5) g.plus = ri(1, 3 + r * 2); b.inv.push(g); }
 function botGain(b, xp) { b.exp += xp; let up = false; while (b.lv < MAXLV && b.exp >= expNeed(b.lv)) { b.exp -= expNeed(b.lv); b.lv++; up = true; }
   const e = ents.get(b.id); if (up && e) { const st = botStats(b); e.maxHp = st.hp; e.hp = st.hp; fxRing(e.pos.x, e.pos.z, 0, 1.4, '#ffd27a', 0.6); e.el.querySelector('.nm').innerHTML = botName(b); } }
-function botStats(b) { const C = CLS[b.cls], g = 1.7 + b.lv * 0.012; return { atk: (12 + b.lv * 3.2) * C.atk * g, hp: Math.round((380 + b.lv * 55) * C.hp * 1.8), def: b.lv * 3, aps: apsOf(C.aps, asRef(b.lv) * 0.85) }; }
+function botStats(b) { const C = CLS[b.cls], g = 1.4 + b.lv * 0.004; return { atk: (12 + b.lv * 3.2) * C.atk * g, hp: Math.round((380 + b.lv * 55) * C.hp * 1.8), def: b.lv * 3, aps: apsOf(C.aps, asRef(b.lv) * 0.85) }; }
 const inParty = b => !!(S.party && S.party.members.includes(b.id));
 const botName = b => `${inParty(b) ? (S.party.leader === b.id ? '♛ ' : '◆ ') : ''}${b.name} · Lv ${b.lv}`;
 
@@ -2184,7 +2223,7 @@ function botMove(e, tx, tz, dt, sp) { const dx = tx - e.pos.x, dz = tz - e.pos.z
   const r = Math.hypot(e.pos.x, e.pos.z); if (r > 21) { e.pos.x *= 21 / r; e.pos.z *= 21 / r; }
   let da = Math.atan2(ux, uz) - e.face; da = Math.atan2(Math.sin(da), Math.cos(da)); e.face += da * Math.min(1, dt * 8); return true; }
 function botSay(e, txt) { e.sayEl.textContent = txt; e.sayEl.style.display = 'block'; e.sayHide = S.time + 3.5; }
-function botHitMob(m, dmg, e) { if (m.dead) return; const crit = Math.random() < 0.12; dmg *= DMG_SCALE * rr(0.9, 1.1) * (crit ? 1.8 : 1) * vuln(m, CLS[e.b.cls].el);
+function botHitMob(m, dmg, e) { if (m.dead) return; const crit = Math.random() < 0.12; dmg *= DMG_SCALE * rr(0.9, 1.1) * (crit ? 1.8 : 1) * vuln(m, CLS[e.b.cls].el) * lvDealK(m.lv - e.b.lv);
   m.hp -= dmg; m.flash = 1; m.aggro = true; if (!m.tgt || Math.random() < 0.35) m.tgt = e;
   if (textN < 22) fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), crit ? '#ffd0a0' : '#b8c4cc', crit ? 14 : 12, null, m.T.y + 0.9 * Math.max(1, m.scale));
   burst(m.x, mobH(m), m.z, 4, C3(m.T.color), 3, 0.3, 0.4); if (m.hp <= 0) killMob(m, e); }

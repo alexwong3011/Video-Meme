@@ -152,7 +152,7 @@ function addMob(k, lv, x, z, zone, mini = false) {
   const shadow = blob((T.model === 'fish' ? 1.6 : 1.3) * scale); scene.add(shadow); scene.add(v.group);
   const el = document.createElement('div'); el.className = 'lbl'; el.style.display = 'none';
   el.innerHTML = `<div class="nm" style="color:${T.color}">${mini ? '★ ' : ''}${T.name} · Lv ${lv}</div><div class="hp${boss || mini ? ' b' : ''}"><i></i></div>`; labelsEl.appendChild(el);
-  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 30 : mini ? 10 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 3 : mini ? 2 : 1),
+  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 60 : mini ? 15 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 4 : mini ? 2.5 : 1),
     hp: 0, face: rr(0, 6.28), state: 'idle', wait: rr(0, 3), flash: 0, dead: 0, respawn: 0, aggro: false, atkCd: 0, phase: rr(0, 6.28), spawnT: 0.6 };
   m.hp = m.maxHp; mobs.push(m); return m;
 }
@@ -163,7 +163,7 @@ function removeMob(m) { scene.remove(m.group); scene.remove(m.shadow); m.el.remo
 const mobH = m => m.T.y + m.T.hh * m.scale;
 function vuln(m, el) { let k = 1; if (m.frzT > 0) k *= 1.3; if (m.shockT > 0) k *= 1.2; if (m.burnT > 0) k *= 1.15; if (m.wetT > 0) k *= (el === 'ice' || el === 'thunder') ? 1.35 : 1.1; return k; }
 function hitMob(m, mult, el, show = true) {
-  if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m;
+  if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m * lvDealK(m.lv - S.lv);
   m.hp -= dmg; m.flash = 1; m.aggro = true; m.tgt = null; recover(REC.hpHit, REC.mpHit); show = show && textN < 34;
   if (show) { const y = m.T.y + 0.9 * Math.max(1, m.scale);
     fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), r.ty === 'n' ? '' : DMGC[r.ty], { n: 17, c: 22, p: 23, d: 24, t: 26, x: 30 }[r.ty] + Math.max(0, r.L - 1) * 2, r.ty === 'n' ? null : { glow: r.ty === 'x' || r.L >= 3, life: 1.1 }, y);
@@ -173,7 +173,7 @@ function hitMob(m, mult, el, show = true) {
   if (m.hp <= 0) killMob(m);
 }
 function dot(m, dmg) { if (m.dead) return; m.hp -= dmg; if (m.hp <= 0) killMob(m); }
-function burn(m, mult) { m.burnT = 2.5; m.burnD = Math.max(m.burnD || 0, HS.atk * mult * HS.dmgMul * DMG_SCALE * 0.15); }
+function burn(m, mult) { m.burnT = 2.5; m.burnD = Math.max(m.burnD || 0, HS.atk * mult * HS.dmgMul * DMG_SCALE * 0.15 * lvDealK(m.lv - S.lv)); }
 function freeze(m, t, ch) { if (ch !== undefined && Math.random() >= ch * (m.wetT > 0 ? 2 : 1)) return; const d = m.boss ? t * 0.35 : t; if (d > (m.frzT || 0)) m.frzT = d; }
 function shock(m, t) { m.shockT = Math.max(m.shockT || 0, t); m.stunT = Math.max(m.stunT || 0, m.boss ? 0.1 : 0.35); }
 function knock(m, d) { const dx = m.x - S.pos.x, dz = m.z - S.pos.z, l = Math.hypot(dx, dz) || 1; const k = m.boss ? d * 0.2 : d; const nx = m.x + dx / l * k, nz = m.z + dz / l * k; if (!collides(nx, nz, 0.4) && Math.hypot(nx, nz) < 21) { m.x = nx; m.z = nz; } }
@@ -342,7 +342,7 @@ function updSkills(dt) {
         if (k >= 1) { scene.remove(s.m); S.shake = Math.max(S.shake || 0, 0.35); burst(s.x, 0.4, s.z, 60, C3('#ff7a1a'), 8, 0.6, 0.8); burst(s.x, 0.4, s.z, 24, C3('#ffe08a'), 5, 0.4, 0.6); fxRing(s.x, s.z, 0, 2.8, '#ff9a3a', 0.55);
           for (const m of mobsNear(s.x, s.z, 2.4)) { burn(m, 0.6); hitMob(m, s.D, 'fire'); } sks.push({ type: 'firezone', sk: 'meteor', x: s.x, z: s.z, R: 2, t: 0, dur: 2, tick: 0, D: s.D * 0.04 }); s.done = true; } break; }
       case 'firezone': if (Math.random() < dt * 30) { const a = rr(0, 6.28), r = Math.sqrt(Math.random()) * s.R; emit(s.x + Math.cos(a) * r, 0.05, s.z + Math.sin(a) * r, 0, rr(1, 2.2), 0, C3(Math.random() < 0.5 ? '#ff7a1a' : '#ffcf5a'), 0.4, 0.7, 0.3, 0.98); }
-        s.tick -= dt; if (s.tick <= 0) { s.tick = 0.3; for (const m of mobsNear(s.x, s.z, s.R)) { burn(m, 0.4); dot(m, HS.atk * s.D * HS.dmgMul * DMG_SCALE * vuln(m, 'fire')); } } if (s.t >= s.dur) s.done = true; break;
+        s.tick -= dt; if (s.tick <= 0) { s.tick = 0.3; for (const m of mobsNear(s.x, s.z, s.R)) { burn(m, 0.4); dot(m, HS.atk * s.D * HS.dmgMul * DMG_SCALE * vuln(m, 'fire') * lvDealK(m.lv - S.lv)); } } if (s.t >= s.dur) s.done = true; break;
       case 'blizzard': if (s.t < s.dur) for (let n = 0; n < 5; n++) { const a = rr(0, 6.28), r = Math.sqrt(Math.random()) * s.R; emit(s.x + Math.cos(a) * r, rr(0.2, 2.6), s.z + Math.sin(a) * r, Math.cos(a + 1.6) * 2, -1, Math.sin(a + 1.6) * 2, C3('#e8fbff'), 0.22, 0.6, 0, 0.98); }
         s.pulse -= dt; if (s.pulse <= 0 && s.t < s.dur) { s.pulse = 0.8; fxRing(s.x, s.z, 0, s.R, '#9ff0ff', 0.6, 0, 0.3); }
         s.tick -= dt; if (s.tick <= 0 && s.t < s.dur) { s.tick = 0.4; for (const m of mobsNear(s.x, s.z, s.R)) { m.slowT = 1; m.slow = m.boss ? 0.25 : 0.5; freeze(m, 1.2, 0.12); hitMob(m, s.D, 'ice'); } } if (s.t >= s.dur + 0.3) s.done = true; break;
@@ -482,7 +482,7 @@ function updateMobs(dt, t) {
     const stopped = m.frzT > 0 || m.stunT > 0; const spd = (m.T.speed || 1.2) * (m.slowT > 0 ? 1 - (m.slow || 0) : 1);
     if (m.tgt && (!m.tgt.alive || m.tgt.dead > 0)) m.tgt = null;
     const dP = Math.hypot(S.pos.x - m.x, S.pos.z - m.z);
-    if (!m.aggro && !S.dead && dP < (m.boss ? 7 : 4.5) && m.lv >= S.lv - 25) { m.aggro = true; m.tgt = null; }
+    if (!m.aggro && !S.dead && dP < (m.boss ? 7 : 4.5) + Math.min(4, Math.max(0, m.lv - S.lv) * 0.02) && m.lv >= S.lv - 25) { m.aggro = true; m.tgt = null; }
     if (!m.aggro && ents.size && Math.random() < 0.1) for (const e of ents.values()) if (!e.dead && Math.hypot(e.pos.x - m.x, e.pos.z - m.z) < 3.5) { m.aggro = true; m.tgt = e; break; }
     const TP = m.tgt ? m.tgt.pos : S.pos, tGone = m.tgt ? false : !!S.dead;
     const dh = Math.hypot(TP.x - m.x, TP.z - m.z); let moving = false; const reach = m.boss ? 2.2 : 1.0;
@@ -490,7 +490,7 @@ function updateMobs(dt, t) {
       if (dh > (m.boss ? 18 : 14)) { m.aggro = false; m.tgt = null; }
       else if (dh > reach) { if (!stopped) { m.tx = TP.x; m.tz = TP.z; moving = true; } }
       else if (!stopped) { m.face = Math.atan2(TP.x - m.x, TP.z - m.z); m.atkCd -= dt;
-        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * (1 - HS.def / (HS.def + 10 * m.lv + 100)))); S.hp -= dmg; S.lastHit = S.time;
+        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - m.tgt.b.lv)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - S.lv) * (1 - HS.def / (HS.def + 10 * m.lv + 100)))); S.hp -= dmg; S.lastHit = S.time;
           fxText(S.pos.x, S.pos.z, '-' + dmg, '#ff6b6b', 14, null, HERO_H + 0.9); if (m.boss) { fxRing(m.x, m.z, 0, 3, '#ff6a6a', 0.5, 0, 0.3); S.shake = Math.max(S.shake || 0, 0.2); } if (S.hp <= 0) heroDie(); } } }
     } else if (!stopped) { m.wait -= dt; if (m.wait <= 0) { if (m.state === 'idle') { const a = rr(0, 6.28), d = rr(1, m.zone.r * 0.8); m.tx = m.zone.x + Math.cos(a) * d; m.tz = m.zone.z + Math.sin(a) * d; m.state = 'move'; } else { m.state = 'idle'; m.wait = rr(1.5, 4); } } if (m.state === 'move') moving = true; }
     if (moving && !stopped) { const dx = m.tx - m.x, dz = m.tz - m.z, d = Math.hypot(dx, dz);

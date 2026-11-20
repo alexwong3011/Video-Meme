@@ -15,7 +15,7 @@ function botLoot(b, force) { if (b.inv.length >= 10) b.inv.shift();
   const q = Math.random(), r = q < 0.08 ? 3 : q < 0.3 ? 2 : q < 0.65 ? 1 : 0; const g = makeGear(Math.random() < 0.35 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, Math.max(1, b.lv - ri(0, 20)), r >= 1 && Math.random() < 0.4 ? MAPS[pickMapFor(b.lv)].set : null); if (r >= 1 && Math.random() < 0.5) g.plus = ri(1, 3 + r * 2); b.inv.push(g); }
 function botGain(b, xp) { b.exp += xp; let up = false; while (b.lv < MAXLV && b.exp >= expNeed(b.lv)) { b.exp -= expNeed(b.lv); b.lv++; up = true; }
   const e = ents.get(b.id); if (up && e) { const st = botStats(b); e.maxHp = st.hp; e.hp = st.hp; fxRing(e.pos.x, e.pos.z, 0, 1.4, '#ffd27a', 0.6); e.el.querySelector('.nm').innerHTML = botName(b); } }
-function botStats(b) { const C = CLS[b.cls], g = 1.7 + b.lv * 0.012; return { atk: (12 + b.lv * 3.2) * C.atk * g, hp: Math.round((380 + b.lv * 55) * C.hp * 1.8), def: b.lv * 3, aps: apsOf(C.aps, asRef(b.lv) * 0.85) }; }
+function botStats(b) { const C = CLS[b.cls], g = 1.4 + b.lv * 0.004; return { atk: (12 + b.lv * 3.2) * C.atk * g, hp: Math.round((380 + b.lv * 55) * C.hp * 1.8), def: b.lv * 3, aps: apsOf(C.aps, asRef(b.lv) * 0.85) }; }
 const inParty = b => !!(S.party && S.party.members.includes(b.id));
 const botName = b => `${inParty(b) ? (S.party.leader === b.id ? '♛ ' : '◆ ') : ''}${b.name} · Lv ${b.lv}`;
 
@@ -84,7 +84,7 @@ function botMove(e, tx, tz, dt, sp) { const dx = tx - e.pos.x, dz = tz - e.pos.z
   const r = Math.hypot(e.pos.x, e.pos.z); if (r > 21) { e.pos.x *= 21 / r; e.pos.z *= 21 / r; }
   let da = Math.atan2(ux, uz) - e.face; da = Math.atan2(Math.sin(da), Math.cos(da)); e.face += da * Math.min(1, dt * 8); return true; }
 function botSay(e, txt) { e.sayEl.textContent = txt; e.sayEl.style.display = 'block'; e.sayHide = S.time + 3.5; }
-function botHitMob(m, dmg, e) { if (m.dead) return; const crit = Math.random() < 0.12; dmg *= DMG_SCALE * rr(0.9, 1.1) * (crit ? 1.8 : 1) * vuln(m, CLS[e.b.cls].el);
+function botHitMob(m, dmg, e) { if (m.dead) return; const crit = Math.random() < 0.12; dmg *= DMG_SCALE * rr(0.9, 1.1) * (crit ? 1.8 : 1) * vuln(m, CLS[e.b.cls].el) * lvDealK(m.lv - e.b.lv);
   m.hp -= dmg; m.flash = 1; m.aggro = true; if (!m.tgt || Math.random() < 0.35) m.tgt = e;
   if (textN < 22) fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), crit ? '#ffd0a0' : '#b8c4cc', crit ? 14 : 12, null, m.T.y + 0.9 * Math.max(1, m.scale));
   burst(m.x, mobH(m), m.z, 4, C3(m.T.color), 3, 0.3, 0.4); if (m.hp <= 0) killMob(m, e); }

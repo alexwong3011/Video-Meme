@@ -336,3 +336,13 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
   - **Lực chiến** = sát thương/giây ước tính (tấn công × 30% × đòn/giây × siêu đòn trung bình × hệ số cánh/bộ/bùa) + máu × 0,05 + phòng thủ × 2. Bot dùng cùng công thức trên chỉ số của bot (`botPower`, `myPower` trong h_ui.js).
   - **Kinh tế** = vàng + giá trị đồ trong túi (và đồ đang mặc với người chơi); kèm tổng vàng đã giao dịch (`traded`, cộng khi mua/bán với bot và khi bot giao dịch với nhau).
 - Mỗi dòng hiện hạng, lớp, cấp, map đang ở; hàng của bạn được tô vàng, top 3 màu vàng/bạc/đồng.
+
+## 20. Vực Lam – HUD mới và chỉnh độ khó
+
+- **HUD v2** (cuối `<style>` trong a_head.html, khối "HUD v2"): header 2 tầng (khung cấp/tên/máu/mana bên trái + 3 huy hiệu Túi/Bản đồ/Menu bên phải; tầng dưới: viên vàng bên trái, giờ boss bên phải). Nút dạng huy hiệu tròn viền kim loại kép (`.orb`) với icon SVG vẽ riêng. Cột trái: BXH, Nhóm, Tự lượm, Tự động. Cụm phải: Đánh (huy hiệu lớn có kiếm chéo) + 3 kỹ năng. Chat xuống góc dưới trái. Trung tâm màn hình để trống.
+- **Độ khó**:
+  - Áp chế cấp: đánh quái cao hơn mình `gap` cấp chỉ gây `1/(1+0,012·gap)` sát thương và nhận `1+0,012·gap` lần sát thương (áp dụng cả bot).
+  - Quái cao cấp hơn phát hiện bạn từ xa hơn (tới +4m).
+  - Máu quái `60·(1+0,3(L−1))·(1+L/180)`, công `16+2,4L+L²/400`.
+  - Boss ×60 máu / ×4 công (cũ ×30/×3), tinh anh ×15 / ×2,5.
+  - Bot yếu hơn (hệ số trang bị `1,4+0,004·lv` thay vì `1,7+0,012·lv`).

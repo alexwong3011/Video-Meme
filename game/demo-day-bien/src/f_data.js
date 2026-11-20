@@ -224,8 +224,11 @@ const apsRef = L => apsOf(3.2, asRef(L));
 const killRef = L => 0.25 * apsRef(L);                        // reference kills per second used to size EXP
 const mobExp = lv => 10 + 3 * lv;
 const expNeed = lv => Math.round(lvSeconds(lv) * killRef(lv) * mobExp(lv));
-const mobHp = lv => Math.round(60 * (1 + 0.3 * (lv - 1)) * (1 + lv / 250));
-const mobAtk = lv => Math.round(16 + 2.4 * lv);
+const mobHp = lv => Math.round(60 * (1 + 0.3 * (lv - 1)) * (1 + lv / 180));
+const mobAtk = lv => Math.round(16 + 2.4 * lv + lv * lv / 400);
+// level suppression: fighting monsters above your level hurts both ways
+const lvDealK = gap => gap > 0 ? 1 / (1 + gap * 0.012) : 1;   // your damage to a higher-level monster
+const lvTakeK = gap => 1 + Math.max(0, gap) * 0.012;           // its damage to you
 const DMG_SCALE = 0.3;                                         // every hero hit deals 30% of the old damage
 const REC = { hpHit: 0.0025, mpHit: 0.005, hpKill: 0.01, mpKill: 0.015, hpCap: 0.05, mpCap: 0.12 }; // on-hit recovery, capped per second
 // pets: follow the hero, pull loot in, give bonuses; the strongest ones also attack
