@@ -34,8 +34,8 @@ function updateLabels() {
   const place = (el, x, y, z) => { const [sx, sy, vis] = toScreen(tmpV.set(x, y, z)); if (!vis || sx < -80 || sx > innerWidth + 80 || sy < -40 || sy > innerHeight + 40) { el.style.display = 'none'; return; } el.style.display = ''; el.style.transform = `translate(${sx}px,${sy}px) translate(-50%,-100%)`; };
   for (const m of mobs) { if (m.dead) continue; place(m.el, m.x, m.T.y + m.T.lh * m.scale + 0.15, m.z); if (!m.boss && !m.mini) m.hpEl.style.visibility = m.hp < m.maxHp ? 'visible' : 'hidden'; m.bar.style.transform = `scaleX(${Math.max(0, m.hp / m.maxHp)})`; }
   for (const l of loots) place(l.el, l.x, 1.05, l.z);
-  for (const e of ents.values()) { if (e.dead) { e.el.style.display = 'none'; continue; } place(e.el, e.pos.x, e.C.g.position.y + HERO_H + 0.45, e.pos.z); e.bar.style.transform = `scaleX(${e.hp / e.maxHp})`; e.el.querySelector('.hp').style.visibility = e.hp < e.maxHp || inParty(e.b) ? 'visible' : 'hidden'; }
-  for (const e of npcEnts) place(e.el, e.pos.x, HERO_H + 0.35, e.pos.z);
+  for (const e of ents.values()) { if (e.dead) { e.el.style.display = 'none'; continue; } place(e.el, e.pos.x, e.C.g.position.y + HERO_H * LOOK.size + 0.4, e.pos.z); e.bar.style.transform = `scaleX(${e.hp / e.maxHp})`; e.el.querySelector('.hp').style.visibility = e.hp < e.maxHp || inParty(e.b) ? 'visible' : 'hidden'; }
+  for (const e of npcEnts) place(e.el, e.pos.x, HERO_H * LOOK.size + 0.3, e.pos.z);
   heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H * LOOK.size + 0.5, S.pos.z);
 }
 

@@ -3,7 +3,7 @@
 // HERO LOOK v2 — approved in the A/B test: richer armour, purple glow outline (40%),
 // hero size +60%, crisp feather wings with a rainbow wave (80%, speed 25%), tip glints and falling sparkles
 // =====================================================================
-const LOOK = { size: 1.6, outline: 0.016, outlineCol: 0xb46aff, outlineGlow: 2.6, rainbow: 0.8 * 1.25, waveSpeed: 0.4 + 0.25 * 2.4 };
+const LOOK = { size: 1.28, outline: 0.016, outlineCol: 0xb46aff, outlineGlow: 2.6, rainbow: 0.8 * 1.25, waveSpeed: 0.4 + 0.25 * 2.4 };
 (function richerArmour() { const H = heroMats;
   H.suit.color.multiplyScalar(0.45); H.suit.userData.u.uRim.value.setHex(0x9fd0ff); H.suit.userData.u.uRimStr.value = 0.75; H.suit.userData.u.uRimPow.value = 2.2;
   H.steel.color.multiplyScalar(0.62); H.steel.envMapIntensity *= 1.7; H.steel.userData.u.uRimPow.value = 2.2;
@@ -16,10 +16,15 @@ const LOOK_TH = { value: LOOK.outline };
 function lookOutlineMat(k) { const m = new THREE.MeshBasicMaterial({ color: LOOK.outlineCol, side: THREE.BackSide });
   m.onBeforeCompile = s => { s.uniforms.uTh = LOOK_TH; s.vertexShader = 'uniform float uTh;\n' + s.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = position + normal * uTh * ${k.toFixed(3)};`); }; m.customProgramCacheKey = () => 'heroOutline' + k; return m; }
 const lookOM = lookOutlineMat(1), lookOMS = lookOutlineMat(0.65);
-function heroLookBuild(model) { const meshes = []; model.traverse(o => { if (o.isMesh) meshes.push(o); });
+function lookOutline(model) { const meshes = []; model.traverse(o => { if (o.isMesh) meshes.push(o); });
   for (const o of meshes) { if (o.material === heroMats.glow) continue; let ol; if (o.isSkinnedMesh) { ol = new THREE.SkinnedMesh(o.geometry, lookOM); ol.bind(o.skeleton, o.bindMatrix); } else ol = new THREE.Mesh(o.geometry, lookOMS);
-    ol.position.copy(o.position); ol.quaternion.copy(o.quaternion); ol.scale.copy(o.scale); ol.frustumCulled = false; o.parent.add(ol); }
-  heroG.scale.setScalar(LOOK.size); }
+    ol.position.copy(o.position); ol.quaternion.copy(o.quaternion); ol.scale.copy(o.scale); ol.frustumCulled = false; o.parent.add(ol); } }
+function heroLookBuild(model) { lookOutline(model); heroG.scale.setScalar(LOOK.size); }
+// the same armour treatment for bots and NPCs (their own coloured materials)
+function lookMats(M) { M.suit.color.multiplyScalar(0.45); M.suit.userData.u.uRim.value.setHex(0x9fd0ff); M.suit.userData.u.uRimStr.value = 0.75; M.suit.userData.u.uRimPow.value = 2.2;
+  M.steel.color.multiplyScalar(0.62); M.steel.envMapIntensity *= 1.7; M.steel.userData.u.uRim.value.setHex(0xcfeaff); M.steel.userData.u.uRimStr.value = 0.6; M.steel.userData.u.uRimPow.value = 2.2;
+  M.dark.color.multiplyScalar(0.55); M.dark.envMapIntensity *= 1.45; M.dark.userData.u.uRim.value.setHex(0xa8d8ff); M.dark.userData.u.uRimStr.value = 0.55; M.dark.userData.u.uRimPow.value = 2.2;
+  M.cape.color.offsetHSL(0, 0.2, -0.12); M.cape.emissive.multiplyScalar(1.6); M.cape.userData.u.uRimStr.value *= 1.6; return M; }
 // light that only matters around the hero, firmer contact shadow, faint dark halo behind for contrast
 const lookKey = new THREE.PointLight(0xe8f0ff, 5, 4.5 * LOOK.size, 1.4); scene.add(lookKey);
 const lookBlob = blobMat.clone(); lookBlob.opacity = 1; heroBlob.material = lookBlob; heroBlob.scale.multiplyScalar(1.25 * LOOK.size);

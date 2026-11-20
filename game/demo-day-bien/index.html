@@ -1376,7 +1376,7 @@ function cliffRing(hex) { for (let k = 0; k < 22; k++) { const a = (k / 22) * 6.
 // HERO LOOK v2 — approved in the A/B test: richer armour, purple glow outline (40%),
 // hero size +60%, crisp feather wings with a rainbow wave (80%, speed 25%), tip glints and falling sparkles
 // =====================================================================
-const LOOK = { size: 1.6, outline: 0.016, outlineCol: 0xb46aff, outlineGlow: 2.6, rainbow: 0.8 * 1.25, waveSpeed: 0.4 + 0.25 * 2.4 };
+const LOOK = { size: 1.28, outline: 0.016, outlineCol: 0xb46aff, outlineGlow: 2.6, rainbow: 0.8 * 1.25, waveSpeed: 0.4 + 0.25 * 2.4 };
 (function richerArmour() { const H = heroMats;
   H.suit.color.multiplyScalar(0.45); H.suit.userData.u.uRim.value.setHex(0x9fd0ff); H.suit.userData.u.uRimStr.value = 0.75; H.suit.userData.u.uRimPow.value = 2.2;
   H.steel.color.multiplyScalar(0.62); H.steel.envMapIntensity *= 1.7; H.steel.userData.u.uRimPow.value = 2.2;
@@ -1389,10 +1389,15 @@ const LOOK_TH = { value: LOOK.outline };
 function lookOutlineMat(k) { const m = new THREE.MeshBasicMaterial({ color: LOOK.outlineCol, side: THREE.BackSide });
   m.onBeforeCompile = s => { s.uniforms.uTh = LOOK_TH; s.vertexShader = 'uniform float uTh;\n' + s.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = position + normal * uTh * ${k.toFixed(3)};`); }; m.customProgramCacheKey = () => 'heroOutline' + k; return m; }
 const lookOM = lookOutlineMat(1), lookOMS = lookOutlineMat(0.65);
-function heroLookBuild(model) { const meshes = []; model.traverse(o => { if (o.isMesh) meshes.push(o); });
+function lookOutline(model) { const meshes = []; model.traverse(o => { if (o.isMesh) meshes.push(o); });
   for (const o of meshes) { if (o.material === heroMats.glow) continue; let ol; if (o.isSkinnedMesh) { ol = new THREE.SkinnedMesh(o.geometry, lookOM); ol.bind(o.skeleton, o.bindMatrix); } else ol = new THREE.Mesh(o.geometry, lookOMS);
-    ol.position.copy(o.position); ol.quaternion.copy(o.quaternion); ol.scale.copy(o.scale); ol.frustumCulled = false; o.parent.add(ol); }
-  heroG.scale.setScalar(LOOK.size); }
+    ol.position.copy(o.position); ol.quaternion.copy(o.quaternion); ol.scale.copy(o.scale); ol.frustumCulled = false; o.parent.add(ol); } }
+function heroLookBuild(model) { lookOutline(model); heroG.scale.setScalar(LOOK.size); }
+// the same armour treatment for bots and NPCs (their own coloured materials)
+function lookMats(M) { M.suit.color.multiplyScalar(0.45); M.suit.userData.u.uRim.value.setHex(0x9fd0ff); M.suit.userData.u.uRimStr.value = 0.75; M.suit.userData.u.uRimPow.value = 2.2;
+  M.steel.color.multiplyScalar(0.62); M.steel.envMapIntensity *= 1.7; M.steel.userData.u.uRim.value.setHex(0xcfeaff); M.steel.userData.u.uRimStr.value = 0.6; M.steel.userData.u.uRimPow.value = 2.2;
+  M.dark.color.multiplyScalar(0.55); M.dark.envMapIntensity *= 1.45; M.dark.userData.u.uRim.value.setHex(0xa8d8ff); M.dark.userData.u.uRimStr.value = 0.55; M.dark.userData.u.uRimPow.value = 2.2;
+  M.cape.color.offsetHSL(0, 0.2, -0.12); M.cape.emissive.multiplyScalar(1.6); M.cape.userData.u.uRimStr.value *= 1.6; return M; }
 // light that only matters around the hero, firmer contact shadow, faint dark halo behind for contrast
 const lookKey = new THREE.PointLight(0xe8f0ff, 5, 4.5 * LOOK.size, 1.4); scene.add(lookKey);
 const lookBlob = blobMat.clone(); lookBlob.opacity = 1; heroBlob.material = lookBlob; heroBlob.scale.multiplyScalar(1.25 * LOOK.size);
@@ -2223,14 +2228,14 @@ function charMats(hue, cls) { const c = (s, l) => new THREE.Color().setHSL(hue, 
     cape: stylized({ color: c(0.7, 0.32), roughness: 0.7, side: THREE.DoubleSide, emissive: c(0.7, 0.08) }, 0x9f8bff, 0.5, 2), glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(CLS[cls].glow).multiplyScalar(2.4) }) }; }
 function makeChar(cls, hue, wingTier) {
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body); scene.add(g);
-  const model = SkeletonUtils.clone(heroGLTF.scene); const T3 = { tip: null }; buildArmor(model, cls, charMats(hue, cls), T3);
+  const model = SkeletonUtils.clone(heroGLTF.scene); const T3 = { tip: null }; buildArmor(model, cls, lookMats(charMats(hue, cls)), T3); lookOutline(model);
   const box = new THREE.Box3().setFromObject(model); const k = HERO_H / (box.max.y - box.min.y); model.scale.setScalar(k); model.position.y = -box.min.y * k; body.add(model);
   model.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
   const mx = new THREE.AnimationMixer(model), acts = {}; for (const c of heroGLTF.animations) acts[c.name] = mx.clipAction(c);
-  let wg = null, wR = null, wL = null; if (wingTier >= 0) { const wm = wingMat.clone(); wm.uniforms.uTime = U.uTime; const W = WTIER[Math.min(5, wingTier)]; wm.uniforms.uRoot.value.setHex(W[0]); wm.uniforms.uTip.value.setHex(new THREE.Color().setHSL(hue, 0.9, 0.5).getHex()); wm.uniforms.uEdge.value.setHex(W[2]); wm.uniforms.uB.value = 0.62 + wingTier * 0.05;
+  let wg = null, wR = null, wL = null; if (wingTier >= 0) { const wm = wingB.clone(); wm.uniforms.uTime = U.uTime; const W = WTIER[Math.min(5, wingTier)]; wm.uniforms.uRoot.value.setHex(W[0]); wm.uniforms.uTip.value.setHex(new THREE.Color().setHSL(hue, 0.9, 0.5).getHex()); wm.uniforms.uEdge.value.setHex(W[2]); wm.uniforms.uB.value = 0.62 + wingTier * 0.05;
     wg = new THREE.Group(); wg.position.set(0, HERO_H * 0.66, -0.3 * HERO_H / 2.3); wg.scale.setScalar(HERO_H / 2.3 * 1.15 * WSCALE[Math.min(5, wingTier)]); body.add(wg);
     wR = new THREE.Mesh(wingGeo, wm); wR.position.x = 0.1; wg.add(wR); wL = new THREE.Mesh(wingGeo, wm); wL.scale.x = -1; wL.position.x = -0.1; wg.add(wL); }
-  const shadow = blob(1.5); scene.add(shadow);
+  g.scale.setScalar(LOOK.size); const shadow = blob(1.5 * LOOK.size); scene.add(shadow);
   const C = { g, body, model, mx, acts, cur: null, tip: T3.tip, wR, wL, shadow, melee: CLS[cls].melee, phase: rr(0, 6.28) };
   C.idle = C.melee ? 'Sword_Idle' : 'Spell_Simple_Idle_Loop'; C.atk = C.melee ? 'Sword_Attack' : 'Spell_Simple_Shoot';
   mx.addEventListener('finished', () => charPlay(C, C.idle, 0.25)); charPlay(C, C.idle, 0); return C;
@@ -2404,8 +2409,8 @@ function updateLabels() {
   const place = (el, x, y, z) => { const [sx, sy, vis] = toScreen(tmpV.set(x, y, z)); if (!vis || sx < -80 || sx > innerWidth + 80 || sy < -40 || sy > innerHeight + 40) { el.style.display = 'none'; return; } el.style.display = ''; el.style.transform = `translate(${sx}px,${sy}px) translate(-50%,-100%)`; };
   for (const m of mobs) { if (m.dead) continue; place(m.el, m.x, m.T.y + m.T.lh * m.scale + 0.15, m.z); if (!m.boss && !m.mini) m.hpEl.style.visibility = m.hp < m.maxHp ? 'visible' : 'hidden'; m.bar.style.transform = `scaleX(${Math.max(0, m.hp / m.maxHp)})`; }
   for (const l of loots) place(l.el, l.x, 1.05, l.z);
-  for (const e of ents.values()) { if (e.dead) { e.el.style.display = 'none'; continue; } place(e.el, e.pos.x, e.C.g.position.y + HERO_H + 0.45, e.pos.z); e.bar.style.transform = `scaleX(${e.hp / e.maxHp})`; e.el.querySelector('.hp').style.visibility = e.hp < e.maxHp || inParty(e.b) ? 'visible' : 'hidden'; }
-  for (const e of npcEnts) place(e.el, e.pos.x, HERO_H + 0.35, e.pos.z);
+  for (const e of ents.values()) { if (e.dead) { e.el.style.display = 'none'; continue; } place(e.el, e.pos.x, e.C.g.position.y + HERO_H * LOOK.size + 0.4, e.pos.z); e.bar.style.transform = `scaleX(${e.hp / e.maxHp})`; e.el.querySelector('.hp').style.visibility = e.hp < e.maxHp || inParty(e.b) ? 'visible' : 'hidden'; }
+  for (const e of npcEnts) place(e.el, e.pos.x, HERO_H * LOOK.size + 0.3, e.pos.z);
   heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H * LOOK.size + 0.5, S.pos.z);
 }
 

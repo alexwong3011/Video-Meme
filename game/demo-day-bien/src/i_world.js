@@ -26,14 +26,14 @@ function charMats(hue, cls) { const c = (s, l) => new THREE.Color().setHSL(hue, 
     cape: stylized({ color: c(0.7, 0.32), roughness: 0.7, side: THREE.DoubleSide, emissive: c(0.7, 0.08) }, 0x9f8bff, 0.5, 2), glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(CLS[cls].glow).multiplyScalar(2.4) }) }; }
 function makeChar(cls, hue, wingTier) {
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body); scene.add(g);
-  const model = SkeletonUtils.clone(heroGLTF.scene); const T3 = { tip: null }; buildArmor(model, cls, charMats(hue, cls), T3);
+  const model = SkeletonUtils.clone(heroGLTF.scene); const T3 = { tip: null }; buildArmor(model, cls, lookMats(charMats(hue, cls)), T3); lookOutline(model);
   const box = new THREE.Box3().setFromObject(model); const k = HERO_H / (box.max.y - box.min.y); model.scale.setScalar(k); model.position.y = -box.min.y * k; body.add(model);
   model.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
   const mx = new THREE.AnimationMixer(model), acts = {}; for (const c of heroGLTF.animations) acts[c.name] = mx.clipAction(c);
-  let wg = null, wR = null, wL = null; if (wingTier >= 0) { const wm = wingMat.clone(); wm.uniforms.uTime = U.uTime; const W = WTIER[Math.min(5, wingTier)]; wm.uniforms.uRoot.value.setHex(W[0]); wm.uniforms.uTip.value.setHex(new THREE.Color().setHSL(hue, 0.9, 0.5).getHex()); wm.uniforms.uEdge.value.setHex(W[2]); wm.uniforms.uB.value = 0.62 + wingTier * 0.05;
+  let wg = null, wR = null, wL = null; if (wingTier >= 0) { const wm = wingB.clone(); wm.uniforms.uTime = U.uTime; const W = WTIER[Math.min(5, wingTier)]; wm.uniforms.uRoot.value.setHex(W[0]); wm.uniforms.uTip.value.setHex(new THREE.Color().setHSL(hue, 0.9, 0.5).getHex()); wm.uniforms.uEdge.value.setHex(W[2]); wm.uniforms.uB.value = 0.62 + wingTier * 0.05;
     wg = new THREE.Group(); wg.position.set(0, HERO_H * 0.66, -0.3 * HERO_H / 2.3); wg.scale.setScalar(HERO_H / 2.3 * 1.15 * WSCALE[Math.min(5, wingTier)]); body.add(wg);
     wR = new THREE.Mesh(wingGeo, wm); wR.position.x = 0.1; wg.add(wR); wL = new THREE.Mesh(wingGeo, wm); wL.scale.x = -1; wL.position.x = -0.1; wg.add(wL); }
-  const shadow = blob(1.5); scene.add(shadow);
+  g.scale.setScalar(LOOK.size); const shadow = blob(1.5 * LOOK.size); scene.add(shadow);
   const C = { g, body, model, mx, acts, cur: null, tip: T3.tip, wR, wL, shadow, melee: CLS[cls].melee, phase: rr(0, 6.28) };
   C.idle = C.melee ? 'Sword_Idle' : 'Spell_Simple_Idle_Loop'; C.atk = C.melee ? 'Sword_Attack' : 'Spell_Simple_Shoot';
   mx.addEventListener('finished', () => charPlay(C, C.idle, 0.25)); charPlay(C, C.idle, 0); return C;
