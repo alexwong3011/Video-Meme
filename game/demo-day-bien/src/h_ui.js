@@ -36,7 +36,7 @@ function updateLabels() {
   for (const l of loots) place(l.el, l.x, 1.05, l.z);
   for (const e of ents.values()) { if (e.dead) { e.el.style.display = 'none'; continue; } place(e.el, e.pos.x, e.C.g.position.y + HERO_H + 0.45, e.pos.z); e.bar.style.transform = `scaleX(${e.hp / e.maxHp})`; e.el.querySelector('.hp').style.visibility = e.hp < e.maxHp || inParty(e.b) ? 'visible' : 'hidden'; }
   for (const e of npcEnts) place(e.el, e.pos.x, HERO_H + 0.35, e.pos.z);
-  heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H + 0.55, S.pos.z);
+  heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H * LOOK.size + 0.5, S.pos.z);
 }
 
 // ---------- input ----------
@@ -342,7 +342,7 @@ function frame() {
   }
   if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) $('banner').classList.remove('show'); }
   if (running && !paused && S) { updateBots(dt, t); updateNpcs(dt, t); if (isTown() && !npcEnts.length && heroGLTF) spawnNpcs(); }
-  updateParticles(dt); updateFx(dt); for (const f of scenery) f(t, dt);
+  updateParticles(dt); updateFx(dt); heroLookTick(dt, t); for (const f of scenery) f(t, dt);
   if (S) { const portrait = innerHeight > innerWidth; const dist = portrait ? 1.2 : 1; camPos.set(S.pos.x, 11 * dist, S.pos.z + 9.5 * dist); if (fitCam) { camera.position.copy(camPos); fitCam = false; } camera.position.lerp(camPos, Math.min(1, dt * 4));
     if (S.shake > 0) { S.shake -= dt; camera.position.x += (Math.random() - 0.5) * S.shake * 0.4; camera.position.y += (Math.random() - 0.5) * S.shake * 0.4; }
     camera.lookAt(camera.position.x, 1.0, camera.position.z - 9.5 * dist);

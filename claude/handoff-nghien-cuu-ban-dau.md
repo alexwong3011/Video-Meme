@@ -357,3 +357,10 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - Người dùng chọn: **viền tím glow, dày 40%, cỡ nhân vật +60%** (giờ là mặc định của trang A/B).
 - Cánh B (`wingB` trong ab.js, không viền): lông tách rõ (khe giữa lông rộng hơn, mép lông và sống lông mảnh, sáng), giảm phần thân lông để không chói trên nền sáng; hiệu ứng: dải sáng quét gốc→ngọn, ánh xà cừ trên sống lông, đốm lấp lánh đầu lông, hạt sáng rơi từ mép cánh; nút bật/tắt riêng.
 - Cánh B v2: bỏ dải sáng và ánh xà cừ (khó thấy), thay bằng **sóng cầu vồng** lan từ thân ra ngọn cánh (uniform `uRb` độ mạnh, `uRs` tốc độ; thanh trượt "Cầu vồng" 0–100% (80% mặc định), "Tốc độ sóng"); hạt sáng rơi đổi màu cầu vồng; giữ lấp lánh đầu lông.
+- **Thông số chốt:** Cầu vồng 80% (`uRb` = 1.0), tốc độ sóng 25% (`uRs` = 1.0), viền tím glow 40% (0,016), cỡ nhân vật +60%.
+
+## 22. Vực Lam – nhân vật & cánh mới vào game chính
+
+- `src/d2_look.js` (ghép sau e2_myth.js): `LOOK` = { size 1.6, outline 0.016 tím glow nhịp sáng, rainbow 1.0, waveSpeed 1.0 }. Giáp đậm hơn (thép/áo lót/giáp tối tối hơn, phản chiếu mạnh hơn; áo choàng bão hòa hơn), viền tím glow quanh thân + giáp + vũ khí, đèn trắng quanh nhân vật, bóng chân đậm, quầng tối sau lưng, cánh `wingB` (lông tách rõ + sóng cầu vồng gốc→ngọn chỉ trên lông + lấp lánh đầu lông + hạt cầu vồng rơi).
+- Móc vào game: `heroLookBuild(model)` trong buildHero3D, `heroLookTick` trong vòng lặp, rim thép/giáp tối trong applyGearVisuals đổi sang tông lạnh (trước đây đổi theo màu cấp cường hóa). Nhãn tên hero cao theo cỡ mới.
+- Chỉ áp cho nhân vật người chơi; bot/NPC giữ như cũ. Trang A/B (`ab.js`) giữ làm lưu trữ; nếu dựng lại trang A/B cần bỏ d2_look.js và 2 lệnh móc ra khỏi bản ghép.

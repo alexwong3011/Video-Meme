@@ -154,7 +154,7 @@ function buildHero3D() {
   H3.melee = CLS[cls].melee; H3.idle = H3.melee ? 'Sword_Idle' : 'Spell_Simple_Idle_Loop'; H3.attack = H3.melee ? 'Sword_Attack' : 'Spell_Simple_Shoot';
   mixer.m.addEventListener('finished', () => fadeTo(H3.idle, 0.25));
   fadeTo(H3.idle, 0);
-  applyGearVisuals();
+  heroLookBuild(model); applyGearVisuals();
 }
 function fadeTo(name, dur, once = false, speed = 1) {
   const a = mixer.acts[name]; if (!a) return;

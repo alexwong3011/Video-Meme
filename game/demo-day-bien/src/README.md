@@ -1,6 +1,6 @@
 Nguồn của `../index.html` (game chính "Vực Lam"). Ghép lại bằng:
 
-    cat a_head.html b_body.html c_engine.js d_hero.js e_mobs.js e2_myth.js f_data.js g_game.js i_world.js h_ui.js > ../index.html
+    cat a_head.html b_body.html c_engine.js d_hero.js e_mobs.js e2_myth.js d2_look.js f_data.js g_game.js i_world.js h_ui.js > ../index.html
 
 Phần hình (c_engine, d_hero, e_mobs) lấy nguyên từ bản template đẹp (commit 4d5125b) — chỉ thêm tham số màu cho từng vùng biển
 và vũ khí theo lớp. Không dùng code hình của game phòng thủ. Thư mục `../src_v1/` giữ bản trước (hình theo game phòng thủ) để tham khảo.

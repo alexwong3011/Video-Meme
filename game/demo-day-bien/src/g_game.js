@@ -409,8 +409,8 @@ function applyGearVisuals() {
   if (!S) return; const w = S.eq.weapon, a = Math.max(S.eq.armor?.plus || 0, S.eq.helm?.plus || 0);
   const wt = tier(w?.plus || 0); heroMats.glow.color.set(wt ? TIER_COL[wt] : CLS[S.cls].glow).multiplyScalar(2.2 + wt * 0.6);
   const at = tier(a);
-  heroMats.steel.userData.u.uRim.value.setHex(at ? TIER_COL[at] : 0x8fe6ff); heroMats.steel.userData.u.uRimStr.value = [0.45, 0.9, 1.1, 1.3][at];
-  heroMats.dark.userData.u.uRim.value.setHex(at ? TIER_COL[at] : 0x7fb8ff); heroMats.dark.userData.u.uRimStr.value = [0.35, 0.7, 0.9, 1.1][at];
+  heroMats.steel.userData.u.uRim.value.setHex(0xcfeaff); heroMats.steel.userData.u.uRimStr.value = Math.max(0.6, [0.45, 0.9, 1.1, 1.3][at] * 1.1); // cool rim keeps the hero apart from warm scenes
+  heroMats.dark.userData.u.uRim.value.setHex(0xa8d8ff); heroMats.dark.userData.u.uRimStr.value = [0.35, 0.7, 0.9, 1.1][at] * 1.5;
   heroMats.gold.userData.u.uRimStr.value = [0.45, 0.6, 0.9, 1.0][at];
   const c = WTIER[S.wing]; wingMat.uniforms.uRoot.value.setHex(c[0]); wingMat.uniforms.uTip.value.setHex(c[1]); wingMat.uniforms.uEdge.value.setHex(c[2]); wingMat.uniforms.uB.value = 0.62 + S.wing * 0.05;
   wings.scale.setScalar(1.0 * HERO_H / 2.3 * 1.15 * WSCALE[S.wing]);
