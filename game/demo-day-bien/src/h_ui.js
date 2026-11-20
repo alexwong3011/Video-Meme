@@ -19,7 +19,7 @@ function updateHud() {
   $('bBag').classList.toggle('dot', upgradeHint());
   const need = expNeed(S.lv); $('expBar').style.transform = `scaleX(${S.lv >= MAXLV ? 1 : S.exp / need})`; $('expTxt').textContent = S.lv >= MAXLV ? 'CẤP TỐI ĐA' : `EXP ${(S.exp / need * 100).toFixed(1)}%`;
   $('bAuto').setAttribute('aria-pressed', String(S.auto)); $('bParty').classList.toggle('on', !!S.party);
-  $('partyF').innerHTML = S.party ? partyBots().map(b => { const e = ents.get(b.id); return `<div>${S.party.leader === b.id ? '♛ ' : ''}${b.name} · ${b.lv}<i style="transform:scaleX(${e ? Math.max(0, e.hp / e.maxHp) : 1})"></i></div>`; }).join('') + (S.party.follow ? '<div style="color:#7dff9a">Theo sát trưởng nhóm: BẬT</div>' : '') : ''; $('bLoot').setAttribute('aria-pressed', String(S.autoLoot));
+  $('partyF').innerHTML = S.party ? partyBots().map(b => { const e = ents.get(b.id); return `<div>${S.party.leader === b.id ? '♛ ' : ''}${b.name} · ${b.lv}<i style="transform:scaleX(${e ? Math.max(0, e.hp / e.maxHp) : 1})"></i></div>`; }).join('') + (S.party.follow ? '<div style="color:#7dff9a">Theo sát trưởng nhóm: BẬT</div>' : '') : ''; $('bLoot').setAttribute('aria-pressed', String(S.autoLoot)); $('bBoss').setAttribute('aria-pressed', String(!!S.bossHunt));
   SKILLS[S.cls].forEach((sk, j) => { const b = $('sk' + j); const lock = S.lv < sk.lv; b.classList.toggle('lock', lock); b.classList.toggle('nomp', !lock && S.mp < skMp(sk));
     b.style.setProperty('--c2', ELC[sk.el] + '99'); b.style.setProperty('--c3', ELC[sk.el] + '55');
     b.querySelector('.ic').textContent = ELI[sk.el]; b.querySelector('small').textContent = lock ? 'Lv ' + sk.lv : sk.name.split(' ').slice(0, 2).join(' ');
@@ -43,13 +43,14 @@ function updateLabels() {
 $('bAtk').addEventListener('pointerdown', e => { e.preventDefault(); attack(); });
 for (let j = 0; j < 3; j++) $('sk' + j).addEventListener('pointerdown', e => { e.preventDefault(); if (!castSkill(j)) { const sk = SKILLS[S.cls][j]; if (S.lv < sk.lv) log(sk.name + ' mở ở cấp ' + sk.lv + '.', '#93c6cf'); else if (S.mp < skMp(sk)) log('Không đủ Mana.', '#5ab0ff'); } });
 $('bAuto').onclick = () => { S.auto = !S.auto; updateHud(); };
+$('bBoss').onclick = () => { S.bossHunt = !S.bossHunt; log(S.bossHunt ? 'Săn boss: BẬT — khi tự động, ưu tiên lao tới diệt boss và tinh anh, chờ sẵn ở cổng khi boss sắp ra.' : 'Săn boss: TẮT.', '#ff9ab0'); updateHud(); };
 $('bLoot').onclick = () => { S.autoLoot = !S.autoLoot; log(S.autoLoot ? 'Tự lượm đồ: BẬT — nhân vật và thú cưng tự nhặt đồ rơi.' : 'Tự lượm đồ: TẮT — chỉ nhặt khi bạn đi qua đồ.', '#9fe8ff'); updateHud(); };
 $('bBag').onclick = () => openBag(); $('bMap').onclick = () => openMap(); $('bMenu').onclick = () => openMenu();
 addEventListener('keydown', e => { if (!S || !running) return; input.keys[e.code] = true;
   if (e.code === 'Escape') { closeBag(); closeMap(); return; }
   if (!$('bag').classList.contains('hide') || !$('mapP').classList.contains('hide')) { if (e.code === 'KeyI') closeBag(); if (e.code === 'KeyM') closeMap(); return; }
   if (e.code === 'Space') { e.preventDefault(); attack(); } if (e.code === 'Digit1') castSkill(0); if (e.code === 'Digit2') castSkill(1); if (e.code === 'Digit3') castSkill(2);
-  if (e.code === 'KeyF') { S.auto = !S.auto; updateHud(); } if (e.code === 'KeyL') $('bLoot').click(); if (e.code === 'KeyI') openBag(); if (e.code === 'KeyM') openMap(); });
+  if (e.code === 'KeyF') { S.auto = !S.auto; updateHud(); } if (e.code === 'KeyL') $('bLoot').click(); if (e.code === 'KeyB') $('bBoss').click(); if (e.code === 'KeyI') openBag(); if (e.code === 'KeyM') openMap(); });
 addEventListener('keyup', e => { input.keys[e.code] = false; });
 // touch / click to move: tap the sea floor to walk there, hold and drag to steer, tap a monster to attack it
 const cvs = renderer.domElement; cvs.style.touchAction = 'none';
@@ -279,10 +280,10 @@ function rankRows(k) { const where = m => MAPS[m] ? MAPS[m].name : '';
 const SKEY = 'vuclam-save-v2', OLDKEY = 'vuclam-save-v1';
 const Store = { db: null, uid: null, writing: false, pending: null };
 let SAVE = null, OLD = null, running = false, best = 0;
-function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, traded: S.traded || 0, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
+function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, bossHunt: !!S.bossHunt, traded: S.traded || 0, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: d.lv || 1, exp: d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
   S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s];
-  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.traded = d.traded || 0; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
+  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.bossHunt = !!d.bossHunt; S.traded = d.traded || 0; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
   { const inv = []; for (const g of S.inv) if (!stackInto(inv, g)) inv.push(g); S.inv = inv; } // older saves: merge loose charms into stacks S.lvLog = d.lvLog || [];
   for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
   }

@@ -373,3 +373,7 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - **Khiên**: ô trang bị mới `shield` (phòng thủ + máu), hiện thành khiên phép nổi bên trái nhân vật (`heroShield` trong d2_look.js), biểu tượng phát sáng theo cấp cường hóa.
 - **Soul of Ancient**: `charm: 'soul'` (xếp chồng như bùa), chỉ rơi từ boss chính (12%/lần hạ, bot hạ boss cũng có thể nhặt rồi bán), mỗi viên +1% sát thương và −0,3% sát thương nhận vào, tối đa 100 viên (+100% / −30%). Giá trị ×15 so với bùa.
 - **Thú cưỡi Thần Thú Kỳ Lân** (6 triệu vàng, Lv380): +90% tốc chạy, +18% phòng thủ, +15% máu, +25 tốc đánh; mô hình dựng bằng code (`makeUnicorn`): thân ngọc trai, sừng vàng có vòng sáng, bờm và đuôi cầu vồng bay, 4 chân phi nước đại, móng vàng tóe hạt cầu vồng.
+
+## 24. Vực Lam – ưu tiên săn boss
+
+- Nút "Săn boss" (cột trái, phím B, lưu trong save `bossHunt`). Khi bật và đang tự động: mục tiêu đầu tiên là boss chính, sau đó tinh anh, bỏ qua giới hạn cấp/máu thường dùng để né boss; khi boss còn < 10 giây mới xuất hiện, nhân vật tự chạy tới trước cổng (vị trí boss) để chờ. Không có boss thì đánh quái như cũ.

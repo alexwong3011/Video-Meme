@@ -6,7 +6,7 @@ WNAME[0] = 'Cánh Sơ Khai';
 let S = null;
 function newState(cls) { return { v: 2, cls, lv: 1, exp: 0, gold: 0, mats: { e: 3, c: 0, p: 0, d: 0, t: 0, x: 0, f: 0 }, st: { c: 0, p: 0, d: 0, t: 0, x: 0 }, wing: 0, inv: [], eq: {}, map: 0, auto: true,
   hp: 1, mp: 100, pos: new THREE.Vector3(0, 0, 8), face: Math.PI, atkCd: 0, atkT: 0, skCd: [0, 0, 0], castT: 0, dead: 0, lastHit: -99, time: 0, kills: 0, skillT: 0,
-  pets: [], pet: null, mounts: [], mount: null, playT: 0, autoLoot: true, miniT: 70, mini: null, rec: { t: 0, hp: 0, mp: 0 }, lvLog: [] }; }
+  pets: [], pet: null, mounts: [], mount: null, playT: 0, autoLoot: true, bossHunt: false, miniT: 70, mini: null, rec: { t: 0, hp: 0, mp: 0 }, lvLog: [] }; }
 let uidN = 1; const uid = () => 'i' + Date.now().toString(36) + (uidN++);
 function makeGear(slot, r, lv, set) {
   const base = {}; for (const k in SLOTS[slot].base) base[k] = k === 'crit' ? SLOTS[slot].base[k] * (r + 1) : Math.round(SLOTS[slot].base[k] * RMULT[r] * (1 + lv * 0.09));
@@ -463,6 +463,9 @@ function updateHero(dt, t) {
     else if (!S.moveTo.hold) S.moveTo = null;
   } else if (!fol && !keys && (S.auto || S.tapMob) && !isTown()) {
     let target = S.tapMob, best = 1e9;
+    // boss hunt: the main boss (then the elite) comes first; shortly before the boss spawns, wait at its gate
+    if (!target && S.bossHunt) { const M = MAPS[S.map]; const bm = S.boss && !S.boss.dead ? S.boss : S.mini && !S.mini.dead ? S.mini : null;
+      if (bm) target = bm; else if (M.boss && !S.boss && S.bossT < 10) { const gx = M.boss.x, gz = M.boss.z + 2.5; if (Math.hypot(gx - S.pos.x, gz - S.pos.z) > 1.2) target = { x: gx, z: gz, wait: true }; } }
     if (!target && S.autoLoot) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time)) { best = d; target = l; } }
     if (!target) for (const m of mobs) { if (m.dead || m.noReach > S.time) continue; if (m.boss && HS.hp < m.atk * 6) continue; if (!m.aggro && m.lv > S.lv + 4) continue; const d = Math.hypot(m.x - S.pos.x, m.z - S.pos.z) - (m.aggro ? 3 : 0); if (d < best) { best = d; target = m; } }
     if (target) { const isLoot = !target.T; const dx = target.x - S.pos.x, dz = target.z - S.pos.z, d = Math.hypot(dx, dz); const want = isLoot ? 0.3 : (Cl.melee ? Cl.range - 0.3 + (target.boss ? 0.8 : 0) : Cl.range - 1);
