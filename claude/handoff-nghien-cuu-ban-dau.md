@@ -238,3 +238,17 @@ Sau khi chơi thử cả hai, người dùng chọn **game demo ARPG cày cuốc
 https://claude.ai/artifact/3NUHdxYh66beQxqLDat1os) làm hướng phát triển chính, vì tiềm năng hơn về đồ họa và nội dung.
 Game phòng thủ 3D (`game/vuc-bien-3d/`) giữ lại để tham khảo; có thể tái dùng: 5 bộ giáp anh hùng, quái/boss 3D,
 hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
+
+## 13. Vực Lam bản lớn (2026-11-20) — game chính
+
+`game/demo-day-bien/index.html` (link https://claude.ai/artifact/3NUHdxYh66beQxqLDat1os), nguồn ở `game/demo-day-bien/src/`
+(xem README; engine, giáp anh hùng và mô hình quái lấy từ game phòng thủ).
+- **5 lớp nhân vật** chọn khi chơi mới (giáp/vũ khí/cánh riêng), mỗi lớp **3 kỹ năng** mở ở Lv 1/10/25, tốn Mana, có hồi chiêu;
+  trạng thái Băng/Sét/Lửa/Ướt/Chậm. Phím 1/2/3; tự động đánh tự dùng kỹ năng khi quái đông/boss.
+- **3 bản đồ** (Bãi San Hô Lân Quang Lv1, Rừng Tảo U Linh Lv15, Hố Thẳm Dung Nham Lv30), 4 bãi quái mỗi map xếp cấp tăng dần từ điểm xuất hiện (0, 8);
+  **boss** mỗi map (Sứa Mẫu Hậu / Hải Long Xà / Cự Quy Dung Nham) hồi sinh 3–4 phút tại trận đồ phía bắc. Nút Bản đồ để dịch chuyển (cần đủ cấp).
+- **Cánh**: chế từ Lông Vũ Thần (5/10/18/30/50), ×1.3→×2.5 sát thương + phòng thủ + máu + tốc chạy, nhân vật bay khi có cánh.
+- **Linh thạch**: 5 tầng sát thương như bản phòng thủ (×1.5/×2/×2/×3/×10, tối đa ×180), khảm vào nhân vật, lò hợp 3→1.
+- **Bộ đồ**: Sóng Bạc / Vảy Rồng Biển / Dung Nham (mỗi map một bộ), hiệu ứng 2 và 4 món; cường hóa +15 giữ nguyên.
+- **Lưu**: localStorage `vuclam-save-v2` + đám mây `data/users/<id>/save` (bản mới nhất thắng). Bản lưu cũ v1 được chuyển sang (chọn lớp, giữ cấp/vàng/đồ; cánh cũ đổi thành lông vũ).
+- Tự động: chỉ đánh quái ≤ cấp+4 (trừ quái đang đánh mình), né boss nếu máu quá thấp. Chết: hồi sinh sau 3 giây, mất 3% EXP.
