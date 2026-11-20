@@ -15,7 +15,7 @@ const heroMats = {
   glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(0x7fe9ff).multiplyScalar(2.6) }),
   blade: stylized({ color: 0xcfe6ff, metalness: 0.95, roughness: 0.15, envMapIntensity: 1.8 }, 0x9ff4ff, 0.9, 1.8)
 };
-function buildArmor(model, cls) {
+function buildArmor(model, cls, mats, T3) {
   model.updateMatrixWorld(true);
   const bone = n => model.getObjectByName(n);
   const P = n => bone(n).getWorldPosition(new THREE.Vector3());
@@ -37,7 +37,7 @@ function buildArmor(model, cls) {
     const m = new THREE.Mesh(g, mat); m.position.copy(A); m.quaternion.setFromUnitVectors(Y, d.normalize());
     bone(a).attach(m); return m;
   };
-  const M = heroMats;
+  const M = mats || heroMats, HT = T3 || H3;
   for (const s of ['l', 'r']) {
     const side = P('upperarm_' + s).sub(P('spine_03')).dot(right) > 0 ? 1 : -1;
     // pauldron: three overlapping lames, gold trim and a pair of spikes
@@ -126,8 +126,8 @@ function buildArmor(model, cls) {
       const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, -0.45, 0), new THREE.Vector3(0, 0, -0.28), new THREE.Vector3(0, 0.45, 0));
       bow.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 18, 0.013, 6), M.gold)); bow.add(new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.9, 4), M.glow));
       for (const sd of [-1, 1]) { const g = new THREE.Mesh(new THREE.OctahedronGeometry(0.025), M.glow); g.position.y = sd * 0.45; bow.add(g); }
-      bow.position.copy(l.palm); bow.quaternion.setFromUnitVectors(Y, l.grip); bone('hand_l').attach(bow); const t2 = new THREE.Object3D(); t2.position.copy(l.palm); bone('hand_l').attach(t2); H3.tip = t2; }
-    else { const r = hand('r'); sw.add(tip); sw.position.copy(r.palm).addScaledVector(r.grip, -0.03); sw.quaternion.setFromUnitVectors(Y, r.grip); bone('hand_r').attach(sw); H3.tip = tip; } }
+      bow.position.copy(l.palm); bow.quaternion.setFromUnitVectors(Y, l.grip); bone('hand_l').attach(bow); const t2 = new THREE.Object3D(); t2.position.copy(l.palm); bone('hand_l').attach(t2); HT.tip = t2; }
+    else { const r = hand('r'); sw.add(tip); sw.position.copy(r.palm).addScaledVector(r.grip, -0.03); sw.quaternion.setFromUnitVectors(Y, r.grip); bone('hand_r').attach(sw); HT.tip = tip; } }
   // under-suit for the mannequin itself
   model.traverse(o => { if (o.isSkinnedMesh) { o.material = M.suit; o.frustumCulled = false; } });
 }

@@ -22,6 +22,9 @@
   <div id="zone"><h1 id="zoneName"></h1><p id="zoneSub"></p></div>
   <div id="banner"></div>
   <div id="log"></div>
+  <button id="bParty" aria-label="Nhóm">Nhóm</button>
+  <div id="partyF"></div>
+  <div id="invite" class="hide" role="alertdialog"></div>
   <div class="actions">
     <button id="bLoot" aria-pressed="true" aria-label="Bật hoặc tắt tự lượm đồ">Tự<br>lượm</button>
     <button id="bAuto" aria-pressed="true" aria-label="Bật hoặc tắt tự động đánh">Tự<br>động</button>
@@ -53,6 +56,11 @@
 <div class="pnl hide" id="mapP" role="dialog" aria-modal="true" aria-labelledby="mapTitle" style="max-width:520px;max-height:560px">
   <header><h2 id="mapTitle">Bản đồ Vực Lam</h2><button class="x" id="mapClose" aria-label="Đóng">×</button></header>
   <div class="body maps" id="mapList"></div>
+</div>
+
+<div class="pnl hide" id="wP" role="dialog" aria-modal="true" aria-labelledby="wTitle" style="max-width:560px;max-height:620px">
+  <header><h2 id="wTitle">Nhóm</h2><button class="x" id="wClose" aria-label="Đóng">×</button></header>
+  <div class="body" id="wBody"></div>
 </div>
 
 <div class="ov" id="startOv">

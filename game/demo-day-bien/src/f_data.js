@@ -160,45 +160,54 @@ const MAPS = [
       coral: [[0xff4f9a, 0xffb0e0], [0x9a5bff, 0xd8b8ff], [0xff7a3d, 0xffd08a], [0x3fd1c8, 0xb8fff4]], sponge: [0xffb43d, 0xff6a5a, 0xc8ff6a], fan: [0xff5fa8, 0xb07bff, 0xffa34d], mote: [0x7fdcef, 0xbff4ff] },
     zones: [{ k: 'jelly', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fish', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'jellyBlue', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishNight', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossJelly', x: 0, z: -12.5, off: 8, respawn: 180 } },
-  { name: 'Rừng Tảo U Linh', req: 70, lo: 70, hi: 170, set: 'vay', env: 'sea', culture: 'Biển Sâu', mini: 'seaSerpent',
+  { name: 'Rừng Tảo U Linh', req: 1, lo: 70, hi: 170, set: 'vay', env: 'sea', culture: 'Biển Sâu', mini: 'seaSerpent',
     pal: { sa: [0.035, 0.12, 0.08], sb: [0.13, 0.27, 0.17], pt: [0.02, 0.08, 0.05], ca: [0.35, 0.85, 0.5], fog: 0x062418, bg: 0x072c1e, rock: [0x6fbf7c, 0x24603a, 0x0a2a16, 0xc8ffc0], weed: [0x2fae5a, 0x4fd47a, 0x1f8a4a, 0x8ae07a, 0x3fc38a], weedH: 1.5, weedE: 0x0c4a1a, stone: 0x6a9a7a, rune: 0x7dff9a, portal: [0x0d7a3a, 0x9affb0],
       coral: [[0x3fd1c8, 0xb8fff4], [0xb0ff5a, 0xf4ffc0], [0x6aff8a, 0xd8ffb0], [0xffd23a, 0xfff0a0]], sponge: [0xc8ff6a, 0xffd23a, 0x6affc8], fan: [0x6aff8a, 0x3fd1c8, 0xd8ff6a], mote: [0x9fffb8, 0xd8ffe0] },
     zones: [{ k: 'jellyGreen', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fishMoss', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'seaSerpent', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishGold', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossFish', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Hố Thẳm Dung Nham', req: 150, lo: 150, hi: 250, set: 'dung', env: 'sea', culture: 'Biển Lửa', mini: 'fireSpirit',
+  { name: 'Hố Thẳm Dung Nham', req: 1, lo: 150, hi: 250, set: 'dung', env: 'sea', culture: 'Biển Lửa', mini: 'fireSpirit',
     pal: { sa: [0.09, 0.04, 0.04], sb: [0.24, 0.12, 0.09], pt: [0.05, 0.02, 0.02], ca: [0.9, 0.42, 0.18], fog: 0x1e0c0a, bg: 0x241010, rock: [0xa0604a, 0x4a2a24, 0x160a08, 0xffb07a], weed: [0x8a2a1a, 0xc8401a, 0x5a1a10, 0xe0603a], weedH: 0.8, weedE: 0x4a0a00, stone: 0x6a4a44, rune: 0xff8a3a, portal: [0x8a1a04, 0xffb05a],
       coral: [[0xff4a1a, 0xffd08a], [0xff7a3d, 0xfff0a0], [0xd02a4a, 0xffa0b0], [0xffb43d, 0xfff4c0]], sponge: [0xff6a3a, 0xffb43d, 0xd02a4a], fan: [0xff5a2a, 0xffa34d, 0xff3a6a], mote: [0xffa070, 0xffd8b0] },
     zones: [{ k: 'jellyRed', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fishLava', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'fireSpirit', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishBlack', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossLava', x: 0, z: -12.5, off: 8, respawn: 240 } },
-  { name: 'Sa Mạc Hoàng Kim', culture: 'Ai Cập', req: 230, lo: 230, hi: 330, set: 'sa', env: 'desert', exposure: 0.78, mini: 'sphinx',
+  { name: 'Sa Mạc Hoàng Kim', culture: 'Ai Cập', req: 1, lo: 230, hi: 330, set: 'sa', env: 'desert', exposure: 0.78, mini: 'sphinx',
     pal: { sa: [0.154, 0.105, 0.055], sb: [0.242, 0.176, 0.094], pt: [0.187, 0.127, 0.066], ca: [0.06, 0.05, 0.03], fog: 0x8a6a4a, bg: 0xa08060, fogD: 0.011, rock: [0xd8b07a, 0x8a6a3a, 0x4a3420, 0xffe0a0], weed: [0x8a9a3a, 0xa0a848, 0x6a7a2a], weedH: 0.5, weedE: 0x2a2a0a, stone: 0xc8a46a, rune: 0x6fe7ff, portal: [0x0d5a99, 0x66f2ff], coral: [[0x8a9a3a, 0xc8d070]], sponge: [0xc8a050], fan: [0xa0a040], mote: [0xffe0a0, 0xfff0d0], moteRise: [0.15, 0.4], hemi: [0xfff0d8, 0x6a4a2a, 1.1], sun: [0xfff0c8, 2.2], light: 0xffc87a, shaft: [0.3, 0.24, 0.12], spk: 0.6 },
     zones: [{ k: 'scarab', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'mummy', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'apep', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'sandGolem', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossApep', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Thánh Địa Olympus', culture: 'Hy Lạp', req: 310, lo: 310, hi: 410, set: 'olym', env: 'olympus', exposure: 0.68, mini: 'griffin',
+  { name: 'Thánh Địa Olympus', culture: 'Hy Lạp', req: 1, lo: 310, hi: 410, set: 'olym', env: 'olympus', exposure: 0.68, mini: 'griffin',
     pal: { sa: [0.121, 0.132, 0.094], sb: [0.198, 0.209, 0.160], pt: [0.099, 0.143, 0.066], ca: [0.05, 0.06, 0.05], fog: 0x6a8098, bg: 0x7a90a8, fogD: 0.012, rock: [0xd8d4c8, 0x8a8a80, 0x4a4a44, 0xffffff], weed: [0x6a8a3a, 0x8aa050], weedH: 0.5, weedE: 0x1a2a0a, stone: 0xe8e4d8, rune: 0xffd86a, portal: [0x8a6a10, 0xffe8a0], coral: [[0x6a8a3a, 0xb0c880]], sponge: [0x8a9a5a], fan: [0x8aa050], mote: [0xfff0c8, 0xffffff], moteRise: [0.2, 0.6], hemi: [0xe8f4ff, 0x4a5a3a, 1.15], sun: [0xfff4e0, 2.3], light: 0xffe0a0, shaft: [0.3, 0.28, 0.2], spk: 0.2 },
     zones: [{ k: 'harpy', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'cyclops', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'gorgon', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'shade', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossTitan', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Rừng Trúc Linh Hồ', culture: 'Đông Á', req: 390, lo: 390, hi: 490, set: 'ho', env: 'bamboo', exposure: 0.9, mini: 'tengu',
+  { name: 'Rừng Trúc Linh Hồ', culture: 'Đông Á', req: 1, lo: 390, hi: 490, set: 'ho', env: 'bamboo', exposure: 0.9, mini: 'tengu',
     pal: { sa: [0.088, 0.132, 0.066], sb: [0.165, 0.209, 0.110], pt: [0.231, 0.165, 0.176], ca: [0.04, 0.06, 0.03], fog: 0x5a7a6a, bg: 0x6a8a7a, fogD: 0.03, rock: [0x8a9a8a, 0x4a5a4a, 0x2a3a2a, 0xd8f0d8], weed: [0x4a8a3a, 0x6aaa4a], weedH: 0.6, weedE: 0x0a2a0a, stone: 0x7a8a7a, rune: 0xff8ab0, portal: [0x8a1a4a, 0xffa8d8], coral: [[0x4a8a3a, 0xa0d070]], sponge: [0x6a9a4a], fan: [0x6aaa4a], mote: [0xffb8d8, 0xffffff], moteRise: [-0.25, 0.5], hemi: [0xd8fff0, 0x2a4a2a, 1.5], sun: [0xfff0e0, 2.4], light: 0xffb8d8, shaft: [0.2, 0.26, 0.2], spk: 0.0 },
     zones: [{ k: 'kitsune', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'oni', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'yurei', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'jadeDragon', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossLong', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Đầm Lầy U Minh', culture: 'Đông Âu', req: 470, lo: 470, hi: 570, set: 'dam', env: 'swamp', exposure: 1.0, mini: 'zmey',
+  { name: 'Đầm Lầy U Minh', culture: 'Đông Âu', req: 1, lo: 470, hi: 570, set: 'dam', env: 'swamp', exposure: 1.0, mini: 'zmey',
     pal: { sa: [0.044, 0.055, 0.039], sb: [0.088, 0.105, 0.066], pt: [0.028, 0.066, 0.055], ca: [0.08, 0.16, 0.08], fog: 0x1a2a22, bg: 0x1a2a24, fogD: 0.04, rock: [0x5a6a50, 0x2a3424, 0x10140c, 0x9ab080], weed: [0x4a5a2a, 0x6a7a3a, 0x3a4a1a], weedH: 0.7, weedE: 0x0a1a00, stone: 0x4a5a48, rune: 0x7dff9a, portal: [0x0d5a2a, 0x9affb0], coral: [[0x4a5a2a, 0x8a9a5a]], sponge: [0x5a6a3a], fan: [0x4a5a2a], mote: [0x9affb0, 0xd8ffe0], moteRise: [0.1, 0.3], hemi: [0x9ab8a0, 0x10180c, 1.2], sun: [0xb0d0b8, 1.6], light: 0x7dff9a, shaft: [0.1, 0.16, 0.1], spk: 0.0 },
     zones: [{ k: 'wisp', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'leshy', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'bogBeetle', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'rusalka', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossLeshy', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Băng Nguyên Bắc Âu', culture: 'Bắc Âu', req: 550, lo: 550, hi: 650, set: 'bac', env: 'snow', exposure: 0.78, mini: 'huginn',
+  { name: 'Băng Nguyên Bắc Âu', culture: 'Bắc Âu', req: 1, lo: 550, hi: 650, set: 'bac', env: 'snow', exposure: 0.78, mini: 'huginn',
     pal: { sa: [0.198, 0.226, 0.259], sb: [0.286, 0.319, 0.352], pt: [0.165, 0.198, 0.242], ca: [0.03, 0.04, 0.05], fog: 0x4a5a78, bg: 0x1a2a44, fogD: 0.016, rock: [0xe8f0f8, 0x8a98a8, 0x4a5464, 0xffffff], weed: [0x9ab0a0], weedH: 0.4, weedE: 0x1a2a2a, stone: 0x6a7888, rune: 0x6fe7ff, portal: [0x0d4a99, 0x9ff2ff], coral: [[0x9ab0c0, 0xffffff]], sponge: [0xc8d8e8], fan: [0xb0c0d0], mote: [0xffffff, 0xe8f4ff], moteRise: [-0.7, -1.1], hemi: [0xdff0ff, 0x3a4a5a, 1.15], sun: [0xe8f4ff, 2.0], light: 0x9fe8ff, shaft: [0.12, 0.18, 0.3], spk: 1.0 },
     zones: [{ k: 'draugr', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'jotunn', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'raven', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'jorm', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossYmir', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Cực Băng Vĩnh Hằng', culture: 'Bắc Cực', req: 630, lo: 630, hi: 730, set: 'cuc', env: 'ice', exposure: 0.82, mini: 'sedna',
+  { name: 'Cực Băng Vĩnh Hằng', culture: 'Bắc Cực', req: 1, lo: 630, hi: 730, set: 'cuc', env: 'ice', exposure: 0.82, mini: 'sedna',
     pal: { sa: [0.132, 0.187, 0.242], sb: [0.231, 0.297, 0.352], pt: [0.088, 0.143, 0.209], ca: [0.1, 0.16, 0.22], fog: 0x2a4a6a, bg: 0x0a1430, fogD: 0.02, rock: [0xbff4ff, 0x6a9ab8, 0x2a4a68, 0xffffff], weed: [0x9ad8f0], weedH: 0.4, weedE: 0x1a3a5a, stone: 0x6a8aa8, rune: 0xc0a8ff, portal: [0x4a2a99, 0xd0b8ff], coral: [[0x9ad8f0, 0xffffff]], sponge: [0xbff4ff], fan: [0x9ad8f0], mote: [0xdff8ff, 0xc0a8ff], moteRise: [-0.4, 0.5], hemi: [0xc8e8ff, 0x1a2a4a, 1.5], sun: [0xd8f0ff, 2.2], light: 0xc0a8ff, shaft: [0.14, 0.2, 0.34], spk: 1.4 },
     zones: [{ k: 'auroraSp', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'crystalBug', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'iceDragon', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'snowBird', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossPhoenixIce', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Thiên Giới Kim Quang', culture: 'Thiên Giới', req: 710, lo: 710, hi: 800, set: 'thien', env: 'heaven', exposure: 0.66, mini: 'fallen',
+  { name: 'Thiên Giới Kim Quang', culture: 'Thiên Giới', req: 1, lo: 710, hi: 800, set: 'thien', env: 'heaven', exposure: 0.66, mini: 'fallen',
     pal: { sa: [0.231, 0.209, 0.171], sb: [0.308, 0.286, 0.237], pt: [0.275, 0.226, 0.132], ca: [0.16, 0.12, 0.05], fog: 0xb89a70, bg: 0xc8aa80, fogD: 0.012, rock: [0xf0e8d8, 0xb8a888, 0x6a5a48, 0xffffff], weed: [0xd8c070], weedH: 0.4, weedE: 0x3a2a0a, stone: 0xf0e8d8, rune: 0xffd86a, portal: [0x8a5a10, 0xfff0a0], coral: [[0xffd86a, 0xffffff]], sponge: [0xffe8a0], fan: [0xffd86a], mote: [0xffe08a, 0xffffff], moteRise: [0.3, 0.8], hemi: [0xfff8e8, 0x8a6a40, 1.05], sun: [0xfff4d8, 2.1], light: 0xffd86a, shaft: [0.36, 0.3, 0.16], spk: 0.5 },
     zones: [{ k: 'phoenix', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'goldGuard', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'seraph', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'goldDragon', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossDe', x: 0, z: -12.5, off: 8, respawn: 210 } }
 ];
+
+// the hub: an ancient Greek city with no monsters, NPCs, and resting bots
+MAPS.push({ name: 'Thành Cổ Hy Lạp', culture: 'Thành chính', town: true, req: 1, lo: 1, hi: 1, env: 'town', exposure: 0.8, zones: [], boss: null, mini: null, set: 'song',
+  pal: { sa: [0.2, 0.18, 0.14], sb: [0.3, 0.27, 0.21], pt: [0.24, 0.2, 0.15], ca: [0.03, 0.03, 0.02], fog: 0x6a7888, bg: 0x7a8aa0, fogD: 0.012, rock: [0xd8d0c0, 0x8a8478, 0x4a4640, 0xffffff], weed: [0x6a8a3a, 0x8aa050], weedH: 0.5, weedE: 0x1a2a0a, stone: 0xd8d0c0, rune: 0xffd86a, portal: [0x8a6a10, 0xffe8a0], coral: [[0x6a8a3a, 0xb0c880]], sponge: [0x8a9a5a], fan: [0x8aa050], mote: [0xfff0c8, 0xffffff], moteRise: [0.15, 0.5], hemi: [0xe8f4ff, 0x5a5a4a, 1.15], sun: [0xfff4e0, 2.3], light: 0xffe0a0, shaft: [0.26, 0.24, 0.18], spk: 0.1 } });
+const TOWN = MAPS.length - 1;
+// charms: carried in the bag, each gives +1% of one stat; super rare (1% per kill)
+const CHARMS = { dmg: { n: 'Bùa Chiến Thần', d: '+1% sát thương', col: '#ff7a5a' }, hp: { n: 'Bùa Sinh Mệnh', d: '+1% máu tối đa', col: '#7dff9a' }, mp: { n: 'Bùa Linh Lực', d: '+1% mana tối đa', col: '#5ab0ff' } };
+const CHARM_RATE = 0.01;
+function makeCharm(kind, lv) { return { id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), slot: 'charm', charm: kind, r: 3, lv, name: CHARMS[kind].n, base: {}, plus: 0, set: null }; }
 
 // formulas ---------------------------------------------------------------
 // Levels: cap 800. Time per level grows exponentially so that, at the reference

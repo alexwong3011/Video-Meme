@@ -313,3 +313,12 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - **Mini boss (★ Tinh anh)**: mỗi map 1 loại, xuất hiện mỗi 1/3 thời gian hồi boss (~70 giây), máu 10× quái thường (boss 30×), EXP/vàng/nguyên liệu/đồ = 1/3 boss.
 - **Tự lượm đồ** bật/tắt (nút "Tự lượm" trên HUD, phím L): khi tắt, nhân vật không tự chạy tới đồ và thú cưng không hút đồ; vẫn nhặt khi đi qua.
 - **Tốc chạy** còn 60% (4,6 → 2,76 cơ bản; cánh và thú cưỡi vẫn cộng theo %).
+
+## 17. Vực Lam – thế giới chung: bot AI, nhóm, Thành Cổ, giao dịch, bùa
+
+- **Bot AI** (`i_world.js`): 18 người chơi ảo (tên, lớp, cấp, vàng, túi đồ riêng; lưu trong save). Mỗi bot dùng cùng mô hình giáp + cánh như hero nhưng màu riêng. Bot ở cùng map với bạn được dựng 3D (tối đa 6 ở map đánh, 9 ở thành): tìm quái, đi vòng chướng ngại, đánh thường/bắn, dùng kỹ năng, bị quái đánh, chết và hồi sinh, nói chuyện bong bóng. Bot ở map khác vẫn "cày" ngầm mỗi giây (EXP, vàng, đồ) và luân phiên về thành nghỉ / ra map hợp cấp.
+- **Nhóm** (nút "Nhóm" bên trái): lập nhóm, mời bot ở gần (có thể bị từ chối), mời ra, giải tán; bot cũng tự mời bạn (hộp mời 15 giây). Tối đa 5 người. Thành viên trong 15m chia 50% EXP khi hạ quái, đồ rơi chung, cả nhóm +10% EXP. **Theo sát**: trưởng nhóm là bạn → bot giữ trong vòng ~1,2–2m quanh bạn và chỉ đánh quái trong tầm; bạn là thành viên → nhân vật tự bám trưởng nhóm trong 2m và vẫn tự đánh quái trong tầm.
+- **Thành Cổ Hy Lạp** (`TOWN`, map cuối trong `MAPS`, đứng đầu danh sách bản đồ): không quái; đài phun nước, đền cột, sạp chợ có mái sọc bay, cây, lò lửa. Vào game và hồi sinh đều ở thành. NPC: Hermes (bán đá cường hóa, lông vũ, linh thạch), Hephaestus (mở cường hóa), Artemis (thú), Iris (bản đồ), Agora (chợ: xem bot đang rao bán).
+- **Giao dịch** bằng vàng: mua đồ trong túi bot, bán đồ của bạn cho bot (giá tốt hơn bán thường, bot cần đủ vàng).
+- **Bùa** (siêu hiếm, 1% mỗi quái): Bùa Chiến Thần +1% sát thương, Bùa Sinh Mệnh +1% máu, Bùa Linh Lực +1% mana; có tác dụng khi nằm trong túi, cộng dồn (giới hạn bởi 40 ô túi). Bot cũng nhặt và bán bùa.
+- **Bỏ giới hạn cấp** vào map; bản đồ ghi "nguy hiểm" nếu cấp bạn thấp hơn quái quá 20.

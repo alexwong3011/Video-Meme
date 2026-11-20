@@ -5,7 +5,7 @@
 const heroLabel = document.createElement('div'); heroLabel.className = 'lbl hero'; heroLabel.style.display = 'none'; labelsEl.appendChild(heroLabel);
 function log(t, col) { const d = document.createElement('div'); d.textContent = t; d.style.color = col || '#e9dfc6'; const L = $('log'); L.appendChild(d); while (L.children.length > 5) L.firstChild.remove(); setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 700); }, 5500); }
 let bannerT = 0; function banner(txt, col) { const b = $('banner'); b.textContent = txt; b.style.color = col === 'red' ? '#ff6a6a' : '#ffd86a'; b.classList.add('show'); bannerT = 2.6; }
-let zoneT = 0; function showZone() { const M = MAPS[S.map]; $('zoneName').textContent = M.name; $('zoneSub').textContent = `Quái cấp ${M.lo}–${M.hi} (theo cấp bạn) · Boss ${MT[M.boss.k].name}`; $('zone').style.opacity = 1; zoneT = 4; }
+let zoneT = 0; function showZone() { const M = MAPS[S.map]; if (M.town) { $('zoneName').textContent = M.name; $('zoneSub').textContent = 'Thành chính · không có quái · NPC, chợ và người chơi nghỉ ngơi'; $('zone').style.opacity = 1; zoneT = 4; return; } $('zoneName').textContent = M.name; $('zoneSub').textContent = `Quái cấp ${M.lo}–${M.hi} (theo cấp bạn) · Boss ${MT[M.boss.k].name}`; $('zone').style.opacity = 1; zoneT = 4; }
 function pulseHud() { }
 
 // ---------- HUD ----------
@@ -18,7 +18,8 @@ function updateHud() {
   $('hGold').textContent = S.gold.toLocaleString('vi-VN'); $('hBag').textContent = S.inv.length;
   $('bBag').classList.toggle('dot', upgradeHint());
   const need = expNeed(S.lv); $('expBar').style.transform = `scaleX(${S.lv >= MAXLV ? 1 : S.exp / need})`; $('expTxt').textContent = S.lv >= MAXLV ? 'CẤP TỐI ĐA' : `EXP ${(S.exp / need * 100).toFixed(1)}%`;
-  $('bAuto').setAttribute('aria-pressed', String(S.auto)); $('bLoot').setAttribute('aria-pressed', String(S.autoLoot));
+  $('bAuto').setAttribute('aria-pressed', String(S.auto)); $('bParty').classList.toggle('on', !!S.party);
+  $('partyF').innerHTML = S.party ? partyBots().map(b => { const e = ents.get(b.id); return `<div>${S.party.leader === b.id ? '♛ ' : ''}${b.name} · ${b.lv}<i style="transform:scaleX(${e ? Math.max(0, e.hp / e.maxHp) : 1})"></i></div>`; }).join('') + (S.party.follow ? '<div style="color:#7dff9a">Theo sát trưởng nhóm: BẬT</div>' : '') : ''; $('bLoot').setAttribute('aria-pressed', String(S.autoLoot));
   SKILLS[S.cls].forEach((sk, j) => { const b = $('sk' + j); const lock = S.lv < sk.lv; b.classList.toggle('lock', lock); b.classList.toggle('nomp', !lock && S.mp < skMp(sk));
     b.style.setProperty('--c2', ELC[sk.el] + '99'); b.style.setProperty('--c3', ELC[sk.el] + '55');
     b.querySelector('.ic').textContent = ELI[sk.el]; b.querySelector('small').textContent = lock ? 'Lv ' + sk.lv : sk.name.split(' ').slice(0, 2).join(' ');
@@ -26,12 +27,15 @@ function updateHud() {
     b.setAttribute('aria-label', sk.name + (lock ? ' (mở ở cấp ' + sk.lv + ')' : '')); });
   const boss = S.boss && !S.boss.dead ? S.boss : null; $('bossbar').classList.toggle('hide', !boss);
   if (boss) { $('bossName').textContent = boss.T.name.toUpperCase() + ' · Lv ' + boss.lv; $('bossHp').style.transform = `scaleX(${Math.max(0, boss.hp / boss.maxHp)})`; $('bossInfo').textContent = ''; }
+  else if (!MAPS[S.map].boss) $('bossInfo').textContent = '';
   else { const s = Math.max(0, Math.ceil(S.bossT)); $('bossInfo').textContent = `Boss ${MT[MAPS[S.map].boss.k].name} sau ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
 }
 function updateLabels() {
   const place = (el, x, y, z) => { const [sx, sy, vis] = toScreen(tmpV.set(x, y, z)); if (!vis || sx < -80 || sx > innerWidth + 80 || sy < -40 || sy > innerHeight + 40) { el.style.display = 'none'; return; } el.style.display = ''; el.style.transform = `translate(${sx}px,${sy}px) translate(-50%,-100%)`; };
   for (const m of mobs) { if (m.dead) continue; place(m.el, m.x, m.T.y + m.T.lh * m.scale + 0.15, m.z); if (!m.boss && !m.mini) m.hpEl.style.visibility = m.hp < m.maxHp ? 'visible' : 'hidden'; m.bar.style.transform = `scaleX(${Math.max(0, m.hp / m.maxHp)})`; }
   for (const l of loots) place(l.el, l.x, 1.05, l.z);
+  for (const e of ents.values()) { if (e.dead) { e.el.style.display = 'none'; continue; } place(e.el, e.pos.x, e.C.g.position.y + HERO_H + 0.45, e.pos.z); e.bar.style.transform = `scaleX(${e.hp / e.maxHp})`; e.el.querySelector('.hp').style.visibility = e.hp < e.maxHp || inParty(e.b) ? 'visible' : 'hidden'; }
+  for (const e of npcEnts) place(e.el, e.pos.x, HERO_H + 0.35, e.pos.z);
   heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H + 0.55, S.pos.z);
 }
 
@@ -57,7 +61,9 @@ function mobAt(cx, cy) { let b = null, bd = 46; for (const m of mobs) { if (m.de
 function showMark(x, z, hex) { marker.position.set(x, 0.06, z); markMat.color.setHex(hex); markT = 0.6; }
 let touchId = null, touchX = 0, touchY = 0;
 function touchMove(cx, cy, hold) { const p = floorAt(cx, cy); if (!p) return; const r = Math.hypot(p.x, p.z); if (r > 20.5) p.multiplyScalar(20.5 / r); S.moveTo = { x: p.x, z: p.z, hold, t: S.time }; S.tapMob = null; showMark(p.x, p.z, 0x9fe8ff); }
-cvs.addEventListener('pointerdown', e => { if (!S || !running || paused || S.dead) return; e.preventDefault(); touchId = e.pointerId; touchX = e.clientX; touchY = e.clientY; cvs.setPointerCapture(e.pointerId);
+cvs.addEventListener('pointerdown', e => { if (!S || !running || paused || S.dead) return; e.preventDefault();
+  const who = charAt(e.clientX, e.clientY); if (who) { if (who.n) npcAct(who.n.id); else openWorld('bot', who.b.id); return; }
+  touchId = e.pointerId; touchX = e.clientX; touchY = e.clientY; cvs.setPointerCapture(e.pointerId);
   const m = mobAt(e.clientX, e.clientY); if (m) { S.tapMob = m; S.moveTo = null; S.nav = null; showMark(m.x, m.z, 0xff7a7a); touchId = null; return; }
   touchMove(e.clientX, e.clientY, true); });
 cvs.addEventListener('pointermove', e => { if (e.pointerId !== touchId || !S) return; touchX = e.clientX; touchY = e.clientY; });
@@ -69,7 +75,8 @@ function updateTouch(dt) { if (touchId !== null && S && !S.dead) touchMove(touch
 // ---------- icons ----------
 const GI = {
   weapon: '<path d="M19 3l-9.5 9.5M19 3h-3.5M19 3v3.5M9.5 12.5l2 2M6 14l4 4M8 16l-4 4" />', helm: '<path d="M5 15a7 7 0 0114 0v3H5zM12 4v4M8.5 15h7" />',
-  armor: '<path d="M7 4l5 2 5-2 3 4-3 2v10H7V10L4 8zM12 6v14" />', ring: '<circle cx="12" cy="14" r="6"/><path d="M9 4h6l-3 4z"/>', pendant: '<path d="M6 3c0 6 3 9 6 9s6-3 6-9"/><path d="M12 12l-3 4 3 5 3-5z"/>'
+  armor: '<path d="M7 4l5 2 5-2 3 4-3 2v10H7V10L4 8zM12 6v14" />', ring: '<circle cx="12" cy="14" r="6"/><path d="M9 4h6l-3 4z"/>', pendant: '<path d="M6 3c0 6 3 9 6 9s6-3 6-9"/><path d="M12 12l-3 4 3 5 3-5z"/>',
+  charm: '<path d="M12 2l2.6 6.2L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-.8z"/>'
 };
 const gIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${GI[k]}</svg>`;
 const mIcon = k => { const c = MATS[k].col; if (k === 'f') return `<svg viewBox="0 0 24 24"><path d="M5 20C8 12 13 6 20 3c-1 7-6 13-14 16z" fill="${c}" stroke="#000" stroke-width="1"/><path d="M5 20L17 7" stroke="#fff8d0" stroke-width="1"/></svg>`;
@@ -84,7 +91,7 @@ $('bagClose').onclick = closeBag;
 bagEl.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; renderBag(); });
 const fmt = n => n.toLocaleString('vi-VN');
 const findItem = id => { for (const s of SLOT_ORDER) if (S.eq[s] && S.eq[s].id === id) return { g: S.eq[s], equipped: true }; const g = S.inv.find(x => x.id === id); return g ? { g, equipped: false } : null; };
-function tileHtml(g, extra = '') { return `<button class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${gIcon(g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
+function tileHtml(g, extra = '') { return `<button style="${g.charm ? 'color:' + CHARMS[g.charm].col : ''}" class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${gIcon(g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
 function flash(t, cls = '') { const m = bagBody.querySelector('.msg'); if (!m) return; m.textContent = t; m.className = 'msg show ' + cls; clearTimeout(msgT); msgT = setTimeout(() => { m.className = 'msg'; }, 2200); }
 function afterChange(heal) { recalc(heal); applyGearVisuals(); applyPetMount(); updateHud(); renderBag(); saveGame(); }
 function renderBag() {
@@ -119,7 +126,10 @@ function renderGear() {
 function renderDetail() {
   const box = $('detail'); const f = selId && findItem(selId);
   if (!f) { box.innerHTML = '<p class="muted">Chọn một món đồ để xem chỉ số, mặc vào, cường hóa hoặc bán.</p>'; return; }
-  const { g, equipped } = f; const cur = S.eq[g.slot]; const cost = upCost(g.plus), rate = upRate(g.plus); const canUp = g.plus < 15;
+  const { g, equipped } = f;
+  if (g.slot === 'charm') { const C = CHARMS[g.charm]; box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${C.col}">${g.name}</h3><p class="muted">Bùa siêu hiếm · ${C.d} khi mang trong túi · cộng dồn</p></div></div>
+      <div class="acts"><button class="pb" id="aSell">Bán · ${fmt(sellPrice(g))} vàng</button></div>`; $('aSell').onclick = () => { S.inv = S.inv.filter(x => x !== g); S.gold += sellPrice(g); selId = null; afterChange(); }; return; }
+  const cur = S.eq[g.slot]; const cost = upCost(g.plus), rate = upRate(g.plus); const canUp = g.plus < 15;
   box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</h3>
     <p class="muted">${SLOTS[g.slot].n} · ${RARITY[g.r].n} · cấp ${g.lv}${g.set ? ' · ' + SETS[g.set].n : ''}${equipped ? ' · <b style="color:var(--cyan)">Đang mặc</b>' : ''}</p></div></div>
     <ul class="stl">${statLines(g, !equipped && cur ? cur : null)}</ul>
@@ -183,23 +193,75 @@ function renderSkills() {
 
 // ---------- map panel ----------
 function openMap() { closeBag(); $('mapP').classList.remove('hide');
-  $('mapList').innerHTML = MAPS.map((M, i) => { const lo = M.lo, hi = M.hi; const ok = S.lv >= M.req; const here = i === S.map;
-    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>${M.culture ? M.culture + ' · ' : ''}Quái cấp ${lo}–${hi} · Boss ${MT[M.boss.k].name}<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
+  $('mapList').innerHTML = [TOWN, ...MAPS.map((_, i) => i).filter(i => i !== TOWN)].map(i => { const M = MAPS[i]; const lo = M.lo, hi = M.hi; const ok = true; const here = i === S.map; if (M.town) return `<button data-m="${i}" class="${here ? 'here' : ''}"${here ? ' disabled' : ''}><span class="dot" style="background:#ffd86a;box-shadow:0 0 10px #ffd86a"></span><span><b>${M.name}</b>Thành chính · NPC, chợ, nghỉ ngơi · ${here ? 'Đang ở đây' : 'Chạm để về thành'}</span></button>`;
+    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>${M.culture ? M.culture + ' · ' : ''}Quái cấp ${lo}–${hi}${S.lv < lo - 20 ? ' <b style="display:inline;font:inherit;color:#ff8a8a">· nguy hiểm</b>' : ''} · Boss ${MT[M.boss.k].name}<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
   $('mapList').querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { const i = +b.dataset.m; closeMap(); travel(i); }); $('mapClose').focus(); }
 function closeMap() { $('mapP').classList.add('hide'); }
 $('mapClose').onclick = closeMap;
 function travel(i) { for (const p of projs) scene.remove(p.m); projs.length = 0; for (const s of sks) if (s.type === 'meteor') scene.remove(s.m); sks.length = 0; S.bossT = 60; setMap(i); showZone(); saveGame(); fxBeam(0, 8, '#9fe8ff', 1.4, 1.2); }
 
+// ---------- world: party, bot card, trade, NPCs ----------
+let wMode = 'party', wArg = null;
+function openWorld(mode, arg) { closeBag(); closeMap(); wMode = mode; wArg = arg; $('wP').classList.remove('hide'); renderWorldPanel(); }
+function closeWorld() { $('wP').classList.add('hide'); }
+$('wClose').onclick = closeWorld; $('bParty').onclick = () => openWorld('party');
+function charAt(cx, cy) { let best = null, bd = 44; const test = (pos, h, o) => { const [sx, sy, ok] = toScreen(tmpV.set(pos.x, h, pos.z)); const d = Math.hypot(sx - cx, sy - cy); if (ok && d < bd) { bd = d; best = o; } };
+  for (const e of npcEnts) test(e.pos, HERO_H * 0.55, e); for (const e of ents.values()) if (!e.dead) test(e.pos, 0.55 + HERO_H * 0.55, e); return best; }
+function npcAct(id) { if (id === 'smith') openBag('gear'); else if (id === 'pets') openBag('pet'); else if (id === 'guide') openMap(); else openWorld(id); }
+const botTag = b => `<b style="color:${CLS[b.cls].col}">${CLS[b.cls].icon} ${b.name}</b> · ${CLS[b.cls].name} · Lv ${b.lv}`;
+const itemLine = g => g.slot === 'charm' ? `<b style="color:${CHARMS[g.charm].col}">${g.name}</b> · ${CHARMS[g.charm].d}` : `<b style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</b> · ${SLOTS[g.slot].n} cấp ${g.lv} · ${Object.entries(gearStats(g)).map(([k, v]) => STAT_N[k] + ' ' + v).join(', ')}`;
+const buyPrice = g => Math.round((g.slot === 'charm' ? 3000 + g.lv * 120 : sellPrice(g) * 2.6) * (g.pm || (g.pm = rr(0.85, 1.25))));
+const offerPrice = (g, b) => Math.round((g.slot === 'charm' ? 1800 + g.lv * 70 : sellPrice(g) * 1.6) * (0.85 + (b.hue * 7 % 1) * 0.4));
+function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; const B = $('wBody'); const here = [...ents.values()].filter(e => !e.dead).map(e => e.b);
+  if (wMode === 'party') { $('wTitle').textContent = 'Nhóm';
+    const P = S.party, lead = P && P.leader === 'me';
+    B.innerHTML = `<p class="muted" style="margin-top:0">Lập nhóm với người chơi khác cùng map để đánh chung: thành viên ở gần (15m) chia nhau <b style="color:var(--gold)">50% EXP</b> mỗi lần hạ quái, đồ rơi chung, cả nhóm +10% EXP. Bật <b>Theo sát</b> để mọi người luôn ở trong vòng 2m quanh trưởng nhóm.</p>
+    ${P ? `<div class="sect" style="margin:8px 0 6px">Thành viên (${P.members.length + 1}/5)</div>
+      <div class="row"><div class="t">${P.leader === 'me' ? '♛ ' : ''}<b style="color:var(--gold)">Bạn</b> · ${CLS[S.cls].name} · Lv ${S.lv}</div></div>
+      ${partyBots().map(b => `<div class="row"><div class="t">${P.leader === b.id ? '♛ ' : ''}${botTag(b)}</div><button class="pb" data-tr="${b.id}">Giao dịch</button>${lead ? `<button class="pb" data-kick="${b.id}">Mời ra</button>` : ''}</div>`).join('')}
+      <div class="acts" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="pb pri" id="wFollow">Theo sát ${lead ? '(cả nhóm theo bạn)' : 'trưởng nhóm'}: ${P.follow ? 'BẬT' : 'TẮT'}</button><button class="pb" id="wLeave">${lead ? 'Giải tán nhóm' : 'Rời nhóm'}</button></div>`
+      : `<button class="pb pri" id="wCreate" style="margin-top:6px">Lập nhóm</button>`}
+    <div class="sect" style="margin:12px 0 6px">Người chơi ở gần (${here.length})</div>
+    ${here.length ? here.map(b => `<div class="row"><div class="t">${botTag(b)}${inParty(b) ? ' · <span style="color:#7dff9a">cùng nhóm</span>' : ''}</div>${!inParty(b) && (!P || lead) ? `<button class="pb pri" data-inv="${b.id}">Mời</button>` : ''}<button class="pb" data-tr="${b.id}">Giao dịch</button></div>`).join('') : '<p class="muted">Chưa có ai ở map này.</p>'}`;
+    const c = $('wCreate'); if (c) c.onclick = () => { createParty(); renderWorldPanel(); updateHud(); };
+    const f = $('wFollow'); if (f) f.onclick = () => { S.party.follow = !S.party.follow; log('Theo sát: ' + (S.party.follow ? 'BẬT — giữ trong vòng 2m quanh trưởng nhóm.' : 'TẮT.'), '#9fe8ff'); renderWorldPanel(); updateHud(); };
+    const l = $('wLeave'); if (l) l.onclick = () => { leaveParty(); renderWorldPanel(); updateHud(); };
+    B.querySelectorAll('[data-inv]').forEach(b => b.onclick = () => inviteBot(S.bots.find(q => q.id === b.dataset.inv)));
+    B.querySelectorAll('[data-kick]').forEach(b => b.onclick = () => { kickBot(b.dataset.kick); renderWorldPanel(); updateHud(); });
+    B.querySelectorAll('[data-tr]').forEach(b => b.onclick = () => openWorld('trade', b.dataset.tr)); }
+  else if (wMode === 'bot') { const b = S.bots.find(q => q.id === wArg); $('wTitle').textContent = b.name;
+    B.innerHTML = `<p style="margin:0">${botTag(b)}</p><p class="muted">${inParty(b) ? 'Đang cùng nhóm với bạn.' : 'Đã hạ ' + fmt(b.kills) + ' quái.'} Vàng: ${fmt(b.gold)}</p>
+      <div style="display:flex;gap:8px;margin-top:10px">${!inParty(b) ? '<button class="pb pri" id="wInv">Mời vào nhóm</button>' : ''}<button class="pb pri" id="wTr">Giao dịch</button></div>`;
+    const i = $('wInv'); if (i) i.onclick = () => { inviteBot(b); closeWorld(); }; $('wTr').onclick = () => openWorld('trade', b.id); }
+  else if (wMode === 'trade') { const b = S.bots.find(q => q.id === wArg); $('wTitle').textContent = 'Giao dịch';
+    const mine = S.inv.filter(g => !g.lockT);
+    B.innerHTML = `<p style="margin:0">${botTag(b)} · Vàng của họ: <b style="color:var(--gold)">${fmt(b.gold)}</b> · Vàng của bạn: <b style="color:var(--gold)">${fmt(S.gold)}</b></p>
+      <div class="sect" style="margin:10px 0 6px">${b.name} bán</div>${b.inv.length ? b.inv.map((g, i) => `<div class="row">${tileHtml(g, 'tabindex="-1"')}<div class="t">${itemLine(g)}</div><button class="pb pri" data-buy="${i}"${S.gold < buyPrice(g) ? ' disabled' : ''}>Mua ${fmt(buyPrice(g))}</button></div>`).join('') : '<p class="muted">Họ chưa có gì để bán.</p>'}
+      <div class="sect" style="margin:12px 0 6px">Bạn bán cho ${b.name}</div>${mine.length ? mine.map(g => `<div class="row">${tileHtml(g, 'tabindex="-1"')}<div class="t">${itemLine(g)}</div><button class="pb" data-sell="${g.id}"${b.gold < offerPrice(g, b) ? ' disabled' : ''}>Bán ${fmt(offerPrice(g, b))}</button></div>`).join('') : '<p class="muted">Túi đồ trống.</p>'}<div class="msg" role="status"></div>`;
+    const say = t => { const e = ents.get(b.id); if (e) botSay(e, t); };
+    B.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => { const g = b.inv[+x.dataset.buy]; const p = buyPrice(g); if (!g || S.gold < p || S.inv.length >= BAG_MAX) { log(S.inv.length >= BAG_MAX ? 'Túi đầy.' : 'Không đủ vàng.', '#ff9a9a'); return; }
+      S.gold -= p; b.gold += p; b.inv.splice(+x.dataset.buy, 1); delete g.pm; S.inv.push(g); log(`Đã mua [${g.name}] của ${b.name} giá ${fmt(p)} vàng.`, '#7dff9a'); say('Cảm ơn nhé!'); afterChange(); renderWorldPanel(); });
+    B.querySelectorAll('[data-sell]').forEach(x => x.onclick = () => { const g = S.inv.find(q => q.id === x.dataset.sell); if (!g) return; const p = offerPrice(g, b); if (b.gold < p) return;
+      S.inv = S.inv.filter(q => q !== g); S.gold += p; b.gold -= p; b.inv.push(g); if (b.inv.length > 12) b.inv.shift(); log(`Đã bán [${g.name}] cho ${b.name} được ${fmt(p)} vàng.`, '#ffd86a'); say('Món này ngon!'); afterChange(); renderWorldPanel(); }); }
+  else if (wMode === 'shop') { $('wTitle').textContent = 'Hermes · Thương Nhân';
+    const goods = [['e', 1, 300 + S.lv * 6], ['e', 10, 2800 + S.lv * 55], ['f', 1, 2500 + S.lv * 25], ['c', 1, 6000 + S.lv * 40]];
+    B.innerHTML = `<p class="muted" style="margin-top:0">Nguyên liệu bán sẵn. Muốn bán đồ, hãy giao dịch với người chơi khác ở chợ Agora (giá tốt hơn bán thường).</p>${goods.map(([k, n, p], i) => `<div class="row">${mIcon(k)}<div class="t"><b style="color:${MATS[k].col}">${MATS[k].name} ×${n}</b><br>${MATS[k].desc}</div><button class="pb pri" data-g="${i}"${S.gold < p ? ' disabled' : ''}>Mua ${fmt(p)}</button></div>`).join('')}`;
+    B.querySelectorAll('[data-g]').forEach(x => x.onclick = () => { const [k, n, p] = goods[+x.dataset.g]; if (S.gold < p) return; S.gold -= p; S.mats[k] += n; log(`Đã mua ${MATS[k].name} ×${n}.`, MATS[k].col); afterChange(); renderWorldPanel(); }); }
+  else if (wMode === 'market') { $('wTitle').textContent = 'Chợ Agora'; const list = S.bots.filter(b => b.map === S.map && b.inv.length);
+    B.innerHTML = `<p class="muted" style="margin-top:0">Người chơi đang ở thành và đồ họ rao bán. Chạm "Giao dịch" để mua hoặc bán đồ cho họ bằng vàng.</p>${list.length ? list.map(b => `<div class="row"><div class="t">${botTag(b)}<br>${b.inv.slice(0, 3).map(g => g.slot === 'charm' ? `<span style="color:${CHARMS[g.charm].col}">✦ ${g.name}</span>` : `<span style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</span>`).join(' · ')}${b.inv.length > 3 ? ' …' : ''}</div><button class="pb pri" data-tr="${b.id}">Giao dịch</button></div>`).join('') : '<p class="muted">Chợ đang vắng, quay lại sau nhé.</p>'}`;
+    B.querySelectorAll('[data-tr]').forEach(b => b.onclick = () => openWorld('trade', b.dataset.tr)); }
+}
+
 // ---------- save (browser + cloud) ----------
 const SKEY = 'vuclam-save-v2', OLDKEY = 'vuclam-save-v1';
 const Store = { db: null, uid: null, writing: false, pending: null };
 let SAVE = null, OLD = null, running = false, best = 0;
-function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
+function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: d.lv || 1, exp: d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
   S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s];
-  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.lvLog = d.lvLog || [];
+  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null; S.lvLog = d.lvLog || [];
   for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
-  if (S.map && S.lv < MAPS[S.map].req) S.map = 0; }
+  }
 async function initStore() { try { if (window.claude && typeof window.claude.use === 'function') { const db = await window.claude.use('db'); const u = await window.claude.use('user'); if (db && u) { const id = await u.id(); if (id) { Store.db = db; Store.uid = id; } } } } catch (e) { } await refreshSave(); }
 async function readSave() { let b = null; try { const l = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (l && l.v === 2) b = l; } catch (e) { }
   if (Store.db) { try { const s = await Promise.race([Store.db.doc(`data/users/${Store.uid}/save`).get(), new Promise((_, r) => setTimeout(() => r('timeout'), 9000))]); if (s && s.exists) { const d = s.data(); if (d && d.v === 2 && (!b || d.ts > b.ts)) b = JSON.parse(JSON.stringify(d)); } } catch (e) { } }
@@ -226,7 +288,7 @@ $('classGo').onclick = () => { if (!pickCls) return; S = newState(pickCls);
   $('classOv').classList.add('hide'); startRun(true); };
 function startRun(fresh) {
   $('startOv').classList.add('hide'); $('classOv').classList.add('hide'); $('menuOv').classList.add('hide'); $('hud').classList.remove('hide');
-  recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); applyPetMount(); showZone(); updateHud(); fitCam = true;
+  if (!S.bots) S.bots = newBots(); S.map = TOWN; recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); applyPetMount(); showZone(); updateHud(); fitCam = true;
   if (fresh) log('Chào mừng đến Vực Lam! Chạm vào nền để di chuyển, chạm vào quái để đánh. Tự động đánh đang bật. Mở túi đồ để khảm linh thạch và chế cánh.', '#9fe8ff');
   saveGame();
 }
@@ -257,6 +319,7 @@ function frame() {
     if (zoneT > 0) { zoneT -= dt; if (zoneT <= 0) $('zone').style.opacity = 0; }
   }
   if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) $('banner').classList.remove('show'); }
+  if (running && !paused && S) { updateBots(dt, t); updateNpcs(dt, t); if (isTown() && !npcEnts.length && heroGLTF) spawnNpcs(); }
   updateParticles(dt); updateFx(dt); for (const f of scenery) f(t, dt);
   if (S) { const portrait = innerHeight > innerWidth; const dist = portrait ? 1.2 : 1; camPos.set(S.pos.x, 11 * dist, S.pos.z + 9.5 * dist); if (fitCam) { camera.position.copy(camPos); fitCam = false; } camera.position.lerp(camPos, Math.min(1, dt * 4));
     if (S.shake > 0) { S.shake -= dt; camera.position.x += (Math.random() - 0.5) * S.shake * 0.4; camera.position.y += (Math.random() - 0.5) * S.shake * 0.4; }

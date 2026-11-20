@@ -26,7 +26,8 @@ function heroStats() {
   const b = { atkP: 0, hpP: 0, defP: 0, dmgP: 0, crit: 0 }; const sc = setCounts();
   for (const k in sc) { const T = SETS[k]; if (sc[k] >= 2) for (const x in T.b2) b[x] += T.b2[x]; if (sc[k] >= 4) for (const x in T.b4) b[x] += T.b4[x]; }
   st.atk = Math.round(st.atk * (1 + b.atkP)); st.hp = Math.round(st.hp * (1 + b.hpP)); st.def = Math.round(st.def * (1 + b.defP)); st.crit += b.crit;
-  st.dmgMul = WINGM[S.wing] * (1 + b.dmgP); st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
+  const ch = { dmg: 0, hp: 0, mp: 0 }; for (const g of S.inv) if (g.slot === 'charm') ch[g.charm]++; st.charms = ch; st.hp = Math.round(st.hp * (1 + ch.hp * 0.01)); st.mp = Math.round(st.mp * (1 + ch.mp * 0.01));
+  st.dmgMul = WINGM[S.wing] * (1 + b.dmgP) * (1 + ch.dmg * 0.01); st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
   st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * 0.6 * (1 + (Mt ? Mt.spd : 0)); return st;
 }
 const curPet = () => S && S.pet ? PETS.find(p => p.id === S.pet) : null;
@@ -140,7 +141,7 @@ function setMap(i) {
   for (const m of mobs) removeMob(m); mobs.length = 0; for (const l of loots) removeLoot(l); loots.length = 0;
   for (const zn of M.zones) for (let n = 0; n < zn.n; n++) { const [x, z] = spawnPos(zn); addMob(zn.k, zoneLv(zn), x, z, zn); }
   S.bossT = Math.min(S.bossT ?? 60, 60); S.boss = null; S.mini = null; S.miniT = Math.min(S.miniT ?? 40, 40);
-  S.pos.set(0, 0, 8); buildNav(); S.nav = null; S.moveTo = null; S.tapMob = null;
+  S.pos.set(0, 0, 8); buildNav(); if (S.bots) { clearBots(); spawnNpcs(); syncBots(); } S.nav = null; S.moveTo = null; S.tapMob = null;
 }
 
 // ---------- monsters (template jelly & spiked fish) ----------
@@ -163,7 +164,7 @@ const mobH = m => m.T.y + m.T.hh * m.scale;
 function vuln(m, el) { let k = 1; if (m.frzT > 0) k *= 1.3; if (m.shockT > 0) k *= 1.2; if (m.burnT > 0) k *= 1.15; if (m.wetT > 0) k *= (el === 'ice' || el === 'thunder') ? 1.35 : 1.1; return k; }
 function hitMob(m, mult, el, show = true) {
   if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m;
-  m.hp -= dmg; m.flash = 1; m.aggro = true; recover(REC.hpHit, REC.mpHit); show = show && textN < 34;
+  m.hp -= dmg; m.flash = 1; m.aggro = true; m.tgt = null; recover(REC.hpHit, REC.mpHit); show = show && textN < 34;
   if (show) { const y = m.T.y + 0.9 * Math.max(1, m.scale);
     fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), r.ty === 'n' ? '' : DMGC[r.ty], { n: 17, c: 22, p: 23, d: 24, t: 26, x: 30 }[r.ty] + Math.max(0, r.L - 1) * 2, r.ty === 'n' ? null : { glow: r.ty === 'x' || r.L >= 3, life: 1.1 }, y);
     if (r.L >= 2) fxText(m.x, m.z, (r.L >= 3 ? 'SIÊU ĐÒN ' : '') + '×' + (Math.round(r.m * 10) / 10), DMGC[r.ty], 13, { life: 1.3, glow: true }, y + 0.55);
@@ -176,14 +177,20 @@ function burn(m, mult) { m.burnT = 2.5; m.burnD = Math.max(m.burnD || 0, HS.atk 
 function freeze(m, t, ch) { if (ch !== undefined && Math.random() >= ch * (m.wetT > 0 ? 2 : 1)) return; const d = m.boss ? t * 0.35 : t; if (d > (m.frzT || 0)) m.frzT = d; }
 function shock(m, t) { m.shockT = Math.max(m.shockT || 0, t); m.stunT = Math.max(m.stunT || 0, m.boss ? 0.1 : 0.35); }
 function knock(m, d) { const dx = m.x - S.pos.x, dz = m.z - S.pos.z, l = Math.hypot(dx, dz) || 1; const k = m.boss ? d * 0.2 : d; const nx = m.x + dx / l * k, nz = m.z + dz / l * k; if (!collides(nx, nz, 0.4) && Math.hypot(nx, nz) < 21) { m.x = nx; m.z = nz; } }
-function killMob(m) {
-  m.dead = 1; m.hp = 0; m.respawn = m.boss ? 0 : 2.5; S.kills++; recover(REC.hpKill, REC.mpKill);
+function killMob(m, killer) {
+  m.dead = 1; m.hp = 0; m.respawn = m.boss ? 0 : 2.5;
+  const share = killer && inParty(killer.b) && !S.dead && Math.hypot(killer.pos.x - S.pos.x, killer.pos.z - S.pos.z) < 15;
+  if (!killer) { S.kills++; recover(REC.hpKill, REC.mpKill); }
   burst(m.x, mobH(m), m.z, m.boss ? 80 : 40, C3(m.T.color), m.boss ? 9 : 6, m.boss ? 0.8 : 0.5, 0.9); burst(m.x, mobH(m), m.z, m.boss ? 40 : 20, C3('#ffffff'), 3, 0.3, 0.7);
   if (m.mini) { banner('HẠ TINH ANH ' + m.T.name.toUpperCase() + '!', 'gold'); S.mini = null; S.miniT = MAPS[S.map].boss.respawn / 3; fxBeam(m.x, m.z, '#ffd27a', 1.5, 1.2); }
   const B = m.boss ? 1 : m.mini ? 1 / 3 : 0;
   if (m.boss) { S.shake = 0.5; banner('ĐÃ HẠ ' + m.T.name.toUpperCase() + '!', 'gold'); log('Hạ boss ' + m.T.name + '! Phần thưởng lớn rơi ra.', '#ffd27a'); S.boss = null; S.bossT = MAPS[S.map].boss.respawn; fxBeam(m.x, m.z, '#ffd27a', 2, 1.6); }
-  let xp = mobExp(m.lv) * (B ? 30 * B : 1) * clamp(1 + (m.lv - S.lv) * 0.05, 0.3, 1.5) * (1 + HS.expB); gainExp(Math.round(xp));
+  const xp0 = mobExp(m.lv) * (B ? 30 * B : 1);
+  if (killer) { killer.b.kills++; botGain(killer.b, xp0); killer.b.gold += Math.round((5 + m.lv) * rr(3, 8)); if (Math.random() < 0.02 + B) botLoot(killer.b); if (!share) return; }
+  else for (const b of partyBots()) if (ents.has(b.id)) botGain(b, xp0 * 0.5);
+  let xp = xp0 * clamp(1 + (m.lv - S.lv) * 0.05, 0.3, 1.5) * (1 + HS.expB) * (killer ? 0.5 : 1) * (S.party && S.party.members.length ? 1.1 : 1); gainExp(Math.round(xp));
   const lvl = m.lv, set = MAPS[S.map].set;
+  if (Math.random() < CHARM_RATE) { const c = makeCharm(pick(['dmg', 'hp', 'mp']), lvl); dropLoot(m.x, m.z, { kind: 'gear', gear: c }); log('✦ Siêu hiếm! ' + c.name + ' rơi ra!', CHARMS[c.charm].col); }
   if (B || Math.random() < 0.25) dropLoot(m.x, m.z, { kind: 'gold', amount: Math.round((5 + lvl) * rr(6, 14) * (B ? 25 * B : 1) * (1 + HS.goldB)) });
   const mats = {}; for (const k of MKEYS) if (Math.random() < DROP[k]) mats[k] = 1;
   if (B) { const big = { e: 8, c: 4, p: 3, d: 2, f: 6 }; for (const k in big) { const v = big[k] * B; mats[k] = Math.floor(v) + (Math.random() < v % 1 ? 1 : 0); if (!mats[k]) delete mats[k]; } if (Math.random() < 0.4 * B) mats.t = 1; if (Math.random() < 0.1 * B) mats.x = 1; }
@@ -212,7 +219,7 @@ function dropLoot(x, z, it) {
   const g = new THREE.Group(); let col, geo, name, beam = false, cls = '';
   if (it.kind === 'gold') { col = new THREE.Color(0xffd36a); geo = new THREE.CylinderGeometry(0.16, 0.16, 0.05, 16); name = `${it.amount} Vàng`; cls = 'var(--gold)'; }
   else if (it.kind === 'mat') { const M = MATS[it.k]; col = new THREE.Color(M.col); geo = it.k === 'e' ? new THREE.IcosahedronGeometry(0.14) : it.k === 'f' ? FEATHER : new THREE.OctahedronGeometry(0.15).scale(0.8, 1.3, 0.8); name = M.name + (it.amount > 1 ? ' ×' + it.amount : ''); cls = M.col; beam = ['t', 'x', 'f'].includes(it.k); }
-  else { const gr = it.gear; col = new THREE.Color(gr.set ? SETS[gr.set].col : RARITY[gr.r].css); geo = new THREE.OctahedronGeometry(0.18); name = gr.name + (gr.plus ? ` +${gr.plus}` : ''); cls = gr.set ? SETS[gr.set].col : RARITY[gr.r].css; beam = gr.r >= 1; }
+  else { const gr = it.gear; col = new THREE.Color(gr.charm ? CHARMS[gr.charm].col : gr.set ? SETS[gr.set].col : RARITY[gr.r].css); geo = new THREE.OctahedronGeometry(0.18); name = gr.name + (gr.plus ? ` +${gr.plus}` : ''); cls = gr.charm ? CHARMS[gr.charm].col : gr.set ? SETS[gr.set].col : RARITY[gr.r].css; beam = gr.r >= 1; }
   const gem = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, metalness: 0.8, roughness: 0.2, emissive: col, emissiveIntensity: it.kind === 'gold' ? 0.6 : 1.4, side: THREE.DoubleSide })); gem.position.y = 0.45; g.add(gem);
   if (beam) { const bm = beamMatBase.clone(); bm.uniforms.uC.value = col.clone().multiplyScalar(1.2); g.add(new THREE.Mesh(beamGeo, bm)); }
   const ox = rr(-0.8, 0.8), oz = rr(-0.8, 0.8); g.position.set(x + ox, 0, z + oz); scene.add(g);
@@ -262,6 +269,7 @@ function attack(pref) {
 function chain(m0) { const list = [m0]; for (let j = 0; j < 2; j++) { const l = list[list.length - 1]; let b = null, bd = 3; for (const m of mobs) { if (m.dead || list.includes(m)) continue; const d = Math.hypot(m.x - l.x, m.z - l.z); if (d < bd) { bd = d; b = m; } } if (!b) break; list.push(b); }
   fxBolt([heroTip(), ...list.map(m => new THREE.Vector3(m.x, mobH(m), m.z))], '#c8a8ff', 0.22); list.slice(1).forEach(m => { hitMob(m, 0.6, 'thunder'); if (Math.random() < 0.3) shock(m, 1.5); }); }
 function projHit(p, m) {
+  if (p.bot) { if (p.bot.alive) botHitMob(m, p.mult, p.bot); return; }
   const Cl = CLS[S.cls]; if (p.type === 'pet') { hitMob(m, p.mult, 'holy'); burst(m.x, mobH(m), m.z, 6, C3('#ffe08a'), 2, 0.25, 0.4); return; }
   if (p.type === 'holy') { for (const o of mobsNear(m.x, m.z, Cl.splash)) hitMob(o, p.mult, 'holy'); fxRing(m.x, m.z, 0, Cl.splash, '#ffd85a', 0.35); burst(m.x, mobH(m), m.z, 14, C3('#ffe680'), 3, 0.3, 0.5); return; }
   hitMob(m, p.mult, p.el);
@@ -405,17 +413,19 @@ function applyGearVisuals() {
 }
 function updateHero(dt, t) {
   S.playT += dt; updatePet(dt, t); updateMount(dt, t, Math.hypot(input.x, input.z) > 0 || !!S.moveTo);
-  if (S.dead > 0) { S.dead -= dt; if (S.dead <= 0) { S.dead = 0; S.pos.set(0, 0, 8); recalc(true); heroG.visible = true; fxBeam(0, 8, '#9fe8ff', 1.2); } return; }
+  if (S.dead > 0) { S.dead -= dt; if (S.dead <= 0) { S.dead = 0; if (!isTown()) travel(TOWN); S.pos.set(0, 0, 8); recalc(true); heroG.visible = true; fxBeam(0, 8, '#9fe8ff', 1.2); } return; }
   let mx = 0, mz = 0;
   if (input.keys.KeyW || input.keys.ArrowUp) mz -= 1; if (input.keys.KeyS || input.keys.ArrowDown) mz += 1; if (input.keys.KeyA || input.keys.ArrowLeft) mx -= 1; if (input.keys.KeyD || input.keys.ArrowRight) mx += 1;
   let mag = Math.hypot(mx, mz); const keys = mag > 0.12; const Cl = CLS[S.cls];
   if (keys) { S.moveTo = null; S.tapMob = null; S.nav = null; }
+  const fol = !keys && !S.moveTo ? followLeaderDir() : null;
+  if (fol) { if (fol[0] || fol[1]) { [mx, mz] = fol; mag = 1; } else if (S.auto && !isTown()) { const m = nearestMob(Cl.range + 0.4); if (m) { S.face = Math.atan2(m.x - S.pos.x, m.z - S.pos.z); for (let j = 2; j >= 0; j--) if (castSkill(j, m)) break; attack(m); } } }
   if (S.tapMob && (S.tapMob.dead || !mobs.includes(S.tapMob))) S.tapMob = null;
   if (!keys && S.moveTo) { // touch / click: walk to the touched point
     const d = Math.hypot(S.moveTo.x - S.pos.x, S.moveTo.z - S.pos.z);
     if (d > 0.25) { [mx, mz] = navDir(S.moveTo.x, S.moveTo.z); mag = 1; if (!S.moveTo.hold && S.nav && S.nav.fail && S.time - S.moveTo.t > 4) S.moveTo = null; }
     else if (!S.moveTo.hold) S.moveTo = null;
-  } else if (!keys && (S.auto || S.tapMob)) {
+  } else if (!fol && !keys && (S.auto || S.tapMob) && !isTown()) {
     let target = S.tapMob, best = 1e9;
     if (!target && S.autoLoot) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time)) { best = d; target = l; } }
     if (!target) for (const m of mobs) { if (m.dead || m.noReach > S.time) continue; if (m.boss && HS.hp < m.atk * 6) continue; if (!m.aggro && m.lv > S.lv + 4) continue; const d = Math.hypot(m.x - S.pos.x, m.z - S.pos.z) - (m.aggro ? 3 : 0); if (d < best) { best = d; target = m; } }
@@ -452,7 +462,7 @@ function updateHero(dt, t) {
 const TINT = new THREE.Color();
 function updateMobs(dt, t) {
   const M = MAPS[S.map];
-  if (!S.boss) { S.bossT -= dt; if (S.bossT <= 0) { const b = M.boss; const blv = zoneLv(b); S.boss = addMob(b.k, blv, b.x, b.z, { x: b.x, z: b.z, r: 3 }); banner('BOSS XUẤT HIỆN: ' + MT[b.k].name.toUpperCase(), 'red'); log(`Boss ${MT[b.k].name} (Lv ${blv}) xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); fxBeam(b.x, b.z, '#ff6a8a', 2, 2); S.shake = 0.3; } }
+  if (!S.boss && M.boss) { S.bossT -= dt; if (S.bossT <= 0) { const b = M.boss; const blv = zoneLv(b); S.boss = addMob(b.k, blv, b.x, b.z, { x: b.x, z: b.z, r: 3 }); banner('BOSS XUẤT HIỆN: ' + MT[b.k].name.toUpperCase(), 'red'); log(`Boss ${MT[b.k].name} (Lv ${blv}) xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); fxBeam(b.x, b.z, '#ff6a8a', 2, 2); S.shake = 0.3; } }
   if (!S.mini && M.mini) { S.miniT -= dt; if (S.miniT <= 0) { const zn = pick(M.zones); const [x, z] = spawnPos(zn); S.mini = addMob(M.mini, Math.min(M.hi, zoneLv(zn) + 4), x, z, zn, true);
       banner('TINH ANH XUẤT HIỆN: ' + MT[M.mini].name.toUpperCase(), 'gold'); log(`★ Tinh anh ${MT[M.mini].name} xuất hiện! Phần thưởng bằng 1/3 boss.`, '#ffd27a'); fxBeam(x, z, '#ffd27a', 1.6, 1.4); } }
   for (const m of mobs) {
@@ -465,14 +475,18 @@ function updateMobs(dt, t) {
     if (m.shockT > 0 && Math.random() < dt * 6) emit(m.x + rr(-0.3, 0.3), mobH(m) + rr(-0.2, 0.2), m.z + rr(-0.3, 0.3), rr(-0.5, 0.5), rr(-0.5, 0.5), rr(-0.5, 0.5), C3('#d8c0ff'), 0.2, 0.15, 0, 1);
     if (m.wetT > 0 && Math.random() < dt * 3) emit(m.x + rr(-0.2, 0.2), mobH(m), m.z, 0, -1.2, 0, C3('#7fd0ff'), 0.15, 0.5, -2, 1);
     const stopped = m.frzT > 0 || m.stunT > 0; const spd = (m.T.speed || 1.2) * (m.slowT > 0 ? 1 - (m.slow || 0) : 1);
-    const dh = Math.hypot(S.pos.x - m.x, S.pos.z - m.z); let moving = false; const reach = m.boss ? 2.2 : 1.0;
-    if (!m.aggro && !S.dead && dh < (m.boss ? 7 : 4.5) && m.lv >= S.lv - 25) m.aggro = true;
-    if (m.aggro && !S.dead) {
-      if (dh > (m.boss ? 18 : 14)) m.aggro = false;
-      else if (dh > reach) { if (!stopped) { m.tx = S.pos.x; m.tz = S.pos.z; moving = true; } }
-      else if (!stopped) { m.face = Math.atan2(S.pos.x - m.x, S.pos.z - m.z); m.atkCd -= dt;
-        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * (1 - HS.def / (HS.def + 10 * m.lv + 100)))); S.hp -= dmg; S.lastHit = S.time;
-          fxText(S.pos.x, S.pos.z, '-' + dmg, '#ff6b6b', 14, null, HERO_H + 0.9); if (m.boss) { fxRing(m.x, m.z, 0, 3, '#ff6a6a', 0.5, 0, 0.3); S.shake = Math.max(S.shake || 0, 0.2); } if (S.hp <= 0) heroDie(); } }
+    if (m.tgt && (!m.tgt.alive || m.tgt.dead > 0)) m.tgt = null;
+    const dP = Math.hypot(S.pos.x - m.x, S.pos.z - m.z);
+    if (!m.aggro && !S.dead && dP < (m.boss ? 7 : 4.5) && m.lv >= S.lv - 25) { m.aggro = true; m.tgt = null; }
+    if (!m.aggro && ents.size && Math.random() < 0.1) for (const e of ents.values()) if (!e.dead && Math.hypot(e.pos.x - m.x, e.pos.z - m.z) < 3.5) { m.aggro = true; m.tgt = e; break; }
+    const TP = m.tgt ? m.tgt.pos : S.pos, tGone = m.tgt ? false : !!S.dead;
+    const dh = Math.hypot(TP.x - m.x, TP.z - m.z); let moving = false; const reach = m.boss ? 2.2 : 1.0;
+    if (m.aggro && !tGone) {
+      if (dh > (m.boss ? 18 : 14)) { m.aggro = false; m.tgt = null; }
+      else if (dh > reach) { if (!stopped) { m.tx = TP.x; m.tz = TP.z; moving = true; } }
+      else if (!stopped) { m.face = Math.atan2(TP.x - m.x, TP.z - m.z); m.atkCd -= dt;
+        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * (1 - HS.def / (HS.def + 10 * m.lv + 100)))); S.hp -= dmg; S.lastHit = S.time;
+          fxText(S.pos.x, S.pos.z, '-' + dmg, '#ff6b6b', 14, null, HERO_H + 0.9); if (m.boss) { fxRing(m.x, m.z, 0, 3, '#ff6a6a', 0.5, 0, 0.3); S.shake = Math.max(S.shake || 0, 0.2); } if (S.hp <= 0) heroDie(); } } }
     } else if (!stopped) { m.wait -= dt; if (m.wait <= 0) { if (m.state === 'idle') { const a = rr(0, 6.28), d = rr(1, m.zone.r * 0.8); m.tx = m.zone.x + Math.cos(a) * d; m.tz = m.zone.z + Math.sin(a) * d; m.state = 'move'; } else { m.state = 'idle'; m.wait = rr(1.5, 4); } } if (m.state === 'move') moving = true; }
     if (moving && !stopped) { const dx = m.tx - m.x, dz = m.tz - m.z, d = Math.hypot(dx, dz);
       if (d < 0.3) { if (!m.aggro) { m.state = 'idle'; m.wait = rr(1.5, 4); } }
