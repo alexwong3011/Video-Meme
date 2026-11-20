@@ -261,3 +261,6 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - Thay đổi gameplay hình ảnh: luôn có cánh (Cánh Sơ Khai) để bay lơ lửng như template; vàng/nguyên liệu/đồ rơi xuống đất, đi qua để nhặt.
 - Nguồn: `game/demo-day-bien/src/` (ghép `cat a_head.html b_body.html c_engine.js d_hero.js e_mobs.js f_data.js g_game.js h_ui.js > ../index.html`). Bản cũ lưu ở `src_v1/`.
 - Đã test headless (lớp Băng mới chơi, Cung Thủ lv32 map 2 + boss): không lỗi. Chưa đo FPS trên điện thoại thật, chưa cân bằng chi tiết.
+- Sửa: game "đứng" sau khi hồi sinh (bộ đếm `S.dead` âm vẫn bị coi là chết).
+- Điều khiển: bỏ joystick → chạm/nhấp nền để đi (giữ & kéo để lái), chạm quái để đánh; vòng sáng đánh dấu điểm chạm. WASD vẫn dùng được trên PC.
+- Tìm đường: lưới A* 0,5m (`buildNav/findPath/navDir` trong g_game.js) dựng lại mỗi map, rút gọn đường bằng kiểm tra tầm nhìn; tự động và chạm-để-đi đều đi vòng đá/san hô. Mục tiêu không tới được bị bỏ qua 6 giây.

@@ -65,6 +65,38 @@ function updateFx(dt) {
 const rockSpots = [[-14, -9, 1.8, 2.6], [14, -12, 2.2, 3.4], [-16, 6, 2.0, 2.2], [16, 4, 1.6, 2.8], [-4, -9, 1.0, 1.4], [5, 2, 0.9, 1.1], [-3, 15, 1.6, 2.4], [11, 16, 2.0, 3.0], [-12, 16, 1.4, 1.8], [2, -6, 0.7, 0.9]];
 const coralSpots = [[-6, -12], [7, -13], [-13, -2], [13, -2], [-11, 12], [12, 11], [-2, 11], [4, 13], [-18, -12], [18, -10], [-6, 3], [8, -1]];
 function collides(x, z, r) { for (const c of colliders) { const dx = x - c.x, dz = z - c.z; if (dx * dx + dz * dz < (c.r + r) ** 2) return true; } return false; }
+// ---------- navigation (grid A* so the hero walks around rocks and coral) ----------
+const NAV = { n: 88, c: 0.5, o: -22, g: null, R: 0.56 };
+function navCell(v) { return clamp(Math.floor((v - NAV.o) / NAV.c), 0, NAV.n - 1); }
+function navX(i) { return NAV.o + (i + 0.5) * NAV.c; }
+function buildNav() { const n = NAV.n; NAV.g = new Uint8Array(n * n);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const x = navX(i), z = navX(j); NAV.g[j * n + i] = Math.hypot(x, z) > 20.8 || collides(x, z, NAV.R) ? 1 : 0; } }
+function navFree(i, j) { return i >= 0 && j >= 0 && i < NAV.n && j < NAV.n && !NAV.g[j * NAV.n + i]; }
+function los(ax, az, bx, bz, r = 0.5) { const d = Math.hypot(bx - ax, bz - az), k = Math.ceil(d / 0.2); for (let s = 1; s <= k; s++) { const f = s / k; if (collides(ax + (bx - ax) * f, az + (bz - az) * f, r)) return false; } return true; }
+function nearestFree(i, j) { if (navFree(i, j)) return [i, j]; for (let r = 1; r < 8; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) if (Math.max(Math.abs(di), Math.abs(dj)) === r && navFree(i + di, j + dj)) return [i + di, j + dj]; return null; }
+function findPath(sx, sz, tx, tz) {
+  if (!NAV.g) return null; const n = NAV.n; const s = nearestFree(navCell(sx), navCell(sz)), t = nearestFree(navCell(tx), navCell(tz)); if (!s || !t) return null;
+  const S0 = s[1] * n + s[0], T0 = t[1] * n + t[0]; const gs = new Float32Array(n * n).fill(1e9), from = new Int32Array(n * n).fill(-1), shut = new Uint8Array(n * n);
+  const heap = [], H = k => { const i = k % n, j = (k / n) | 0, dx = Math.abs(i - t[0]), dz = Math.abs(j - t[1]); return Math.max(dx, dz) + 0.414 * Math.min(dx, dz); };
+  const push = (k, f) => { heap.push([f, k]); let c = heap.length - 1; while (c > 0) { const p = (c - 1) >> 1; if (heap[p][0] <= heap[c][0]) break; [heap[p], heap[c]] = [heap[c], heap[p]]; c = p; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let c = 0; for (;;) { const l = 2 * c + 1, r = l + 1; let m = c; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === c) break; [heap[m], heap[c]] = [heap[c], heap[m]]; c = m; } } return top[1]; };
+  gs[S0] = 0; push(S0, H(S0)); let found = false, it = 0;
+  while (heap.length && it++ < 9000) { const k = pop(); if (shut[k]) continue; shut[k] = 1; if (k === T0) { found = true; break; } const i = k % n, j = (k / n) | 0;
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (!di && !dj) continue; const a = i + di, b = j + dj; if (!navFree(a, b)) continue; if (di && dj && (!navFree(i + di, j) || !navFree(i, j + dj))) continue;
+      const q = b * n + a, g = gs[k] + (di && dj ? 1.414 : 1); if (g < gs[q]) { gs[q] = g; from[q] = k; push(q, g + H(q)); } } }
+  if (!found) return null; const pts = []; for (let k = T0; k !== -1 && k !== S0; k = from[k]) pts.push([navX(k % n), navX((k / n) | 0)]); pts.reverse(); pts.push([tx, tz]);
+  const out = []; let ax = sx, az = sz, i = 0; // string-pull: keep only corners the hero cannot see past
+  while (i < pts.length) { let j = pts.length - 1; while (j > i && !los(ax, az, pts[j][0], pts[j][1], 0.45)) j--; out.push(pts[j]); [ax, az] = pts[j]; i = j + 1; }
+  return out;
+}
+// direction (unit vector) the hero should walk now to reach (tx,tz), going around obstacles
+function navDir(tx, tz) {
+  const px = S.pos.x, pz = S.pos.z;
+  if (los(px, pz, tx, tz)) { S.nav = null; const d = Math.hypot(tx - px, tz - pz) || 1; return [(tx - px) / d, (tz - pz) / d]; }
+  let N = S.nav; if (!N || Math.hypot(N.tx - tx, N.tz - tz) > 1 || S.time - N.t > 1.5) { const pts = findPath(px, pz, tx, tz); N = S.nav = { tx, tz, t: S.time, pts: pts || [[tx, tz]], i: 0, fail: !pts }; }
+  while (N.i < N.pts.length - 1 && (Math.hypot(N.pts[N.i][0] - px, N.pts[N.i][1] - pz) < 0.35 || los(px, pz, N.pts[N.i + 1][0], N.pts[N.i + 1][1]))) N.i++;
+  const [wx, wz] = N.pts[N.i]; const d = Math.hypot(wx - px, wz - pz) || 1; return [(wx - px) / d, (wz - pz) / d];
+}
 function spawnPos(z) { for (let k = 0; k < 20; k++) { const a = rr(0, 6.28), d = Math.sqrt(rand()) * z.r; const x = z.x + Math.cos(a) * d, zz = z.z + Math.sin(a) * d; if (!collides(x, zz, 0.8)) return [x, zz]; } return [z.x, z.z]; }
 function setMap(i) {
   S.map = i; const M = MAPS[i]; PAL = M.pal; seed = 20261119 + i * 977;
@@ -90,7 +122,7 @@ function setMap(i) {
   for (const m of mobs) removeMob(m); mobs.length = 0; for (const l of loots) removeLoot(l); loots.length = 0;
   for (const zn of M.zones) for (let n = 0; n < zn.n; n++) { const [x, z] = spawnPos(zn); addMob(zn.k, ri(zn.lv[0], zn.lv[1]), x, z, zn); }
   S.bossT = Math.min(S.bossT ?? 60, 60); S.boss = null;
-  S.pos.set(0, 0, 8);
+  S.pos.set(0, 0, 8); buildNav(); S.nav = null; S.moveTo = null; S.tapMob = null;
 }
 
 // ---------- monsters (template jelly & spiked fish) ----------
@@ -302,16 +334,25 @@ function applyGearVisuals() {
 }
 function updateHero(dt, t) {
   if (S.dead > 0) { S.dead -= dt; if (S.dead <= 0) { S.dead = 0; S.pos.set(0, 0, 8); recalc(true); heroG.visible = true; fxBeam(0, 8, '#9fe8ff', 1.2); } return; }
-  let mx = input.x, mz = input.z;
+  let mx = 0, mz = 0;
   if (input.keys.KeyW || input.keys.ArrowUp) mz -= 1; if (input.keys.KeyS || input.keys.ArrowDown) mz += 1; if (input.keys.KeyA || input.keys.ArrowLeft) mx -= 1; if (input.keys.KeyD || input.keys.ArrowRight) mx += 1;
-  let mag = Math.hypot(mx, mz); const manual = mag > 0.12; const Cl = CLS[S.cls];
-  if (!manual && S.auto) {
-    let target = null, best = 1e9;
-    for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best) { best = d; target = { x: l.x, z: l.z, loot: true }; } }
-    if (!target) for (const m of mobs) { if (m.dead) continue; if (m.boss && HS.hp < m.atk * 6) continue; if (!m.aggro && m.lv > S.lv + 4) continue; const d = Math.hypot(m.x - S.pos.x, m.z - S.pos.z) - (m.aggro ? 3 : 0); if (d < best) { best = d; target = m; } }
-    if (target) { const dx = target.x - S.pos.x, dz = target.z - S.pos.z, d = Math.hypot(dx, dz); const want = target.loot ? 0.3 : (Cl.melee ? Cl.range - 0.3 + (target.boss ? 0.8 : 0) : Cl.range - 1);
-      if (d > want) { mx = dx / d; mz = dz / d; mag = 1; } else if (!target.loot) { S.face = Math.atan2(dx, dz); const crowd = mobsNear(target.x, target.z, 2.6).filter(o => o.lv <= S.lv + 4 || o.aggro).length;
-        if (crowd >= 2 || target.boss || target.maxHp > HS.atk * 6) { for (let j = 2; j >= 0; j--) if (castSkill(j, target)) break; } attack(target); } }
+  let mag = Math.hypot(mx, mz); const keys = mag > 0.12; const Cl = CLS[S.cls];
+  if (keys) { S.moveTo = null; S.tapMob = null; S.nav = null; }
+  if (S.tapMob && (S.tapMob.dead || !mobs.includes(S.tapMob))) S.tapMob = null;
+  if (!keys && S.moveTo) { // touch / click: walk to the touched point
+    const d = Math.hypot(S.moveTo.x - S.pos.x, S.moveTo.z - S.pos.z);
+    if (d > 0.25) { [mx, mz] = navDir(S.moveTo.x, S.moveTo.z); mag = 1; if (!S.moveTo.hold && S.nav && S.nav.fail && S.time - S.moveTo.t > 4) S.moveTo = null; }
+    else if (!S.moveTo.hold) S.moveTo = null;
+  } else if (!keys && (S.auto || S.tapMob)) {
+    let target = S.tapMob, best = 1e9;
+    if (!target) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time)) { best = d; target = l; } }
+    if (!target) for (const m of mobs) { if (m.dead || m.noReach > S.time) continue; if (m.boss && HS.hp < m.atk * 6) continue; if (!m.aggro && m.lv > S.lv + 4) continue; const d = Math.hypot(m.x - S.pos.x, m.z - S.pos.z) - (m.aggro ? 3 : 0); if (d < best) { best = d; target = m; } }
+    if (target) { const isLoot = !target.T; const dx = target.x - S.pos.x, dz = target.z - S.pos.z, d = Math.hypot(dx, dz); const want = isLoot ? 0.3 : (Cl.melee ? Cl.range - 0.3 + (target.boss ? 0.8 : 0) : Cl.range - 1);
+      const sees = isLoot || Cl.melee || los(S.pos.x, S.pos.z, target.x, target.z, 0.15);
+      if (d > want || !sees) { [mx, mz] = navDir(target.x, target.z); mag = 1;
+        if (S.nav && S.nav.fail && target !== S.tapMob) { target.noReach = S.time + 6; S.nav = null; } }
+      else if (!isLoot) { S.face = Math.atan2(dx, dz); const crowd = mobsNear(target.x, target.z, 2.6).filter(o => o.lv <= S.lv + 4 || o.aggro).length;
+        if (S.auto && (crowd >= 2 || target.boss || target.maxHp > HS.atk * 6)) { for (let j = 2; j >= 0; j--) if (castSkill(j, target)) break; } attack(target); } }
   }
   if (mag > 0.12 && S.castT <= 0) { const sp = Math.min(mag, 1) * (4.6 + S.wing * 0.3); const nx = S.pos.x + mx / Math.max(mag, 1) * sp * dt, nz = S.pos.z + mz / Math.max(mag, 1) * sp * dt;
     if (!collides(nx, S.pos.z, 0.5)) S.pos.x = nx; if (!collides(S.pos.x, nz, 0.5)) S.pos.z = nz; const r = Math.hypot(S.pos.x, S.pos.z); if (r > 21) { S.pos.x *= 21 / r; S.pos.z *= 21 / r; }

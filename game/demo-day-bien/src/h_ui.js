@@ -46,12 +46,24 @@ addEventListener('keydown', e => { if (!S || !running) return; input.keys[e.code
   if (e.code === 'Space') { e.preventDefault(); attack(); } if (e.code === 'Digit1') castSkill(0); if (e.code === 'Digit2') castSkill(1); if (e.code === 'Digit3') castSkill(2);
   if (e.code === 'KeyF') { S.auto = !S.auto; updateHud(); } if (e.code === 'KeyI') openBag(); if (e.code === 'KeyM') openMap(); });
 addEventListener('keyup', e => { input.keys[e.code] = false; });
-const joy = $('joy'), knob = $('joyKnob'); let joyId = null;
-function joyMove(e) { const r = joy.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height / 2; let dx = e.clientX - cx, dy = e.clientY - cy; const m = Math.hypot(dx, dy), max = r.width / 2 - 10; if (m > max) { dx *= max / m; dy *= max / m; } knob.style.transform = `translate(${dx}px,${dy}px)`; input.x = dx / max; input.z = dy / max; }
-joy.addEventListener('pointerdown', e => { joyId = e.pointerId; joy.setPointerCapture(e.pointerId); joyMove(e); });
-joy.addEventListener('pointermove', e => { if (e.pointerId === joyId) joyMove(e); });
-const joyEnd = e => { if (e.pointerId !== joyId) return; joyId = null; input.x = input.z = 0; knob.style.transform = ''; };
-joy.addEventListener('pointerup', joyEnd); joy.addEventListener('pointercancel', joyEnd);
+// touch / click to move: tap the sea floor to walk there, hold and drag to steer, tap a monster to attack it
+const cvs = renderer.domElement; cvs.style.touchAction = 'none';
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), floor = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hitP = new THREE.Vector3();
+const markMat = new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+const marker = new THREE.Mesh(new THREE.RingGeometry(0.28, 0.4, 40), markMat); marker.rotation.x = -Math.PI / 2; scene.add(marker); let markT = 0;
+function floorAt(cx, cy) { ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); return ray.ray.intersectPlane(floor, hitP) ? hitP : null; }
+function mobAt(cx, cy) { let b = null, bd = 46; for (const m of mobs) { if (m.dead) continue; const [sx, sy, ok] = toScreen(tmpV.set(m.x, mobH(m), m.z)); const d = Math.hypot(sx - cx, sy - cy) - (m.boss ? 30 : 0); if (ok && d < bd) { bd = d; b = m; } } return b; }
+function showMark(x, z, hex) { marker.position.set(x, 0.06, z); markMat.color.setHex(hex); markT = 0.6; }
+let touchId = null, touchX = 0, touchY = 0;
+function touchMove(cx, cy, hold) { const p = floorAt(cx, cy); if (!p) return; const r = Math.hypot(p.x, p.z); if (r > 20.5) p.multiplyScalar(20.5 / r); S.moveTo = { x: p.x, z: p.z, hold, t: S.time }; S.tapMob = null; showMark(p.x, p.z, 0x9fe8ff); }
+cvs.addEventListener('pointerdown', e => { if (!S || !running || paused || S.dead) return; e.preventDefault(); touchId = e.pointerId; touchX = e.clientX; touchY = e.clientY; cvs.setPointerCapture(e.pointerId);
+  const m = mobAt(e.clientX, e.clientY); if (m) { S.tapMob = m; S.moveTo = null; S.nav = null; showMark(m.x, m.z, 0xff7a7a); touchId = null; return; }
+  touchMove(e.clientX, e.clientY, true); });
+cvs.addEventListener('pointermove', e => { if (e.pointerId !== touchId || !S) return; touchX = e.clientX; touchY = e.clientY; });
+const touchEnd = e => { if (e.pointerId !== touchId) return; touchId = null; if (S && S.moveTo) S.moveTo.hold = false; };
+cvs.addEventListener('pointerup', touchEnd); cvs.addEventListener('pointercancel', touchEnd);
+function updateTouch(dt) { if (touchId !== null && S && !S.dead) touchMove(touchX, touchY, true);
+  if (markT > 0) { markT -= dt; markMat.opacity = Math.max(0, markT / 0.6) * 0.9; marker.scale.setScalar(1 + (0.6 - markT) * 0.8); if (S && S.tapMob && !S.tapMob.dead) marker.position.set(S.tapMob.x, 0.06, S.tapMob.z); } else markMat.opacity = 0; }
 
 // ---------- icons ----------
 const GI = {
@@ -195,7 +207,7 @@ $('classGo').onclick = () => { if (!pickCls) return; S = newState(pickCls);
 function startRun(fresh) {
   $('startOv').classList.add('hide'); $('classOv').classList.add('hide'); $('menuOv').classList.add('hide'); $('hud').classList.remove('hide');
   recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); showZone(); updateHud(); fitCam = true;
-  if (fresh) log('Chào mừng đến Vực Lam! Tự động đánh đang bật. Mở túi đồ để khảm linh thạch và chế cánh.', '#9fe8ff');
+  if (fresh) log('Chào mừng đến Vực Lam! Chạm vào nền để di chuyển, chạm vào quái để đánh. Tự động đánh đang bật. Mở túi đồ để khảm linh thạch và chế cánh.', '#9fe8ff');
   saveGame();
 }
 function openMenu() { $('menuOv').classList.remove('hide'); paused = true; $('menuInfo').innerHTML = `${CLS[S.cls].name} · Cấp <b>${S.lv}</b> · ${MAPS[S.map].name}`; $('mMsg').textContent = ''; $('mResume').focus(); }
@@ -218,7 +230,7 @@ const clock = new THREE.Clock(); let hudT = 0, saveT = 0, fpsAcc = 0, fpsN = 0, 
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime; U.uTime.value = t;
   if (running && !paused) {
-    S.time += dt; updateHero(dt, t); updateMobs(dt, t); updateLoot(dt, t); updateProjs(dt); updSkills(dt);
+    S.time += dt; updateTouch(dt); updateHero(dt, t); updateMobs(dt, t); updateLoot(dt, t); updateProjs(dt); updSkills(dt);
     hudT -= dt; if (hudT <= 0) { hudT = 0.2; updateHud(); if (!bagEl.classList.contains('hide') && tab !== 'gear') { } }
     saveT += dt; if (saveT > 20) { saveT = 0; saveGame(); }
     if (zoneT > 0) { zoneT -= dt; if (zoneT <= 0) $('zone').style.opacity = 0; }
