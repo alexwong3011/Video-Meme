@@ -352,4 +352,5 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - Trang thử: https://claude.ai/artifact/NYw5oHX5TEa1k8D98st4QF (`game/vuc-lam-ab/`, mã ở `game/demo-day-bien/src/ab.js`).
 - Màn hình chia đôi, cùng cảnh thật, chọn map / lớp, bật cận cảnh, bật ra chiêu.
 - Bản B: thép tối (×0,62) + envMap ×1,7, rim trắng-xanh lạnh, suit/dark tối hơn, áo choàng bão hòa hơn, viền phát sáng chọn được (xanh lam mặc định, tím, đen, tắt; dày 0,02 skinned / 0,013 giáp, nhịp sáng nhẹ), đèn điểm trắng quanh nhân vật, bóng chân đậm, quầng tối sau lưng.
+- Thanh trượt real time: độ dày viền 0–100% (100% = 0,04; uniform `OUT_TH`), cỡ nhân vật 0–100% (0% = cỡ hiện tại, 100% = gấp đôi; áp cho cả A và B).
 - Chờ người dùng chọn trước khi áp vào game (có thể áp thêm cho bot/NPC).
