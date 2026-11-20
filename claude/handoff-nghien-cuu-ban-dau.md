@@ -346,3 +346,10 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
   - Máu quái `60·(1+0,3(L−1))·(1+L/180)`, công `16+2,4L+L²/400`.
   - Boss ×60 máu / ×4 công (cũ ×30/×3), tinh anh ×15 / ×2,5.
   - Bot yếu hơn (hệ số trang bị `1,4+0,004·lv` thay vì `1,7+0,012·lv`).
+
+## 21. A/B nhân vật nổi bật hơn (chưa đưa vào game)
+
+- Trang thử: https://claude.ai/artifact/NYw5oHX5TEa1k8D98st4QF (`game/vuc-lam-ab/`, mã ở `game/demo-day-bien/src/ab.js`).
+- Màn hình chia đôi, cùng cảnh thật, chọn map / lớp, bật cận cảnh, bật ra chiêu.
+- Bản B: thép tối (×0,62) + envMap ×1,7, rim trắng-xanh lạnh, suit/dark tối hơn, áo choàng bão hòa hơn, viền đen (0,04 skinned / 0,026 giáp), đèn điểm trắng quanh nhân vật, bóng chân đậm, quầng tối sau lưng.
+- Chờ người dùng chọn trước khi áp vào game (có thể áp thêm cho bot/NPC).
