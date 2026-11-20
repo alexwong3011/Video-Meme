@@ -211,6 +211,22 @@ const SOUL_RATE = 0.12; // per main-boss kill
 const CHARM_RATE = 0.01;
 function makeCharm(kind, lv) { return { id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), slot: 'charm', charm: kind, r: 3, lv, name: CHARMS[kind].n, base: {}, plus: 0, set: null }; }
 
+// second boss of each realm (two bosses spawn together every 2 minutes)
+Object.assign(MT, {
+  bossFishNight: { name: 'Cá Gai Dạ Vương', model: 'fish', hp: 90, atk: 1.3, exp: 22, speed: 1.1, size: 2.0, y: 0.9, color: '#9fc8ff', boss: true, hh: 0.1, lh: 0.85, pal: { back: 0x0a1430, belly: 0x3a6aff, stripe: 0x9fe8ff, fin: 0x5a8aff, finE: 0x1a3aff, rim: 0x9fe8ff, eye: 0xff3a6a, crown: true } },
+  bossKelpSerpent: MY('serpent', 'Hải Xà Vương Rêu Thẳm', '#9fffc0', 1, { body: 0x0e4a3a, belly: 0xc8f0a0, glow: 0x7dffb0, horn: 0xffe08a, mane: 0x3a8a5a, crown: true, segs: 13 }, { boss: true }),
+  bossFlame: MY('spirit', 'Hỏa Thần Dung Nham', '#ff9a5a', 1, { glow: 0xff4a0a, core: 0xffe0a0, flame: '#ff6a1a', orbs: 6 }, { boss: true, y: 1.5 }),
+  bossMummy: MY('wraith', 'Pharaoh Xác Ướp Vĩnh Hằng', '#ffe0a0', 1, { robe: 0xe8d8a8, robe2: 0x6a5a3a, bands: true, glow: 0xffd23a, eye: 0x6fe7ff, crown: true }, { boss: true }),
+  bossHydra: MY('serpent', 'Hydra Đầm Lerna', '#b0ff6a', 1, { body: 0x2a5a1a, belly: 0xd8d090, glow: 0xb0ff4a, mane: 0x4a7a2a, horn: 0xd8d0b0, rear: true, crown: true, segs: 13 }, { boss: true }),
+  bossOni: MY('spirit', 'Đại Quỷ Vương Shuten', '#ff6a4a', 1, { glow: 0xff2a0a, core: 0xffd08a, flame: '#ff3a1a', mask: 0x8a0a0a, orbs: 4 }, { boss: true, y: 1.5 }),
+  bossKoschei: MY('wraith', 'Koschei Bất Tử', '#9affd8', 1, { robe: 0x1a2a24, robe2: 0x050a08, glow: 0x6affb0, eye: 0x9affd8, horn: 0xc8d8c0, crown: true }, { boss: true }),
+  bossHraes: MY('bird', 'Đại Bàng Gió Hræsvelgr', '#d8e8ff', 1, { body: 0x2a3a5a, beak: 0xd8e0e8, glow: 0x9fd0ff, w1: 0xffffff, w2: 0x3a6aaa, w3: 0x9fd0ff, trail: '#bfe8ff', crown: true }, { boss: true, y: 1.6 }),
+  bossIceKing: MY('serpent', 'Băng Long Vương', '#dff8ff', 1, { body: 0x6a9ac8, belly: 0xffffff, glow: 0xbff4ff, horn: 0xffffff, whisk: true, mane: 0xdff8ff, fly: true, crown: true, segs: 14 }, { boss: true, y: 1.1 }),
+  bossSeraphKing: MY('golem', 'Thiên Binh Thống Lĩnh', '#fff0b0', 1, { stone: 0xe0b84a, glow: 0xfff0b0, metal: true, halo: true, crown: true }, { boss: true })
+});
+const BOSS2 = ['bossFishNight', 'bossKelpSerpent', 'bossFlame', 'bossMummy', 'bossHydra', 'bossOni', 'bossKoschei', 'bossHraes', 'bossIceKing', 'bossSeraphKing'];
+MAPS.forEach((M, i) => { if (!M.boss) return; M.boss.respawn = 120; M.boss.x = 3.2; M.boss.z = -12.5; M.boss2 = { k: BOSS2[i], x: -3.2, z: -12.5, off: 8 }; });
+
 // formulas ---------------------------------------------------------------
 // Levels: cap 800. Time per level grows exponentially so that, at the reference
 // kill rate, level 400 takes ~1 hour and level 800 ~12 hours of play.

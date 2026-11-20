@@ -394,3 +394,9 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 
 - Số sát thương trên quái (của người chơi và bot, cả dòng "SIÊU ĐÒN ×") còn 60% cỡ cũ (`DMG_TEXT = 0.6`, tối thiểu 9px, `dmgSize()` trong g_game.js).
 - Không còn hiện tên kỹ năng khi ra chiêu.
+
+## 28. Vực Lam – 2 boss mỗi map, hồi 2 phút
+
+- Mỗi map có thêm boss thứ hai (`MAPS[i].boss2`, danh sách `BOSS2` trong f_data.js): Cá Gai Dạ Vương, Hải Xà Vương Rêu Thẳm, Hỏa Thần Dung Nham, Pharaoh Xác Ướp Vĩnh Hằng, Hydra Đầm Lerna, Đại Quỷ Vương Shuten, Koschei Bất Tử, Đại Bàng Gió Hræsvelgr, Băng Long Vương, Thiên Binh Thống Lĩnh.
+- Hai boss xuất hiện cùng lúc trước cổng (x = ±3,2), thời gian hồi 120 giây, đếm lại khi cả hai đã bị hạ (`S.boss`, `S.boss2`). Tinh anh vẫn theo 1/3 thời gian hồi boss (40 giây).
+- HUD: 2 thanh máu boss (`#bossbar`, `#bossbar2`); "Săn boss" nhắm boss gần nhất.

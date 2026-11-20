@@ -140,7 +140,7 @@ function setMap(i) {
   if (i === 1) { addSeaweed(-11, -4, 30, 2.5); addSeaweed(13, 5, 30, 2.5); addSeaweed(-2, -20, 30, 3); } }
   for (const m of mobs) removeMob(m); mobs.length = 0; for (const l of loots) removeLoot(l); loots.length = 0;
   for (const zn of M.zones) for (let n = 0; n < zn.n; n++) { const [x, z] = spawnPos(zn); addMob(zn.k, zoneLv(zn), x, z, zn); }
-  S.bossT = Math.min(S.bossT ?? 60, 60); S.boss = null; S.mini = null; S.miniT = Math.min(S.miniT ?? 40, 40);
+  S.bossT = Math.min(S.bossT ?? 60, 60); S.boss = null; S.boss2 = null; S.mini = null; S.miniT = Math.min(S.miniT ?? 40, 40);
   S.pos.set(0, 0, 8); buildNav(); if (S.bots) { clearBots(); spawnNpcs(); syncBots(); } S.nav = null; S.moveTo = null; S.tapMob = null;
 }
 
@@ -186,7 +186,7 @@ function killMob(m, killer) {
   burst(m.x, mobH(m), m.z, m.boss ? 80 : 40, C3(m.T.color), m.boss ? 9 : 6, m.boss ? 0.8 : 0.5, 0.9); burst(m.x, mobH(m), m.z, m.boss ? 40 : 20, C3('#ffffff'), 3, 0.3, 0.7);
   if (m.mini) { banner('HẠ TINH ANH ' + m.T.name.toUpperCase() + '!', 'gold'); S.mini = null; S.miniT = MAPS[S.map].boss.respawn / 3; fxBeam(m.x, m.z, '#ffd27a', 1.5, 1.2); }
   const B = m.boss ? 1 : m.mini ? 1 / 3 : 0;
-  if (m.boss) { S.shake = 0.5; banner('ĐÃ HẠ ' + m.T.name.toUpperCase() + '!', 'gold'); log('Hạ boss ' + m.T.name + '! Phần thưởng lớn rơi ra.', '#ffd27a'); S.boss = null; S.bossT = MAPS[S.map].boss.respawn; fxBeam(m.x, m.z, '#ffd27a', 2, 1.6); }
+  if (m.boss) { S.shake = 0.5; banner('ĐÃ HẠ ' + m.T.name.toUpperCase() + '!', 'gold'); log('Hạ boss ' + m.T.name + '! Phần thưởng lớn rơi ra.', '#ffd27a'); if (S.boss === m) S.boss = null; if (S.boss2 === m) S.boss2 = null; if (!S.boss && !S.boss2) S.bossT = MAPS[S.map].boss.respawn; fxBeam(m.x, m.z, '#ffd27a', 2, 1.6); }
   const xp0 = mobExp(m.lv) * (B ? 30 * B : 1);
   if (killer) { killer.b.kills++; botGain(killer.b, xp0); if (m.boss && Math.random() < SOUL_RATE) { const c = makeCharm('soul', m.lv); if (!stackInto(killer.b.inv, c)) killer.b.inv.push(c); } killer.b.gold += Math.round((5 + m.lv) * rr(3, 8)); if (Math.random() < 0.02 + B) botLoot(killer.b); if (!share) return; }
   else for (const b of partyBots()) if (ents.has(b.id)) botGain(b, xp0 * 0.5);
@@ -473,8 +473,8 @@ function updateHero(dt, t) {
   } else if (!fol && !keys && (S.auto || S.tapMob) && !isTown()) {
     let target = S.tapMob, best = 1e9;
     // boss hunt: the main boss (then the elite) comes first; shortly before the boss spawns, wait at its gate
-    if (!target && S.bossHunt) { const M = MAPS[S.map]; const bm = S.boss && !S.boss.dead ? S.boss : S.mini && !S.mini.dead ? S.mini : null;
-      if (bm) target = bm; else if (M.boss && !S.boss && S.bossT < 10) { const gx = M.boss.x, gz = M.boss.z + 2.5; if (Math.hypot(gx - S.pos.x, gz - S.pos.z) > 1.2) target = { x: gx, z: gz, wait: true }; } }
+    if (!target && S.bossHunt) { const M = MAPS[S.map]; const bs = [S.boss, S.boss2].filter(b => b && !b.dead).sort((a, b) => Math.hypot(a.x - S.pos.x, a.z - S.pos.z) - Math.hypot(b.x - S.pos.x, b.z - S.pos.z)); const bm = bs[0] || (S.mini && !S.mini.dead ? S.mini : null);
+      if (bm) target = bm; else if (M.boss && !S.boss && !S.boss2 && S.bossT < 10) { const gx = 0, gz = M.boss.z + 2.5; if (Math.hypot(gx - S.pos.x, gz - S.pos.z) > 1.2) target = { x: gx, z: gz, wait: true }; } }
     if (!target && S.autoLoot) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time) && lootOk(l.it)) { best = d; target = l; } }
     if (!target) for (const m of mobs) { if (m.dead || m.noReach > S.time) continue; if (m.boss && HS.hp < m.atk * 6) continue; if (!m.aggro && m.lv > S.lv + 4) continue; const d = Math.hypot(m.x - S.pos.x, m.z - S.pos.z) - (m.aggro ? 3 : 0); if (d < best) { best = d; target = m; } }
     if (target) { const isLoot = !target.T; const dx = target.x - S.pos.x, dz = target.z - S.pos.z, d = Math.hypot(dx, dz); const want = isLoot ? 0.3 : (Cl.melee ? Cl.range - 0.3 + (target.boss ? 0.8 : 0) : Cl.range - 1);
@@ -510,7 +510,9 @@ function updateHero(dt, t) {
 const TINT = new THREE.Color();
 function updateMobs(dt, t) {
   const M = MAPS[S.map];
-  if (!S.boss && M.boss) { S.bossT -= dt; if (S.bossT <= 0) { const b = M.boss; const blv = zoneLv(b); S.boss = addMob(b.k, blv, b.x, b.z, { x: b.x, z: b.z, r: 3 }); banner('BOSS XUẤT HIỆN: ' + MT[b.k].name.toUpperCase(), 'red'); log(`Boss ${MT[b.k].name} (Lv ${blv}) xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); fxBeam(b.x, b.z, '#ff6a8a', 2, 2); S.shake = 0.3; } }
+  if (!S.boss && !S.boss2 && M.boss) { S.bossT -= dt; if (S.bossT <= 0) { S.bossT = M.boss.respawn; const spawnB = b => { const lv = zoneLv(b); const m = addMob(b.k, lv, b.x, b.z, { x: b.x, z: b.z, r: 3 }); fxBeam(b.x, b.z, '#ff6a8a', 2, 2); return m; };
+      S.boss = spawnB(M.boss); if (M.boss2) S.boss2 = spawnB(M.boss2); S.shake = 0.3;
+      banner(M.boss2 ? '2 BOSS XUẤT HIỆN!' : 'BOSS XUẤT HIỆN: ' + MT[M.boss.k].name.toUpperCase(), 'red'); log(`Boss ${MT[M.boss.k].name} (Lv ${S.boss.lv})${S.boss2 ? ` và ${MT[M.boss2.k].name} (Lv ${S.boss2.lv})` : ''} xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); } }
   if (!S.mini && M.mini) { S.miniT -= dt; if (S.miniT <= 0) { const zn = pick(M.zones); const [x, z] = spawnPos(zn); S.mini = addMob(M.mini, Math.min(M.hi, zoneLv(zn) + 4), x, z, zn, true);
       banner('TINH ANH XUẤT HIỆN: ' + MT[M.mini].name.toUpperCase(), 'gold'); log(`★ Tinh anh ${MT[M.mini].name} xuất hiện! Phần thưởng bằng 1/3 boss.`, '#ffd27a'); fxBeam(x, z, '#ffd27a', 1.6, 1.4); } }
   for (const m of mobs) {

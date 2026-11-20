@@ -63,10 +63,10 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .tr .g span{display:block;font:600 8.5px var(--ui);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .tr .g b{font:700 14px var(--ui);color:var(--gold);font-variant-numeric:tabular-nums}
 #bossInfo{position:absolute;top:calc(64px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));font:700 10.5px var(--ui);color:#ff9a9a;text-shadow:0 1px 2px #000;text-align:right}
-#bossbar{position:absolute;top:calc(68px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(300px,62vw);padding:3px 10px 6px;background:var(--panel);border:1px solid rgba(255,120,140,.5);border-radius:8px;text-align:center}
-#bossbar b{font:700 13px var(--display);color:#ff9a9a;letter-spacing:.08em}
-#bossbar div{height:7px;margin-top:3px;background:#120404;border-radius:3px;overflow:hidden}
-#bossbar i{display:block;height:100%;background:linear-gradient(#ff6a8a,#b0103a);transform-origin:left}
+#bossbar,#bossbar2{position:absolute;top:calc(68px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(300px,62vw);padding:3px 10px 6px;background:var(--panel);border:1px solid rgba(255,120,140,.5);border-radius:8px;text-align:center}
+#bossbar b,#bossbar2 b{font:700 13px var(--display);color:#ff9a9a;letter-spacing:.08em}
+#bossbar div,#bossbar2 div{height:7px;margin-top:3px;background:#120404;border-radius:3px;overflow:hidden}
+#bossbar i,#bossbar2 i{display:block;height:100%;background:linear-gradient(#ff6a8a,#b0103a);transform-origin:left}
 #zone{position:absolute;top:calc(110px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;transition:opacity 1.2s;padding-inline:16px;opacity:0}
 #zone h1{margin:0;font:700 clamp(24px,6vw,38px)/1.05 var(--display);letter-spacing:.1em;color:#f4fbff;text-shadow:0 0 18px rgba(111,231,255,.65),0 2px 4px #000;text-wrap:balance}
 #zone p{margin:6px 0 0;font:600 11px var(--ui);letter-spacing:.24em;text-transform:uppercase;color:var(--cyan);text-shadow:0 1px 3px #000}
@@ -204,6 +204,8 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .lcol .orb{position:relative;left:auto;bottom:auto;pointer-events:auto}
 #bossInfo{top:calc(74px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));max-width:52vw}
 #bossbar{top:calc(104px + env(safe-area-inset-top,0px))}
+#bossbar2{top:calc(146px + env(safe-area-inset-top,0px))}
+#hud #bossbar2:not(.hide)~#partyF{top:calc(190px + env(safe-area-inset-top,0px))}
 #partyF{top:calc(102px + env(safe-area-inset-top,0px))}
 #bossbar:not(.hide)~#partyF{top:calc(146px + env(safe-area-inset-top,0px))}
 #zone{top:calc(150px + env(safe-area-inset-top,0px))}

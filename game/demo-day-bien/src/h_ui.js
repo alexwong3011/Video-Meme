@@ -25,10 +25,13 @@ function updateHud() {
     b.querySelector('.ic').textContent = ELI[sk.el]; b.querySelector('small').textContent = lock ? 'Lv ' + sk.lv : sk.name.split(' ').slice(0, 2).join(' ');
     b.querySelector('.cd').style.transform = `scaleY(${lock ? 0 : Math.min(1, S.skCd[j] / skCd(sk))})`; b.querySelector('.cdt').textContent = !lock && S.skCd[j] >= 1 ? Math.ceil(S.skCd[j]) : '';
     b.setAttribute('aria-label', sk.name + (lock ? ' (mở ở cấp ' + sk.lv + ')' : '')); });
-  const boss = S.boss && !S.boss.dead ? S.boss : null; $('bossbar').classList.toggle('hide', !boss);
-  if (boss) { $('bossName').textContent = boss.T.name.toUpperCase() + ' · Lv ' + boss.lv; $('bossHp').style.transform = `scaleX(${Math.max(0, boss.hp / boss.maxHp)})`; $('bossInfo').textContent = ''; }
-  else if (!MAPS[S.map].boss) $('bossInfo').textContent = '';
-  else { const s = Math.max(0, Math.ceil(S.bossT)); $('bossInfo').textContent = `Boss ${MT[MAPS[S.map].boss.k].name} sau ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+  const boss = S.boss && !S.boss.dead ? S.boss : null, b2 = S.boss2 && !S.boss2.dead ? S.boss2 : null;
+  $('bossbar').classList.toggle('hide', !boss); $('bossbar2').classList.toggle('hide', !b2);
+  if (boss) { $('bossName').textContent = boss.T.name.toUpperCase() + ' · Lv ' + boss.lv; $('bossHp').style.transform = `scaleX(${Math.max(0, boss.hp / boss.maxHp)})`; }
+  if (b2) { $('bossName2').textContent = b2.T.name.toUpperCase() + ' · Lv ' + b2.lv; $('bossHp2').style.transform = `scaleX(${Math.max(0, b2.hp / b2.maxHp)})`; }
+  const M = MAPS[S.map];
+  if (boss || b2 || !M.boss) $('bossInfo').textContent = '';
+  else { const s = Math.max(0, Math.ceil(S.bossT)); $('bossInfo').textContent = `${M.boss2 ? '2 Boss' : 'Boss ' + MT[M.boss.k].name} sau ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
 }
 function updateLabels() {
   const place = (el, x, y, z) => { const [sx, sy, vis] = toScreen(tmpV.set(x, y, z)); if (!vis || sx < -80 || sx > innerWidth + 80 || sy < -40 || sy > innerHeight + 40) { el.style.display = 'none'; return; } el.style.display = ''; el.style.transform = `translate(${sx}px,${sy}px) translate(-50%,-100%)`; };
