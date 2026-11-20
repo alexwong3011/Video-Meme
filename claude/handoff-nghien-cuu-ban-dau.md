@@ -377,3 +377,10 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 ## 24. Vực Lam – ưu tiên săn boss
 
 - Nút "Săn boss" (cột trái, phím B, lưu trong save `bossHunt`). Khi bật và đang tự động: mục tiêu đầu tiên là boss chính, sau đó tinh anh, bỏ qua giới hạn cấp/máu thường dùng để né boss; khi boss còn < 10 giây mới xuất hiện, nhân vật tự chạy tới trước cổng (vị trí boss) để chờ. Không có boss thì đánh quái như cũ.
+
+## 25. Kỳ Lân Lab – 4 mẫu thiết kế thú cưỡi (chưa vào game)
+
+- Trang: https://claude.ai/artifact/Vee6ff68P3ieMUT6uAyKXb (`game/vuc-lam-kylan/`, mã `src/kylan_lab.js` ghép sau bản game).
+- Thân ngựa dựng bằng "sweep" dọc đường cong xương sống (mặt cắt elip thay đổi: mông, eo thon, ngực sâu, cổ cong, đầu dài), chân 2 đoạn có khớp gối/khuỷu, móng; bờm là các dải lụa rủ hai bên cổ, đuôi dải dài, đều gợn sóng theo thời gian; phi nước đại 4 nhịp.
+- A Thiên Mã Bạch Ngọc (trắng ngọc, sừng xoắn vàng, bờm cầu vồng) · B Kỳ Lân Phương Đông (vảy ngọc bích viền vàng, sừng cong, bờm/đuôi lửa vàng, móng lửa) · C Tinh Linh Pha Lê (thân trong suốt, sao bên trong, sừng tinh thể, bờm cực quang) · D Thánh Mã Có Cánh (trắng vàng, giáp ngực, yên, cánh `wingB` sóng cầu vồng).
+- 4 ô camera xoay riêng, nút Phi nước đại / Xoay. Chờ người dùng chọn mẫu để thay `makeUnicorn` trong game.
