@@ -354,3 +354,5 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - Bản B: thép tối (×0,62) + envMap ×1,7, rim trắng-xanh lạnh, suit/dark tối hơn, áo choàng bão hòa hơn, viền phát sáng chọn được (xanh lam mặc định, tím, đen, tắt; dày 0,02 skinned / 0,013 giáp, nhịp sáng nhẹ), đèn điểm trắng quanh nhân vật, bóng chân đậm, quầng tối sau lưng.
 - Thanh trượt real time: độ dày viền 0–100% (100% = 0,04; uniform `OUT_TH`), cỡ nhân vật 0–100% (0% = cỡ hiện tại, 100% = gấp đôi; áp cho cả A và B).
 - Chờ người dùng chọn trước khi áp vào game (có thể áp thêm cho bot/NPC).
+- Người dùng chọn: **viền tím glow, dày 40%, cỡ nhân vật +60%** (giờ là mặc định của trang A/B).
+- Cánh B (`wingB` trong ab.js, không viền): lông tách rõ (khe giữa lông rộng hơn, mép lông và sống lông mảnh, sáng), giảm phần thân lông để không chói trên nền sáng; hiệu ứng: dải sáng quét gốc→ngọn, ánh xà cừ trên sống lông, đốm lấp lánh đầu lông, hạt sáng rơi từ mép cánh; nút bật/tắt riêng.
