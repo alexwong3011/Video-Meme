@@ -15,7 +15,7 @@ body.ab #game{display:flex}body.ab #game canvas{width:50%!important;height:100%!
 document.body.classList.add('ab');
 document.body.insertAdjacentHTML('beforeend', `<div id="abUI">
   <div class="abTag l">A · Hiện tại</div><div class="abTag r">B · Nâng cấp</div><div class="abSplit"></div>
-  <div class="abBar"><select id="abMap"></select><select id="abCls"></select><button id="abZoom">Cận cảnh: TẮT</button><button id="abAtk">Ra chiêu: BẬT</button></div></div>`);
+  <div class="abBar"><select id="abMap"></select><select id="abCls"></select><select id="abOut"><option value="blue">Viền: Xanh lam glow</option><option value="purple">Viền: Tím glow</option><option value="black">Viền: Đen</option><option value="off">Viền: Tắt</option></select><button id="abZoom">Cận cảnh: TẮT</button><button id="abAtk">Ra chiêu: BẬT</button></div></div>`);
 const rB = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
 rB.toneMapping = THREE.ACESFilmicToneMapping; host.appendChild(rB.domElement);
 function composerFor(r, w, h) { const rt = new THREE.WebGLRenderTarget(w * DPR, h * DPR, { type: THREE.HalfFloatType, samples: 4 }); const c = new EffectComposer(r, rt); c.setPixelRatio(DPR); c.setSize(w, h);
@@ -37,7 +37,7 @@ let AB = { mats: [], outlines: [] };
 function prepVariants() {
   for (const o of AB.outlines) o.parent && o.parent.remove(o); AB = { mats: [], outlines: [] };
   if (!H3.model) return; const seen = new Set(); const meshes = []; H3.model.traverse(o => { if (o.isMesh) meshes.push(o); });
-  const om = outlineMat(0.04), omS = outlineMat(0.026);
+  const om = outlineMat(0.02), omS = outlineMat(0.013); AB.om = om; AB.omS = omS;
   for (const o of meshes) {
     const m = o.material; if (m && !seen.has(m)) { seen.add(m); AB.mats.push({ m, A: { color: m.color && m.color.clone(), em: m.emissive && m.emissive.clone(), env: m.envMapIntensity, rs: m.userData.u?.uRimStr.value, rp: m.userData.u?.uRimPow.value, rc: m.userData.u?.uRim.value.clone() } }); }
     if (m === heroMats.glow) continue;
@@ -58,23 +58,26 @@ function setVariant(v) { const B = v === 'B';
     else if (m === H.cape) { m.color.offsetHSL(0, 0.2, -0.12); m.emissive.multiplyScalar(1.6); m.userData.u.uRimStr.value = A.rs * 1.6; }
     else if (m === H.blade) { m.envMapIntensity = A.env * 1.3; }
   }
-  for (const o of AB.outlines) o.visible = B;
+  for (const o of AB.outlines) o.visible = B && outCol !== 'off';
   keyLight.intensity = B ? 5 : 0; shade.visible = B; heroBlob.material = B ? blobB : blobMat; heroBlob.scale.set(B ? 1.25 : 1, 1, B ? 1.25 : 1);
 }
 // ---- harness loop: wrap the game's composer so each frame renders A then B
-let zoom = false, autoAtk = true, atkT = 0;
+let zoom = false, autoAtk = true, atkT = 0, outCol = 'blue';
+const OUTS = { blue: [0x3a9cff, 2.6], purple: [0xb46aff, 2.6], black: [0x000000, 1] };
+function tintOutline(t) { if (!AB.om || outCol === 'off') return; const [c, k] = OUTS[outCol]; const p = k * (0.82 + 0.18 * Math.sin(t * 3)); for (const m of [AB.om, AB.omS]) m.color.setHex(c).multiplyScalar(p); }
 composer = { render(dt) { if (!cA) abResize();
     if (S && H3.model && !AB.mats.length) prepVariants();
     if (S) { S.hp = HS.hp; S.mp = HS.mp; for (const m of mobs) { m.aggro = false; m.tgt = null; } atkT -= dt; if (autoAtk && atkT <= 0 && H3.attack) { atkT = 1.5; fadeTo(H3.attack, 0.06, true, 1.3); if (Math.random() < 0.35) heroRing(ELC[CLS[S.cls].el]); } }
     const keep = camera.position.clone(); if (zoom && S) { camera.position.lerp(new THREE.Vector3(S.pos.x, heroG.position.y + 1, S.pos.z), 0.62); camera.lookAt(S.pos.x, heroG.position.y + 0.6, S.pos.z); }
     if (S) { keyLight.position.set(S.pos.x + 0.6, heroG.position.y + 1.8, S.pos.z + 1.6); const back = new THREE.Vector3(S.pos.x, heroG.position.y + 0.6, S.pos.z).sub(camera.position).normalize(); shade.position.set(S.pos.x, heroG.position.y + 0.6, S.pos.z).addScaledVector(back, 0.9); }
-    setVariant('A'); cA.render(dt); setVariant('B'); cB.render(dt); setVariant('A');
+    tintOutline(U.uTime.value); setVariant('A'); cA.render(dt); setVariant('B'); cB.render(dt); setVariant('A');
     if (zoom && S) camera.position.copy(keep); }, dispose() {} };
 // ---- scene setup: same build as the player (Thánh Quang Lv 419, wings V, +12 gear) on the brightest realm
 const abMaps = [9, 4, 5, 0, TOWN]; $('abMap').innerHTML = abMaps.map(i => `<option value="${i}">${MAPS[i].name}</option>`).join('');
 $('abCls').innerHTML = CORDER.map(k => `<option value="${k}">${CLS[k].name}</option>`).join(''); $('abCls').value = 'holy';
 $('abMap').onchange = e => { travel(+e.target.value); };
 $('abCls').onchange = e => { S.cls = e.target.value; buildHero3D(); applyGearVisuals(); AB.mats = []; };
+$('abOut').onchange = e => { outCol = e.target.value; };
 $('abZoom').onclick = e => { zoom = !zoom; e.target.textContent = 'Cận cảnh: ' + (zoom ? 'BẬT' : 'TẮT'); };
 $('abAtk').onclick = e => { autoAtk = !autoAtk; e.target.textContent = 'Ra chiêu: ' + (autoAtk ? 'BẬT' : 'TẮT'); };
 (function boot() { if (!heroGLTF) { setTimeout(boot, 200); return; }
