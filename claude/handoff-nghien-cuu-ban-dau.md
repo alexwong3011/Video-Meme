@@ -328,3 +328,11 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - `BAG_MAX = 120`. Vật phẩm cùng loại không phải trang bị (hiện là bùa) xếp chồng trong 1 ô với số lượng `n` (`stackKey`, `stackInto`, `takeOne` trong g_game.js); bán 1 hoặc cả chồng; giao dịch mua/bán từng lá. Bản lưu cũ tự gộp bùa rời. Hiệu lực bùa tối đa `CHARM_CAP = 100` lá mỗi loại (+100%).
 - 20 bot (thêm ThầnPhong, VôSong; bản lưu cũ tự bổ sung). Tối đa 8 bot cùng map đánh quái, 10 ở thành. Bot tự mua bán với nhau (`botMarket`, ~1 giao dịch mỗi 5 giây khắp thế giới); ở thành có thông báo 🛒 khi giao dịch diễn ra.
 - Sửa: nhặt bùa giờ cập nhật chỉ số ngay.
+
+## 19. Vực Lam – bảng xếp hạng
+
+- Nút "BXH" (trên nút Nhóm) mở bảng xếp hạng cả 20 bot + người chơi, 3 tab:
+  - **Cấp độ** (cùng cấp xếp theo % EXP).
+  - **Lực chiến** = sát thương/giây ước tính (tấn công × 30% × đòn/giây × siêu đòn trung bình × hệ số cánh/bộ/bùa) + máu × 0,05 + phòng thủ × 2. Bot dùng cùng công thức trên chỉ số của bot (`botPower`, `myPower` trong h_ui.js).
+  - **Kinh tế** = vàng + giá trị đồ trong túi (và đồ đang mặc với người chơi); kèm tổng vàng đã giao dịch (`traded`, cộng khi mua/bán với bot và khi bot giao dịch với nhau).
+- Mỗi dòng hiện hạng, lớp, cấp, map đang ở; hàng của bạn được tô vàng, top 3 màu vàng/bạc/đồng.

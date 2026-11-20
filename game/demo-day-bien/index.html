@@ -30,6 +30,7 @@ body{background:var(--abyss);color:var(--ink);font-family:var(--ui);overflow:hid
 .lbl .say{display:none;margin:3px auto 0;max-width:160px;white-space:normal;background:rgba(4,20,26,.82);border:1px solid rgba(111,231,255,.35);border-radius:8px;padding:3px 7px;font:600 10.5px/1.3 var(--ui);color:#e8f8ff}
 .lbl.npc .say{background:#c99a3c;color:#fff;border:0;width:16px;padding:1px 0;border-radius:50%;font-weight:800}
 #bParty{position:absolute;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:700 11px var(--ui)}
+#bRank{position:absolute;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(210px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--panel);border:1px solid var(--line);color:var(--gold);font:700 11px var(--ui)}
 #bParty.on{border-color:#7dff9a;box-shadow:0 0 12px rgba(125,255,154,.4)}
 #partyF{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));top:92px;display:flex;flex-direction:column;gap:4px;pointer-events:none}
 #partyF div{background:rgba(4,20,26,.7);border:1px solid rgba(111,231,255,.25);border-radius:6px;padding:3px 6px;font:600 10.5px var(--ui);color:#dff4ff;width:118px}
@@ -213,6 +214,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   <div id="banner"></div>
   <div id="log"></div>
   <button id="bParty" aria-label="Nhóm">Nhóm</button>
+  <button id="bRank" aria-label="Bảng xếp hạng">BXH</button>
   <div id="partyF"></div>
   <div id="invite" class="hide" role="alertdialog"></div>
   <div class="actions">
@@ -2173,7 +2175,7 @@ function worldTick() { // once a second: the off-screen world keeps playing
 function botMarket() { if (Math.random() > 0.2) return; const sellers = S.bots.filter(b => b.inv.length && !inParty(b)); if (!sellers.length) return; const s = pick(sellers);
   const buyers = S.bots.filter(b => b !== s && b.map === s.map && !inParty(b)); if (!buyers.length) return; const b = pick(buyers); const g = pick(s.inv);
   const price = Math.round((g.slot === 'charm' ? 2500 + g.lv * 100 : sellPrice(g) * 2) * rr(0.8, 1.2)); if (b.gold < price) return;
-  const item = takeOne(s.inv, g); b.gold -= price; s.gold += price; if (!stackInto(b.inv, item)) { b.inv.push(item); if (b.inv.length > 12) b.inv.shift(); }
+  const item = takeOne(s.inv, g); b.gold -= price; s.gold += price; b.traded = (b.traded || 0) + price; s.traded = (s.traded || 0) + price; if (!stackInto(b.inv, item)) { b.inv.push(item); if (b.inv.length > 12) b.inv.shift(); }
   if (s.map === S.map) { const e = ents.get(b.id); if (e) botSay(e, 'Mua được ' + item.name + '!'); if (isTown() && Math.random() < 0.5) log(`🛒 ${b.name} mua [${item.name}] của ${s.name} giá ${fmt(price)} vàng.`, '#c8b88a'); } }
 function botMove(e, tx, tz, dt, sp) { const dx = tx - e.pos.x, dz = tz - e.pos.z, d = Math.hypot(dx, dz); if (d < 0.05) return false;
   let ux = dx / d, uz = dz / d; if (!los(e.pos.x, e.pos.z, tx, tz)) { if (!e.nav || Math.hypot(e.nav.tx - tx, e.nav.tz - tz) > 1 || S.time - e.nav.t > 1.5) { const pts = findPath(e.pos.x, e.pos.z, tx, tz); e.nav = { tx, tz, t: S.time, pts: pts || [[tx, tz]], i: 0 }; }
@@ -2477,7 +2479,7 @@ function travel(i) { for (const p of projs) scene.remove(p.m); projs.length = 0;
 let wMode = 'party', wArg = null;
 function openWorld(mode, arg) { closeBag(); closeMap(); wMode = mode; wArg = arg; $('wP').classList.remove('hide'); renderWorldPanel(); }
 function closeWorld() { $('wP').classList.add('hide'); }
-$('wClose').onclick = closeWorld; $('bParty').onclick = () => openWorld('party');
+$('wClose').onclick = closeWorld; $('bParty').onclick = () => openWorld('party'); $('bRank').onclick = () => openWorld('rank');
 function charAt(cx, cy) { let best = null, bd = 44; const test = (pos, h, o) => { const [sx, sy, ok] = toScreen(tmpV.set(pos.x, h, pos.z)); const d = Math.hypot(sx - cx, sy - cy); if (ok && d < bd) { bd = d; best = o; } };
   for (const e of npcEnts) test(e.pos, HERO_H * 0.55, e); for (const e of ents.values()) if (!e.dead) test(e.pos, 0.55 + HERO_H * 0.55, e); return best; }
 function npcAct(id) { if (id === 'smith') openBag('gear'); else if (id === 'pets') openBag('pet'); else if (id === 'guide') openMap(); else openWorld(id); }
@@ -2513,9 +2515,18 @@ function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; co
       <div class="sect" style="margin:12px 0 6px">Bạn bán cho ${b.name}</div>${mine.length ? mine.map(g => `<div class="row">${tileHtml(g, 'tabindex="-1"')}<div class="t">${itemLine(g)}</div><button class="pb" data-sell="${g.id}"${b.gold < offerPrice(g, b) ? ' disabled' : ''}>Bán ${fmt(offerPrice(g, b))}</button></div>`).join('') : '<p class="muted">Túi đồ trống.</p>'}<div class="msg" role="status"></div>`;
     const say = t => { const e = ents.get(b.id); if (e) botSay(e, t); };
     B.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => { const g = b.inv[+x.dataset.buy]; const p = buyPrice(g); if (!g || S.gold < p || (S.inv.length >= BAG_MAX && !S.inv.some(q => stackKey(q) && stackKey(q) === stackKey(g)))) { log(S.inv.length >= BAG_MAX ? 'Túi đầy.' : 'Không đủ vàng.', '#ff9a9a'); return; }
-      S.gold -= p; b.gold += p; const got = takeOne(b.inv, g); delete got.pm; addItem(got); log(`Đã mua [${g.name}] của ${b.name} giá ${fmt(p)} vàng.`, '#7dff9a'); say('Cảm ơn nhé!'); afterChange(); renderWorldPanel(); });
+      S.gold -= p; b.gold += p; S.traded = (S.traded || 0) + p; b.traded = (b.traded || 0) + p; const got = takeOne(b.inv, g); delete got.pm; addItem(got); log(`Đã mua [${g.name}] của ${b.name} giá ${fmt(p)} vàng.`, '#7dff9a'); say('Cảm ơn nhé!'); afterChange(); renderWorldPanel(); });
     B.querySelectorAll('[data-sell]').forEach(x => x.onclick = () => { const g = S.inv.find(q => q.id === x.dataset.sell); if (!g) return; const p = offerPrice(g, b); if (b.gold < p) return;
-      const sold = takeOne(S.inv, g); S.gold += p; b.gold -= p; if (!stackInto(b.inv, sold)) { b.inv.push(sold); if (b.inv.length > 12) b.inv.shift(); } log(`Đã bán [${g.name}] cho ${b.name} được ${fmt(p)} vàng.`, '#ffd86a'); say('Món này ngon!'); afterChange(); renderWorldPanel(); }); }
+      const sold = takeOne(S.inv, g); S.gold += p; b.gold -= p; S.traded = (S.traded || 0) + p; b.traded = (b.traded || 0) + p; if (!stackInto(b.inv, sold)) { b.inv.push(sold); if (b.inv.length > 12) b.inv.shift(); } log(`Đã bán [${g.name}] cho ${b.name} được ${fmt(p)} vàng.`, '#ffd86a'); say('Món này ngon!'); afterChange(); renderWorldPanel(); }); }
+  else if (wMode === 'rank') { $('wTitle').textContent = 'Bảng xếp hạng'; const tabs = [['lv', 'Cấp độ'], ['pow', 'Lực chiến'], ['eco', 'Kinh tế']]; const k = wArg || 'lv';
+    const rows = rankRows(k); const me = rows.findIndex(r => r.me); const unit = { lv: 'Cấp', pow: 'Lực chiến', eco: 'Tài sản' }[k];
+    B.innerHTML = `<div class="tabs" style="padding:0 0 8px">${tabs.map(([id, n]) => `<button data-rk="${id}" aria-selected="${id === k}">${n}</button>`).join('')}</div>
+      <p class="muted" style="margin:0 0 8px">${k === 'lv' ? 'Xếp theo cấp, cùng cấp thì ai nhiều EXP hơn đứng trên.' : k === 'pow' ? 'Lực chiến = sát thương mỗi giây ước tính (tấn công × đòn/giây × siêu đòn × hệ số cánh, bộ, bùa) + độ bền (máu, phòng thủ).' : 'Tài sản = vàng + giá trị đồ trong túi và đang mặc. Cột phải là tổng vàng đã giao dịch.'}
+      Bạn đang hạng <b style="color:var(--gold)">#${me + 1}</b> / ${rows.length}.</p>
+      ${rows.map((r, i) => `<div class="row" style="${r.me ? 'border-color:var(--gold);background:rgba(242,198,107,.12)' : ''}"><b style="width:30px;color:${i < 3 ? ['#ffd23a', '#d8e0e8', '#e0905a'][i] : '#93c6cf'}">#${i + 1}</b>
+        <div class="t"><b style="color:${CLS[r.cls].col}">${CLS[r.cls].icon} ${r.name}</b>${r.party ? ' <span style="color:#7dff9a">◆</span>' : ''} · ${CLS[r.cls].name} · Lv ${r.lv}<br><span class="muted" style="font-size:11px">${r.where}</span></div>
+        <div style="text-align:right;font:700 12px var(--ui)"><b style="color:var(--gold)">${fmt(Math.round(r.v))}</b>${k === 'eco' ? `<br><span class="muted" style="font-size:10.5px">vàng ${fmt(r.gold)} · GD ${fmt(r.traded)}</span>` : `<br><span class="muted" style="font-size:10.5px">${unit}</span>`}</div></div>`).join('')}`;
+    B.querySelectorAll('[data-rk]').forEach(x => x.onclick = () => { wArg = x.dataset.rk; renderWorldPanel(); }); }
   else if (wMode === 'shop') { $('wTitle').textContent = 'Hermes · Thương Nhân';
     const goods = [['e', 1, 300 + S.lv * 6], ['e', 10, 2800 + S.lv * 55], ['f', 1, 2500 + S.lv * 25], ['c', 1, 6000 + S.lv * 40]];
     B.innerHTML = `<p class="muted" style="margin-top:0">Nguyên liệu bán sẵn. Muốn bán đồ, hãy giao dịch với người chơi khác ở chợ Agora (giá tốt hơn bán thường).</p>${goods.map(([k, n, p], i) => `<div class="row">${mIcon(k)}<div class="t"><b style="color:${MATS[k].col}">${MATS[k].name} ×${n}</b><br>${MATS[k].desc}</div><button class="pb pri" data-g="${i}"${S.gold < p ? ' disabled' : ''}>Mua ${fmt(p)}</button></div>`).join('')}`;
@@ -2525,14 +2536,24 @@ function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; co
     B.querySelectorAll('[data-tr]').forEach(b => b.onclick = () => openWorld('trade', b.dataset.tr)); }
 }
 
+// ---------- rankings: everyone in the world, bots and you ----------
+const itemsValue = list => list.reduce((s, g) => s + (g ? sellPrice(g) * qty(g) : 0), 0);
+function botPower(b) { const st = botStats(b); return st.atk * DMG_SCALE * st.aps * 1.3 * (1 + Math.min(5, Math.floor(b.lv / 120)) * 0.25) + st.hp * 0.05 + st.def * 2; }
+function myPower() { return HS.atk * DMG_SCALE * HS.aps * avgMult() * HS.dmgMul + HS.hp * 0.05 + HS.def * 2; }
+function rankRows(k) { const where = m => MAPS[m] ? MAPS[m].name : '';
+  const rows = S.bots.map(b => ({ name: b.name, cls: b.cls, lv: b.lv, exp: b.exp, gold: b.gold, traded: b.traded || 0, party: inParty(b), where: where(b.map),
+    v: k === 'lv' ? b.lv : k === 'pow' ? botPower(b) : b.gold + itemsValue(b.inv) }));
+  rows.push({ me: true, name: 'Bạn', cls: S.cls, lv: S.lv, exp: S.exp, gold: S.gold, traded: S.traded || 0, where: where(S.map), v: k === 'lv' ? S.lv : k === 'pow' ? myPower() : S.gold + itemsValue(S.inv) + itemsValue(Object.values(S.eq)) });
+  return rows.sort((a, b) => b.v - a.v || (k === 'lv' ? b.exp / expNeed(b.lv) - a.exp / expNeed(a.lv) : 0)); }
+
 // ---------- save (browser + cloud) ----------
 const SKEY = 'vuclam-save-v2', OLDKEY = 'vuclam-save-v1';
 const Store = { db: null, uid: null, writing: false, pending: null };
 let SAVE = null, OLD = null, running = false, best = 0;
-function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
+function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, traded: S.traded || 0, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: d.lv || 1, exp: d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
   S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s];
-  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
+  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.traded = d.traded || 0; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
   { const inv = []; for (const g of S.inv) if (!stackInto(inv, g)) inv.push(g); S.inv = inv; } // older saves: merge loose charms into stacks S.lvLog = d.lvLog || [];
   for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
   }

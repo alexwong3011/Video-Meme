@@ -75,7 +75,7 @@ function worldTick() { // once a second: the off-screen world keeps playing
 function botMarket() { if (Math.random() > 0.2) return; const sellers = S.bots.filter(b => b.inv.length && !inParty(b)); if (!sellers.length) return; const s = pick(sellers);
   const buyers = S.bots.filter(b => b !== s && b.map === s.map && !inParty(b)); if (!buyers.length) return; const b = pick(buyers); const g = pick(s.inv);
   const price = Math.round((g.slot === 'charm' ? 2500 + g.lv * 100 : sellPrice(g) * 2) * rr(0.8, 1.2)); if (b.gold < price) return;
-  const item = takeOne(s.inv, g); b.gold -= price; s.gold += price; if (!stackInto(b.inv, item)) { b.inv.push(item); if (b.inv.length > 12) b.inv.shift(); }
+  const item = takeOne(s.inv, g); b.gold -= price; s.gold += price; b.traded = (b.traded || 0) + price; s.traded = (s.traded || 0) + price; if (!stackInto(b.inv, item)) { b.inv.push(item); if (b.inv.length > 12) b.inv.shift(); }
   if (s.map === S.map) { const e = ents.get(b.id); if (e) botSay(e, 'Mua được ' + item.name + '!'); if (isTown() && Math.random() < 0.5) log(`🛒 ${b.name} mua [${item.name}] của ${s.name} giá ${fmt(price)} vàng.`, '#c8b88a'); } }
 function botMove(e, tx, tz, dt, sp) { const dx = tx - e.pos.x, dz = tz - e.pos.z, d = Math.hypot(dx, dz); if (d < 0.05) return false;
   let ux = dx / d, uz = dz / d; if (!los(e.pos.x, e.pos.z, tx, tz)) { if (!e.nav || Math.hypot(e.nav.tx - tx, e.nav.tz - tz) > 1 || S.time - e.nav.t > 1.5) { const pts = findPath(e.pos.x, e.pos.z, tx, tz); e.nav = { tx, tz, t: S.time, pts: pts || [[tx, tz]], i: 0 }; }
