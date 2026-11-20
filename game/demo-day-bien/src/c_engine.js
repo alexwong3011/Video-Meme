@@ -72,7 +72,7 @@ const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.5, 12
   pm.dispose();
 }
 
-scene.add(new THREE.HemisphereLight(0x8fefff, 0x0a2c36, 1.4));
+const hemi = new THREE.HemisphereLight(0x8fefff, 0x0a2c36, 1.4); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xc8f7ff, 2.4);
 sun.position.set(-6, 14, 4);
 scene.add(sun);
@@ -112,11 +112,11 @@ float caustic(vec2 uv, float t){
   return pow(abs(c), 8.0);
 }`;
 const groundMat = new THREE.ShaderMaterial({
-  uniforms: { uTime: U.uTime, uHero: { value: new THREE.Vector3() }, uFog: { value: FOG }, uFogD: { value: 0.022 }, uSA: { value: new THREE.Vector3(0.045, 0.13, 0.15) }, uSB: { value: new THREE.Vector3(0.17, 0.30, 0.29) }, uPt: { value: new THREE.Vector3(0.03, 0.10, 0.13) }, uCa: { value: new THREE.Vector3(0.25, 0.75, 0.85) }, uHg: { value: new THREE.Vector3(0.08, 0.22, 0.6) } },
+  uniforms: { uTime: U.uTime, uHero: { value: new THREE.Vector3() }, uFog: { value: FOG }, uFogD: { value: 0.022 }, uSA: { value: new THREE.Vector3(0.045, 0.13, 0.15) }, uSB: { value: new THREE.Vector3(0.17, 0.30, 0.29) }, uPt: { value: new THREE.Vector3(0.03, 0.10, 0.13) }, uCa: { value: new THREE.Vector3(0.25, 0.75, 0.85) }, uHg: { value: new THREE.Vector3(0.08, 0.22, 0.6) }, uSpk: { value: 0 } },
   vertexShader: `varying vec3 vW; varying float vD;
     void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; vec4 mv = viewMatrix * w; vD = -mv.z; gl_Position = projectionMatrix * mv; }`,
   fragmentShader: NOISE_GLSL + `
-    uniform float uTime; uniform vec3 uHero; uniform vec3 uFog; uniform float uFogD; uniform vec3 uSA, uSB, uPt, uCa, uHg;
+    uniform float uTime; uniform vec3 uHero; uniform vec3 uFog; uniform float uFogD; uniform vec3 uSA, uSB, uPt, uCa, uHg; uniform float uSpk;
     varying vec3 vW; varying float vD;
     void main(){
       vec2 p = vW.xz;
@@ -135,6 +135,7 @@ const groundMat = new THREE.ShaderMaterial({
       float c = caustic(p * 0.11, uTime * 0.55);
       float c2 = caustic(p * 0.23 + 3.0, uTime * 0.4);
       col += uCa * (c * 0.35 + c2 * 0.15) * (0.6 + 0.4 * n);
+      float sp = h21(floor(p * 26.0)); col += uSpk * smoothstep(0.985, 1.0, sp) * (0.5 + 0.5 * sin(uTime * 3.0 + sp * 60.0)) * vec3(1.0, 0.98, 0.9);
       float d = length(p - uHero.xz);
       col += uHg * exp(-d * d * 0.12) * 0.8;
       float r = length(p);
@@ -325,13 +326,13 @@ function addGate(x, z, rotY) {
 
 // ---------- light shafts ----------
 const shaftMat = new THREE.ShaderMaterial({
-  uniforms: { uTime: U.uTime }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  uniforms: { uTime: U.uTime, uC: { value: new THREE.Vector3(0.16, 0.4, 0.45) } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
   vertexShader: 'varying vec2 vUv; varying float vSeed; void main(){ vUv=uv; vSeed = modelMatrix[3].x*0.37 + modelMatrix[3].z*0.11; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-  fragmentShader: `uniform float uTime; varying vec2 vUv; varying float vSeed;
+  fragmentShader: `uniform float uTime; uniform vec3 uC; varying vec2 vUv; varying float vSeed;
     void main(){ float edge = smoothstep(0.0, 0.5, vUv.x) * smoothstep(1.0, 0.5, vUv.x);
       float v = smoothstep(0.0, 0.35, vUv.y) * smoothstep(1.0, 0.6, vUv.y);
       float flick = 0.55 + 0.45 * sin(uTime * 0.6 + vSeed * 6.0);
-      gl_FragColor = vec4(vec3(0.16, 0.4, 0.45) * edge * edge * v * flick * 0.28, 1.0); }`
+      gl_FragColor = vec4(uC * edge * edge * v * flick * 0.28, 1.0); }`
 });
 const shafts = new THREE.Group();
 for (let i = 0; i < 9; i++) {

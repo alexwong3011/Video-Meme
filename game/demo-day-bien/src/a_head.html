@@ -78,7 +78,9 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .sk.lock{filter:grayscale(1);opacity:.55}
 .sk.nomp{filter:saturate(.3)}
 #sk0{right:96px;bottom:0}#sk1{right:84px;bottom:66px}#sk2{right:20px;bottom:98px}
-#bAuto{right:146px;bottom:118px;width:50px;height:50px;background:var(--panel);font-size:9.5px;line-height:1.1}
+#bAuto,#bLoot{right:146px;bottom:118px;width:50px;height:50px;background:var(--panel);font-size:9.5px;line-height:1.1}
+#bLoot{bottom:176px}
+#bLoot[aria-pressed="true"]{background:radial-gradient(circle at 40% 35%,#3c9ac9,#08304a 75%);border-color:var(--cyan);box-shadow:0 0 14px rgba(111,231,255,.45)}
 #bAuto[aria-pressed="true"]{background:radial-gradient(circle at 40% 35%,#c99a3c,#4a3008 75%);border-color:var(--gold);box-shadow:0 0 14px rgba(242,198,107,.5)}
 .exp{position:absolute;left:0;right:0;bottom:0;height:calc(6px + env(safe-area-inset-bottom,0px));background:rgba(0,0,0,.55)}
 .exp i{position:absolute;left:0;top:0;height:6px;width:100%;background:linear-gradient(90deg,#3fb8ff,#a7f3ff);transform-origin:left;box-shadow:0 0 8px #6fe7ff}

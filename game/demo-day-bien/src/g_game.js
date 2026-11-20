@@ -6,7 +6,7 @@ WNAME[0] = 'Cánh Sơ Khai';
 let S = null;
 function newState(cls) { return { v: 2, cls, lv: 1, exp: 0, gold: 0, mats: { e: 3, c: 0, p: 0, d: 0, t: 0, x: 0, f: 0 }, st: { c: 0, p: 0, d: 0, t: 0, x: 0 }, wing: 0, inv: [], eq: {}, map: 0, auto: true,
   hp: 1, mp: 100, pos: new THREE.Vector3(0, 0, 8), face: Math.PI, atkCd: 0, atkT: 0, skCd: [0, 0, 0], castT: 0, dead: 0, lastHit: -99, time: 0, kills: 0, skillT: 0,
-  pets: [], pet: null, mounts: [], mount: null, playT: 0, rec: { t: 0, hp: 0, mp: 0 }, lvLog: [] }; }
+  pets: [], pet: null, mounts: [], mount: null, playT: 0, autoLoot: true, miniT: 70, mini: null, rec: { t: 0, hp: 0, mp: 0 }, lvLog: [] }; }
 let uidN = 1; const uid = () => 'i' + Date.now().toString(36) + (uidN++);
 function makeGear(slot, r, lv, set) {
   const base = {}; for (const k in SLOTS[slot].base) base[k] = k === 'crit' ? SLOTS[slot].base[k] * (r + 1) : Math.round(SLOTS[slot].base[k] * RMULT[r] * (1 + lv * 0.09));
@@ -27,7 +27,7 @@ function heroStats() {
   for (const k in sc) { const T = SETS[k]; if (sc[k] >= 2) for (const x in T.b2) b[x] += T.b2[x]; if (sc[k] >= 4) for (const x in T.b4) b[x] += T.b4[x]; }
   st.atk = Math.round(st.atk * (1 + b.atkP)); st.hp = Math.round(st.hp * (1 + b.hpP)); st.def = Math.round(st.def * (1 + b.defP)); st.crit += b.crit;
   st.dmgMul = WINGM[S.wing] * (1 + b.dmgP); st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
-  st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * (1 + (Mt ? Mt.spd : 0)); return st;
+  st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * 0.6 * (1 + (Mt ? Mt.spd : 0)); return st;
 }
 const curPet = () => S && S.pet ? PETS.find(p => p.id === S.pet) : null;
 const curMount = () => S && S.mount ? MOUNTS.find(p => p.id === S.mount) : null;
@@ -113,12 +113,17 @@ function navDir(tx, tz) {
 function spawnPos(z) { for (let k = 0; k < 20; k++) { const a = rr(0, 6.28), d = Math.sqrt(rand()) * z.r; const x = z.x + Math.cos(a) * d, zz = z.z + Math.sin(a) * d; if (!collides(x, zz, 0.8)) return [x, zz]; } return [z.x, z.z]; }
 function setMap(i) {
   S.map = i; const M = MAPS[i]; PAL = M.pal; seed = 20261119 + i * 977;
-  while (world.children.length) { const c = world.children.pop(); c.traverse(o => { if (o.geometry && o.geometry !== blobGeo) o.geometry.dispose(); }); }
-  colliders.length = 0;
+  while (world.children.length) { const c = world.children.pop(); c.traverse(o => { if (o.geometry && o.geometry !== blobGeo && !SHARED.has(o.geometry)) o.geometry.dispose(); }); }
+  colliders.length = 0; scenery.length = 0; const env = M.env || 'sea';
   const G = groundMat.uniforms; G.uSA.value.set(...PAL.sa); G.uSB.value.set(...PAL.sb); G.uPt.value.set(...PAL.pt); G.uCa.value.set(...PAL.ca);
   FOG.setHex(PAL.fog); scene.background.setHex(PAL.bg); moteMats[0].uniforms.uC.value.setHex(PAL.mote[0]); moteMats[1].uniforms.uC.value.setHex(PAL.mote[1]);
-  heroLight.color.setHex(i === 2 ? 0xff9a5a : 0x5ab8ff);
+  heroLight.color.setHex(PAL.light ?? (i === 2 ? 0xff9a5a : 0x5ab8ff));
+  const hm = PAL.hemi || [0x8fefff, 0x0a2c36, 1.4], sn = PAL.sun || [0xc8f7ff, 2.4]; hemi.color.setHex(hm[0]); hemi.groundColor.setHex(hm[1]); hemi.intensity = hm[2]; sun.color.setHex(sn[0]); sun.intensity = sn[1];
+  renderer.toneMappingExposure = M.exposure ?? 0.95;
+  scene.fog.density = G.uFogD.value = PAL.fogD ?? 0.022; G.uSpk.value = PAL.spk ?? 0; shaftMat.uniforms.uC.value.set(...(PAL.shaft || [0.16, 0.4, 0.45]));
+  const mr = PAL.moteRise || [0.25, 1.1]; moteMats[0].uniforms.uRise.value = mr[0]; moteMats[1].uniforms.uRise.value = mr[1]; moteMats[0].uniforms.uSize.value = mr[0] < 0 ? 0.2 : 0.12;
   addGate(0, -15, 0);
+  if (env !== 'sea') REALM[env](M); else {
   for (const [x, z, r, h] of rockSpots) addRock(x, z, r, h, rr(0.8, 1.6));
   for (let k = 0; k < 26; k++) { const a = (k / 26) * 6.28 + rr(-0.1, 0.1), d = rr(23, 28); addRock(Math.cos(a) * d, Math.sin(a) * d, rr(2.2, 3.6), rr(2.5, 5.5), rr(1.0, 2.0)); }
   for (let k = 0; k < 12; k++) { const [x, z] = [rr(-18, 18), rr(-18, 18)]; if (!collides(x, z, 0.5) && Math.hypot(x, z - 8) > 3) addRock(x, z, rr(0.25, 0.5), rr(0.25, 0.5), 0.6, false); }
@@ -131,30 +136,30 @@ function setMap(i) {
   }
   const wk = i === 1 ? 1.8 : 1;
   addSeaweed(-15, 0, Math.round(40 * wk), 3.5); addSeaweed(15, 10, Math.round(36 * wk), 3); addSeaweed(-6, 17, Math.round(30 * wk), 3); addSeaweed(6, -18, Math.round(34 * wk), 4); addSeaweed(-17, -15, Math.round(28 * wk), 3); addSeaweed(18, -16, Math.round(26 * wk), 3); addSeaweed(1, 13, 10, 1.2);
-  if (i === 1) { addSeaweed(-11, -4, 30, 2.5); addSeaweed(13, 5, 30, 2.5); addSeaweed(-2, -20, 30, 3); }
+  if (i === 1) { addSeaweed(-11, -4, 30, 2.5); addSeaweed(13, 5, 30, 2.5); addSeaweed(-2, -20, 30, 3); } }
   for (const m of mobs) removeMob(m); mobs.length = 0; for (const l of loots) removeLoot(l); loots.length = 0;
   for (const zn of M.zones) for (let n = 0; n < zn.n; n++) { const [x, z] = spawnPos(zn); addMob(zn.k, zoneLv(zn), x, z, zn); }
-  S.bossT = Math.min(S.bossT ?? 60, 60); S.boss = null;
+  S.bossT = Math.min(S.bossT ?? 60, 60); S.boss = null; S.mini = null; S.miniT = Math.min(S.miniT ?? 40, 40);
   S.pos.set(0, 0, 8); buildNav(); S.nav = null; S.moveTo = null; S.tapMob = null;
 }
 
 // ---------- monsters (template jelly & spiked fish) ----------
 const mobs = [];
-function addMob(k, lv, x, z, zone) {
-  const T = MT[k]; const boss = !!T.boss; const v = T.model === 'jelly' ? makeJelly(T.pal) : makeFish(T.pal);
-  const scale = T.size * (boss ? 1 : T.model === 'fish' ? rr(0.9, 1.15) : rr(0.85, 1.2));
+function addMob(k, lv, x, z, zone, mini = false) {
+  const T = MT[k]; const boss = !!T.boss; const v = MAKERS[T.model](T.p || T.pal);
+  const scale = T.size * (boss ? (T.p ? 2.6 : 1) : mini ? 1.75 : T.model === 'fish' ? rr(0.9, 1.15) : rr(0.85, 1.2));
   const shadow = blob((T.model === 'fish' ? 1.6 : 1.3) * scale); scene.add(shadow); scene.add(v.group);
   const el = document.createElement('div'); el.className = 'lbl'; el.style.display = 'none';
-  el.innerHTML = `<div class="nm" style="color:${T.color}">${T.name} · Lv ${lv}</div><div class="hp${boss ? ' b' : ''}"><i></i></div>`; labelsEl.appendChild(el);
-  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 30 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 3 : 1),
+  el.innerHTML = `<div class="nm" style="color:${T.color}">${mini ? '★ ' : ''}${T.name} · Lv ${lv}</div><div class="hp${boss || mini ? ' b' : ''}"><i></i></div>`; labelsEl.appendChild(el);
+  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 30 : mini ? 10 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 3 : mini ? 2 : 1),
     hp: 0, face: rr(0, 6.28), state: 'idle', wait: rr(0, 3), flash: 0, dead: 0, respawn: 0, aggro: false, atkCd: 0, phase: rr(0, 6.28), spawnT: 0.6 };
   m.hp = m.maxHp; mobs.push(m); return m;
 }
 // zone monsters follow the hero's level inside the map's range (grind anywhere in the map)
 function zoneLv(zn) { const M = MAPS[S.map]; return clamp(S.lv + (zn.off || 0) + ri(-1, 1), M.lo, M.hi); }
-function setMobLv(m, lv) { m.lv = lv; m.maxHp = mobHp(lv) * (m.zone.hk || 1); m.atk = mobAtk(lv) * (m.zone.hk || 1); m.el.querySelector('.nm').textContent = `${m.T.name} · Lv ${lv}`; }
+function setMobLv(m, lv) { m.lv = lv; m.maxHp = mobHp(lv) * (m.zone.hk || 1); m.atk = mobAtk(lv) * (m.zone.hk || 1); m.el.querySelector('.nm').textContent = `${m.mini ? '★ ' : ''}${m.T.name} · Lv ${lv}`; }
 function removeMob(m) { scene.remove(m.group); scene.remove(m.shadow); m.el.remove(); }
-const mobH = m => m.T.y + (m.kind === 'jelly' ? 0.15 : 0.05) * m.scale * 2;
+const mobH = m => m.T.y + m.T.hh * m.scale;
 function vuln(m, el) { let k = 1; if (m.frzT > 0) k *= 1.3; if (m.shockT > 0) k *= 1.2; if (m.burnT > 0) k *= 1.15; if (m.wetT > 0) k *= (el === 'ice' || el === 'thunder') ? 1.35 : 1.1; return k; }
 function hitMob(m, mult, el, show = true) {
   if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m;
@@ -174,16 +179,18 @@ function knock(m, d) { const dx = m.x - S.pos.x, dz = m.z - S.pos.z, l = Math.hy
 function killMob(m) {
   m.dead = 1; m.hp = 0; m.respawn = m.boss ? 0 : 2.5; S.kills++; recover(REC.hpKill, REC.mpKill);
   burst(m.x, mobH(m), m.z, m.boss ? 80 : 40, C3(m.T.color), m.boss ? 9 : 6, m.boss ? 0.8 : 0.5, 0.9); burst(m.x, mobH(m), m.z, m.boss ? 40 : 20, C3('#ffffff'), 3, 0.3, 0.7);
+  if (m.mini) { banner('HẠ TINH ANH ' + m.T.name.toUpperCase() + '!', 'gold'); S.mini = null; S.miniT = MAPS[S.map].boss.respawn / 3; fxBeam(m.x, m.z, '#ffd27a', 1.5, 1.2); }
+  const B = m.boss ? 1 : m.mini ? 1 / 3 : 0;
   if (m.boss) { S.shake = 0.5; banner('ĐÃ HẠ ' + m.T.name.toUpperCase() + '!', 'gold'); log('Hạ boss ' + m.T.name + '! Phần thưởng lớn rơi ra.', '#ffd27a'); S.boss = null; S.bossT = MAPS[S.map].boss.respawn; fxBeam(m.x, m.z, '#ffd27a', 2, 1.6); }
-  let xp = mobExp(m.lv) * (m.boss ? 30 : 1) * clamp(1 + (m.lv - S.lv) * 0.05, 0.3, 1.5) * (1 + HS.expB); gainExp(Math.round(xp));
+  let xp = mobExp(m.lv) * (B ? 30 * B : 1) * clamp(1 + (m.lv - S.lv) * 0.05, 0.3, 1.5) * (1 + HS.expB); gainExp(Math.round(xp));
   const lvl = m.lv, set = MAPS[S.map].set;
-  if (Math.random() < (m.boss ? 1 : 0.25)) dropLoot(m.x, m.z, { kind: 'gold', amount: Math.round((5 + lvl) * rr(6, 14) * (m.boss ? 25 : 1) * (1 + HS.goldB)) });
+  if (B || Math.random() < 0.25) dropLoot(m.x, m.z, { kind: 'gold', amount: Math.round((5 + lvl) * rr(6, 14) * (B ? 25 * B : 1) * (1 + HS.goldB)) });
   const mats = {}; for (const k of MKEYS) if (Math.random() < DROP[k]) mats[k] = 1;
-  if (m.boss) { Object.assign(mats, { e: 8, c: 4, p: 3, d: 2, f: 6 }); if (Math.random() < 0.4) mats.t = 1; if (Math.random() < 0.1) mats.x = 1; }
+  if (B) { const big = { e: 8, c: 4, p: 3, d: 2, f: 6 }; for (const k in big) { const v = big[k] * B; mats[k] = Math.floor(v) + (Math.random() < v % 1 ? 1 : 0); if (!mats[k]) delete mats[k]; } if (Math.random() < 0.4 * B) mats.t = 1; if (Math.random() < 0.1 * B) mats.x = 1; }
   for (const k in mats) dropLoot(m.x, m.z, { kind: 'mat', k, amount: mats[k] });
-  const ng = m.boss ? 3 : (Math.random() < 0.045 ? 1 : 0);
-  for (let n = 0; n < ng; n++) { const q = Math.random(); let r = q < 0.03 ? 3 : q < 0.15 ? 2 : q < 0.45 ? 1 : 0; if (m.boss) r = Math.min(3, Math.max(1, r + (Math.random() < 0.4 ? 1 : 0)));
-    const g = makeGear(Math.random() < 0.3 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, lvl, r >= 1 && Math.random() < (m.boss ? 0.75 : 0.45) ? set : null); if (r >= 1 && Math.random() < 0.4) g.plus = ri(1, r + 1); dropLoot(m.x, m.z, { kind: 'gear', gear: g }); }
+  const ng = B ? Math.round(3 * B) : (Math.random() < 0.045 ? 1 : 0);
+  for (let n = 0; n < ng; n++) { const q = Math.random(); let r = q < 0.03 ? 3 : q < 0.15 ? 2 : q < 0.45 ? 1 : 0; if (B) r = Math.min(3, Math.max(1, r + (Math.random() < 0.4 ? 1 : 0)));
+    const g = makeGear(Math.random() < 0.3 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, lvl, r >= 1 && Math.random() < (B ? 0.75 : 0.45) ? set : null); if (r >= 1 && Math.random() < 0.4) g.plus = ri(1, r + 1); dropLoot(m.x, m.z, { kind: 'gear', gear: g }); }
   updateHud();
 }
 function gainExp(n) {
@@ -219,7 +226,7 @@ function updateLoot(dt, t) {
   for (let i = loots.length - 1; i >= 0; i--) { const l = loots[i]; l.t += dt;
     l.gem.rotation.y = t * 2; l.gem.position.y = 0.45 + Math.sin(t * 3 + i) * 0.08 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
     const ld = Math.hypot(l.x - S.pos.x, l.z - S.pos.z);
-    if (!S.dead && l.t > 0.5 && ld < HS.loot && ld > 0.5) { const k = Math.min(1, dt * 7 / Math.max(ld, 0.6)); l.x += (S.pos.x - l.x) * k * 1.5; l.z += (S.pos.z - l.z) * k * 1.5; l.g.position.set(l.x, 0, l.z); }
+    if (!S.dead && S.autoLoot && l.t > 0.5 && ld < HS.loot && ld > 0.5) { const k = Math.min(1, dt * 7 / Math.max(ld, 0.6)); l.x += (S.pos.x - l.x) * k * 1.5; l.z += (S.pos.z - l.z) * k * 1.5; l.g.position.set(l.x, 0, l.z); }
     if ((!S.dead && ld < 0.9) || l.t > 40) {
       if (l.t <= 40) { const it = l.it;
         if (it.kind === 'gold') { S.gold += it.amount; }
@@ -410,7 +417,7 @@ function updateHero(dt, t) {
     else if (!S.moveTo.hold) S.moveTo = null;
   } else if (!keys && (S.auto || S.tapMob)) {
     let target = S.tapMob, best = 1e9;
-    if (!target) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time)) { best = d; target = l; } }
+    if (!target && S.autoLoot) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time)) { best = d; target = l; } }
     if (!target) for (const m of mobs) { if (m.dead || m.noReach > S.time) continue; if (m.boss && HS.hp < m.atk * 6) continue; if (!m.aggro && m.lv > S.lv + 4) continue; const d = Math.hypot(m.x - S.pos.x, m.z - S.pos.z) - (m.aggro ? 3 : 0); if (d < best) { best = d; target = m; } }
     if (target) { const isLoot = !target.T; const dx = target.x - S.pos.x, dz = target.z - S.pos.z, d = Math.hypot(dx, dz); const want = isLoot ? 0.3 : (Cl.melee ? Cl.range - 0.3 + (target.boss ? 0.8 : 0) : Cl.range - 1);
       const sees = isLoot || Cl.melee || los(S.pos.x, S.pos.z, target.x, target.z, 0.15);
@@ -446,10 +453,12 @@ const TINT = new THREE.Color();
 function updateMobs(dt, t) {
   const M = MAPS[S.map];
   if (!S.boss) { S.bossT -= dt; if (S.bossT <= 0) { const b = M.boss; const blv = zoneLv(b); S.boss = addMob(b.k, blv, b.x, b.z, { x: b.x, z: b.z, r: 3 }); banner('BOSS XUẤT HIỆN: ' + MT[b.k].name.toUpperCase(), 'red'); log(`Boss ${MT[b.k].name} (Lv ${blv}) xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); fxBeam(b.x, b.z, '#ff6a8a', 2, 2); S.shake = 0.3; } }
+  if (!S.mini && M.mini) { S.miniT -= dt; if (S.miniT <= 0) { const zn = pick(M.zones); const [x, z] = spawnPos(zn); S.mini = addMob(M.mini, Math.min(M.hi, zoneLv(zn) + 4), x, z, zn, true);
+      banner('TINH ANH XUẤT HIỆN: ' + MT[M.mini].name.toUpperCase(), 'gold'); log(`★ Tinh anh ${MT[M.mini].name} xuất hiện! Phần thưởng bằng 1/3 boss.`, '#ffd27a'); fxBeam(x, z, '#ffd27a', 1.6, 1.4); } }
   for (const m of mobs) {
     const g = m.group;
     if (m.dead) { if (m.dead === 1) { m.deadT = 0; m.dead = 2; m.el.style.display = 'none'; } m.deadT += dt; const k = clamp(1 - m.deadT / 0.4, 0, 1); g.scale.setScalar(m.scale * (0.2 + 0.8 * k)); g.visible = k > 0; m.shadow.visible = k > 0;
-      if (!m.boss) { m.respawn -= dt; if (m.respawn <= 0) { const [x, z] = spawnPos(m.zone); m.x = x; m.z = z; setMobLv(m, zoneLv(m.zone)); m.hp = m.maxHp; m.dead = 0; m.aggro = false; m.state = 'idle'; m.wait = 1; m.frzT = m.burnT = m.shockT = m.wetT = m.slowT = 0; g.visible = true; m.shadow.visible = true; m.spawnT = 0.6; burst(x, m.T.y, z, 18, C3('#7fe9ff'), 2, 0.3, 0.8); } }
+      if (!m.boss && !m.mini) { m.respawn -= dt; if (m.respawn <= 0) { const [x, z] = spawnPos(m.zone); m.x = x; m.z = z; setMobLv(m, zoneLv(m.zone)); m.hp = m.maxHp; m.dead = 0; m.aggro = false; m.state = 'idle'; m.wait = 1; m.frzT = m.burnT = m.shockT = m.wetT = m.slowT = 0; g.visible = true; m.shadow.visible = true; m.spawnT = 0.6; burst(x, m.T.y, z, 18, C3('#7fe9ff'), 2, 0.3, 0.8); } }
       continue; }
     for (const k of ['slowT', 'frzT', 'stunT', 'shockT', 'wetT']) if (m[k] > 0) m[k] -= dt;
     if (m.burnT > 0) { m.burnT -= dt; dot(m, m.burnD * dt); if (Math.random() < dt * 10) emit(m.x + rr(-0.2, 0.2), mobH(m), m.z + rr(-0.2, 0.2), 0, 0.8, 0, C3('#ff7a1a'), 0.25, 0.5, 0.3, 0.98); if (m.dead) continue; }
@@ -471,16 +480,17 @@ function updateMobs(dt, t) {
         const want = Math.atan2(dx, dz); let da = want - m.face; da = Math.atan2(Math.sin(da), Math.cos(da)); m.face += da * Math.min(1, dt * 4); } }
     let y = m.T.y;
     if (!stopped) {
-      if (m.kind === 'jelly') { const pulse = Math.sin(t * 2.6 + m.phase); y += Math.sin(t * 1.3 + m.phase) * 0.12 + pulse * 0.04; m.bell.scale.set(1 + pulse * 0.08, 1 - pulse * 0.12, 1 + pulse * 0.08); g.rotation.set(Math.sin(t * 0.9 + m.phase) * 0.12, t * 0.3 + m.phase, Math.cos(t * 0.8 + m.phase) * 0.12); }
+      if (m.anim) { m.anim(t, moving, m); g.rotation.set(0, m.face, 0); }
+      else if (m.kind === 'jelly') { const pulse = Math.sin(t * 2.6 + m.phase); y += Math.sin(t * 1.3 + m.phase) * 0.12 + pulse * 0.04; m.bell.scale.set(1 + pulse * 0.08, 1 - pulse * 0.12, 1 + pulse * 0.08); g.rotation.set(Math.sin(t * 0.9 + m.phase) * 0.12, t * 0.3 + m.phase, Math.cos(t * 0.8 + m.phase) * 0.12); }
       else { y += Math.sin(t * 1.8 + m.phase) * 0.1; m.tail.rotation.y = Math.sin(t * (moving ? 12 : 5) + m.phase) * 0.45; g.rotation.set(0, m.face + Math.sin(t * (moving ? 12 : 5) + m.phase) * 0.06, Math.sin(t * 1.4 + m.phase) * 0.08); }
     }
     TINT.setRGB(0, 0, 0); if (m.frzT > 0) TINT.setRGB(0.25, 0.6, 0.9); else if (m.burnT > 0) TINT.setRGB(0.35, 0.1, 0).multiplyScalar(0.7 + 0.3 * Math.sin(t * 20)); else if (m.shockT > 0) TINT.setRGB(0.35, 0.25, 0.6).multiplyScalar(0.5 + 0.5 * Math.random());
-    if (m.kind === 'jelly') { m.jmat.uniforms.uFlash.value = m.flash; m.jmat.uniforms.uTint.value.copy(TINT); } else { m.mats[0].emissive.setScalar(m.flash * 1.2).add(TINT); }
+    if (m.kind === 'jelly') { m.jmat.uniforms.uFlash.value = m.flash; m.jmat.uniforms.uTint.value.copy(TINT); } else if (m.baseE) { m.mats[0].emissive.copy(m.baseE).addScalar(m.flash * 1.2).add(TINT); }
     let lz = 0; if (m.lunge > 0) { m.lunge -= dt; lz = Math.sin((m.lunge / 0.3) * Math.PI) * (m.boss ? 0.9 : 0.5); }
     m.flash = Math.max(0, m.flash - dt * 6);
     const sc = m.spawnT > 0 ? (m.spawnT -= dt, 1 - m.spawnT / 0.6) : 1; g.scale.setScalar(m.scale * clamp(sc, 0.05, 1));
     g.position.set(m.x + Math.sin(m.face) * lz, y, m.z + Math.cos(m.face) * lz); m.shadow.position.set(m.x, 0.025, m.z);
     if (m.boss && Math.random() < dt * 8) emit(m.x + rr(-1, 1), y + rr(-0.5, 0.5), m.z + rr(-1, 1), 0, rr(0.3, 0.8), 0, C3(m.T.color), 0.3, 1, 0, 0.99);
   }
-  for (let i = mobs.length - 1; i >= 0; i--) { const m = mobs[i]; if (m.boss && m.dead && m.deadT > 0.5) { removeMob(m); mobs.splice(i, 1); } }
+  for (let i = mobs.length - 1; i >= 0; i--) { const m = mobs[i]; if ((m.boss || m.mini) && m.dead && m.deadT > 0.5) { removeMob(m); mobs.splice(i, 1); } }
 }

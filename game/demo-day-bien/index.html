@@ -78,7 +78,9 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .sk.lock{filter:grayscale(1);opacity:.55}
 .sk.nomp{filter:saturate(.3)}
 #sk0{right:96px;bottom:0}#sk1{right:84px;bottom:66px}#sk2{right:20px;bottom:98px}
-#bAuto{right:146px;bottom:118px;width:50px;height:50px;background:var(--panel);font-size:9.5px;line-height:1.1}
+#bAuto,#bLoot{right:146px;bottom:118px;width:50px;height:50px;background:var(--panel);font-size:9.5px;line-height:1.1}
+#bLoot{bottom:176px}
+#bLoot[aria-pressed="true"]{background:radial-gradient(circle at 40% 35%,#3c9ac9,#08304a 75%);border-color:var(--cyan);box-shadow:0 0 14px rgba(111,231,255,.45)}
 #bAuto[aria-pressed="true"]{background:radial-gradient(circle at 40% 35%,#c99a3c,#4a3008 75%);border-color:var(--gold);box-shadow:0 0 14px rgba(242,198,107,.5)}
 .exp{position:absolute;left:0;right:0;bottom:0;height:calc(6px + env(safe-area-inset-bottom,0px));background:rgba(0,0,0,.55)}
 .exp i{position:absolute;left:0;top:0;height:6px;width:100%;background:linear-gradient(90deg,#3fb8ff,#a7f3ff);transform-origin:left;box-shadow:0 0 8px #6fe7ff}
@@ -200,13 +202,14 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   <div id="banner"></div>
   <div id="log"></div>
   <div class="actions">
+    <button id="bLoot" aria-pressed="true" aria-label="Bật hoặc tắt tự lượm đồ">Tự<br>lượm</button>
     <button id="bAuto" aria-pressed="true" aria-label="Bật hoặc tắt tự động đánh">Tự<br>động</button>
     <button class="sk" id="sk2"><div class="cd"></div><span class="ic"></span><small></small><span class="cdt"></span></button>
     <button class="sk" id="sk1"><div class="cd"></div><span class="ic"></span><small></small><span class="cdt"></span></button>
     <button class="sk" id="sk0"><div class="cd"></div><span class="ic"></span><small></small><span class="cdt"></span></button>
     <button id="bAtk" aria-label="Đánh thường">Đánh</button>
   </div>
-  <div class="hint">Chạm/nhấp nền để đi · WASD · Space đánh · 1 2 3 kỹ năng · F tự động · I túi đồ · M bản đồ</div>
+  <div class="hint">Chạm/nhấp nền để đi · WASD · Space đánh · 1 2 3 kỹ năng · F tự động · L tự lượm · I túi đồ · M bản đồ</div>
   <div class="exp"><i id="expBar"></i><span id="expTxt"></span></div>
 </div>
 
@@ -346,7 +349,7 @@ const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.5, 12
   pm.dispose();
 }
 
-scene.add(new THREE.HemisphereLight(0x8fefff, 0x0a2c36, 1.4));
+const hemi = new THREE.HemisphereLight(0x8fefff, 0x0a2c36, 1.4); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xc8f7ff, 2.4);
 sun.position.set(-6, 14, 4);
 scene.add(sun);
@@ -386,11 +389,11 @@ float caustic(vec2 uv, float t){
   return pow(abs(c), 8.0);
 }`;
 const groundMat = new THREE.ShaderMaterial({
-  uniforms: { uTime: U.uTime, uHero: { value: new THREE.Vector3() }, uFog: { value: FOG }, uFogD: { value: 0.022 }, uSA: { value: new THREE.Vector3(0.045, 0.13, 0.15) }, uSB: { value: new THREE.Vector3(0.17, 0.30, 0.29) }, uPt: { value: new THREE.Vector3(0.03, 0.10, 0.13) }, uCa: { value: new THREE.Vector3(0.25, 0.75, 0.85) }, uHg: { value: new THREE.Vector3(0.08, 0.22, 0.6) } },
+  uniforms: { uTime: U.uTime, uHero: { value: new THREE.Vector3() }, uFog: { value: FOG }, uFogD: { value: 0.022 }, uSA: { value: new THREE.Vector3(0.045, 0.13, 0.15) }, uSB: { value: new THREE.Vector3(0.17, 0.30, 0.29) }, uPt: { value: new THREE.Vector3(0.03, 0.10, 0.13) }, uCa: { value: new THREE.Vector3(0.25, 0.75, 0.85) }, uHg: { value: new THREE.Vector3(0.08, 0.22, 0.6) }, uSpk: { value: 0 } },
   vertexShader: `varying vec3 vW; varying float vD;
     void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; vec4 mv = viewMatrix * w; vD = -mv.z; gl_Position = projectionMatrix * mv; }`,
   fragmentShader: NOISE_GLSL + `
-    uniform float uTime; uniform vec3 uHero; uniform vec3 uFog; uniform float uFogD; uniform vec3 uSA, uSB, uPt, uCa, uHg;
+    uniform float uTime; uniform vec3 uHero; uniform vec3 uFog; uniform float uFogD; uniform vec3 uSA, uSB, uPt, uCa, uHg; uniform float uSpk;
     varying vec3 vW; varying float vD;
     void main(){
       vec2 p = vW.xz;
@@ -409,6 +412,7 @@ const groundMat = new THREE.ShaderMaterial({
       float c = caustic(p * 0.11, uTime * 0.55);
       float c2 = caustic(p * 0.23 + 3.0, uTime * 0.4);
       col += uCa * (c * 0.35 + c2 * 0.15) * (0.6 + 0.4 * n);
+      float sp = h21(floor(p * 26.0)); col += uSpk * smoothstep(0.985, 1.0, sp) * (0.5 + 0.5 * sin(uTime * 3.0 + sp * 60.0)) * vec3(1.0, 0.98, 0.9);
       float d = length(p - uHero.xz);
       col += uHg * exp(-d * d * 0.12) * 0.8;
       float r = length(p);
@@ -599,13 +603,13 @@ function addGate(x, z, rotY) {
 
 // ---------- light shafts ----------
 const shaftMat = new THREE.ShaderMaterial({
-  uniforms: { uTime: U.uTime }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  uniforms: { uTime: U.uTime, uC: { value: new THREE.Vector3(0.16, 0.4, 0.45) } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
   vertexShader: 'varying vec2 vUv; varying float vSeed; void main(){ vUv=uv; vSeed = modelMatrix[3].x*0.37 + modelMatrix[3].z*0.11; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-  fragmentShader: `uniform float uTime; varying vec2 vUv; varying float vSeed;
+  fragmentShader: `uniform float uTime; uniform vec3 uC; varying vec2 vUv; varying float vSeed;
     void main(){ float edge = smoothstep(0.0, 0.5, vUv.x) * smoothstep(1.0, 0.5, vUv.x);
       float v = smoothstep(0.0, 0.35, vUv.y) * smoothstep(1.0, 0.6, vUv.y);
       float flick = 0.55 + 0.45 * sin(uTime * 0.6 + vSeed * 6.0);
-      gl_FragColor = vec4(vec3(0.16, 0.4, 0.45) * edge * edge * v * flick * 0.28, 1.0); }`
+      gl_FragColor = vec4(uC * edge * edge * v * flick * 0.28, 1.0); }`
 });
 const shafts = new THREE.Group();
 for (let i = 0; i < 9; i++) {
@@ -1012,6 +1016,306 @@ function makeFish(pal = {}) {
 }
 
 // =====================================================================
+// MYTHIC MONSTERS — serpents, wraiths, golems, birds, scarabs, spirits
+// Each builder returns { group, mats, kind, anim(t, moving, m) }; mats[0] takes the hit flash.
+// =====================================================================
+const glowM = hex => new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(2.4) });
+const SPH = new THREE.SphereGeometry(1, 18, 12), SPH_LO = new THREE.SphereGeometry(1, 10, 8), CONE = new THREE.ConeGeometry(1, 1, 10), CYL = new THREE.CylinderGeometry(1, 1, 1, 10);
+function part(geo, mat, sx, sy, sz, x = 0, y = 0, z = 0, parent) { const o = new THREE.Mesh(geo, mat); o.scale.set(sx, sy, sz); o.position.set(x, y, z); if (parent) parent.add(o); return o; }
+function horns(parent, mat, y, z, spread, len, curve = 0.5) { for (const s of [-1, 1]) { const h = part(CONE, mat, 0.05, len, 0.05, s * spread, y + len * 0.4, z); h.rotation.z = -s * curve; h.rotation.x = -0.3; parent.add(h); } }
+function crown(parent, y, r, hex = 0xffd23a) { const m = stylized({ color: hex, metalness: 0.9, roughness: 0.25, emissive: new THREE.Color(hex).multiplyScalar(0.25) }, 0xfff0b0, 0.8); const c = new THREE.Group();
+  part(new THREE.CylinderGeometry(1, 1, 0.3, 14, 1, true), m, r, r * 0.8, r, 0, 0, 0, c); for (let i = 0; i < 7; i++) { const a = i / 7 * 6.283; part(CONE, m, r * 0.18, r * 0.7, r * 0.18, Math.cos(a) * r, r * 0.45, Math.sin(a) * r, c); }
+  part(SPH_LO, glowM(0xff4a6a), r * 0.16, r * 0.16, r * 0.16, 0, r * 0.1, r * 0.95, c); c.position.y = y; parent.add(c); return c; }
+
+// --- serpent: naga, cobra (Apep), Chinese/Norse dragon. body is a chain of glowing-spined segments
+function makeSerpent(p = {}) {
+  const g = new THREE.Group(), N = p.segs || 10, segs = [];
+  const bodyM = stylized({ color: p.body || 0x2a6a4a, roughness: 0.4, metalness: 0.35 }, p.glow || 0x9fffc0, 0.9, 2.2);
+  const bellyM = stylized({ color: p.belly || 0xd8c890, roughness: 0.5 }, p.glow || 0x9fffc0, 0.4);
+  const gl = glowM(p.glow || 0x9fffc0);
+  for (let i = 0; i < N; i++) { const s = new THREE.Group(); const k = 1 - (i / N) * 0.72;
+    part(SPH, bodyM, 0.2 * k, 0.17 * k, 0.3 * k, 0, 0, 0, s); part(SPH_LO, bellyM, 0.15 * k, 0.09 * k, 0.27 * k, 0, -0.08 * k, 0, s);
+    if (i % 3 === 0) part(CONE, gl, 0.025 * k, 0.1 * k, 0.025 * k, 0, 0.17 * k, 0, s);
+    if (p.mane && i < N - 2) { const f = part(CONE, stylized({ color: p.mane, roughness: 0.6 }, p.glow, 0.6), 0.06 * k, 0.22 * k, 0.03 * k, 0, 0.2 * k, -0.04, s); f.rotation.x = -0.6; }
+    g.add(s); segs.push(s); }
+  const head = new THREE.Group(); g.add(head);
+  part(SPH, bodyM, 0.2, 0.15, 0.3, 0, 0, 0.08, head); const jaw = part(SPH, bellyM, 0.15, 0.06, 0.24, 0, -0.09, 0.1, head);
+  const eyeM = glowM(p.eye || 0xffe04a); for (const s of [-1, 1]) part(SPH_LO, eyeM, 0.04, 0.035, 0.04, s * 0.11, 0.06, 0.2, head);
+  if (p.hood) { const hd = part(SPH, stylized({ color: p.hood, roughness: 0.45, metalness: 0.3, side: THREE.DoubleSide }, p.glow, 0.8), 0.42, 0.36, 0.05, 0, 0.08, -0.12, head); for (const s of [-1, 1]) part(SPH_LO, gl, 0.06, 0.08, 0.02, s * 0.18, 0.14, -0.09, head); }
+  if (p.horn) horns(head, stylized({ color: p.horn, roughness: 0.35, metalness: 0.5 }, 0xffffff, 0.6), 0.1, -0.05, 0.1, 0.32, 0.6);
+  if (p.whisk) for (const s of [-1, 1]) { const w = part(CYL, gl, 0.008, 0.6, 0.008, s * 0.14, -0.05, 0.42, head); w.rotation.set(1.2, 0, s * 0.6); }
+  if (p.crown) crown(head, 0.2, 0.16);
+  const fly = !!p.fly;
+  return { group: g, mats: [bodyM], kind: 'serpent', head, anim(t, moving, m) { const sp = moving ? 7 : 3; const ph = m.phase;
+    for (let i = 0; i < N; i++) { const a = t * sp - i * 0.65 + ph; const s = segs[i];
+      s.position.set(Math.sin(a) * (0.06 + i * 0.02), (fly ? Math.sin(a * 0.5) * 0.12 : 0) + (p.rear ? Math.max(0, 3 - i) * 0.16 : 0), -0.02 - i * 0.17); s.rotation.y = Math.cos(a) * 0.45; }
+    head.position.set(Math.sin(t * sp + ph + 0.65) * 0.06, (p.rear ? 0.62 : 0.05) + (fly ? Math.sin((t * sp + ph) * 0.5) * 0.12 : 0), 0.2);
+    jaw.rotation.x = m.lunge > 0 ? 0.5 : Math.max(0, Math.sin(t * 1.3 + ph)) * 0.15; } };
+}
+
+// --- wraith: mummy, yurei, draugr, banshee. hooded robe with a fluttering hem, glowing eyes and claws
+function robeMat(hex, glow) { const m = stylized({ color: hex, roughness: 0.75, side: THREE.DoubleSide, vertexColors: true }, glow, 0.8, 2.0); const prev = m.onBeforeCompile;
+  m.onBeforeCompile = s => { prev(s); s.uniforms.uTime = U.uTime; s.vertexShader = 'uniform float uTime;\n' + s.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      float hm = 1.0 - clamp(position.y / 0.9, 0.0, 1.0); float an = atan(position.z, position.x);
+      float ph = modelMatrix[3].x * 1.7 + modelMatrix[3].z;
+      transformed.xz *= 1.0 + sin(uTime * 4.0 + an * 5.0 + ph) * 0.14 * hm; transformed.y += sin(uTime * 5.0 + an * 7.0 + ph) * 0.06 * hm;`); };
+  m.customProgramCacheKey = () => 'robe'; return m; }
+function makeWraith(p = {}) {
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const prof = [[0.001, 1.5], [0.16, 1.47], [0.25, 1.33], [0.27, 1.12], [0.24, 0.98], [0.3, 0.75], [0.4, 0.42], [0.52, 0.08], [0.47, 0.0]].map(([x, y]) => new THREE.Vector2(x, y));
+  const geo = new THREE.LatheGeometry(prof, 28); const pos = geo.attributes.position, cols = [], A = new THREE.Color(p.robe || 0x3a4a5a), B = new THREE.Color(p.robe2 || p.robe || 0x3a4a5a), tmp = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) { const y = pos.getY(i); const band = p.bands ? (Math.sin(y * 34 + Math.atan2(pos.getZ(i), pos.getX(i)) * 2) > 0.2 ? 1 : 0.72) : 1; tmp.copy(A).lerp(B, 1 - y / 1.5).multiplyScalar(band); cols.push(tmp.r, tmp.g, tmp.b); }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3)); geo.computeVertexNormals();
+  const rm = robeMat(0xffffff, p.glow || 0x9fe8ff); const robe = new THREE.Mesh(geo, rm); body.add(robe);
+  part(SPH, new THREE.MeshBasicMaterial({ color: 0x020205 }), 0.17, 0.19, 0.12, 0, 1.2, 0.12, body);
+  const eyeM = glowM(p.eye || 0x9fe8ff); for (const s of [-1, 1]) part(SPH_LO, eyeM, 0.035, 0.022, 0.02, s * 0.065, 1.23, 0.23, body);
+  if (p.horn) horns(body, stylized({ color: p.horn, roughness: 0.4, metalness: 0.5 }, 0xffffff, 0.5), 1.35, -0.02, 0.17, 0.3, 0.9);
+  if (p.crown) crown(body, 1.5, 0.17);
+  if (p.hair) for (let i = 0; i < 9; i++) { const h = part(new THREE.PlaneGeometry(0.06, 0.7), new THREE.MeshStandardMaterial({ color: 0x050505, side: THREE.DoubleSide, roughness: 0.9 }), 1, 1, 1, (i - 4) * 0.045, 1.05, 0.2 + Math.abs(i - 4) * -0.012, body); h.rotation.x = 0.1; }
+  const arms = []; const sleeveM = stylized({ color: p.robe || 0x3a4a5a, roughness: 0.8 }, p.glow || 0x9fe8ff, 0.6); const clawM = glowM(p.claw || p.eye || 0x9fe8ff);
+  for (const s of [-1, 1]) { const a = new THREE.Group(); a.position.set(s * 0.25, 1.0, 0.05); const sl = part(CONE, sleeveM, 0.09, 0.5, 0.09, 0, -0.22, 0, a); sl.rotation.x = Math.PI;
+    for (let f = 0; f < 3; f++) { const c = part(CONE, clawM, 0.015, 0.13, 0.015, (f - 1) * 0.035, -0.52, 0.02, a); c.rotation.x = Math.PI + 0.3; } body.add(a); arms.push(a); }
+  return { group: g, mats: [sleeveM], kind: 'wraith', anim(t, moving, m) { const ph = m.phase; body.position.y = Math.sin(t * 1.6 + ph) * 0.08; body.rotation.z = Math.sin(t * 1.1 + ph) * 0.05; body.rotation.x = moving ? 0.25 : 0.05;
+    const reach = m.lunge > 0 ? 1.2 : 0; arms.forEach((a, i) => { a.rotation.x = -0.5 - reach + Math.sin(t * 2.2 + ph + i * 1.7) * 0.25; a.rotation.z = (i ? -1 : 1) * (0.25 + Math.sin(t * 1.7 + ph + i) * 0.1); });
+    if (Math.random() < 0.05) emit(m.x + rr(-0.3, 0.3), m.T.y + 0.1, m.z + rr(-0.3, 0.3), 0, rr(0.2, 0.6), 0, C3(m.T.color), 0.25, 0.9, 0, 0.98); } };
+}
+
+// --- golem: sand guardian, marble cyclops/titan, ice jotunn, swamp treant. floating fists, rune ring, glowing core
+function rockyGeo(r, det, amp, seedK) { const g = new THREE.IcosahedronGeometry(r, det); const p = g.attributes.position; const v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = vnoise(v.x * 3 + seedK, v.y * 3, v.z * 3 - seedK); v.multiplyScalar(1 + (n - 0.5) * amp); p.setXYZ(i, v.x, v.y, v.z); } g.computeVertexNormals(); return g; }
+function makeGolem(p = {}) {
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const st = stylized({ color: p.stone || 0xb08a5a, roughness: p.metal ? 0.3 : 0.8, metalness: p.metal ? 0.85 : 0.05, flatShading: true }, p.glow || 0xffd27a, 0.6, 2.4);
+  const gl = glowM(p.glow || 0xffd27a);
+  part(rockyGeo(0.42, 1, 0.35, 1.3), st, 1, 1.15, 0.85, 0, 0.95, 0, body);
+  const core = part(SPH_LO, gl, 0.11, 0.11, 0.11, 0, 1.0, 0.33, body);
+  const head = new THREE.Group(); head.position.set(0, 1.62, 0.04); body.add(head);
+  part(rockyGeo(0.2, 1, 0.3, 4.1), st, 1, 0.95, 1, 0, 0, 0, head);
+  if (p.cyclops) { part(SPH, new THREE.MeshStandardMaterial({ color: 0xf4f0e8, roughness: 0.2 }), 0.1, 0.1, 0.06, 0, 0.02, 0.17, head); part(SPH_LO, gl, 0.05, 0.05, 0.03, 0, 0.02, 0.22, head); }
+  else for (const s of [-1, 1]) part(SPH_LO, gl, 0.035, 0.025, 0.02, s * 0.075, 0.03, 0.18, head);
+  if (p.halo) { const h = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.018, 8, 40), gl); h.position.set(0, 0.1, -0.2); head.add(h); }
+  if (p.horn) horns(head, stylized({ color: p.horn, roughness: 0.4 }, 0xffffff, 0.5), 0.1, 0, 0.12, 0.25, 0.7);
+  if (p.crown) crown(head, 0.2, 0.16);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.02, 6, 48), gl); ring.position.y = 0.95; ring.rotation.x = 1.3; body.add(ring);
+  const fists = []; for (const s of [-1, 1]) { const sh = part(rockyGeo(0.17, 0, 0.4, s * 2), st, 1, 1, 1, s * 0.5, 1.38, 0, body); const f = part(rockyGeo(0.19, 1, 0.35, s * 3.3), st, 1, 1, 1, s * 0.62, 0.62, 0.15, body); fists.push(f); }
+  const peb = []; for (let i = 0; i < 4; i++) peb.push(part(rockyGeo(0.06, 0, 0.5, i), st, 1, 1, 1, 0, 0, 0, body));
+  if (p.crystal) { const cm = stylized({ color: p.crystal, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.85, emissive: new THREE.Color(p.crystal).multiplyScalar(0.25) }, 0xffffff, 1.2);
+    for (let i = 0; i < 7; i++) { const c = part(new THREE.OctahedronGeometry(1), cm, 0.07, rr(0.2, 0.38), 0.07, rr(-0.35, 0.35), 1.35 + rr(0, 0.2), rr(-0.25, 0.1), body); c.rotation.set(rr(-0.5, 0.5), 0, rr(-0.6, 0.6)); } }
+  if (p.wood) { for (const s of [-1, 1]) { const br = coralBranches(0.55, 0.05, 2, p.stone, p.leaf || 0x6aaa3a); br.position.set(s * 0.32, 1.45, -0.05); br.rotation.z = -s * 0.5; br.scale.setScalar(0.9); body.add(br); }
+    const lm = stylized({ color: p.leaf || 0x4a8a2a, roughness: 0.8, flatShading: true }, 0xc8ff8a, 0.4); for (let i = 0; i < 6; i++) part(new THREE.IcosahedronGeometry(1, 0), lm, rr(0.12, 0.2), rr(0.1, 0.16), rr(0.12, 0.2), rr(-0.5, 0.5), rr(1.6, 2.0), rr(-0.3, 0.2), body); }
+  return { group: g, mats: [st], kind: 'golem', anim(t, moving, m) { const ph = m.phase; body.position.y = Math.sin(t * 1.4 + ph) * 0.05; body.rotation.z = moving ? Math.sin(t * 6 + ph) * 0.06 : 0;
+    head.position.y = 1.62 + Math.sin(t * 2 + ph) * 0.03; ring.rotation.z = t * 0.8; core.scale.setScalar(0.11 * (1 + Math.sin(t * 4 + ph) * 0.25));
+    const slam = m.lunge > 0 ? Math.sin((m.lunge / 0.3) * Math.PI) : 0;
+    fists.forEach((f, i) => { const s = i ? 1 : -1; f.position.set(s * 0.62, 0.62 + Math.sin(t * 2.4 + ph + i * 2) * 0.08 + slam * 0.5, 0.15 + slam * 0.45); f.rotation.y = t * 0.6; });
+    peb.forEach((q, i) => { const a = t * 1.3 + i * 1.57 + ph; q.position.set(Math.cos(a) * 0.75, 1.0 + Math.sin(a * 2) * 0.25, Math.sin(a) * 0.75); }); } };
+}
+
+// --- bird: harpy, phoenix, raven, griffin, ice bird. glowing feather-fan wings (hero wing shader)
+function makeBird(p = {}) {
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const fm = stylized({ color: p.body || 0x6a3a8a, roughness: 0.6, metalness: 0.15 }, p.glow || 0xd8a8ff, 0.8);
+  const gl = glowM(p.glow || 0xd8a8ff);
+  part(SPH, fm, 0.2, 0.2, 0.34, 0, 0, 0, body); part(SPH, fm, 0.13, 0.13, 0.13, 0, 0.14, 0.3, body);
+  const bk = part(CONE, stylized({ color: p.beak || 0xffc84a, roughness: 0.3, metalness: 0.4 }, 0xffffff, 0.4), 0.045, 0.16, 0.045, 0, 0.12, 0.47, body); bk.rotation.x = Math.PI / 2 + 0.25;
+  for (const s of [-1, 1]) part(SPH_LO, glowM(p.eye || 0xffe04a), 0.025, 0.025, 0.02, s * 0.07, 0.18, 0.4, body);
+  for (let i = 0; i < 3; i++) { const c = part(CONE, gl, 0.025, 0.2, 0.02, (i - 1) * 0.04, 0.3, 0.24 - i * 0.04, body); c.rotation.x = -0.7 - i * 0.15; }
+  const tail = new THREE.Group(); tail.position.set(0, 0.02, -0.3); body.add(tail);
+  for (let i = 0; i < 5; i++) { const f = part(new THREE.PlaneGeometry(0.08, 0.55).translate(0, -0.27, 0), new THREE.MeshBasicMaterial({ color: new THREE.Color(i % 2 ? p.glow || 0xd8a8ff : p.tail || p.glow || 0xd8a8ff).multiplyScalar(1.6), side: THREE.DoubleSide, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }), 1, 1, 1, 0, 0, 0, tail); f.rotation.set(Math.PI / 2 - 0.25, (i - 2) * 0.28, 0); }
+  const wm = wingMat.clone(); wm.uniforms.uTime = U.uTime; wm.uniforms.uRoot.value.setHex(p.w1 || 0xfff0ff); wm.uniforms.uTip.value.setHex(p.w2 || 0x8a3dff); wm.uniforms.uEdge.value.setHex(p.w3 || 0xd8a8ff); wm.uniforms.uB.value = 0.7;
+  const wings = []; for (const s of [-1, 1]) { const piv = new THREE.Group(); piv.position.set(s * 0.12, 0.08, 0.02); const w = new THREE.Mesh(wingGeo, wm); w.scale.set(s * 0.32, 0.32, 0.32); w.rotation.set(-Math.PI / 2, 0, s * 0.15); piv.add(w); body.add(piv); wings.push(piv); }
+  for (const s of [-1, 1]) { const l = part(CYL, stylized({ color: p.beak || 0xffc84a, roughness: 0.4 }, 0xffffff, 0.3), 0.015, 0.22, 0.015, s * 0.08, -0.22, 0.02, body); l.rotation.x = 0.4; }
+  if (p.crown) crown(body, 0.3, 0.12);
+  return { group: g, mats: [fm], kind: 'bird', anim(t, moving, m) { const ph = m.phase, f = moving ? 9 : 5.5; const fl = Math.sin(t * f + ph);
+    wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * (fl * 0.65 + 0.1); w.rotation.y = (i ? 1 : -1) * 0.15; });
+    body.position.y = Math.sin(t * f + ph - 1) * 0.08; body.rotation.x = moving ? 0.2 : -0.05 + Math.sin(t * 1.3) * 0.05; tail.rotation.x = Math.sin(t * 2 + ph) * 0.15;
+    if (p.trail && Math.random() < 0.35) emit(m.x + rr(-0.2, 0.2), m.T.y + 0.1, m.z + rr(-0.2, 0.2), rr(-0.3, 0.3), rr(-0.2, 0.4), rr(-0.3, 0.3), C3(Math.random() < 0.5 ? p.trail : '#ffffff'), 0.28, 0.6, 0, 0.96); } };
+}
+
+// --- scarab: golden scarab, swamp beetle, crystal beetle. iridescent shell with a glowing seam, walking legs
+function makeScarab(p = {}) {
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const sm = stylized({ color: p.shell || 0x2a6a5a, roughness: 0.22, metalness: 0.9 }, p.glow || 0x9fffd0, 1.0, 1.8);
+  const dm = stylized({ color: p.dark || 0x10140f, roughness: 0.5, metalness: 0.4 }, p.glow || 0x9fffd0, 0.5);
+  const gl = glowM(p.glow || 0x9fffd0);
+  for (const s of [-1, 1]) { const h = part(new THREE.SphereGeometry(1, 16, 10, s > 0 ? 0 : Math.PI, Math.PI, 0, Math.PI / 2), sm, 0.36, 0.3, 0.44, s * 0.012, 0.2, -0.05, body); }
+  part(CYL, gl, 0.012, 0.86, 0.012, 0, 0.36, -0.05, body).rotation.x = Math.PI / 2;
+  part(SPH, dm, 0.24, 0.13, 0.17, 0, 0.22, 0.38, body);
+  const head = part(SPH, dm, 0.15, 0.1, 0.12, 0, 0.2, 0.55, body);
+  const hn = part(CONE, sm, 0.04, 0.28, 0.04, 0, 0.32, 0.62, body); hn.rotation.x = 0.6;
+  for (const s of [-1, 1]) { part(SPH_LO, glowM(p.eye || 0xffe04a), 0.03, 0.03, 0.03, s * 0.1, 0.24, 0.63, body); const a = part(CYL, dm, 0.008, 0.25, 0.008, s * 0.07, 0.3, 0.68, body); a.rotation.set(1.0, 0, s * 0.5); }
+  if (p.gem) part(new THREE.OctahedronGeometry(1), gl, 0.07, 0.1, 0.07, 0, 0.5, -0.05, body);
+  if (p.crown) crown(body, 0.48, 0.14);
+  const legs = []; for (let i = 0; i < 6; i++) { const s = i % 2 ? 1 : -1, row = Math.floor(i / 2); const piv = new THREE.Group(); piv.position.set(s * 0.25, 0.14, 0.25 - row * 0.25);
+    const l = part(CYL, dm, 0.02, 0.32, 0.02, s * 0.14, -0.06, 0, piv); l.rotation.z = s * 1.1; body.add(piv); legs.push(piv); }
+  return { group: g, mats: [sm], kind: 'scarab', anim(t, moving, m) { const f = moving ? 14 : 2, ph = m.phase; legs.forEach((l, i) => { l.rotation.y = Math.sin(t * f + ph + i * 1.9) * (moving ? 0.5 : 0.08); });
+    body.position.y = moving ? Math.abs(Math.sin(t * f)) * 0.02 : 0; head.rotation.y = Math.sin(t * 1.5 + ph) * 0.3; } };
+}
+
+// --- spirit: kitsune fox-fire, oni mask, seraph eye, will-o-wisp, aurora spirit
+const haloTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+function makeSpirit(p = {}) {
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, color: new THREE.Color(p.glow || 0x7fd8ff).multiplyScalar(0.55), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); halo.scale.setScalar(1.0); body.add(halo);
+  const cm = stylized({ color: p.core || 0xffffff, roughness: 0.3, emissive: new THREE.Color(p.glow || 0x7fd8ff).multiplyScalar(0.45) }, p.glow || 0x7fd8ff, 1.2);
+  part(SPH, cm, 0.16, 0.16, 0.16, 0, 0, 0, body);
+  const orbs = []; for (let i = 0; i < (p.orbs ?? 3); i++) orbs.push(part(SPH_LO, glowM(p.glow || 0x7fd8ff), 0.05, 0.05, 0.05, 0, 0, 0, body));
+  let face = null; const rings = [];
+  if (p.mask) { face = new THREE.Group(); face.position.z = 0.16; body.add(face); const mm = stylized({ color: p.mask, roughness: 0.35, metalness: 0.2 }, 0xffd0a0, 0.6); cm.emissive.multiplyScalar(0.4);
+    part(new THREE.SphereGeometry(1, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2), mm, 0.3, 0.34, 0.16, 0, 0, 0, face).rotation.x = Math.PI / 2;
+    horns(face, stylized({ color: 0xf4e8d0, roughness: 0.3 }, 0xffffff, 0.4), 0.2, 0.05, 0.15, 0.3, 0.4);
+    for (const s of [-1, 1]) { part(SPH_LO, glowM(0xffe04a), 0.05, 0.03, 0.02, s * 0.1, 0.06, 0.15, face); const b = part(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x1a0505 }), 0.12, 0.025, 0.03, s * 0.1, 0.13, 0.14, face); b.rotation.z = s * 0.35; part(CONE, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }), 0.025, 0.08, 0.02, s * 0.06, -0.15, 0.13, face).rotation.x = Math.PI; } }
+  if (p.eye) { const em = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 }); const eye = part(SPH, em, 0.2, 0.2, 0.2, 0, 0, 0.02, body); part(SPH_LO, glowM(p.eye), 0.1, 0.1, 0.04, 0, 0, 0.2, body); part(SPH_LO, new THREE.MeshBasicMaterial({ color: 0x000000 }), 0.045, 0.06, 0.02, 0, 0, 0.235, body);
+    for (let i = 0; i < 2; i++) { const r = new THREE.Mesh(new THREE.TorusGeometry(0.34 + i * 0.1, 0.014, 6, 48), glowM(p.glow || 0xffe08a)); body.add(r); rings.push(r); } }
+  return { group: g, mats: [cm], kind: 'spirit', anim(t, moving, m) { const ph = m.phase; body.position.y = Math.sin(t * 2 + ph) * 0.12; halo.scale.setScalar(0.95 + Math.sin(t * 5 + ph) * 0.12);
+    orbs.forEach((o, i) => { const a = t * 2.5 + i * 2.09 + ph; o.position.set(Math.cos(a) * 0.35, Math.sin(a * 1.5) * 0.15, Math.sin(a) * 0.35); });
+    rings.forEach((r, i) => { r.rotation.set(t * (0.8 + i * 0.5) + i, t * (0.5 - i), 0); }); if (face) face.rotation.y = Math.sin(t * 1.2 + ph) * 0.3;
+    if (Math.random() < 0.45) emit(m.x + rr(-0.12, 0.12), m.T.y + body.position.y + 0.05, m.z + rr(-0.12, 0.12), rr(-0.2, 0.2), rr(0.6, 1.4), rr(-0.2, 0.2), C3(Math.random() < 0.6 ? (p.flame || m.T.color) : '#ffffff'), rr(0.15, 0.3), 0.55, -0.5, 0.95); } };
+}
+const SHARED = new Set([SPH, SPH_LO, CONE, CYL, wingGeo]);
+const MAKERS = { jelly: makeJelly, fish: makeFish, serpent: makeSerpent, wraith: makeWraith, golem: makeGolem, bird: makeBird, scarab: makeScarab, spirit: makeSpirit };
+
+// =====================================================================
+// SCENERY — themed, animated props for the land / sky realms
+// =====================================================================
+function windy(m, amp, freq = 1.4) { const prev = m.onBeforeCompile; m.onBeforeCompile = s => { prev(s); s.uniforms.uTime = U.uTime;
+    s.vertexShader = 'uniform float uTime;\n' + s.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      float wh = max(position.y, 0.0); float wp = modelMatrix[3].x * 0.7 + modelMatrix[3].z * 0.4;
+      transformed.x += sin(uTime * ${freq.toFixed(2)} + wp) * ${amp.toFixed(3)} * wh * wh; transformed.z += cos(uTime * ${(freq * 0.8).toFixed(2)} + wp) * ${(amp * 0.6).toFixed(3)} * wh * wh;`); };
+  m.customProgramCacheKey = () => 'windy' + amp + freq; return m; }
+const scenery = [];
+function at(o, x, y, z) { o.position.set(x, y, z); return o; } // per-frame updaters for the current map
+function prop(obj, x, z, r) { obj.position.set(x, obj.position.y, z); world.add(obj); if (r) { colliders.push({ x, z, r }); const b = blob(r * 3); b.position.set(x, 0.02, z); world.add(b); } return obj; }
+function M_(hex, o = {}) { return stylized(Object.assign({ color: hex, roughness: 0.7, metalness: 0.05 }, o), o.rim ?? 0xffffff, o.rimS ?? 0.35, 2.4); }
+function leafBlob(hex, s) { const m = M_(hex, { flatShading: true, rim: 0xe8ffd0, rimS: 0.3 }); return new THREE.Mesh(rockyGeo(s, 1, 0.45, s * 7), m); }
+
+function palmTree(h) { const g = new THREE.Group(); const pts = []; const lean = rr(0.4, 1.0), dir = rr(0, 6.28);
+  for (let i = 0; i <= 8; i++) { const k = i / 8; pts.push(new THREE.Vector3(Math.cos(dir) * lean * k * k, k * h, Math.sin(dir) * lean * k * k)); }
+  const trunk = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.13, 7), windy(M_(0x8a6a44, { roughness: 0.9 }), 0.004)); g.add(trunk);
+  for (let i = 1; i < 8; i++) { const r = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.03, 4, 10), M_(0x6a4a2a)); r.position.copy(pts[i]); r.rotation.x = Math.PI / 2; g.add(r); }
+  const top = pts[8]; const fm = windy(M_(0x3a8a3a, { side: THREE.DoubleSide, rim: 0xc8ff8a, rimS: 0.4 }), 0.03, 1.8);
+  for (let i = 0; i < 9; i++) { const geo = new THREE.PlaneGeometry(0.42, 2.0, 1, 10); const p = geo.attributes.position; for (let j = 0; j < p.count; j++) { const y = p.getY(j) + 1; p.setXYZ(j, p.getX(j) * Math.sin(Math.min(1, y / 2) * Math.PI) * 1.1, y, -y * y * 0.22); } geo.computeVertexNormals();
+    const f = new THREE.Mesh(geo, fm); f.position.copy(top); f.rotation.set(-0.9, i / 9 * 6.283, 0, 'YXZ'); g.add(f); }
+  for (let i = 0; i < 3; i++) part(SPH_LO, M_(0x5a3a1a), 0.09, 0.09, 0.09, top.x + rr(-0.12, 0.12), top.y - 0.12, top.z + rr(-0.12, 0.12), g);
+  return g; }
+function obelisk(h, glyph) { const g = new THREE.Group(); const st = M_(0xc8a46a, { flatShading: true, rim: 0xffe0a0, rimS: 0.3 });
+  part(new THREE.CylinderGeometry(0.28, 0.42, h, 4), st, 1, 1, 1, 0, h / 2 + 0.25, 0, g).rotation.y = Math.PI / 4;
+  part(new THREE.ConeGeometry(0.3, 0.45, 4), M_(0xffd23a, { metalness: 0.9, roughness: 0.2, emissive: new THREE.Color(0x553300) }), 1, 1, 1, 0, h + 0.47, 0, g).rotation.y = Math.PI / 4;
+  part(new THREE.BoxGeometry(1, 1, 1), st, 1.0, 0.25, 1.0, 0, 0.12, 0, g);
+  const gm = new THREE.MeshBasicMaterial({ color: new THREE.Color(glyph).multiplyScalar(2) }); for (let i = 0; i < 7; i++) for (const s of [0, 1]) { const q = part(new THREE.BoxGeometry(1, 1, 1), gm, rr(0.05, 0.14), rr(0.06, 0.16), 0.02, rr(-0.1, 0.1), 0.6 + i * (h - 0.8) / 7, 0, g); q.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), s * Math.PI); q.position.z += s ? -0.3 : 0.3; }
+  scenery.push(t => { gm.color.setRGB(...new THREE.Color(glyph).multiplyScalar(1.4 + Math.sin(t * 2 + h) * 0.8).toArray()); }); return g; }
+function column(h, broken, mat) { const g = new THREE.Group(); const geo = new THREE.CylinderGeometry(0.32, 0.36, h, 20, 1); const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) { const a = Math.atan2(p.getZ(i), p.getX(i)); const k = 1 - 0.06 * Math.max(0, Math.cos(a * 10)); p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); } geo.computeVertexNormals();
+  part(geo, mat, 1, 1, 1, 0, h / 2 + 0.2, 0, g); part(new THREE.CylinderGeometry(0.48, 0.5, 0.2, 16), mat, 1, 1, 1, 0, 0.1, 0, g);
+  if (!broken) { part(new THREE.BoxGeometry(0.95, 0.16, 0.95), mat, 1, 1, 1, 0, h + 0.33, 0, g); part(new THREE.CylinderGeometry(0.46, 0.34, 0.2, 16), mat, 1, 1, 1, 0, h + 0.2, 0, g); }
+  else { const top = part(rockyGeo(0.33, 0, 0.5, h), mat, 1, 0.5, 1, 0, h + 0.2, 0, g); } return g; }
+function brazier(fire) { const g = new THREE.Group(); const br = M_(0x8a5a2a, { metalness: 0.8, roughness: 0.35 });
+  part(CYL, br, 0.05, 0.9, 0.05, 0, 0.45, 0, g); part(new THREE.CylinderGeometry(0.32, 0.16, 0.22, 14, 1, true), br, 1, 1, 1, 0, 1.0, 0, g); part(SPH_LO, glowM(fire), 0.16, 0.1, 0.16, 0, 1.05, 0, g);
+  for (let i = 0; i < 3; i++) { const l = part(CYL, br, 0.03, 0.5, 0.03, Math.cos(i * 2.1) * 0.15, 0.22, Math.sin(i * 2.1) * 0.15, g); l.rotation.set(Math.sin(i * 2.1) * 0.3, 0, -Math.cos(i * 2.1) * 0.3); }
+  scenery.push(() => { if (Math.random() < 0.6) { const w = g.position; emit(w.x + rr(-0.12, 0.12), 1.12, w.z + rr(-0.12, 0.12), rr(-0.1, 0.1), rr(1.2, 2.4), rr(-0.1, 0.1), C3(Math.random() < 0.5 ? fire : '#ffe08a'), rr(0.3, 0.5), 0.6, -0.8, 0.96); } }); return g; }
+function cypress(h) { const g = new THREE.Group(); part(CYL, M_(0x4a3424), 0.07, 0.6, 0.07, 0, 0.3, 0, g); const m = windy(M_(0x1f4a2a, { flatShading: true, rim: 0xb0ffb0, rimS: 0.25 }), 0.012);
+  const geo = rockyGeo(1, 1, 0.3, h); part(geo, m, 0.38, h * 0.5, 0.38, 0, h * 0.5 + 0.4, 0, g); return g; }
+function oliveTree() { const g = coralBranches(1.1, 0.12, 3, 0x6a5a48, 0x8aa070); const lm = windy(M_(0x8aa070, { flatShading: true, rim: 0xe0ffd0, rimS: 0.3 }), 0.02);
+  for (let i = 0; i < 6; i++) { const b = new THREE.Mesh(rockyGeo(rr(0.35, 0.55), 1, 0.4, i), lm); b.position.set(rr(-0.7, 0.7), rr(1.3, 1.9), rr(-0.7, 0.7)); b.scale.y = 0.65; g.add(b); } return g; }
+function bambooClump(n) { const g = new THREE.Group(); const sm = windy(M_(0x6aa84a, { roughness: 0.45, rim: 0xd8ff9a, rimS: 0.4 }), 0.006, 1.6), nm = windy(M_(0x4a7a2a), 0.006, 1.6), lm = windy(M_(0x5aa040, { side: THREE.DoubleSide, flatShading: true }), 0.006, 1.6);
+  for (let i = 0; i < n; i++) { const h = rr(4, 6.5), x = rr(-0.6, 0.6), z = rr(-0.6, 0.6); part(new THREE.CylinderGeometry(0.06, 0.075, h, 8).translate(0, h / 2, 0), sm, 1, 1, 1, x, 0, z, g);
+    for (let k = 1; k < h / 0.7; k++) part(new THREE.TorusGeometry(0.07, 0.016, 4, 10).rotateX(Math.PI / 2).translate(0, k * 0.7, 0), nm, 1, 1, 1, x, 0, z, g);
+    for (let k = 0; k < 6; k++) { const y = h * rr(0.55, 1); const lf = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.55).translate(0, 0.27, 0).rotateZ(rr(-2.3, -0.8)).rotateY(rr(0, 6.28)).translate(x, y, z), lm); g.add(lf); } } return g; }
+function torii(c) { const g = new THREE.Group(); const rm = M_(c, { roughness: 0.5, rim: 0xffd0a0, rimS: 0.4 }), dm = M_(0x1a1010);
+  for (const s of [-1, 1]) { part(CYL, rm, 0.17, 3.4, 0.17, s * 1.25, 1.7, 0, g); part(CYL, dm, 0.22, 0.3, 0.22, s * 1.25, 0.15, 0, g); }
+  const top = part(new THREE.BoxGeometry(3.6, 0.22, 0.3), dm, 1, 1, 1, 0, 3.45, 0, g); part(new THREE.BoxGeometry(3.2, 0.18, 0.26), rm, 1, 1, 1, 0, 3.25, 0, g); part(new THREE.BoxGeometry(3.0, 0.16, 0.2), rm, 1, 1, 1, 0, 2.7, 0, g);
+  return g; }
+function lantern(glow) { const g = new THREE.Group(); const st = M_(0x8a8a80, { flatShading: true });
+  part(new THREE.CylinderGeometry(0.22, 0.3, 0.15, 6), st, 1, 1, 1, 0, 0.08, 0, g); part(new THREE.CylinderGeometry(0.08, 0.1, 0.7, 6), st, 1, 1, 1, 0, 0.5, 0, g);
+  part(new THREE.BoxGeometry(0.34, 0.3, 0.34), glowM(glow), 1, 1, 1, 0, 1.0, 0, g); for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) part(CYL, st, 0.025, 0.32, 0.025, x * 0.18, 1.0, z * 0.18, g);
+  part(new THREE.ConeGeometry(0.38, 0.28, 6), st, 1, 1, 1, 0, 1.3, 0, g); part(SPH_LO, st, 0.06, 0.08, 0.06, 0, 1.48, 0, g); return g; }
+function blossomTree(col) { const g = coralBranches(1.3, 0.13, 3, 0x4a3030, col); const lm = windy(M_(col, { flatShading: true, emissive: new THREE.Color(col).multiplyScalar(0.12), rim: 0xffffff, rimS: 0.5 }), 0.02);
+  for (let i = 0; i < 7; i++) { const b = new THREE.Mesh(rockyGeo(rr(0.4, 0.6), 1, 0.4, i + 3), lm); b.position.set(rr(-0.8, 0.8), rr(1.5, 2.2), rr(-0.8, 0.8)); b.scale.y = 0.6; g.add(b); }
+  scenery.push(() => { if (Math.random() < 0.08) { const w = g.position; emit(w.x + rr(-1, 1), 2.2, w.z + rr(-1, 1), rr(-0.4, 0.4), -0.4, rr(-0.2, 0.2), C3(Math.random() < 0.7 ? '#ffb8d8' : '#ffffff'), 0.22, 3, 0.05, 0.995); } }); return g; }
+function deadTree() { const g = coralBranches(1.4, 0.15, 3, 0x2a2420, 0x3a3020); const mm = windy(new THREE.MeshStandardMaterial({ color: 0x4a6a3a, side: THREE.DoubleSide, roughness: 1 }), 0.05, 1.2);
+  for (let i = 0; i < 8; i++) { const h = rr(0.5, 1.1); const s = new THREE.Mesh(new THREE.PlaneGeometry(0.06, h).translate(0, -h / 2, 0), mm); s.position.set(rr(-0.8, 0.8), rr(1.4, 2.0), rr(-0.8, 0.8)); s.rotation.y = rr(0, 3); g.add(s); } return g; }
+function mushrooms(glow) { const g = new THREE.Group(); const cm = M_(glow, { emissive: new THREE.Color(glow).multiplyScalar(0.6), roughness: 0.4 }); const stm = M_(0xd8d0b8);
+  for (let i = 0; i < 6; i++) { const h = rr(0.15, 0.5), x = rr(-0.5, 0.5), z = rr(-0.5, 0.5); part(CYL, stm, 0.035, h, 0.035, x, h / 2, z, g); part(new THREE.SphereGeometry(1, 12, 8, 0, 6.283, 0, 1.6), cm, h * 0.4 + 0.06, h * 0.25 + 0.04, h * 0.4 + 0.06, x, h, z, g); }
+  scenery.push(t => { cm.emissiveIntensity = 0.8 + Math.sin(t * 1.7 + g.position.x) * 0.4; }); return g; }
+function pine(h, snow) { const g = new THREE.Group(); part(CYL, M_(0x4a3424), 0.1, 0.8, 0.1, 0, 0.4, 0, g);
+  const geoCol = (r, hh) => { const geo = new THREE.ConeGeometry(r, hh, 9, 3); const p = geo.attributes.position, c = []; const A = new THREE.Color(0x1f4a3a), B = new THREE.Color(snow); for (let i = 0; i < p.count; i++) { const k = (p.getY(i) / hh + 0.5); const s = k > 0.55 || (k < 0.2 && Math.random() < 0.5) ? 0.85 : 0; const t = A.clone().lerp(B, s); c.push(t.r, t.g, t.b); } geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); return geo; };
+  const m = windy(M_(0xffffff, { vertexColors: true, flatShading: true, rim: 0xdff4ff, rimS: 0.3 }), 0.006); for (let k = 0; k < 4; k++) { const r = (1.1 - k * 0.22) * h / 4, hh = h * 0.38; part(geoCol(r, hh), m, 1, 1, 1, 0, 0.6 + k * h * 0.2 + hh / 2, 0, g); } return g; }
+function runeStone(glow) { const g = new THREE.Group(); const st = M_(0x5a6470, { flatShading: true }); const h = rr(1.6, 2.4);
+  const s = part(rockyGeo(0.5, 1, 0.25, h * 3), st, 0.7, h, 0.35, 0, h * 0.85, 0, g); s.rotation.z = rr(-0.08, 0.08);
+  const gm = new THREE.MeshBasicMaterial({ color: new THREE.Color(glow).multiplyScalar(2) }); for (let i = 0; i < 5; i++) { const r = part(new THREE.BoxGeometry(1, 1, 1), gm, 0.03, rr(0.15, 0.3), 0.02, rr(-0.15, 0.15), 0.6 + i * h * 0.28, 0.2, g); r.rotation.z = rr(-0.7, 0.7); }
+  scenery.push(t => { gm.color.setRGB(...new THREE.Color(glow).multiplyScalar(1.2 + Math.sin(t * 1.5 + h * 5) * 0.9).toArray()); }); return g; }
+function iceSpire(c) { const g = new THREE.Group(); const m = M_(c, { roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.82, emissive: new THREE.Color(c).multiplyScalar(0.2), rim: 0xffffff, rimS: 1.1 });
+  for (let i = 0; i < 6; i++) { const h = rr(0.8, 2.8); const o = part(new THREE.OctahedronGeometry(1, 0), m, rr(0.15, 0.32), h, rr(0.15, 0.32), rr(-0.4, 0.4), h * 0.6, rr(-0.4, 0.4), g); o.rotation.set(rr(-0.35, 0.35), rr(0, 3), rr(-0.35, 0.35)); } return g; }
+function floatIsle(s) { const g = new THREE.Group(); part(rockyGeo(1, 1, 0.4, s), M_(0x9a8a7a, { flatShading: true }), 1.2 * s, 1.4 * s, 1.2 * s, 0, -0.7 * s, 0, g).scale.y *= -1;
+  part(new THREE.CylinderGeometry(1.25 * s, 1.15 * s, 0.18 * s, 12), M_(0x9adf7a, { flatShading: true, rim: 0xffffe0 }), 1, 1, 1, 0, 0.02, 0, g);
+  const tr = leafBlob(0xf0d070, 0.45 * s); tr.position.set(0.3 * s, 0.5 * s, 0); g.add(tr); part(CYL, M_(0x8a6a4a), 0.05 * s, 0.4 * s, 0.05 * s, 0.3 * s, 0.25 * s, 0, g); return g; }
+function cloudPuff(s, hex = 0xd8d0c4) { const g = new THREE.Group(); const m = M_(hex, { emissive: new THREE.Color(hex).multiplyScalar(0.04), roughness: 1, rim: 0xffe8b0, rimS: 0.35 });
+  for (let i = 0; i < 6; i++) part(SPH, m, rr(0.5, 0.9) * s, rr(0.35, 0.6) * s, rr(0.5, 0.9) * s, rr(-1, 1) * s, rr(0, 0.3) * s, rr(-0.6, 0.6) * s, g); return g; }
+function goldPillar(h) { const g = column(h, false, M_(0xc8bca8, { roughness: 0.45, rim: 0xffe8a0, rimS: 0.3 })); const gm = glowM(0xffd86a);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.03, 8, 40), gm); ring.position.y = h + 1.0; ring.rotation.x = Math.PI / 2; g.add(ring); const orb = part(SPH_LO, gm, 0.14, 0.14, 0.14, 0, h + 1.0, 0, g);
+  scenery.push(t => { ring.rotation.z = t; ring.position.y = h + 1.0 + Math.sin(t * 1.3 + h) * 0.1; orb.position.y = ring.position.y; }); return g; }
+function aurora(c1, c2) { const m = new THREE.ShaderMaterial({ uniforms: { uTime: U.uTime, uA: { value: new THREE.Color(c1) }, uB: { value: new THREE.Color(c2) } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
+    vertexShader: 'varying vec2 vUv; uniform float uTime; void main(){ vUv = uv; vec3 p = position; p.z += sin(p.x * 0.08 + uTime * 0.3) * 6.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }',
+    fragmentShader: `uniform float uTime; uniform vec3 uA, uB; varying vec2 vUv; void main(){ float s = sin(vUv.x * 40.0 + uTime * 0.7) * 0.5 + 0.5; float f = sin(vUv.x * 13.0 - uTime * 0.4) * 0.5 + 0.5;
+      float a = smoothstep(0.0, 0.25, vUv.y) * smoothstep(1.0, 0.35, vUv.y) * (0.35 + 0.65 * s * f); gl_FragColor = vec4(mix(uA, uB, vUv.y + f * 0.3) * a * 0.55, 1.0); }` });
+  const g = new THREE.Group(); for (let i = 0; i < 2; i++) { const a = new THREE.Mesh(new THREE.PlaneGeometry(90, 12, 60, 1), m); a.position.set(0, 16 + i * 3, -38 - i * 6); a.rotation.x = 0.35; g.add(a); } world.add(g); }
+function wisps(n, hex, area = 16) { const mm = new THREE.SpriteMaterial({ map: haloTex, color: new THREE.Color(hex).multiplyScalar(1.6), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }); const list = [];
+  for (let i = 0; i < n; i++) { const s = new THREE.Sprite(mm); s.scale.setScalar(rr(0.4, 0.8)); s.userData = { x: rr(-area, area), z: rr(-area, area), p: rr(0, 6.28) }; world.add(s); list.push(s); }
+  scenery.push(t => { for (const s of list) { const u = s.userData; s.position.set(u.x + Math.sin(t * 0.3 + u.p) * 2, 1.2 + Math.sin(t * 1.1 + u.p) * 0.5, u.z + Math.cos(t * 0.25 + u.p) * 2); } }); }
+
+// one builder per realm; underwater realms keep the template's coral seabed
+const REALM = {
+  desert(M) { const R = ringSpots();
+    for (const [x, z] of R.mid.slice(0, 6)) prop(palmTree(rr(3.2, 4.4)), x, z, 0.35);
+    for (const [x, z] of R.mid.slice(6, 10)) prop(obelisk(rr(2.6, 3.6), 0x6fe7ff), x, z, 0.5);
+    for (const [x, z] of R.mid.slice(10)) prop(column(rr(0.8, 2), true, M_(0xd8b480, { flatShading: true })), x, z, 0.45);
+    for (let k = 0; k < 7; k++) { const a = k / 7 * 6.283 + 0.3, d = rr(32, 40); const py = part(new THREE.ConeGeometry(1, 1, 4), M_(0xd8b070, { flatShading: true, rim: 0xffe0a0, rimS: 0.4 }), rr(6, 10), rr(5, 8), rr(6, 10), Math.cos(a) * d, 0, Math.sin(a) * d); py.position.y = py.scale.y / 2 - 0.3; py.rotation.y = Math.PI / 4; world.add(py);
+      part(new THREE.ConeGeometry(1, 1, 4), M_(0xffd23a, { metalness: 0.9, roughness: 0.2, emissive: new THREE.Color(0x553300) }), py.scale.x * 0.12, py.scale.y * 0.12, py.scale.z * 0.12, py.position.x, py.scale.y - 0.3 - py.scale.y * 0.06, py.position.z, world).rotation.y = Math.PI / 4; }
+    duneRing(0xd8b070); },
+  olympus(M) { const R = ringSpots(); const marble = M_(0xc8c2b6, { roughness: 0.55, rim: 0xfff0d0, rimS: 0.25 });
+    for (const [x, z] of R.mid.slice(0, 7)) prop(column(rr(2.4, 3.4), Math.random() < 0.45, marble), x, z, 0.45);
+    for (const [x, z] of R.mid.slice(7, 10)) prop(brazier('#ff9a3a'), x, z, 0.3);
+    for (const [x, z] of R.mid.slice(10)) prop(Math.random() < 0.5 ? cypress(rr(2.5, 3.5)) : oliveTree(), x, z, 0.4);
+    for (let k = 0; k < 18; k++) { const a = k / 18 * 6.283, d = rr(24, 29); world.add(at(Math.random() < 0.5 ? cypress(rr(3, 5)) : oliveTree(), Math.cos(a) * d, 0, Math.sin(a) * d)); }
+    cliffRing(0x9a9488); },
+  bamboo(M) { const R = ringSpots();
+    for (const [x, z] of R.mid.slice(0, 6)) prop(bambooClump(ri(4, 7)), x, z, 0.6);
+    for (const [x, z] of R.mid.slice(6, 9)) prop(lantern('#ffc870'), x, z, 0.3);
+    for (const [x, z] of R.mid.slice(9)) prop(blossomTree(0xffa8c8), x, z, 0.4);
+    const t = torii(0xd8301a); t.position.set(0, 0, 4); world.add(t);
+    for (let k = 0; k < 22; k++) { const a = k / 22 * 6.283, d = rr(23, 28); world.add(at(bambooClump(ri(5, 8)), Math.cos(a) * d, 0, Math.sin(a) * d)); }
+    wisps(10, '#8ad8ff'); },
+  swamp(M) { const R = ringSpots();
+    for (const [x, z] of R.mid.slice(0, 7)) prop(deadTree(), x, z, 0.45);
+    for (const [x, z] of R.mid.slice(7)) prop(mushrooms('#7dff9a'), x, z, 0);
+    addSeaweed(-12, 3, 30, 3); addSeaweed(12, -6, 30, 3); addSeaweed(3, 14, 24, 3);
+    for (let k = 0; k < 20; k++) { const a = k / 20 * 6.283, d = rr(23, 29); world.add(at(deadTree(), Math.cos(a) * d, 0, Math.sin(a) * d)); }
+    wisps(16, '#9affb0'); },
+  snow(M) { const R = ringSpots();
+    for (const [x, z] of R.mid.slice(0, 8)) prop(pine(rr(3, 4.5), 0xf0f8ff), x, z, 0.45);
+    for (const [x, z] of R.mid.slice(8, 11)) prop(runeStone('#6fe7ff'), x, z, 0.4);
+    for (const [x, z] of R.mid.slice(11)) addRock(x, z, rr(0.6, 1.0), rr(0.5, 0.9), 1.3);
+    for (let k = 0; k < 30; k++) { const a = k / 30 * 6.283, d = rr(23, 30); world.add(at(pine(rr(4, 6.5), 0xf0f8ff), Math.cos(a) * d, 0, Math.sin(a) * d)); }
+    aurora(0x3aff9a, 0x8a5aff); },
+  ice(M) { const R = ringSpots();
+    for (const [x, z] of R.mid.slice(0, 9)) prop(iceSpire(0x9fe8ff), x, z, 0.5);
+    for (const [x, z] of R.mid.slice(9)) addRock(x, z, rr(0.6, 1.0), rr(0.4, 0.7), 1.1);
+    for (let k = 0; k < 16; k++) { const a = k / 16 * 6.283, d = rr(25, 31); const s = iceSpire(0xbff4ff); s.scale.setScalar(rr(2.5, 4)); s.position.set(Math.cos(a) * d, 0, Math.sin(a) * d); world.add(s); }
+    aurora(0x6affff, 0xff6ad8); },
+  heaven(M) { const R = ringSpots();
+    for (const [x, z] of R.mid.slice(0, 6)) prop(goldPillar(rr(2.6, 3.4)), x, z, 0.45);
+    for (const [x, z] of R.mid.slice(6, 10)) prop(cloudPuff(rr(0.8, 1.2)), x, z, 0.6);
+    const isles = []; for (let k = 0; k < 7; k++) { const a = k / 7 * 6.283, d = rr(17, 26); const i = floatIsle(rr(0.9, 1.6)); i.position.set(Math.cos(a) * d, rr(5, 9), Math.sin(a) * d); world.add(i); isles.push(i); }
+    for (let k = 0; k < 16; k++) { const a = k / 16 * 6.283, d = rr(24, 32); const c = cloudPuff(rr(2, 3.2)); c.position.set(Math.cos(a) * d, rr(-0.5, 0.5), Math.sin(a) * d); world.add(c); }
+    scenery.push(t => isles.forEach((i, k) => { i.position.y += Math.sin(t * 0.6 + k) * 0.003; i.rotation.y = t * 0.03 + k; }));
+    wisps(14, '#ffe08a'); }
+};
+function ringSpots() { const mid = []; for (let k = 0; k < 14; k++) { for (let tries = 0; tries < 30; tries++) { const a = rr(0, 6.283), d = rr(5, 19); const x = Math.cos(a) * d, z = Math.sin(a) * d;
+      if (Math.hypot(x, z - 8) > 3.5 && Math.hypot(x, z + 14) > 4 && !collides(x, z, 1.4) && !MAPS[S.map].zones.some(zn => Math.hypot(x - zn.x, z - zn.z) < zn.r * 0.55)) { mid.push([x, z]); colliders.push({ x, z, r: 0.01 }); break; } } }
+  return { mid }; }
+function duneRing(hex) { const m = M_(hex, { roughness: 0.95, rim: 0xffe0a0, rimS: 0.3 }); for (let k = 0; k < 20; k++) { const a = k / 20 * 6.283, d = rr(25, 30); part(SPH, m, rr(5, 8), rr(1.2, 2.6), rr(3, 5), Math.cos(a) * d, -0.4, Math.sin(a) * d, world).rotation.y = -a; } }
+function cliffRing(hex) { for (let k = 0; k < 22; k++) { const a = (k / 22) * 6.28, d = rr(26, 31); addRock(Math.cos(a) * d, Math.sin(a) * d, rr(2.2, 3.4), rr(2.5, 5), rr(1.0, 1.6)); } }
+
+// =====================================================================
 // GAME DATA — classes, skills, maps, monsters, items, sets, stones, wings
 // =====================================================================
 const CLS = {
@@ -1078,6 +1382,15 @@ const SETS = {
   vay: { n: 'Bộ Vảy Rồng Biển', col: '#7dffb0', names: { weapon: 'Kiếm Vảy Rồng', helm: 'Mũ Vảy Rồng', armor: 'Giáp Vảy Rồng', ring: 'Nhẫn Vảy Rồng' }, b2: { crit: 5 }, b4: { atkP: 0.15, dmgP: 0.15 }, d2: '+5% chí mạng', d4: '+15% tấn công, +15% sát thương' },
   dung: { n: 'Bộ Dung Nham', col: '#ffa060', names: { weapon: 'Đại Kiếm Dung Nham', helm: 'Mũ Dung Nham', armor: 'Giáp Dung Nham', ring: 'Nhẫn Dung Nham' }, b2: { defP: 0.2 }, b4: { atkP: 0.2, dmgP: 0.25, hpP: 0.1 }, d2: '+20% phòng thủ', d4: '+20% tấn công, +25% sát thương, +10% máu' }
 };
+Object.assign(SETS, {
+  sa: { n: 'Bộ Thần Ưng Sa Mạc', col: '#ffd27a', names: { weapon: 'Liềm Thần Ưng', helm: 'Mão Thần Ưng', armor: 'Giáp Thần Ưng', ring: 'Nhẫn Bọ Hung Thánh' }, b2: { atkP: 0.15 }, b4: { dmgP: 0.3, crit: 5 }, d2: '+15% tấn công', d4: '+30% sát thương, +5% chí mạng' },
+  olym: { n: 'Bộ Lôi Thần Olympus', col: '#c8d8ff', names: { weapon: 'Lôi Trượng Olympus', helm: 'Mũ Lông Vũ Olympus', armor: 'Giáp Cẩm Thạch', ring: 'Nhẫn Nguyệt Quế' }, b2: { hpP: 0.2 }, b4: { atkP: 0.25, dmgP: 0.3 }, d2: '+20% máu', d4: '+25% tấn công, +30% sát thương' },
+  ho: { n: 'Bộ Cửu Vĩ Hồ', col: '#ff9ad8', names: { weapon: 'Kiếm Cửu Vĩ', helm: 'Mặt Nạ Hồ Ly', armor: 'Áo Lụa Hồ Ly', ring: 'Nhẫn Hồ Hỏa' }, b2: { crit: 8 }, b4: { dmgP: 0.4, atkP: 0.2 }, d2: '+8% chí mạng', d4: '+40% sát thương, +20% tấn công' },
+  dam: { n: 'Bộ Phù Thủy Đầm Lầy', col: '#9affb0', names: { weapon: 'Trượng Rễ Cổ', helm: 'Mũ Gạc Hươu', armor: 'Áo Rêu Phép', ring: 'Nhẫn Ma Trơi' }, b2: { defP: 0.3 }, b4: { hpP: 0.3, dmgP: 0.4 }, d2: '+30% phòng thủ', d4: '+30% máu, +40% sát thương' },
+  bac: { n: 'Bộ Chiến Binh Phương Bắc', col: '#9fe8ff', names: { weapon: 'Rìu Sương Giá', helm: 'Mũ Sừng Bắc Âu', armor: 'Giáp Lông Sói', ring: 'Nhẫn Rune' }, b2: { atkP: 0.25 }, b4: { dmgP: 0.5, hpP: 0.2 }, d2: '+25% tấn công', d4: '+50% sát thương, +20% máu' },
+  cuc: { n: 'Bộ Cực Quang', col: '#c0a8ff', names: { weapon: 'Thương Cực Quang', helm: 'Vương Miện Băng', armor: 'Giáp Pha Lê', ring: 'Nhẫn Cực Quang' }, b2: { crit: 10 }, b4: { atkP: 0.35, dmgP: 0.55 }, d2: '+10% chí mạng', d4: '+35% tấn công, +55% sát thương' },
+  thien: { n: 'Bộ Thiên Đế', col: '#ffe08a', names: { weapon: 'Thiên Đế Kiếm', helm: 'Kim Quan Thiên Đế', armor: 'Long Bào Kim Giáp', ring: 'Nhẫn Nhật Nguyệt' }, b2: { atkP: 0.3, hpP: 0.2 }, b4: { dmgP: 0.8, crit: 10 }, d2: '+30% tấn công, +20% máu', d4: '+80% sát thương, +10% chí mạng' }
+});
 const PLAIN = { weapon: ['Kiếm Hải Lam', 'Kích San Hô', 'Thương Triều Dâng'], helm: ['Mũ Ngọc Trai', 'Mũ Vỏ Ốc Bạc'], armor: ['Giáp Lân Quang', 'Giáp Vỏ Sò'], ring: ['Nhẫn Bọt Biển', 'Nhẫn Lân Quang'], pendant: ['Dây Chuyền Ngọc Trai', 'Mặt Dây Lân Quang', 'Bùa Triều Cường'] };
 
 // monsters: only the template's luminous jelly and spiked fish, recoloured per sea
@@ -1098,23 +1411,109 @@ const MT = {
   bossFish: { name: 'Cá Gai Lục Vương', model: 'fish', hp: 90, atk: 1.3, exp: 22, speed: 1.1, size: 2.0, y: 0.9, color: '#c8ff9a', boss: true, pal: { back: 0x0e2a14, belly: 0x5ad84a, stripe: 0xffe08a, fin: 0xffc84a, finE: 0xc88a0a, rim: 0xfff0b0, eye: 0xff3a3a, crown: true } },
   bossLava: { name: 'Sứa Hỏa Vương', model: 'jelly', hp: 320, atk: 1.6, exp: 48, speed: 0.9, size: 1.7, y: 1.7, color: '#ffb080', boss: true, pal: { h1: 0.02, h2: 0.12, crown: true, gem: 0xffd23a } }
 };
+for (const k in MT) { const T = MT[k]; T.hh = T.model === 'jelly' ? 0.3 : 0.1; T.lh = T.model === 'jelly' ? 1.0 : 0.85; }
+// mythic monsters (built in e2_myth.js); y = hover height, hh = hit height, lh = label height (× scale)
+const MY = (model, name, color, size, p, extra = {}) => Object.assign({ name, model, color, size, p, speed: 1.2,
+  y: { serpent: 0.2, wraith: 0.15, golem: 0, bird: 1.3, scarab: 0, spirit: 1.1 }[model], hh: { serpent: 0.15, wraith: 1.0, golem: 1.0, bird: 0, scarab: 0.25, spirit: 0 }[model], lh: { serpent: 0.9, wraith: 1.75, golem: 2.1, bird: 0.7, scarab: 0.8, spirit: 0.65 }[model] }, extra);
+Object.assign(MT, {
+  // sea realms: a sea serpent and a fire spirit join the template creatures
+  seaSerpent: MY('serpent', 'Hải Xà Rêu Biếc', '#9fffc0', 1, { body: 0x1f5a4a, belly: 0xb8e8a0, glow: 0x7dffb0, horn: 0xd8ffd0, segs: 11 }),
+  fireSpirit: MY('spirit', 'Hỏa Linh Dung Nham', '#ffa060', 0.9, { glow: 0xff6a1a, core: 0xffd08a, flame: '#ff7a1a' }),
+  // Egypt
+  scarab: MY('scarab', 'Bọ Hung Thánh Giáp', '#ffd27a', 1, { shell: 0xb08a20, glow: 0x6fe7ff, gem: true }),
+  mummy: MY('wraith', 'Xác Ướp Lang Thang', '#e8d8b0', 0.95, { robe: 0xd8c8a0, robe2: 0x8a7a5a, bands: true, glow: 0x6fe7ff, eye: 0x6fe7ff }),
+  apep: MY('serpent', 'Rắn Cát Apep', '#ffb05a', 1, { body: 0x8a5a2a, belly: 0xf0d090, glow: 0xffa040, hood: 0xc87a2a, rear: true, segs: 10 }),
+  sandGolem: MY('golem', 'Hộ Vệ Sa Thạch', '#ffd8a0', 0.9, { stone: 0xc8a06a, glow: 0x6fe7ff }),
+  sphinx: MY('golem', 'Tượng Nhân Sư Thức Tỉnh', '#ffd27a', 1, { stone: 0xd8b070, glow: 0xffd23a, crown: true, halo: true }),
+  bossApep: MY('serpent', 'Apophis Xà Thần Hỗn Mang', '#ff9a5a', 1, { body: 0x4a1a3a, belly: 0xffa060, glow: 0xff5a2a, hood: 0x8a2a4a, rear: true, crown: true, horn: 0xffd23a, segs: 12 }, { boss: true }),
+  // Greece
+  harpy: MY('bird', 'Harpy Cuồng Phong', '#d8a8ff', 1, { body: 0x5a3a7a, glow: 0xd8a8ff, w1: 0xfff0ff, w2: 0x8a3dff, w3: 0xd8a8ff }),
+  cyclops: MY('golem', 'Khổng Lồ Một Mắt', '#f0e8d8', 0.95, { stone: 0xb8b0a0, glow: 0xffb04a, cyclops: true }),
+  gorgon: MY('serpent', 'Rắn Tóc Gorgon', '#b0ff9a', 1, { body: 0x3a6a2a, belly: 0xd8c890, glow: 0xb0ff6a, mane: 0x6a8a3a, rear: true }),
+  shade: MY('wraith', 'Vong Hồn Hades', '#9ab8ff', 1, { robe: 0x1a2a4a, robe2: 0x0a0a1a, glow: 0x6a9aff, eye: 0x9fd0ff }),
+  griffin: MY('bird', 'Điểu Sư Hoàng Kim', '#ffe08a', 1, { body: 0xb08a3a, glow: 0xffe08a, w1: 0xfff8e0, w2: 0xd89a2a, w3: 0xffe08a, crown: true }),
+  bossTitan: MY('golem', 'Titan Cẩm Thạch', '#fff0d0', 1, { stone: 0xc8c0b0, glow: 0xffd23a, crown: true, halo: true }, { boss: true }),
+  // East Asia
+  kitsune: MY('spirit', 'Hồ Hỏa Cửu Vĩ', '#8ad8ff', 0.9, { glow: 0x4ab0ff, core: 0xe8f8ff, flame: '#6ac8ff', orbs: 9 }),
+  oni: MY('spirit', 'Mặt Quỷ Oni', '#ff8a6a', 1, { glow: 0xff4a1a, core: 0xffd08a, flame: '#ff5a1a', mask: 0xc8281a, orbs: 0 }),
+  yurei: MY('wraith', 'Oán Linh Yūrei', '#e8f4ff', 1, { robe: 0xf0f4f8, robe2: 0x9ab0c8, glow: 0x9fe8ff, eye: 0x6fd8ff, hair: true }),
+  jadeDragon: MY('serpent', 'Long Xà Ngọc Bích', '#7dffc8', 1, { body: 0x1a8a6a, belly: 0xf0e090, glow: 0x7dffc8, horn: 0xf0e0b0, whisk: true, mane: 0xffd23a, fly: true, segs: 12 }, { y: 1.0 }),
+  tengu: MY('bird', 'Thiên Cẩu Tengu', '#ff8a8a', 1, { body: 0x1a1a1a, beak: 0xc8281a, glow: 0xff6a5a, w1: 0xffe0d8, w2: 0x2a0a0a, w3: 0xff6a5a, crown: true }),
+  bossLong: MY('serpent', 'Thanh Long Thần Quân', '#7dd8ff', 1, { body: 0x1a5aa8, belly: 0xf0e8b0, glow: 0x7de8ff, horn: 0xffe08a, whisk: true, mane: 0xffffff, fly: true, crown: true, segs: 14 }, { boss: true, y: 1.1 }),
+  // Slavic swamp
+  wisp: MY('spirit', 'Ma Trơi Đầm Sâu', '#9affb0', 0.8, { glow: 0x5aff8a, core: 0xe0ffe8, flame: '#5aff8a', orbs: 2 }),
+  leshy: MY('golem', 'Cây Ma Leshy', '#b0ff8a', 0.9, { stone: 0x4a3a28, glow: 0x9aff5a, wood: true, leaf: 0x3a6a2a }),
+  bogBeetle: MY('scarab', 'Bọ Độc Đầm Lầy', '#b0ff6a', 1, { shell: 0x2a4a1a, glow: 0xb0ff4a }),
+  rusalka: MY('wraith', 'Hồn Ma Rusalka', '#9affd8', 1, { robe: 0x2a5a4a, robe2: 0x0a1a14, glow: 0x6affb0, eye: 0x9affd8, hair: true }),
+  zmey: MY('serpent', 'Rắn Thần Zmey', '#c8ff6a', 1, { body: 0x2a3a1a, belly: 0x8a9a5a, glow: 0xc8ff4a, horn: 0x8a8a6a, mane: 0x4a6a2a, crown: true }),
+  bossLeshy: MY('golem', 'Leshy Cổ Thụ Vương', '#c8ff8a', 1, { stone: 0x3a2a1a, glow: 0xc8ff5a, wood: true, leaf: 0x4a8a2a, crown: true, horn: 0x6a5a3a }, { boss: true }),
+  // Norse
+  draugr: MY('wraith', 'Draugr Băng Giá', '#9fe8ff', 1, { robe: 0x3a4a5a, robe2: 0x1a2a3a, glow: 0x9fe8ff, eye: 0x6fd8ff, horn: 0xe8e0d0 }),
+  jotunn: MY('golem', 'Jötunn Tuyết', '#dff4ff', 0.95, { stone: 0xb8c8d8, glow: 0x6fd8ff, crystal: 0xbff4ff }),
+  raven: MY('bird', 'Quạ Thần Odin', '#b0b8ff', 1, { body: 0x101018, beak: 0x2a2a3a, glow: 0x8a9aff, w1: 0xd8e0ff, w2: 0x1a1a3a, w3: 0x8a9aff }),
+  jorm: MY('serpent', 'Xà Con Jörmungandr', '#6affe8', 1, { body: 0x1a4a5a, belly: 0x9ad8c8, glow: 0x6affe8, horn: 0xd8f0f0, segs: 12 }),
+  huginn: MY('bird', 'Huginn Tư Tưởng', '#d8e0ff', 1, { body: 0x18182a, beak: 0x3a3a5a, glow: 0xb0c0ff, w1: 0xffffff, w2: 0x3a3aaa, w3: 0xb0c0ff, crown: true }),
+  bossYmir: MY('golem', 'Ymir Cự Nhân Băng', '#bff4ff', 1, { stone: 0xa8c0d8, glow: 0x6fe7ff, crystal: 0xbff4ff, crown: true, horn: 0xe8f0f8 }, { boss: true }),
+  // Arctic
+  auroraSp: MY('spirit', 'Tinh Linh Cực Quang', '#c0a8ff', 0.9, { glow: 0x9a6aff, core: 0xe8e0ff, flame: '#6affd8', orbs: 4 }),
+  crystalBug: MY('scarab', 'Bọ Pha Lê', '#bff4ff', 1, { shell: 0x6ab8d8, glow: 0xbff4ff, gem: true }),
+  iceDragon: MY('serpent', 'Băng Long', '#dff8ff', 1, { body: 0x8ab8d8, belly: 0xffffff, glow: 0xbff4ff, horn: 0xffffff, whisk: true, mane: 0xdff8ff, fly: true, segs: 12 }, { y: 1.0 }),
+  snowBird: MY('bird', 'Tuyết Điểu', '#e8f8ff', 1, { body: 0xe8f0f8, beak: 0x9ab0c8, glow: 0xbff4ff, w1: 0xffffff, w2: 0x6ab8ff, w3: 0xbff4ff, trail: '#bff4ff' }),
+  sedna: MY('wraith', 'Hồn Biển Băng Sedna', '#9fe8ff', 1, { robe: 0x2a5a7a, robe2: 0x0a1a2a, glow: 0x9fe8ff, eye: 0xbff4ff, hair: true, crown: true }),
+  bossPhoenixIce: MY('bird', 'Băng Phượng Cực Bắc', '#dff8ff', 1, { body: 0xbfe0f8, beak: 0x6ab8ff, glow: 0x9fe8ff, w1: 0xffffff, w2: 0x3a8aff, w3: 0xbff4ff, trail: '#bff4ff', crown: true }, { boss: true, y: 1.6 }),
+  // Heaven
+  phoenix: MY('bird', 'Phượng Hoàng Lửa', '#ffb05a', 1, { body: 0xd8401a, beak: 0xffd23a, glow: 0xffa040, w1: 0xfff0b0, w2: 0xff4a0a, w3: 0xffc84a, trail: '#ff9a3a', tail: 0xff4a0a }),
+  goldGuard: MY('golem', 'Thiên Binh Kim Giáp', '#ffe08a', 0.95, { stone: 0xd8a83a, glow: 0xfff0b0, metal: true, halo: true }),
+  seraph: MY('spirit', 'Thiên Nhãn Seraph', '#ffe08a', 1, { glow: 0xffd86a, core: 0xffffff, flame: '#ffe08a', eye: 0x4ab0ff, orbs: 0 }),
+  goldDragon: MY('serpent', 'Kim Long', '#ffd86a', 1, { body: 0xc8901a, belly: 0xfff0b0, glow: 0xffe08a, horn: 0xffffff, whisk: true, mane: 0xff6a3a, fly: true, segs: 13 }, { y: 1.0 }),
+  fallen: MY('wraith', 'Thiên Sứ Sa Ngã', '#ffd8ff', 1, { robe: 0xf0e8f8, robe2: 0x5a3a6a, glow: 0xffd86a, eye: 0xff6aff, crown: true }),
+  bossDe: MY('bird', 'Phượng Hoàng Thiên Đế', '#ffe08a', 1, { body: 0xffc83a, beak: 0xffffff, glow: 0xffe08a, w1: 0xffffff, w2: 0xff9a1a, w3: 0xffe08a, trail: '#ffd86a', tail: 0xff6a1a, crown: true }, { boss: true, y: 1.6 })
+});
 // each sea uses the template's seabed, coral, rocks, kelp and gate, with its own palette
 const MAPS = [
-  { name: 'Bãi San Hô Lân Quang', req: 1, lo: 1, hi: 220, set: 'song',
+  { name: 'Bãi San Hô Lân Quang', req: 1, lo: 1, hi: 90, set: 'song', env: 'sea', culture: 'Biển Sâu', mini: 'jellyBlue',
     pal: { sa: [0.045, 0.13, 0.15], sb: [0.17, 0.30, 0.29], pt: [0.03, 0.10, 0.13], ca: [0.25, 0.75, 0.85], fog: 0x06262e, bg: 0x072c35, rock: [0x4fae94, 0x1f5d63, 0x0b2a33, 0x9ff2d8], weed: [0x2f9e6e, 0x4fc48a, 0x1f7a6a, 0x7ad19a, 0x3fb3a0], weedH: 1, weedE: 0x0c3d2a, stone: 0x5f8f99, rune: 0x6fe7ff, portal: [0x0d5a99, 0x66f2ff],
       coral: [[0xff4f9a, 0xffb0e0], [0x9a5bff, 0xd8b8ff], [0xff7a3d, 0xffd08a], [0x3fd1c8, 0xb8fff4]], sponge: [0xffb43d, 0xff6a5a, 0xc8ff6a], fan: [0xff5fa8, 0xb07bff, 0xffa34d], mote: [0x7fdcef, 0xbff4ff] },
     zones: [{ k: 'jelly', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fish', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'jellyBlue', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishNight', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossJelly', x: 0, z: -12.5, off: 8, respawn: 180 } },
-  { name: 'Rừng Tảo U Linh', req: 120, lo: 110, hi: 520, set: 'vay',
+  { name: 'Rừng Tảo U Linh', req: 70, lo: 70, hi: 170, set: 'vay', env: 'sea', culture: 'Biển Sâu', mini: 'seaSerpent',
     pal: { sa: [0.035, 0.12, 0.08], sb: [0.13, 0.27, 0.17], pt: [0.02, 0.08, 0.05], ca: [0.35, 0.85, 0.5], fog: 0x062418, bg: 0x072c1e, rock: [0x6fbf7c, 0x24603a, 0x0a2a16, 0xc8ffc0], weed: [0x2fae5a, 0x4fd47a, 0x1f8a4a, 0x8ae07a, 0x3fc38a], weedH: 1.5, weedE: 0x0c4a1a, stone: 0x6a9a7a, rune: 0x7dff9a, portal: [0x0d7a3a, 0x9affb0],
       coral: [[0x3fd1c8, 0xb8fff4], [0xb0ff5a, 0xf4ffc0], [0x6aff8a, 0xd8ffb0], [0xffd23a, 0xfff0a0]], sponge: [0xc8ff6a, 0xffd23a, 0x6affc8], fan: [0x6aff8a, 0x3fd1c8, 0xd8ff6a], mote: [0x9fffb8, 0xd8ffe0] },
-    zones: [{ k: 'jellyGreen', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fishMoss', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'jellyAmber', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishGold', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
+    zones: [{ k: 'jellyGreen', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fishMoss', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'seaSerpent', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishGold', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
     boss: { k: 'bossFish', x: 0, z: -12.5, off: 8, respawn: 210 } },
-  { name: 'Hố Thẳm Dung Nham', req: 350, lo: 330, hi: 800, set: 'dung',
+  { name: 'Hố Thẳm Dung Nham', req: 150, lo: 150, hi: 250, set: 'dung', env: 'sea', culture: 'Biển Lửa', mini: 'fireSpirit',
     pal: { sa: [0.09, 0.04, 0.04], sb: [0.24, 0.12, 0.09], pt: [0.05, 0.02, 0.02], ca: [0.9, 0.42, 0.18], fog: 0x1e0c0a, bg: 0x241010, rock: [0xa0604a, 0x4a2a24, 0x160a08, 0xffb07a], weed: [0x8a2a1a, 0xc8401a, 0x5a1a10, 0xe0603a], weedH: 0.8, weedE: 0x4a0a00, stone: 0x6a4a44, rune: 0xff8a3a, portal: [0x8a1a04, 0xffb05a],
       coral: [[0xff4a1a, 0xffd08a], [0xff7a3d, 0xfff0a0], [0xd02a4a, 0xffa0b0], [0xffb43d, 0xfff4c0]], sponge: [0xff6a3a, 0xffb43d, 0xd02a4a], fan: [0xff5a2a, 0xffa34d, 0xff3a6a], mote: [0xffa070, 0xffd8b0] },
-    zones: [{ k: 'jellyRed', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fishLava', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'jellyAsh', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishBlack', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
-    boss: { k: 'bossLava', x: 0, z: -12.5, off: 8, respawn: 240 } }
+    zones: [{ k: 'jellyRed', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'fishLava', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'fireSpirit', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'fishBlack', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
+    boss: { k: 'bossLava', x: 0, z: -12.5, off: 8, respawn: 240 } },
+  { name: 'Sa Mạc Hoàng Kim', culture: 'Ai Cập', req: 230, lo: 230, hi: 330, set: 'sa', env: 'desert', exposure: 0.78, mini: 'sphinx',
+    pal: { sa: [0.154, 0.105, 0.055], sb: [0.242, 0.176, 0.094], pt: [0.187, 0.127, 0.066], ca: [0.06, 0.05, 0.03], fog: 0x8a6a4a, bg: 0xa08060, fogD: 0.011, rock: [0xd8b07a, 0x8a6a3a, 0x4a3420, 0xffe0a0], weed: [0x8a9a3a, 0xa0a848, 0x6a7a2a], weedH: 0.5, weedE: 0x2a2a0a, stone: 0xc8a46a, rune: 0x6fe7ff, portal: [0x0d5a99, 0x66f2ff], coral: [[0x8a9a3a, 0xc8d070]], sponge: [0xc8a050], fan: [0xa0a040], mote: [0xffe0a0, 0xfff0d0], moteRise: [0.15, 0.4], hemi: [0xfff0d8, 0x6a4a2a, 1.1], sun: [0xfff0c8, 2.2], light: 0xffc87a, shaft: [0.3, 0.24, 0.12], spk: 0.6 },
+    zones: [{ k: 'scarab', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'mummy', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'apep', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'sandGolem', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
+    boss: { k: 'bossApep', x: 0, z: -12.5, off: 8, respawn: 210 } },
+  { name: 'Thánh Địa Olympus', culture: 'Hy Lạp', req: 310, lo: 310, hi: 410, set: 'olym', env: 'olympus', exposure: 0.68, mini: 'griffin',
+    pal: { sa: [0.121, 0.132, 0.094], sb: [0.198, 0.209, 0.160], pt: [0.099, 0.143, 0.066], ca: [0.05, 0.06, 0.05], fog: 0x6a8098, bg: 0x7a90a8, fogD: 0.012, rock: [0xd8d4c8, 0x8a8a80, 0x4a4a44, 0xffffff], weed: [0x6a8a3a, 0x8aa050], weedH: 0.5, weedE: 0x1a2a0a, stone: 0xe8e4d8, rune: 0xffd86a, portal: [0x8a6a10, 0xffe8a0], coral: [[0x6a8a3a, 0xb0c880]], sponge: [0x8a9a5a], fan: [0x8aa050], mote: [0xfff0c8, 0xffffff], moteRise: [0.2, 0.6], hemi: [0xe8f4ff, 0x4a5a3a, 1.15], sun: [0xfff4e0, 2.3], light: 0xffe0a0, shaft: [0.3, 0.28, 0.2], spk: 0.2 },
+    zones: [{ k: 'harpy', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'cyclops', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'gorgon', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'shade', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
+    boss: { k: 'bossTitan', x: 0, z: -12.5, off: 8, respawn: 210 } },
+  { name: 'Rừng Trúc Linh Hồ', culture: 'Đông Á', req: 390, lo: 390, hi: 490, set: 'ho', env: 'bamboo', exposure: 0.9, mini: 'tengu',
+    pal: { sa: [0.088, 0.132, 0.066], sb: [0.165, 0.209, 0.110], pt: [0.231, 0.165, 0.176], ca: [0.04, 0.06, 0.03], fog: 0x5a7a6a, bg: 0x6a8a7a, fogD: 0.03, rock: [0x8a9a8a, 0x4a5a4a, 0x2a3a2a, 0xd8f0d8], weed: [0x4a8a3a, 0x6aaa4a], weedH: 0.6, weedE: 0x0a2a0a, stone: 0x7a8a7a, rune: 0xff8ab0, portal: [0x8a1a4a, 0xffa8d8], coral: [[0x4a8a3a, 0xa0d070]], sponge: [0x6a9a4a], fan: [0x6aaa4a], mote: [0xffb8d8, 0xffffff], moteRise: [-0.25, 0.5], hemi: [0xd8fff0, 0x2a4a2a, 1.5], sun: [0xfff0e0, 2.4], light: 0xffb8d8, shaft: [0.2, 0.26, 0.2], spk: 0.0 },
+    zones: [{ k: 'kitsune', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'oni', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'yurei', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'jadeDragon', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
+    boss: { k: 'bossLong', x: 0, z: -12.5, off: 8, respawn: 210 } },
+  { name: 'Đầm Lầy U Minh', culture: 'Đông Âu', req: 470, lo: 470, hi: 570, set: 'dam', env: 'swamp', exposure: 1.0, mini: 'zmey',
+    pal: { sa: [0.044, 0.055, 0.039], sb: [0.088, 0.105, 0.066], pt: [0.028, 0.066, 0.055], ca: [0.08, 0.16, 0.08], fog: 0x1a2a22, bg: 0x1a2a24, fogD: 0.04, rock: [0x5a6a50, 0x2a3424, 0x10140c, 0x9ab080], weed: [0x4a5a2a, 0x6a7a3a, 0x3a4a1a], weedH: 0.7, weedE: 0x0a1a00, stone: 0x4a5a48, rune: 0x7dff9a, portal: [0x0d5a2a, 0x9affb0], coral: [[0x4a5a2a, 0x8a9a5a]], sponge: [0x5a6a3a], fan: [0x4a5a2a], mote: [0x9affb0, 0xd8ffe0], moteRise: [0.1, 0.3], hemi: [0x9ab8a0, 0x10180c, 1.2], sun: [0xb0d0b8, 1.6], light: 0x7dff9a, shaft: [0.1, 0.16, 0.1], spk: 0.0 },
+    zones: [{ k: 'wisp', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'leshy', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'bogBeetle', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'rusalka', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
+    boss: { k: 'bossLeshy', x: 0, z: -12.5, off: 8, respawn: 210 } },
+  { name: 'Băng Nguyên Bắc Âu', culture: 'Bắc Âu', req: 550, lo: 550, hi: 650, set: 'bac', env: 'snow', exposure: 0.78, mini: 'huginn',
+    pal: { sa: [0.198, 0.226, 0.259], sb: [0.286, 0.319, 0.352], pt: [0.165, 0.198, 0.242], ca: [0.03, 0.04, 0.05], fog: 0x4a5a78, bg: 0x1a2a44, fogD: 0.016, rock: [0xe8f0f8, 0x8a98a8, 0x4a5464, 0xffffff], weed: [0x9ab0a0], weedH: 0.4, weedE: 0x1a2a2a, stone: 0x6a7888, rune: 0x6fe7ff, portal: [0x0d4a99, 0x9ff2ff], coral: [[0x9ab0c0, 0xffffff]], sponge: [0xc8d8e8], fan: [0xb0c0d0], mote: [0xffffff, 0xe8f4ff], moteRise: [-0.7, -1.1], hemi: [0xdff0ff, 0x3a4a5a, 1.15], sun: [0xe8f4ff, 2.0], light: 0x9fe8ff, shaft: [0.12, 0.18, 0.3], spk: 1.0 },
+    zones: [{ k: 'draugr', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'jotunn', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'raven', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'jorm', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
+    boss: { k: 'bossYmir', x: 0, z: -12.5, off: 8, respawn: 210 } },
+  { name: 'Cực Băng Vĩnh Hằng', culture: 'Bắc Cực', req: 630, lo: 630, hi: 730, set: 'cuc', env: 'ice', exposure: 0.82, mini: 'sedna',
+    pal: { sa: [0.132, 0.187, 0.242], sb: [0.231, 0.297, 0.352], pt: [0.088, 0.143, 0.209], ca: [0.1, 0.16, 0.22], fog: 0x2a4a6a, bg: 0x0a1430, fogD: 0.02, rock: [0xbff4ff, 0x6a9ab8, 0x2a4a68, 0xffffff], weed: [0x9ad8f0], weedH: 0.4, weedE: 0x1a3a5a, stone: 0x6a8aa8, rune: 0xc0a8ff, portal: [0x4a2a99, 0xd0b8ff], coral: [[0x9ad8f0, 0xffffff]], sponge: [0xbff4ff], fan: [0x9ad8f0], mote: [0xdff8ff, 0xc0a8ff], moteRise: [-0.4, 0.5], hemi: [0xc8e8ff, 0x1a2a4a, 1.5], sun: [0xd8f0ff, 2.2], light: 0xc0a8ff, shaft: [0.14, 0.2, 0.34], spk: 1.4 },
+    zones: [{ k: 'auroraSp', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'crystalBug', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'iceDragon', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'snowBird', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
+    boss: { k: 'bossPhoenixIce', x: 0, z: -12.5, off: 8, respawn: 210 } },
+  { name: 'Thiên Giới Kim Quang', culture: 'Thiên Giới', req: 710, lo: 710, hi: 800, set: 'thien', env: 'heaven', exposure: 0.66, mini: 'fallen',
+    pal: { sa: [0.231, 0.209, 0.171], sb: [0.308, 0.286, 0.237], pt: [0.275, 0.226, 0.132], ca: [0.16, 0.12, 0.05], fog: 0xb89a70, bg: 0xc8aa80, fogD: 0.012, rock: [0xf0e8d8, 0xb8a888, 0x6a5a48, 0xffffff], weed: [0xd8c070], weedH: 0.4, weedE: 0x3a2a0a, stone: 0xf0e8d8, rune: 0xffd86a, portal: [0x8a5a10, 0xfff0a0], coral: [[0xffd86a, 0xffffff]], sponge: [0xffe8a0], fan: [0xffd86a], mote: [0xffe08a, 0xffffff], moteRise: [0.3, 0.8], hemi: [0xfff8e8, 0x8a6a40, 1.05], sun: [0xfff4d8, 2.1], light: 0xffd86a, shaft: [0.36, 0.3, 0.16], spk: 0.5 },
+    zones: [{ k: 'phoenix', x: -5, z: 5, r: 4.5, n: 10, off: -3, hk: 0.85 }, { k: 'goldGuard', x: 9, z: -1, r: 4.5, n: 10, off: 0, hk: 1 }, { k: 'seraph', x: 7, z: -8.5, r: 5, n: 10, off: 3, hk: 1.15 }, { k: 'goldDragon', x: -8, z: -8, r: 5, n: 10, off: 6, hk: 1.3 }],
+    boss: { k: 'bossDe', x: 0, z: -12.5, off: 8, respawn: 210 } }
 ];
 
 // formulas ---------------------------------------------------------------
@@ -1162,7 +1561,7 @@ WNAME[0] = 'Cánh Sơ Khai';
 let S = null;
 function newState(cls) { return { v: 2, cls, lv: 1, exp: 0, gold: 0, mats: { e: 3, c: 0, p: 0, d: 0, t: 0, x: 0, f: 0 }, st: { c: 0, p: 0, d: 0, t: 0, x: 0 }, wing: 0, inv: [], eq: {}, map: 0, auto: true,
   hp: 1, mp: 100, pos: new THREE.Vector3(0, 0, 8), face: Math.PI, atkCd: 0, atkT: 0, skCd: [0, 0, 0], castT: 0, dead: 0, lastHit: -99, time: 0, kills: 0, skillT: 0,
-  pets: [], pet: null, mounts: [], mount: null, playT: 0, rec: { t: 0, hp: 0, mp: 0 }, lvLog: [] }; }
+  pets: [], pet: null, mounts: [], mount: null, playT: 0, autoLoot: true, miniT: 70, mini: null, rec: { t: 0, hp: 0, mp: 0 }, lvLog: [] }; }
 let uidN = 1; const uid = () => 'i' + Date.now().toString(36) + (uidN++);
 function makeGear(slot, r, lv, set) {
   const base = {}; for (const k in SLOTS[slot].base) base[k] = k === 'crit' ? SLOTS[slot].base[k] * (r + 1) : Math.round(SLOTS[slot].base[k] * RMULT[r] * (1 + lv * 0.09));
@@ -1183,7 +1582,7 @@ function heroStats() {
   for (const k in sc) { const T = SETS[k]; if (sc[k] >= 2) for (const x in T.b2) b[x] += T.b2[x]; if (sc[k] >= 4) for (const x in T.b4) b[x] += T.b4[x]; }
   st.atk = Math.round(st.atk * (1 + b.atkP)); st.hp = Math.round(st.hp * (1 + b.hpP)); st.def = Math.round(st.def * (1 + b.defP)); st.crit += b.crit;
   st.dmgMul = WINGM[S.wing] * (1 + b.dmgP); st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
-  st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * (1 + (Mt ? Mt.spd : 0)); return st;
+  st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * 0.6 * (1 + (Mt ? Mt.spd : 0)); return st;
 }
 const curPet = () => S && S.pet ? PETS.find(p => p.id === S.pet) : null;
 const curMount = () => S && S.mount ? MOUNTS.find(p => p.id === S.mount) : null;
@@ -1269,12 +1668,17 @@ function navDir(tx, tz) {
 function spawnPos(z) { for (let k = 0; k < 20; k++) { const a = rr(0, 6.28), d = Math.sqrt(rand()) * z.r; const x = z.x + Math.cos(a) * d, zz = z.z + Math.sin(a) * d; if (!collides(x, zz, 0.8)) return [x, zz]; } return [z.x, z.z]; }
 function setMap(i) {
   S.map = i; const M = MAPS[i]; PAL = M.pal; seed = 20261119 + i * 977;
-  while (world.children.length) { const c = world.children.pop(); c.traverse(o => { if (o.geometry && o.geometry !== blobGeo) o.geometry.dispose(); }); }
-  colliders.length = 0;
+  while (world.children.length) { const c = world.children.pop(); c.traverse(o => { if (o.geometry && o.geometry !== blobGeo && !SHARED.has(o.geometry)) o.geometry.dispose(); }); }
+  colliders.length = 0; scenery.length = 0; const env = M.env || 'sea';
   const G = groundMat.uniforms; G.uSA.value.set(...PAL.sa); G.uSB.value.set(...PAL.sb); G.uPt.value.set(...PAL.pt); G.uCa.value.set(...PAL.ca);
   FOG.setHex(PAL.fog); scene.background.setHex(PAL.bg); moteMats[0].uniforms.uC.value.setHex(PAL.mote[0]); moteMats[1].uniforms.uC.value.setHex(PAL.mote[1]);
-  heroLight.color.setHex(i === 2 ? 0xff9a5a : 0x5ab8ff);
+  heroLight.color.setHex(PAL.light ?? (i === 2 ? 0xff9a5a : 0x5ab8ff));
+  const hm = PAL.hemi || [0x8fefff, 0x0a2c36, 1.4], sn = PAL.sun || [0xc8f7ff, 2.4]; hemi.color.setHex(hm[0]); hemi.groundColor.setHex(hm[1]); hemi.intensity = hm[2]; sun.color.setHex(sn[0]); sun.intensity = sn[1];
+  renderer.toneMappingExposure = M.exposure ?? 0.95;
+  scene.fog.density = G.uFogD.value = PAL.fogD ?? 0.022; G.uSpk.value = PAL.spk ?? 0; shaftMat.uniforms.uC.value.set(...(PAL.shaft || [0.16, 0.4, 0.45]));
+  const mr = PAL.moteRise || [0.25, 1.1]; moteMats[0].uniforms.uRise.value = mr[0]; moteMats[1].uniforms.uRise.value = mr[1]; moteMats[0].uniforms.uSize.value = mr[0] < 0 ? 0.2 : 0.12;
   addGate(0, -15, 0);
+  if (env !== 'sea') REALM[env](M); else {
   for (const [x, z, r, h] of rockSpots) addRock(x, z, r, h, rr(0.8, 1.6));
   for (let k = 0; k < 26; k++) { const a = (k / 26) * 6.28 + rr(-0.1, 0.1), d = rr(23, 28); addRock(Math.cos(a) * d, Math.sin(a) * d, rr(2.2, 3.6), rr(2.5, 5.5), rr(1.0, 2.0)); }
   for (let k = 0; k < 12; k++) { const [x, z] = [rr(-18, 18), rr(-18, 18)]; if (!collides(x, z, 0.5) && Math.hypot(x, z - 8) > 3) addRock(x, z, rr(0.25, 0.5), rr(0.25, 0.5), 0.6, false); }
@@ -1287,30 +1691,30 @@ function setMap(i) {
   }
   const wk = i === 1 ? 1.8 : 1;
   addSeaweed(-15, 0, Math.round(40 * wk), 3.5); addSeaweed(15, 10, Math.round(36 * wk), 3); addSeaweed(-6, 17, Math.round(30 * wk), 3); addSeaweed(6, -18, Math.round(34 * wk), 4); addSeaweed(-17, -15, Math.round(28 * wk), 3); addSeaweed(18, -16, Math.round(26 * wk), 3); addSeaweed(1, 13, 10, 1.2);
-  if (i === 1) { addSeaweed(-11, -4, 30, 2.5); addSeaweed(13, 5, 30, 2.5); addSeaweed(-2, -20, 30, 3); }
+  if (i === 1) { addSeaweed(-11, -4, 30, 2.5); addSeaweed(13, 5, 30, 2.5); addSeaweed(-2, -20, 30, 3); } }
   for (const m of mobs) removeMob(m); mobs.length = 0; for (const l of loots) removeLoot(l); loots.length = 0;
   for (const zn of M.zones) for (let n = 0; n < zn.n; n++) { const [x, z] = spawnPos(zn); addMob(zn.k, zoneLv(zn), x, z, zn); }
-  S.bossT = Math.min(S.bossT ?? 60, 60); S.boss = null;
+  S.bossT = Math.min(S.bossT ?? 60, 60); S.boss = null; S.mini = null; S.miniT = Math.min(S.miniT ?? 40, 40);
   S.pos.set(0, 0, 8); buildNav(); S.nav = null; S.moveTo = null; S.tapMob = null;
 }
 
 // ---------- monsters (template jelly & spiked fish) ----------
 const mobs = [];
-function addMob(k, lv, x, z, zone) {
-  const T = MT[k]; const boss = !!T.boss; const v = T.model === 'jelly' ? makeJelly(T.pal) : makeFish(T.pal);
-  const scale = T.size * (boss ? 1 : T.model === 'fish' ? rr(0.9, 1.15) : rr(0.85, 1.2));
+function addMob(k, lv, x, z, zone, mini = false) {
+  const T = MT[k]; const boss = !!T.boss; const v = MAKERS[T.model](T.p || T.pal);
+  const scale = T.size * (boss ? (T.p ? 2.6 : 1) : mini ? 1.75 : T.model === 'fish' ? rr(0.9, 1.15) : rr(0.85, 1.2));
   const shadow = blob((T.model === 'fish' ? 1.6 : 1.3) * scale); scene.add(shadow); scene.add(v.group);
   const el = document.createElement('div'); el.className = 'lbl'; el.style.display = 'none';
-  el.innerHTML = `<div class="nm" style="color:${T.color}">${T.name} · Lv ${lv}</div><div class="hp${boss ? ' b' : ''}"><i></i></div>`; labelsEl.appendChild(el);
-  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 30 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 3 : 1),
+  el.innerHTML = `<div class="nm" style="color:${T.color}">${mini ? '★ ' : ''}${T.name} · Lv ${lv}</div><div class="hp${boss || mini ? ' b' : ''}"><i></i></div>`; labelsEl.appendChild(el);
+  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 30 : mini ? 10 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 3 : mini ? 2 : 1),
     hp: 0, face: rr(0, 6.28), state: 'idle', wait: rr(0, 3), flash: 0, dead: 0, respawn: 0, aggro: false, atkCd: 0, phase: rr(0, 6.28), spawnT: 0.6 };
   m.hp = m.maxHp; mobs.push(m); return m;
 }
 // zone monsters follow the hero's level inside the map's range (grind anywhere in the map)
 function zoneLv(zn) { const M = MAPS[S.map]; return clamp(S.lv + (zn.off || 0) + ri(-1, 1), M.lo, M.hi); }
-function setMobLv(m, lv) { m.lv = lv; m.maxHp = mobHp(lv) * (m.zone.hk || 1); m.atk = mobAtk(lv) * (m.zone.hk || 1); m.el.querySelector('.nm').textContent = `${m.T.name} · Lv ${lv}`; }
+function setMobLv(m, lv) { m.lv = lv; m.maxHp = mobHp(lv) * (m.zone.hk || 1); m.atk = mobAtk(lv) * (m.zone.hk || 1); m.el.querySelector('.nm').textContent = `${m.mini ? '★ ' : ''}${m.T.name} · Lv ${lv}`; }
 function removeMob(m) { scene.remove(m.group); scene.remove(m.shadow); m.el.remove(); }
-const mobH = m => m.T.y + (m.kind === 'jelly' ? 0.15 : 0.05) * m.scale * 2;
+const mobH = m => m.T.y + m.T.hh * m.scale;
 function vuln(m, el) { let k = 1; if (m.frzT > 0) k *= 1.3; if (m.shockT > 0) k *= 1.2; if (m.burnT > 0) k *= 1.15; if (m.wetT > 0) k *= (el === 'ice' || el === 'thunder') ? 1.35 : 1.1; return k; }
 function hitMob(m, mult, el, show = true) {
   if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m;
@@ -1330,16 +1734,18 @@ function knock(m, d) { const dx = m.x - S.pos.x, dz = m.z - S.pos.z, l = Math.hy
 function killMob(m) {
   m.dead = 1; m.hp = 0; m.respawn = m.boss ? 0 : 2.5; S.kills++; recover(REC.hpKill, REC.mpKill);
   burst(m.x, mobH(m), m.z, m.boss ? 80 : 40, C3(m.T.color), m.boss ? 9 : 6, m.boss ? 0.8 : 0.5, 0.9); burst(m.x, mobH(m), m.z, m.boss ? 40 : 20, C3('#ffffff'), 3, 0.3, 0.7);
+  if (m.mini) { banner('HẠ TINH ANH ' + m.T.name.toUpperCase() + '!', 'gold'); S.mini = null; S.miniT = MAPS[S.map].boss.respawn / 3; fxBeam(m.x, m.z, '#ffd27a', 1.5, 1.2); }
+  const B = m.boss ? 1 : m.mini ? 1 / 3 : 0;
   if (m.boss) { S.shake = 0.5; banner('ĐÃ HẠ ' + m.T.name.toUpperCase() + '!', 'gold'); log('Hạ boss ' + m.T.name + '! Phần thưởng lớn rơi ra.', '#ffd27a'); S.boss = null; S.bossT = MAPS[S.map].boss.respawn; fxBeam(m.x, m.z, '#ffd27a', 2, 1.6); }
-  let xp = mobExp(m.lv) * (m.boss ? 30 : 1) * clamp(1 + (m.lv - S.lv) * 0.05, 0.3, 1.5) * (1 + HS.expB); gainExp(Math.round(xp));
+  let xp = mobExp(m.lv) * (B ? 30 * B : 1) * clamp(1 + (m.lv - S.lv) * 0.05, 0.3, 1.5) * (1 + HS.expB); gainExp(Math.round(xp));
   const lvl = m.lv, set = MAPS[S.map].set;
-  if (Math.random() < (m.boss ? 1 : 0.25)) dropLoot(m.x, m.z, { kind: 'gold', amount: Math.round((5 + lvl) * rr(6, 14) * (m.boss ? 25 : 1) * (1 + HS.goldB)) });
+  if (B || Math.random() < 0.25) dropLoot(m.x, m.z, { kind: 'gold', amount: Math.round((5 + lvl) * rr(6, 14) * (B ? 25 * B : 1) * (1 + HS.goldB)) });
   const mats = {}; for (const k of MKEYS) if (Math.random() < DROP[k]) mats[k] = 1;
-  if (m.boss) { Object.assign(mats, { e: 8, c: 4, p: 3, d: 2, f: 6 }); if (Math.random() < 0.4) mats.t = 1; if (Math.random() < 0.1) mats.x = 1; }
+  if (B) { const big = { e: 8, c: 4, p: 3, d: 2, f: 6 }; for (const k in big) { const v = big[k] * B; mats[k] = Math.floor(v) + (Math.random() < v % 1 ? 1 : 0); if (!mats[k]) delete mats[k]; } if (Math.random() < 0.4 * B) mats.t = 1; if (Math.random() < 0.1 * B) mats.x = 1; }
   for (const k in mats) dropLoot(m.x, m.z, { kind: 'mat', k, amount: mats[k] });
-  const ng = m.boss ? 3 : (Math.random() < 0.045 ? 1 : 0);
-  for (let n = 0; n < ng; n++) { const q = Math.random(); let r = q < 0.03 ? 3 : q < 0.15 ? 2 : q < 0.45 ? 1 : 0; if (m.boss) r = Math.min(3, Math.max(1, r + (Math.random() < 0.4 ? 1 : 0)));
-    const g = makeGear(Math.random() < 0.3 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, lvl, r >= 1 && Math.random() < (m.boss ? 0.75 : 0.45) ? set : null); if (r >= 1 && Math.random() < 0.4) g.plus = ri(1, r + 1); dropLoot(m.x, m.z, { kind: 'gear', gear: g }); }
+  const ng = B ? Math.round(3 * B) : (Math.random() < 0.045 ? 1 : 0);
+  for (let n = 0; n < ng; n++) { const q = Math.random(); let r = q < 0.03 ? 3 : q < 0.15 ? 2 : q < 0.45 ? 1 : 0; if (B) r = Math.min(3, Math.max(1, r + (Math.random() < 0.4 ? 1 : 0)));
+    const g = makeGear(Math.random() < 0.3 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, lvl, r >= 1 && Math.random() < (B ? 0.75 : 0.45) ? set : null); if (r >= 1 && Math.random() < 0.4) g.plus = ri(1, r + 1); dropLoot(m.x, m.z, { kind: 'gear', gear: g }); }
   updateHud();
 }
 function gainExp(n) {
@@ -1375,7 +1781,7 @@ function updateLoot(dt, t) {
   for (let i = loots.length - 1; i >= 0; i--) { const l = loots[i]; l.t += dt;
     l.gem.rotation.y = t * 2; l.gem.position.y = 0.45 + Math.sin(t * 3 + i) * 0.08 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
     const ld = Math.hypot(l.x - S.pos.x, l.z - S.pos.z);
-    if (!S.dead && l.t > 0.5 && ld < HS.loot && ld > 0.5) { const k = Math.min(1, dt * 7 / Math.max(ld, 0.6)); l.x += (S.pos.x - l.x) * k * 1.5; l.z += (S.pos.z - l.z) * k * 1.5; l.g.position.set(l.x, 0, l.z); }
+    if (!S.dead && S.autoLoot && l.t > 0.5 && ld < HS.loot && ld > 0.5) { const k = Math.min(1, dt * 7 / Math.max(ld, 0.6)); l.x += (S.pos.x - l.x) * k * 1.5; l.z += (S.pos.z - l.z) * k * 1.5; l.g.position.set(l.x, 0, l.z); }
     if ((!S.dead && ld < 0.9) || l.t > 40) {
       if (l.t <= 40) { const it = l.it;
         if (it.kind === 'gold') { S.gold += it.amount; }
@@ -1566,7 +1972,7 @@ function updateHero(dt, t) {
     else if (!S.moveTo.hold) S.moveTo = null;
   } else if (!keys && (S.auto || S.tapMob)) {
     let target = S.tapMob, best = 1e9;
-    if (!target) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time)) { best = d; target = l; } }
+    if (!target && S.autoLoot) for (const l of loots) { const d = Math.hypot(l.x - S.pos.x, l.z - S.pos.z); if (d < 9 && d < best && !(l.noReach > S.time)) { best = d; target = l; } }
     if (!target) for (const m of mobs) { if (m.dead || m.noReach > S.time) continue; if (m.boss && HS.hp < m.atk * 6) continue; if (!m.aggro && m.lv > S.lv + 4) continue; const d = Math.hypot(m.x - S.pos.x, m.z - S.pos.z) - (m.aggro ? 3 : 0); if (d < best) { best = d; target = m; } }
     if (target) { const isLoot = !target.T; const dx = target.x - S.pos.x, dz = target.z - S.pos.z, d = Math.hypot(dx, dz); const want = isLoot ? 0.3 : (Cl.melee ? Cl.range - 0.3 + (target.boss ? 0.8 : 0) : Cl.range - 1);
       const sees = isLoot || Cl.melee || los(S.pos.x, S.pos.z, target.x, target.z, 0.15);
@@ -1602,10 +2008,12 @@ const TINT = new THREE.Color();
 function updateMobs(dt, t) {
   const M = MAPS[S.map];
   if (!S.boss) { S.bossT -= dt; if (S.bossT <= 0) { const b = M.boss; const blv = zoneLv(b); S.boss = addMob(b.k, blv, b.x, b.z, { x: b.x, z: b.z, r: 3 }); banner('BOSS XUẤT HIỆN: ' + MT[b.k].name.toUpperCase(), 'red'); log(`Boss ${MT[b.k].name} (Lv ${blv}) xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); fxBeam(b.x, b.z, '#ff6a8a', 2, 2); S.shake = 0.3; } }
+  if (!S.mini && M.mini) { S.miniT -= dt; if (S.miniT <= 0) { const zn = pick(M.zones); const [x, z] = spawnPos(zn); S.mini = addMob(M.mini, Math.min(M.hi, zoneLv(zn) + 4), x, z, zn, true);
+      banner('TINH ANH XUẤT HIỆN: ' + MT[M.mini].name.toUpperCase(), 'gold'); log(`★ Tinh anh ${MT[M.mini].name} xuất hiện! Phần thưởng bằng 1/3 boss.`, '#ffd27a'); fxBeam(x, z, '#ffd27a', 1.6, 1.4); } }
   for (const m of mobs) {
     const g = m.group;
     if (m.dead) { if (m.dead === 1) { m.deadT = 0; m.dead = 2; m.el.style.display = 'none'; } m.deadT += dt; const k = clamp(1 - m.deadT / 0.4, 0, 1); g.scale.setScalar(m.scale * (0.2 + 0.8 * k)); g.visible = k > 0; m.shadow.visible = k > 0;
-      if (!m.boss) { m.respawn -= dt; if (m.respawn <= 0) { const [x, z] = spawnPos(m.zone); m.x = x; m.z = z; setMobLv(m, zoneLv(m.zone)); m.hp = m.maxHp; m.dead = 0; m.aggro = false; m.state = 'idle'; m.wait = 1; m.frzT = m.burnT = m.shockT = m.wetT = m.slowT = 0; g.visible = true; m.shadow.visible = true; m.spawnT = 0.6; burst(x, m.T.y, z, 18, C3('#7fe9ff'), 2, 0.3, 0.8); } }
+      if (!m.boss && !m.mini) { m.respawn -= dt; if (m.respawn <= 0) { const [x, z] = spawnPos(m.zone); m.x = x; m.z = z; setMobLv(m, zoneLv(m.zone)); m.hp = m.maxHp; m.dead = 0; m.aggro = false; m.state = 'idle'; m.wait = 1; m.frzT = m.burnT = m.shockT = m.wetT = m.slowT = 0; g.visible = true; m.shadow.visible = true; m.spawnT = 0.6; burst(x, m.T.y, z, 18, C3('#7fe9ff'), 2, 0.3, 0.8); } }
       continue; }
     for (const k of ['slowT', 'frzT', 'stunT', 'shockT', 'wetT']) if (m[k] > 0) m[k] -= dt;
     if (m.burnT > 0) { m.burnT -= dt; dot(m, m.burnD * dt); if (Math.random() < dt * 10) emit(m.x + rr(-0.2, 0.2), mobH(m), m.z + rr(-0.2, 0.2), 0, 0.8, 0, C3('#ff7a1a'), 0.25, 0.5, 0.3, 0.98); if (m.dead) continue; }
@@ -1627,18 +2035,19 @@ function updateMobs(dt, t) {
         const want = Math.atan2(dx, dz); let da = want - m.face; da = Math.atan2(Math.sin(da), Math.cos(da)); m.face += da * Math.min(1, dt * 4); } }
     let y = m.T.y;
     if (!stopped) {
-      if (m.kind === 'jelly') { const pulse = Math.sin(t * 2.6 + m.phase); y += Math.sin(t * 1.3 + m.phase) * 0.12 + pulse * 0.04; m.bell.scale.set(1 + pulse * 0.08, 1 - pulse * 0.12, 1 + pulse * 0.08); g.rotation.set(Math.sin(t * 0.9 + m.phase) * 0.12, t * 0.3 + m.phase, Math.cos(t * 0.8 + m.phase) * 0.12); }
+      if (m.anim) { m.anim(t, moving, m); g.rotation.set(0, m.face, 0); }
+      else if (m.kind === 'jelly') { const pulse = Math.sin(t * 2.6 + m.phase); y += Math.sin(t * 1.3 + m.phase) * 0.12 + pulse * 0.04; m.bell.scale.set(1 + pulse * 0.08, 1 - pulse * 0.12, 1 + pulse * 0.08); g.rotation.set(Math.sin(t * 0.9 + m.phase) * 0.12, t * 0.3 + m.phase, Math.cos(t * 0.8 + m.phase) * 0.12); }
       else { y += Math.sin(t * 1.8 + m.phase) * 0.1; m.tail.rotation.y = Math.sin(t * (moving ? 12 : 5) + m.phase) * 0.45; g.rotation.set(0, m.face + Math.sin(t * (moving ? 12 : 5) + m.phase) * 0.06, Math.sin(t * 1.4 + m.phase) * 0.08); }
     }
     TINT.setRGB(0, 0, 0); if (m.frzT > 0) TINT.setRGB(0.25, 0.6, 0.9); else if (m.burnT > 0) TINT.setRGB(0.35, 0.1, 0).multiplyScalar(0.7 + 0.3 * Math.sin(t * 20)); else if (m.shockT > 0) TINT.setRGB(0.35, 0.25, 0.6).multiplyScalar(0.5 + 0.5 * Math.random());
-    if (m.kind === 'jelly') { m.jmat.uniforms.uFlash.value = m.flash; m.jmat.uniforms.uTint.value.copy(TINT); } else { m.mats[0].emissive.setScalar(m.flash * 1.2).add(TINT); }
+    if (m.kind === 'jelly') { m.jmat.uniforms.uFlash.value = m.flash; m.jmat.uniforms.uTint.value.copy(TINT); } else if (m.baseE) { m.mats[0].emissive.copy(m.baseE).addScalar(m.flash * 1.2).add(TINT); }
     let lz = 0; if (m.lunge > 0) { m.lunge -= dt; lz = Math.sin((m.lunge / 0.3) * Math.PI) * (m.boss ? 0.9 : 0.5); }
     m.flash = Math.max(0, m.flash - dt * 6);
     const sc = m.spawnT > 0 ? (m.spawnT -= dt, 1 - m.spawnT / 0.6) : 1; g.scale.setScalar(m.scale * clamp(sc, 0.05, 1));
     g.position.set(m.x + Math.sin(m.face) * lz, y, m.z + Math.cos(m.face) * lz); m.shadow.position.set(m.x, 0.025, m.z);
     if (m.boss && Math.random() < dt * 8) emit(m.x + rr(-1, 1), y + rr(-0.5, 0.5), m.z + rr(-1, 1), 0, rr(0.3, 0.8), 0, C3(m.T.color), 0.3, 1, 0, 0.99);
   }
-  for (let i = mobs.length - 1; i >= 0; i--) { const m = mobs[i]; if (m.boss && m.dead && m.deadT > 0.5) { removeMob(m); mobs.splice(i, 1); } }
+  for (let i = mobs.length - 1; i >= 0; i--) { const m = mobs[i]; if ((m.boss || m.mini) && m.dead && m.deadT > 0.5) { removeMob(m); mobs.splice(i, 1); } }
 }
 
 // =====================================================================
@@ -1660,7 +2069,7 @@ function updateHud() {
   $('hGold').textContent = S.gold.toLocaleString('vi-VN'); $('hBag').textContent = S.inv.length;
   $('bBag').classList.toggle('dot', upgradeHint());
   const need = expNeed(S.lv); $('expBar').style.transform = `scaleX(${S.lv >= MAXLV ? 1 : S.exp / need})`; $('expTxt').textContent = S.lv >= MAXLV ? 'CẤP TỐI ĐA' : `EXP ${(S.exp / need * 100).toFixed(1)}%`;
-  $('bAuto').setAttribute('aria-pressed', String(S.auto));
+  $('bAuto').setAttribute('aria-pressed', String(S.auto)); $('bLoot').setAttribute('aria-pressed', String(S.autoLoot));
   SKILLS[S.cls].forEach((sk, j) => { const b = $('sk' + j); const lock = S.lv < sk.lv; b.classList.toggle('lock', lock); b.classList.toggle('nomp', !lock && S.mp < skMp(sk));
     b.style.setProperty('--c2', ELC[sk.el] + '99'); b.style.setProperty('--c3', ELC[sk.el] + '55');
     b.querySelector('.ic').textContent = ELI[sk.el]; b.querySelector('small').textContent = lock ? 'Lv ' + sk.lv : sk.name.split(' ').slice(0, 2).join(' ');
@@ -1672,7 +2081,7 @@ function updateHud() {
 }
 function updateLabels() {
   const place = (el, x, y, z) => { const [sx, sy, vis] = toScreen(tmpV.set(x, y, z)); if (!vis || sx < -80 || sx > innerWidth + 80 || sy < -40 || sy > innerHeight + 40) { el.style.display = 'none'; return; } el.style.display = ''; el.style.transform = `translate(${sx}px,${sy}px) translate(-50%,-100%)`; };
-  for (const m of mobs) { if (m.dead) continue; place(m.el, m.x, m.T.y + (m.kind === 'jelly' ? 1.0 : 0.85) * m.scale + 0.15, m.z); if (!m.boss) m.hpEl.style.visibility = m.hp < m.maxHp ? 'visible' : 'hidden'; m.bar.style.transform = `scaleX(${Math.max(0, m.hp / m.maxHp)})`; }
+  for (const m of mobs) { if (m.dead) continue; place(m.el, m.x, m.T.y + m.T.lh * m.scale + 0.15, m.z); if (!m.boss && !m.mini) m.hpEl.style.visibility = m.hp < m.maxHp ? 'visible' : 'hidden'; m.bar.style.transform = `scaleX(${Math.max(0, m.hp / m.maxHp)})`; }
   for (const l of loots) place(l.el, l.x, 1.05, l.z);
   heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H + 0.55, S.pos.z);
 }
@@ -1681,12 +2090,13 @@ function updateLabels() {
 $('bAtk').addEventListener('pointerdown', e => { e.preventDefault(); attack(); });
 for (let j = 0; j < 3; j++) $('sk' + j).addEventListener('pointerdown', e => { e.preventDefault(); if (!castSkill(j)) { const sk = SKILLS[S.cls][j]; if (S.lv < sk.lv) log(sk.name + ' mở ở cấp ' + sk.lv + '.', '#93c6cf'); else if (S.mp < skMp(sk)) log('Không đủ Mana.', '#5ab0ff'); } });
 $('bAuto').onclick = () => { S.auto = !S.auto; updateHud(); };
+$('bLoot').onclick = () => { S.autoLoot = !S.autoLoot; log(S.autoLoot ? 'Tự lượm đồ: BẬT — nhân vật và thú cưng tự nhặt đồ rơi.' : 'Tự lượm đồ: TẮT — chỉ nhặt khi bạn đi qua đồ.', '#9fe8ff'); updateHud(); };
 $('bBag').onclick = () => openBag(); $('bMap').onclick = () => openMap(); $('bMenu').onclick = () => openMenu();
 addEventListener('keydown', e => { if (!S || !running) return; input.keys[e.code] = true;
   if (e.code === 'Escape') { closeBag(); closeMap(); return; }
   if (!$('bag').classList.contains('hide') || !$('mapP').classList.contains('hide')) { if (e.code === 'KeyI') closeBag(); if (e.code === 'KeyM') closeMap(); return; }
   if (e.code === 'Space') { e.preventDefault(); attack(); } if (e.code === 'Digit1') castSkill(0); if (e.code === 'Digit2') castSkill(1); if (e.code === 'Digit3') castSkill(2);
-  if (e.code === 'KeyF') { S.auto = !S.auto; updateHud(); } if (e.code === 'KeyI') openBag(); if (e.code === 'KeyM') openMap(); });
+  if (e.code === 'KeyF') { S.auto = !S.auto; updateHud(); } if (e.code === 'KeyL') $('bLoot').click(); if (e.code === 'KeyI') openBag(); if (e.code === 'KeyM') openMap(); });
 addEventListener('keyup', e => { input.keys[e.code] = false; });
 // touch / click to move: tap the sea floor to walk there, hold and drag to steer, tap a monster to attack it
 const cvs = renderer.domElement; cvs.style.touchAction = 'none';
@@ -1825,7 +2235,7 @@ function renderSkills() {
 // ---------- map panel ----------
 function openMap() { closeBag(); $('mapP').classList.remove('hide');
   $('mapList').innerHTML = MAPS.map((M, i) => { const lo = M.lo, hi = M.hi; const ok = S.lv >= M.req; const here = i === S.map;
-    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>Quái cấp ${lo}–${hi}, tự theo cấp bạn · Boss ${MT[M.boss.k].name}<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
+    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>${M.culture ? M.culture + ' · ' : ''}Quái cấp ${lo}–${hi} · Boss ${MT[M.boss.k].name}<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
   $('mapList').querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { const i = +b.dataset.m; closeMap(); travel(i); }); $('mapClose').focus(); }
 function closeMap() { $('mapP').classList.add('hide'); }
 $('mapClose').onclick = closeMap;
@@ -1835,10 +2245,10 @@ function travel(i) { for (const p of projs) scene.remove(p.m); projs.length = 0;
 const SKEY = 'vuclam-save-v2', OLDKEY = 'vuclam-save-v1';
 const Store = { db: null, uid: null, writing: false, pending: null };
 let SAVE = null, OLD = null, running = false, best = 0;
-function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
+function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: d.lv || 1, exp: d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
   S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s];
-  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.lvLog = d.lvLog || [];
+  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.lvLog = d.lvLog || [];
   for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
   if (S.map && S.lv < MAPS[S.map].req) S.map = 0; }
 async function initStore() { try { if (window.claude && typeof window.claude.use === 'function') { const db = await window.claude.use('db'); const u = await window.claude.use('user'); if (db && u) { const id = await u.id(); if (id) { Store.db = db; Store.uid = id; } } } } catch (e) { } await refreshSave(); }
@@ -1898,7 +2308,7 @@ function frame() {
     if (zoneT > 0) { zoneT -= dt; if (zoneT <= 0) $('zone').style.opacity = 0; }
   }
   if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) $('banner').classList.remove('show'); }
-  updateParticles(dt); updateFx(dt);
+  updateParticles(dt); updateFx(dt); for (const f of scenery) f(t, dt);
   if (S) { const portrait = innerHeight > innerWidth; const dist = portrait ? 1.2 : 1; camPos.set(S.pos.x, 11 * dist, S.pos.z + 9.5 * dist); if (fitCam) { camera.position.copy(camPos); fitCam = false; } camera.position.lerp(camPos, Math.min(1, dt * 4));
     if (S.shake > 0) { S.shake -= dt; camera.position.x += (Math.random() - 0.5) * S.shake * 0.4; camera.position.y += (Math.random() - 0.5) * S.shake * 0.4; }
     camera.lookAt(camera.position.x, 1.0, camera.position.z - 9.5 * dist);

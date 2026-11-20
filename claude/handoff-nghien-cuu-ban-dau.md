@@ -303,3 +303,13 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 
 ### Rơi đồ
 - Giảm tỉ lệ rơi vì giết nhanh hơn nhiều (đồ 4,5%, đá cường hóa 6%…); 30% đồ rơi là vũ khí/dây chuyền. Đồ rơi biến mất sau 40 giây.
+
+## 16. Vực Lam – 10 vùng đất thần thoại, quái mới, mini boss
+
+- **10 map** (`MAPS` trong f_data.js, mỗi map có `env`, `culture`, khoảng cấp, set đồ riêng, `mini`, `exposure`, màu nền/sương/ánh sáng/bụi/tia sáng):
+  1 Bãi San Hô (1–90) · 2 Rừng Tảo (70–170) · 3 Hố Dung Nham (150–250) · 4 Sa Mạc Hoàng Kim – Ai Cập (230–330) · 5 Thánh Địa Olympus – Hy Lạp (310–410) · 6 Rừng Trúc Linh Hồ – Đông Á (390–490) · 7 Đầm Lầy U Minh – Đông Âu (470–570) · 8 Băng Nguyên Bắc Âu (550–650) · 9 Cực Băng Vĩnh Hằng (630–730) · 10 Thiên Giới Kim Quang (710–800).
+- **Phong cảnh** (`e2_myth.js`, `REALM[env]`): cây cọ đung đưa, cột tháp khắc chữ phát sáng nhấp nháy, kim tự tháp; cột cẩm thạch, lò lửa bốc cháy, cây bách và ô liu; bụi tre, cổng torii, đèn đá, hoa anh đào rơi; cây chết rêu rủ, nấm phát sáng, ma trơi trôi; thông phủ tuyết, đá rune, cực quang; tháp băng pha lê; đảo bay, mây, cột vàng với vòng hào quang xoay. Vật liệu "windy" cho cây lá đung đưa theo gió.
+- **Quái thần thoại** (6 mẫu mới, mỗi mẫu nhiều biến thể màu/sừng/vương miện): rắn thần (Apep, Gorgon, Long Xà, Zmey, Jörmungandr, Kim Long), oan hồn áo choàng bay (xác ướp, vong hồn Hades, Yūrei, Rusalka, Draugr, Sedna), người đá có nắm đấm bay và vòng rune (Hộ vệ sa thạch, Cyclops, Titan, Leshy cây, Jötunn, Thiên binh), chim thần cánh lông vũ phát sáng (Harpy, Điểu sư, Tengu, Quạ Odin, Tuyết điểu, Phượng hoàng), bọ thánh giáp (Bọ hung, Bọ độc, Bọ pha lê), linh hồn (Hồ hỏa, Mặt quỷ Oni, Ma trơi, Tinh linh cực quang, Thiên nhãn Seraph).
+- **Mini boss (★ Tinh anh)**: mỗi map 1 loại, xuất hiện mỗi 1/3 thời gian hồi boss (~70 giây), máu 10× quái thường (boss 30×), EXP/vàng/nguyên liệu/đồ = 1/3 boss.
+- **Tự lượm đồ** bật/tắt (nút "Tự lượm" trên HUD, phím L): khi tắt, nhân vật không tự chạy tới đồ và thú cưng không hút đồ; vẫn nhặt khi đi qua.
+- **Tốc chạy** còn 60% (4,6 → 2,76 cơ bản; cánh và thú cưỡi vẫn cộng theo %).
