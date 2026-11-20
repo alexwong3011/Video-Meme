@@ -231,3 +231,10 @@ nâng cấp +1…+15 phát sáng, auto-hunt, lưu game.
   chat nhanh + chiến thuật (Chặn đầu / Săn boss); EXP chia đều ×0.3; đội nào hạ quái thì nhặt đồ; Thánh Vật bắn hỏa pháo,
   hấp thu linh hồn lên cấp, hồi 10%/đợt; bảng tổng kết MVP. Hệ số COOP* giữ nguyên bản gốc.
 - **Chưa làm:** chế độ "Đấu 3 đội (AI)" đối kháng.
+
+## 12. Quyết định hướng đi (2026-11-20)
+
+Sau khi chơi thử cả hai, người dùng chọn **game demo ARPG cày cuốc** (`game/demo-day-bien/`,
+https://claude.ai/artifact/3NUHdxYh66beQxqLDat1os) làm hướng phát triển chính, vì tiềm năng hơn về đồ họa và nội dung.
+Game phòng thủ 3D (`game/vuc-bien-3d/`) giữ lại để tham khảo; có thể tái dùng: 5 bộ giáp anh hùng, quái/boss 3D,
+hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
