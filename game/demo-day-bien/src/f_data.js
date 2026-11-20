@@ -54,8 +54,8 @@ const WINGM = [1, 1.3, 1.5, 1.8, 2.2, 2.5], WCOST = [5, 10, 18, 30, 50], WNAME =
 const WDEF = [0, 6, 14, 26, 42, 64], WHP = [0, 60, 150, 300, 520, 800];
 
 // gear
-const SLOTS = { weapon: { n: 'Vũ khí', base: { atk: 12 } }, helm: { n: 'Mũ', base: { def: 4, hp: 30 } }, armor: { n: 'Giáp', base: { def: 8, hp: 60 } }, ring: { n: 'Nhẫn', base: { hp: 40, crit: 2 } }, pendant: { n: 'Dây chuyền', base: { hp: 25 } } };
-const SLOT_ORDER = ['weapon', 'helm', 'armor', 'ring', 'pendant'];
+const SLOTS = { weapon: { n: 'Vũ khí', base: { atk: 12 } }, helm: { n: 'Mũ', base: { def: 4, hp: 30 } }, armor: { n: 'Giáp', base: { def: 8, hp: 60 } }, ring: { n: 'Nhẫn', base: { hp: 40, crit: 2 } }, pendant: { n: 'Dây chuyền', base: { hp: 25 } }, shield: { n: 'Khiên', base: { def: 10, hp: 45 } } };
+const SLOT_ORDER = ['weapon', 'shield', 'helm', 'armor', 'ring', 'pendant'];
 const AS_SLOTS = ['weapon', 'pendant']; // attack speed rolls only on the key items
 const ASR = [1, 1.15, 1.3, 1.45]; // attack-speed multiplier by rarity
 const STAT_N = { atk: 'Tấn công', def: 'Phòng thủ', hp: 'Máu', crit: 'Chí mạng %', as: 'Tốc đánh' };
@@ -75,7 +75,7 @@ Object.assign(SETS, {
   cuc: { n: 'Bộ Cực Quang', col: '#c0a8ff', names: { weapon: 'Thương Cực Quang', helm: 'Vương Miện Băng', armor: 'Giáp Pha Lê', ring: 'Nhẫn Cực Quang' }, b2: { crit: 10 }, b4: { atkP: 0.35, dmgP: 0.55 }, d2: '+10% chí mạng', d4: '+35% tấn công, +55% sát thương' },
   thien: { n: 'Bộ Thiên Đế', col: '#ffe08a', names: { weapon: 'Thiên Đế Kiếm', helm: 'Kim Quan Thiên Đế', armor: 'Long Bào Kim Giáp', ring: 'Nhẫn Nhật Nguyệt' }, b2: { atkP: 0.3, hpP: 0.2 }, b4: { dmgP: 0.8, crit: 10 }, d2: '+30% tấn công, +20% máu', d4: '+80% sát thương, +10% chí mạng' }
 });
-const PLAIN = { weapon: ['Kiếm Hải Lam', 'Kích San Hô', 'Thương Triều Dâng'], helm: ['Mũ Ngọc Trai', 'Mũ Vỏ Ốc Bạc'], armor: ['Giáp Lân Quang', 'Giáp Vỏ Sò'], ring: ['Nhẫn Bọt Biển', 'Nhẫn Lân Quang'], pendant: ['Dây Chuyền Ngọc Trai', 'Mặt Dây Lân Quang', 'Bùa Triều Cường'] };
+const PLAIN = { weapon: ['Kiếm Hải Lam', 'Kích San Hô', 'Thương Triều Dâng'], helm: ['Mũ Ngọc Trai', 'Mũ Vỏ Ốc Bạc'], armor: ['Giáp Lân Quang', 'Giáp Vỏ Sò'], ring: ['Nhẫn Bọt Biển', 'Nhẫn Lân Quang'], pendant: ['Dây Chuyền Ngọc Trai', 'Mặt Dây Lân Quang', 'Bùa Triều Cường'], shield: ['Khiên Vỏ Rùa Cổ', 'Khiên Hải Lam', 'Khiên Thánh Quang', 'Khiên Vảy Rồng'] };
 
 // monsters: only the template's luminous jelly and spiked fish, recoloured per sea
 const MT = {
@@ -205,7 +205,9 @@ MAPS.push({ name: 'Thành Cổ Hy Lạp', culture: 'Thành chính', town: true, 
   pal: { sa: [0.2, 0.18, 0.14], sb: [0.3, 0.27, 0.21], pt: [0.24, 0.2, 0.15], ca: [0.03, 0.03, 0.02], fog: 0x6a7888, bg: 0x7a8aa0, fogD: 0.012, rock: [0xd8d0c0, 0x8a8478, 0x4a4640, 0xffffff], weed: [0x6a8a3a, 0x8aa050], weedH: 0.5, weedE: 0x1a2a0a, stone: 0xd8d0c0, rune: 0xffd86a, portal: [0x8a6a10, 0xffe8a0], coral: [[0x6a8a3a, 0xb0c880]], sponge: [0x8a9a5a], fan: [0x8aa050], mote: [0xfff0c8, 0xffffff], moteRise: [0.15, 0.5], hemi: [0xe8f4ff, 0x5a5a4a, 1.15], sun: [0xfff4e0, 2.3], light: 0xffe0a0, shaft: [0.26, 0.24, 0.18], spk: 0.1 } });
 const TOWN = MAPS.length - 1;
 // charms: carried in the bag, each gives +1% of one stat; super rare (1% per kill)
-const CHARMS = { dmg: { n: 'Bùa Chiến Thần', d: '+1% sát thương', col: '#ff7a5a' }, hp: { n: 'Bùa Sinh Mệnh', d: '+1% máu tối đa', col: '#7dff9a' }, mp: { n: 'Bùa Linh Lực', d: '+1% mana tối đa', col: '#5ab0ff' } };
+const CHARMS = { dmg: { n: 'Bùa Chiến Thần', d: '+1% sát thương', col: '#ff7a5a', pv: 1 }, hp: { n: 'Bùa Sinh Mệnh', d: '+1% máu tối đa', col: '#7dff9a', pv: 1 }, mp: { n: 'Bùa Linh Lực', d: '+1% mana tối đa', col: '#5ab0ff', pv: 1 },
+  soul: { n: 'Soul of Ancient', d: '+1% sát thương và giảm 0,3% sát thương quái gây ra (tối đa 100 viên: +100% / −30%) · chỉ rơi từ boss', col: '#e0b0ff', pv: 15 } };
+const SOUL_RATE = 0.12; // per main-boss kill
 const CHARM_RATE = 0.01;
 function makeCharm(kind, lv) { return { id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), slot: 'charm', charm: kind, r: 3, lv, name: CHARMS[kind].n, base: {}, plus: 0, set: null }; }
 
@@ -224,8 +226,10 @@ const apsRef = L => apsOf(3.2, asRef(L));
 const killRef = L => 0.25 * apsRef(L);                        // reference kills per second used to size EXP
 const mobExp = lv => 10 + 3 * lv;
 const expNeed = lv => Math.round(lvSeconds(lv) * killRef(lv) * mobExp(lv));
-const mobHp = lv => Math.round(60 * (1 + 0.3 * (lv - 1)) * (1 + lv / 180));
-const mobAtk = lv => Math.round(16 + 2.4 * lv + lv * lv / 400);
+// late-game difficulty doubles from Lv100 to Lv400 and stays ×2 above
+const hardK = lv => 1 + clamp((lv - 100) / 300, 0, 1);
+const mobHp = lv => Math.round(60 * (1 + 0.3 * (lv - 1)) * (1 + lv / 180) * hardK(lv));
+const mobAtk = lv => Math.round((16 + 2.4 * lv + lv * lv / 400) * hardK(lv));
 // level suppression: fighting monsters above your level hurts both ways
 const lvDealK = gap => gap > 0 ? 1 / (1 + gap * 0.012) : 1;   // your damage to a higher-level monster
 const lvTakeK = gap => 1 + Math.max(0, gap) * 0.012;           // its damage to you
@@ -242,7 +246,8 @@ const PETS = [
 const MOUNTS = [
   { id: 'ray', n: 'Ó Biển Lam', price: 5000, lv: 20, model: 'ray', c1: 0x0b2a40, c2: 0x3fc8f0, spd: 0.35, defP: 0.05, hpP: 0, as: 0, d: '+35% tốc chạy · +5% phòng thủ' },
   { id: 'kinh', n: 'Cá Kình Bạc', price: 80000, lv: 120, model: 'fish', size: 1.25, pal: { back: 0x1a2a3a, belly: 0xd8e8f0, stripe: 0x9fe8ff, fin: 0x8ab8d8, finE: 0x3a6a9a, rim: 0xd8f4ff, eye: 0x9ff4ff }, spd: 0.5, defP: 0.08, hpP: 0.05, as: 0, d: '+50% tốc chạy · +8% phòng thủ · +5% máu' },
-  { id: 'dragon', n: 'Ó Hoàng Kim', price: 1500000, lv: 280, model: 'ray', c1: 0x3a2404, c2: 0xe8b030, spd: 0.7, defP: 0.12, hpP: 0.1, as: 10, d: '+70% tốc chạy · +12% phòng thủ · +10% máu · +10 tốc đánh' }
+  { id: 'dragon', n: 'Ó Hoàng Kim', price: 1500000, lv: 280, model: 'ray', c1: 0x3a2404, c2: 0xe8b030, spd: 0.7, defP: 0.12, hpP: 0.1, as: 10, d: '+70% tốc chạy · +12% phòng thủ · +10% máu · +10 tốc đánh' },
+  { id: 'kylan', n: 'Thần Thú Kỳ Lân', price: 6000000, lv: 380, model: 'unicorn', spd: 0.9, defP: 0.18, hpP: 0.15, as: 25, d: '+90% tốc chạy · +18% phòng thủ · +15% máu · +25 tốc đánh · sừng thần và bờm cầu vồng' }
 ];
 const plusMult = p => 1 + p * 0.1 + p * p * 0.006;
 const upRate = p => p < 6 ? 1 : [0.9, 0.8, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3][p - 6];

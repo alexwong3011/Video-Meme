@@ -16,7 +16,7 @@ function makeGear(slot, r, lv, set) {
 const gearAS = (lv, r) => Math.round((10 + 0.3 * lv) * ASR[r]);
 function gearStats(g) { const o = {}; for (const k in g.base) o[k] = k === 'crit' ? +(g.base[k] + g.plus * 0.5).toFixed(1) : k === 'as' ? g.base[k] + g.plus : Math.round(g.base[k] * plusMult(g.plus)); return o; }
 const gearScore = g => { const s = gearStats(g); return (s.atk || 0) * 3 + (s.def || 0) * 2.5 + (s.hp || 0) * 0.25 + (s.crit || 0) * 4 + (s.as || 0) * 4 + (g.set ? 6 : 0); };
-const sellPrice = g => Math.round((20 + g.lv * 6) * RMULT[g.r] * (1 + g.plus * 0.3));
+const sellPrice = g => Math.round((20 + g.lv * 6) * RMULT[g.r] * (1 + g.plus * 0.3) * (g.charm ? CHARMS[g.charm].pv : 1));
 function setCounts() { const c = {}; for (const s of SLOT_ORDER) { const g = S.eq[s]; if (g && g.set) c[g.set] = (c[g.set] || 0) + 1; } return c; }
 function heroStats() {
   const Cl = CLS[S.cls]; const st = { atk: (12 + S.lv * 3.2) * Cl.atk, def: S.lv * 1.2, hp: (380 + S.lv * 55) * Cl.hp, mp: 100 + S.lv * 3, crit: 0, as: Math.round(S.lv * 0.1) };
@@ -26,8 +26,8 @@ function heroStats() {
   const b = { atkP: 0, hpP: 0, defP: 0, dmgP: 0, crit: 0 }; const sc = setCounts();
   for (const k in sc) { const T = SETS[k]; if (sc[k] >= 2) for (const x in T.b2) b[x] += T.b2[x]; if (sc[k] >= 4) for (const x in T.b4) b[x] += T.b4[x]; }
   st.atk = Math.round(st.atk * (1 + b.atkP)); st.hp = Math.round(st.hp * (1 + b.hpP)); st.def = Math.round(st.def * (1 + b.defP)); st.crit += b.crit;
-  const ch = { dmg: 0, hp: 0, mp: 0 }; for (const g of S.inv) if (g.slot === 'charm') ch[g.charm] += qty(g); for (const k in ch) ch[k] = Math.min(CHARM_CAP, ch[k]); st.charms = ch; st.hp = Math.round(st.hp * (1 + ch.hp * 0.01)); st.mp = Math.round(st.mp * (1 + ch.mp * 0.01));
-  st.dmgMul = WINGM[S.wing] * (1 + b.dmgP) * (1 + ch.dmg * 0.01); st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
+  const ch = { dmg: 0, hp: 0, mp: 0, soul: 0 }; for (const g of S.inv) if (g.slot === 'charm') ch[g.charm] += qty(g); for (const k in ch) ch[k] = Math.min(CHARM_CAP, ch[k]); st.charms = ch; st.hp = Math.round(st.hp * (1 + ch.hp * 0.01)); st.mp = Math.round(st.mp * (1 + ch.mp * 0.01));
+  st.dmgMul = WINGM[S.wing] * (1 + b.dmgP) * (1 + ch.dmg * 0.01) * (1 + ch.soul * 0.01); st.dr = ch.soul * 0.003; st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
   st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * 0.6 * (1 + (Mt ? Mt.spd : 0)); return st;
 }
 const curPet = () => S && S.pet ? PETS.find(p => p.id === S.pet) : null;
@@ -186,10 +186,11 @@ function killMob(m, killer) {
   const B = m.boss ? 1 : m.mini ? 1 / 3 : 0;
   if (m.boss) { S.shake = 0.5; banner('ĐÃ HẠ ' + m.T.name.toUpperCase() + '!', 'gold'); log('Hạ boss ' + m.T.name + '! Phần thưởng lớn rơi ra.', '#ffd27a'); S.boss = null; S.bossT = MAPS[S.map].boss.respawn; fxBeam(m.x, m.z, '#ffd27a', 2, 1.6); }
   const xp0 = mobExp(m.lv) * (B ? 30 * B : 1);
-  if (killer) { killer.b.kills++; botGain(killer.b, xp0); killer.b.gold += Math.round((5 + m.lv) * rr(3, 8)); if (Math.random() < 0.02 + B) botLoot(killer.b); if (!share) return; }
+  if (killer) { killer.b.kills++; botGain(killer.b, xp0); if (m.boss && Math.random() < SOUL_RATE) { const c = makeCharm('soul', m.lv); if (!stackInto(killer.b.inv, c)) killer.b.inv.push(c); } killer.b.gold += Math.round((5 + m.lv) * rr(3, 8)); if (Math.random() < 0.02 + B) botLoot(killer.b); if (!share) return; }
   else for (const b of partyBots()) if (ents.has(b.id)) botGain(b, xp0 * 0.5);
   let xp = xp0 * clamp(1 + (m.lv - S.lv) * 0.05, 0.3, 1.5) * (1 + HS.expB) * (killer ? 0.5 : 1) * (S.party && S.party.members.length ? 1.1 : 1); gainExp(Math.round(xp));
   const lvl = m.lv, set = MAPS[S.map].set;
+  if (m.boss && Math.random() < SOUL_RATE) { const c = makeCharm('soul', lvl); dropLoot(m.x, m.z, { kind: 'gear', gear: c }); banner('SOUL OF ANCIENT!', 'gold'); log('✦✦ Cực hiếm! Soul of Ancient rơi ra từ boss!', CHARMS.soul.col); }
   if (Math.random() < CHARM_RATE) { const c = makeCharm(pick(['dmg', 'hp', 'mp']), lvl); dropLoot(m.x, m.z, { kind: 'gear', gear: c }); log('✦ Siêu hiếm! ' + c.name + ' rơi ra!', CHARMS[c.charm].col); }
   if (B || Math.random() < 0.25) dropLoot(m.x, m.z, { kind: 'gold', amount: Math.round((5 + lvl) * rr(6, 14) * (B ? 25 * B : 1) * (1 + HS.goldB)) });
   const mats = {}; for (const k of MKEYS) if (Math.random() < DROP[k]) mats[k] = 1;
@@ -380,13 +381,43 @@ function makeRay(c1, c2) { // manta ray: flat diamond body with undulating wing 
 function animRay(r, t, moving) { const { geo, base, tail } = r.group.userData; const p = geo.attributes.position, f = moving ? 5 : 2.4, a = moving ? 0.28 : 0.16;
   for (let i = 0; i < p.count; i++) { const x = base[i * 3], z = base[i * 3 + 2]; const w = Math.abs(x) / 1.2; p.setY(i, base[i * 3 + 1] + Math.sin(t * f - z * 2.2) * a * w * w); }
   p.needsUpdate = true; geo.computeVertexNormals(); tail.rotation.y = Math.sin(t * f * 0.7) * 0.25; }
+
+function makeUnicorn() { // divine unicorn: pearl body, glowing golden horn, flowing rainbow mane and tail, golden hooves
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const pearl = stylized({ color: 0xb8b2d0, roughness: 0.4, metalness: 0.2, envMapIntensity: 1.0 }, 0xc8a0ff, 0.6, 2.2);
+  const gold = stylized({ color: 0xffd86a, metalness: 0.95, roughness: 0.2, emissive: new THREE.Color(0x553300) }, 0xfff0b0, 0.8);
+  const rbM = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.9, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
+  const rainbowStrip = (w, h, segs) => { const geo = new THREE.PlaneGeometry(w, h, 1, segs); const p = geo.attributes.position, c = [], col = new THREE.Color(); for (let i = 0; i < p.count; i++) { col.setHSL((p.getY(i) / h + 0.5) * 0.85, 1, 0.62); c.push(col.r * 1.6, col.g * 1.6, col.b * 1.6); } geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); return geo; };
+  part(SPH, pearl, 0.3, 0.29, 0.58, 0, 0.78, 0, body);
+  const neck = new THREE.Group(); neck.position.set(0, 0.95, 0.42); neck.rotation.x = -0.55; body.add(neck);
+  part(SPH, pearl, 0.13, 0.32, 0.15, 0, 0.22, 0, neck);
+  const head = new THREE.Group(); head.position.set(0, 0.5, 0.05); neck.add(head); head.rotation.x = 0.95;
+  part(SPH, pearl, 0.12, 0.13, 0.27, 0, 0, 0.12, head); part(SPH, pearl, 0.09, 0.08, 0.1, 0, -0.03, 0.34, head);
+  for (const s of [-1, 1]) { part(SPH_LO, glowM(0x9fd0ff), 0.025, 0.025, 0.02, s * 0.1, 0.04, 0.2, head); const e = part(CONE, pearl, 0.035, 0.12, 0.03, s * 0.07, 0.15, 0.0, head); e.rotation.z = -s * 0.3; }
+  const horn = new THREE.Group(); horn.position.set(0, 0.12, 0.14); horn.rotation.x = -0.7; head.add(horn);
+  part(new THREE.ConeGeometry(0.035, 0.42, 12, 6).translate(0, 0.21, 0), gold, 1, 1, 1, 0, 0, 0, horn);
+  for (let k = 0; k < 5; k++) { const r = new THREE.Mesh(new THREE.TorusGeometry(0.03 - k * 0.005, 0.007, 6, 16), glowM(0xfff0b0)); r.rotation.x = Math.PI / 2; r.position.y = 0.06 + k * 0.07; horn.add(r); }
+  const hornGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, color: new THREE.Color(0xffe8a0).multiplyScalar(1.4), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); hornGlow.position.y = 0.44; hornGlow.scale.setScalar(0.35); horn.add(hornGlow);
+  const mane = []; for (let k = 0; k < 6; k++) { const m = new THREE.Mesh(rainbowStrip(0.1, 0.32, 6), rbM); m.position.set(0, 0.08 + k * 0.075, -0.1); m.rotation.set(-0.4, 0, 0); neck.add(m); mane.push(m); }
+  const tail = new THREE.Group(); tail.position.set(0, 0.9, -0.55); body.add(tail); const tails = []; for (let k = 0; k < 4; k++) { const m = new THREE.Mesh(rainbowStrip(0.12, 0.6, 8).translate(0, -0.3, 0), rbM); m.rotation.set(0.6 + k * 0.05, (k - 1.5) * 0.25, 0); tail.add(m); tails.push(m); }
+  const legs = []; for (const [x, z] of [[-0.15, 0.36], [0.15, 0.36], [-0.15, -0.36], [0.15, -0.36]]) { const hip = new THREE.Group(); hip.position.set(x, 0.62, z); body.add(hip);
+    part(CYL, pearl, 0.055, 0.32, 0.055, 0, -0.16, 0, hip); const knee = new THREE.Group(); knee.position.y = -0.32; hip.add(knee); part(CYL, pearl, 0.04, 0.26, 0.04, 0, -0.13, 0, knee); part(CYL, gold, 0.052, 0.06, 0.052, 0, -0.28, 0, knee); legs.push({ hip, knee }); }
+  return { group: g, kind: 'unicorn', body, legs, mane, tail, tails, neck, head, hornGlow }; }
+function animUnicorn(u, t, moving) { const f = moving ? 9 : 1.6, a = moving ? 0.6 : 0.04;
+  u.legs.forEach((L, i) => { const ph = t * f + [0, Math.PI, Math.PI * 0.5, Math.PI * 1.5][i]; L.hip.rotation.x = Math.sin(ph) * a; L.knee.rotation.x = Math.max(0, -Math.cos(ph)) * a * 1.4; });
+  u.body.position.y = moving ? Math.abs(Math.sin(t * f)) * 0.05 : Math.sin(t * 1.5) * 0.01; u.body.rotation.x = moving ? Math.sin(t * f * 2) * 0.03 : 0;
+  u.neck.rotation.x = -0.55 + (moving ? Math.sin(t * f) * 0.08 : Math.sin(t * 0.8) * 0.04); u.hornGlow.scale.setScalar(0.32 + Math.sin(t * 4) * 0.06);
+  u.mane.forEach((m, k) => { m.rotation.x = -0.4 - (moving ? 0.5 : 0.1) + Math.sin(t * 6 - k * 0.7) * 0.18; });
+  u.tail.rotation.x = (moving ? 0.5 : 0) + Math.sin(t * 2) * 0.1; u.tails.forEach((m, k) => { m.rotation.y = (k - 1.5) * 0.25 + Math.sin(t * 5 + k) * 0.15; });
+  if (moving && Math.random() < 0.6) { const p = new THREE.Vector3(); u.legs[ri(0, 3)].knee.localToWorld(p.set(0, -0.3, 0)); emit(p.x, p.y + 0.05, p.z, rr(-0.4, 0.4), rr(0.3, 0.9), rr(-0.4, 0.4), new THREE.Color().setHSL(Math.random(), 1, 0.65), 0.3, 0.7, -0.3, 0.95); } }
 let petObj = null, mountObj = null, petShotT = 0; const petPos = new THREE.Vector3(0, 1.4, 8);
 function applyPetMount() {
   if (petObj) { scene.remove(petObj.group); petObj = null; } if (mountObj) { heroG.remove(mountObj.group); mountObj = null; }
   heroBody.position.y = 0; if (!S) return;
   const P = curPet(); if (P) { petObj = P.model === 'jelly' ? makeJelly(P.pal) : makeFish(P.pal); petObj.group.scale.setScalar(P.size); scene.add(petObj.group); petPos.set(S.pos.x + 1, 1.4, S.pos.z); }
-  const Mt = curMount(); if (Mt) { mountObj = Mt.model === 'ray' ? makeRay(Mt.c1, Mt.c2) : makeFish(Mt.pal);
-    if (Mt.model === 'ray') { mountObj.group.position.set(0, -0.34, 0); mountObj.group.scale.setScalar(0.78); heroBody.position.y = -0.15; }
+  const Mt = curMount(); if (Mt) { mountObj = Mt.model === 'ray' ? makeRay(Mt.c1, Mt.c2) : Mt.model === 'unicorn' ? makeUnicorn() : makeFish(Mt.pal);
+    if (Mt.model === 'unicorn') { mountObj.group.position.set(0, -0.43, -0.05); heroBody.position.y = 0.6; }
+    else if (Mt.model === 'ray') { mountObj.group.position.set(0, -0.34, 0); mountObj.group.scale.setScalar(0.78); heroBody.position.y = -0.15; }
     else { mountObj.group.scale.setScalar(Mt.size); mountObj.group.position.set(0, -0.25, -0.05); heroBody.position.y = 0.28; }
     heroG.add(mountObj.group); }
 }
@@ -399,7 +430,7 @@ function updatePet(dt, t) {
   if (Math.random() < dt * 6) emit(petPos.x + rr(-0.15, 0.15), petPos.y, petPos.z + rr(-0.15, 0.15), 0, rr(-0.4, -0.1), 0, C3(Math.random() < 0.5 ? '#ffffff' : '#9fe8ff'), 0.16, 0.8, 0, 0.99);
   if (P.atk > 0) { petShotT -= dt; if (petShotT <= 0) { const m = nearestMob(6.5, petPos.x, petPos.z); if (m) { petShotT = 3 / HS.aps; const p = { type: 'pet', m: PROJM.pet(), pos: petPos.clone(), tgt: m, speed: 11, mult: P.atk * 3, el: 'holy' }; p.m.position.copy(petPos); scene.add(p.m); projs.push(p); } } }
 }
-function updateMount(dt, t, moving) { if (!mountObj) return; if (mountObj.kind === 'ray') animRay(mountObj, t, moving); else mountObj.tail.rotation.y = Math.sin(t * (moving ? 10 : 4)) * 0.4; }
+function updateMount(dt, t, moving) { if (!mountObj) return; if (mountObj.kind === 'unicorn') animUnicorn(mountObj, t, moving); else if (mountObj.kind === 'ray') animRay(mountObj, t, moving); else mountObj.tail.rotation.y = Math.sin(t * (moving ? 10 : 4)) * 0.4; }
 // ---------- hero update (template motion) ----------
 const input = { x: 0, z: 0, keys: {} };
 function heroDie() { S.dead = 3; const lost = Math.floor(S.exp * 0.03); S.exp -= lost; banner('BẠN ĐÃ GỤC NGÃ', 'red'); log('Hồi sinh sau 3 giây' + (lost ? ` (mất ${lost} EXP)` : '') + '.', '#ff9a9a'); for (const m of mobs) m.aggro = false; heroG.visible = false; burst(S.pos.x, 1, S.pos.z, 40, C3('#ff6a6a'), 5, 0.4, 0.8); }
@@ -413,7 +444,7 @@ function applyGearVisuals() {
   heroMats.dark.userData.u.uRim.value.setHex(0xa8d8ff); heroMats.dark.userData.u.uRimStr.value = [0.35, 0.7, 0.9, 1.1][at] * 1.5;
   heroMats.gold.userData.u.uRimStr.value = [0.45, 0.6, 0.9, 1.0][at];
   const c = WTIER[S.wing]; wingMat.uniforms.uRoot.value.setHex(c[0]); wingMat.uniforms.uTip.value.setHex(c[1]); wingMat.uniforms.uEdge.value.setHex(c[2]); wingMat.uniforms.uB.value = 0.62 + S.wing * 0.05;
-  wings.scale.setScalar(1.0 * HERO_H / 2.3 * 1.15 * WSCALE[S.wing]);
+  wings.scale.setScalar(1.0 * HERO_H / 2.3 * 1.15 * WSCALE[S.wing]); lookShield();
   S.glowTier = Math.max(wt, at);
 }
 function updateHero(dt, t) {
@@ -490,7 +521,7 @@ function updateMobs(dt, t) {
       if (dh > (m.boss ? 18 : 14)) { m.aggro = false; m.tgt = null; }
       else if (dh > reach) { if (!stopped) { m.tx = TP.x; m.tz = TP.z; moving = true; } }
       else if (!stopped) { m.face = Math.atan2(TP.x - m.x, TP.z - m.z); m.atkCd -= dt;
-        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - m.tgt.b.lv)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - S.lv) * (1 - HS.def / (HS.def + 10 * m.lv + 100)))); S.hp -= dmg; S.lastHit = S.time;
+        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - m.tgt.b.lv)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - S.lv) * (1 - HS.def / (HS.def + 10 * m.lv + 100)) * (1 - HS.dr))); S.hp -= dmg; S.lastHit = S.time;
           fxText(S.pos.x, S.pos.z, '-' + dmg, '#ff6b6b', 14, null, HERO_H + 0.9); if (m.boss) { fxRing(m.x, m.z, 0, 3, '#ff6a6a', 0.5, 0, 0.3); S.shake = Math.max(S.shake || 0, 0.2); } if (S.hp <= 0) heroDie(); } } }
     } else if (!stopped) { m.wait -= dt; if (m.wait <= 0) { if (m.state === 'idle') { const a = rr(0, 6.28), d = rr(1, m.zone.r * 0.8); m.tx = m.zone.x + Math.cos(a) * d; m.tz = m.zone.z + Math.sin(a) * d; m.state = 'move'; } else { m.state = 'idle'; m.wait = rr(1.5, 4); } } if (m.state === 'move') moving = true; }
     if (moving && !stopped) { const dx = m.tx - m.x, dz = m.tz - m.z, d = Math.hypot(dx, dz);

@@ -365,3 +365,11 @@ hệ thống kỹ năng nguyên tố, tầng sát thương, lưu đám mây.
 - Móc vào game: `heroLookBuild(model)` trong buildHero3D, `heroLookTick` trong vòng lặp, rim thép/giáp tối trong applyGearVisuals đổi sang tông lạnh (trước đây đổi theo màu cấp cường hóa). Nhãn tên hero cao theo cỡ mới.
 - Chỉ áp cho nhân vật người chơi; bot/NPC giữ như cũ. Trang A/B (`ab.js`) giữ làm lưu trữ; nếu dựng lại trang A/B cần bỏ d2_look.js và 2 lệnh móc ra khỏi bản ghép.
 - Cập nhật: cỡ nhân vật giảm 20% (`LOOK.size` 1,6 → 1,28). Bot và NPC dùng cùng giao diện: `lookMats` (giáp đậm, rim lạnh), `lookOutline` (viền tím glow dùng chung vật liệu), cánh bot = `wingB.clone()` (sóng cầu vồng) theo màu riêng mỗi bot, cùng cỡ `LOOK.size`. Đèn/quầng tối/hạt rơi chỉ cho hero (tiết kiệm hiệu năng).
+
+## 23. Vực Lam – hiệu năng, độ khó ×2, khiên, Soul of Ancient, kỳ lân
+
+- **Hiệu năng bot** (i_world.js): bot ngoài khung nhìn bị ẩn và không chạy animation; bot xa >15m chạy animation ~16 lần/giây và tắt viền; mỗi khung hình tối đa 2 lần tìm đường A*; `PERF.botCap` tự giảm (tối thiểu 4) nếu FPS < 34 trong 6 giây, tăng lại khi > 52.
+- **Độ khó**: `hardK(lv)` nhân máu và công quái từ ×1 (≤ Lv100) lên ×2 (≥ Lv400).
+- **Khiên**: ô trang bị mới `shield` (phòng thủ + máu), hiện thành khiên phép nổi bên trái nhân vật (`heroShield` trong d2_look.js), biểu tượng phát sáng theo cấp cường hóa.
+- **Soul of Ancient**: `charm: 'soul'` (xếp chồng như bùa), chỉ rơi từ boss chính (12%/lần hạ, bot hạ boss cũng có thể nhặt rồi bán), mỗi viên +1% sát thương và −0,3% sát thương nhận vào, tối đa 100 viên (+100% / −30%). Giá trị ×15 so với bùa.
+- **Thú cưỡi Thần Thú Kỳ Lân** (6 triệu vàng, Lv380): +90% tốc chạy, +18% phòng thủ, +15% máu, +25 tốc đánh; mô hình dựng bằng code (`makeUnicorn`): thân ngọc trai, sừng vàng có vòng sáng, bờm và đuôi cầu vồng bay, 4 chân phi nước đại, móng vàng tóe hạt cầu vồng.

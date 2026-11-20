@@ -76,7 +76,9 @@ function updateTouch(dt) { if (touchId !== null && S && !S.dead) touchMove(touch
 const GI = {
   weapon: '<path d="M19 3l-9.5 9.5M19 3h-3.5M19 3v3.5M9.5 12.5l2 2M6 14l4 4M8 16l-4 4" />', helm: '<path d="M5 15a7 7 0 0114 0v3H5zM12 4v4M8.5 15h7" />',
   armor: '<path d="M7 4l5 2 5-2 3 4-3 2v10H7V10L4 8zM12 6v14" />', ring: '<circle cx="12" cy="14" r="6"/><path d="M9 4h6l-3 4z"/>', pendant: '<path d="M6 3c0 6 3 9 6 9s6-3 6-9"/><path d="M12 12l-3 4 3 5 3-5z"/>',
-  charm: '<path d="M12 2l2.6 6.2L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-.8z"/>'
+  charm: '<path d="M12 2l2.6 6.2L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-.8z"/>',
+  soul: '<path d="M12 3c3 4 6 6.5 6 10.5a6 6 0 01-12 0C6 9.5 9 7 12 3z"/><path d="M12 10c1.4 1.8 2.6 3 2.6 4.6a2.6 2.6 0 01-5.2 0c0-1.6 1.2-2.8 2.6-4.6z"/>',
+  shield: '<path d="M12 3l7 3v5.5c0 4.3-3 7.6-7 9.5-4-1.9-7-5.2-7-9.5V6z"/><path d="M12 7v10M8.5 11h7"/>'
 };
 const gIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${GI[k]}</svg>`;
 const mIcon = k => { const c = MATS[k].col; if (k === 'f') return `<svg viewBox="0 0 24 24"><path d="M5 20C8 12 13 6 20 3c-1 7-6 13-14 16z" fill="${c}" stroke="#000" stroke-width="1"/><path d="M5 20L17 7" stroke="#fff8d0" stroke-width="1"/></svg>`;
@@ -91,7 +93,7 @@ $('bagClose').onclick = closeBag;
 bagEl.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; renderBag(); });
 const fmt = n => n.toLocaleString('vi-VN');
 const findItem = id => { for (const s of SLOT_ORDER) if (S.eq[s] && S.eq[s].id === id) return { g: S.eq[s], equipped: true }; const g = S.inv.find(x => x.id === id); return g ? { g, equipped: false } : null; };
-function tileHtml(g, extra = '') { return `<button style="${g.charm ? 'color:' + CHARMS[g.charm].col : ''}" class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${gIcon(g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${qty(g) > 1 ? `<span class="qt">×${qty(g)}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
+function tileHtml(g, extra = '') { return `<button style="${g.charm ? 'color:' + CHARMS[g.charm].col : ''}" class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${gIcon(g.charm === 'soul' ? 'soul' : g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${qty(g) > 1 ? `<span class="qt">×${qty(g)}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
 function flash(t, cls = '') { const m = bagBody.querySelector('.msg'); if (!m) return; m.textContent = t; m.className = 'msg show ' + cls; clearTimeout(msgT); msgT = setTimeout(() => { m.className = 'msg'; }, 2200); }
 function afterChange(heal) { recalc(heal); applyGearVisuals(); applyPetMount(); updateHud(); renderBag(); saveGame(); }
 function renderBag() {
@@ -127,7 +129,7 @@ function renderDetail() {
   const box = $('detail'); const f = selId && findItem(selId);
   if (!f) { box.innerHTML = '<p class="muted">Chọn một món đồ để xem chỉ số, mặc vào, cường hóa hoặc bán.</p>'; return; }
   const { g, equipped } = f;
-  if (g.slot === 'charm') { const C = CHARMS[g.charm]; box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${C.col}">${g.name} ×${qty(g)}</h3><p class="muted">Bùa siêu hiếm · ${C.d} mỗi lá khi mang trong túi · cộng dồn tối đa ${CHARM_CAP} lá (đang có tác dụng ${HS.charms[g.charm]}%) · xếp chồng trong 1 ô</p></div></div>
+  if (g.slot === 'charm') { const C = CHARMS[g.charm]; box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${C.col}">${g.name} ×${qty(g)}</h3><p class="muted">${g.charm === 'soul' ? 'Vật phẩm cổ đại' : 'Bùa siêu hiếm'} · ${C.d} mỗi ${g.charm === 'soul' ? 'viên' : 'lá'} khi mang trong túi · cộng dồn tối đa ${CHARM_CAP} lá (đang có tác dụng ${HS.charms[g.charm]}/${CHARM_CAP}) · xếp chồng trong 1 ô</p></div></div>
       <div class="acts"><button class="pb" id="aSell">Bán 1 · ${fmt(sellPrice(g))} vàng</button>${qty(g) > 1 ? `<button class="pb" id="aSellAll">Bán cả ${qty(g)} · ${fmt(sellPrice(g) * qty(g))} vàng</button>` : ''}</div>`;
     $('aSell').onclick = () => { takeOne(S.inv, g); S.gold += sellPrice(g); if (!S.inv.includes(g)) selId = null; afterChange(); };
     const all = $('aSellAll'); if (all) all.onclick = () => { S.gold += sellPrice(g) * qty(g); S.inv = S.inv.filter(x => x !== g); selId = null; afterChange(); }; return; }
@@ -212,8 +214,8 @@ function charAt(cx, cy) { let best = null, bd = 44; const test = (pos, h, o) => 
 function npcAct(id) { if (id === 'smith') openBag('gear'); else if (id === 'pets') openBag('pet'); else if (id === 'guide') openMap(); else openWorld(id); }
 const botTag = b => `<b style="color:${CLS[b.cls].col}">${CLS[b.cls].icon} ${b.name}</b> · ${CLS[b.cls].name} · Lv ${b.lv}`;
 const itemLine = g => g.slot === 'charm' ? `<b style="color:${CHARMS[g.charm].col}">${g.name}${qty(g) > 1 ? ' ×' + qty(g) : ''}</b> · ${CHARMS[g.charm].d} · giá mỗi lá` : `<b style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</b> · ${SLOTS[g.slot].n} cấp ${g.lv} · ${Object.entries(gearStats(g)).map(([k, v]) => STAT_N[k] + ' ' + v).join(', ')}`;
-const buyPrice = g => Math.round((g.slot === 'charm' ? 3000 + g.lv * 120 : sellPrice(g) * 2.6) * (g.pm || (g.pm = rr(0.85, 1.25))));
-const offerPrice = (g, b) => Math.round((g.slot === 'charm' ? 1800 + g.lv * 70 : sellPrice(g) * 1.6) * (0.85 + (b.hue * 7 % 1) * 0.4));
+const buyPrice = g => Math.round((g.slot === 'charm' ? (3000 + g.lv * 120) * CHARMS[g.charm].pv : sellPrice(g) * 2.6) * (g.pm || (g.pm = rr(0.85, 1.25))));
+const offerPrice = (g, b) => Math.round((g.slot === 'charm' ? (1800 + g.lv * 70) * CHARMS[g.charm].pv : sellPrice(g) * 1.6) * (0.85 + (b.hue * 7 % 1) * 0.4));
 function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; const B = $('wBody'); const here = [...ents.values()].filter(e => !e.dead).map(e => e.b);
   if (wMode === 'party') { $('wTitle').textContent = 'Nhóm';
     const P = S.party, lead = P && P.leader === 'me';

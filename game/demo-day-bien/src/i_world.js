@@ -26,7 +26,7 @@ function charMats(hue, cls) { const c = (s, l) => new THREE.Color().setHSL(hue, 
     cape: stylized({ color: c(0.7, 0.32), roughness: 0.7, side: THREE.DoubleSide, emissive: c(0.7, 0.08) }, 0x9f8bff, 0.5, 2), glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(CLS[cls].glow).multiplyScalar(2.4) }) }; }
 function makeChar(cls, hue, wingTier) {
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body); scene.add(g);
-  const model = SkeletonUtils.clone(heroGLTF.scene); const T3 = { tip: null }; buildArmor(model, cls, lookMats(charMats(hue, cls)), T3); lookOutline(model);
+  const model = SkeletonUtils.clone(heroGLTF.scene); const T3 = { tip: null }; buildArmor(model, cls, lookMats(charMats(hue, cls)), T3); const outl = lookOutline(model);
   const box = new THREE.Box3().setFromObject(model); const k = HERO_H / (box.max.y - box.min.y); model.scale.setScalar(k); model.position.y = -box.min.y * k; body.add(model);
   model.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
   const mx = new THREE.AnimationMixer(model), acts = {}; for (const c of heroGLTF.animations) acts[c.name] = mx.clipAction(c);
@@ -34,7 +34,7 @@ function makeChar(cls, hue, wingTier) {
     wg = new THREE.Group(); wg.position.set(0, HERO_H * 0.66, -0.3 * HERO_H / 2.3); wg.scale.setScalar(HERO_H / 2.3 * 1.15 * WSCALE[Math.min(5, wingTier)]); body.add(wg);
     wR = new THREE.Mesh(wingGeo, wm); wR.position.x = 0.1; wg.add(wR); wL = new THREE.Mesh(wingGeo, wm); wL.scale.x = -1; wL.position.x = -0.1; wg.add(wL); }
   g.scale.setScalar(LOOK.size); const shadow = blob(1.5 * LOOK.size); scene.add(shadow);
-  const C = { g, body, model, mx, acts, cur: null, tip: T3.tip, wR, wL, shadow, melee: CLS[cls].melee, phase: rr(0, 6.28) };
+  const C = { g, body, model, mx, acts, cur: null, tip: T3.tip, wR, wL, shadow, outl, olOn: true, animAcc: 0, melee: CLS[cls].melee, phase: rr(0, 6.28) };
   C.idle = C.melee ? 'Sword_Idle' : 'Spell_Simple_Idle_Loop'; C.atk = C.melee ? 'Sword_Attack' : 'Spell_Simple_Shoot';
   mx.addEventListener('finished', () => charPlay(C, C.idle, 0.25)); charPlay(C, C.idle, 0); return C;
 }
@@ -53,7 +53,7 @@ function spawnBot(b, x, z) { if (!heroGLTF || ents.has(b.id)) return; const st =
   ents.set(b.id, e); fxBeam(x, z, '#9fe8ff', 0.9, 0.7); return e; }
 function despawnBot(id, beam) { const e = ents.get(id); if (!e) return; if (beam) fxBeam(e.pos.x, e.pos.z, '#9fe8ff', 0.9, 0.7); charRemove(e.C); e.el.remove(); e.alive = false; ents.delete(id); for (const m of mobs) if (m.tgt === e) m.tgt = null; }
 function syncBots() { // who stands in the player's current map
-  const want = new Set(); const cap = isTown() ? 10 : 8; let n = 0;
+  const want = new Set(); const cap = Math.min(isTown() ? 10 : 8, PERF.botCap + (isTown() ? 2 : 0)); let n = 0;
   for (const b of S.bots) if (inParty(b)) { b.map = S.map; want.add(b.id); n++; }
   for (const b of S.bots) if (!want.has(b.id) && b.map === S.map && n < cap) { want.add(b.id); n++; }
   for (const id of [...ents.keys()]) if (!want.has(id)) despawnBot(id, true);
@@ -61,6 +61,12 @@ function syncBots() { // who stands in the player's current map
 }
 function clearBots() { for (const id of [...ents.keys()]) despawnBot(id, false); }
 let worldT = 0;
+// performance: bots off screen are hidden and not animated, far bots animate at half rate without outlines,
+// path searches are spread out, and the bot count drops automatically if the frame rate stays low
+const PERF = { botCap: 8, fpsAcc: 0, fpsN: 0, t: 0, warned: false }; const frus = new THREE.Frustum(), frusM = new THREE.Matrix4(), frusS = new THREE.Sphere(); let pathBudget = 0;
+function perfTick(dt) { PERF.fpsAcc += dt; PERF.fpsN++; PERF.t += dt; if (PERF.t < 6) return; const fps = PERF.fpsN / PERF.fpsAcc; PERF.fpsAcc = PERF.fpsN = PERF.t = 0;
+  if (fps < 34 && PERF.botCap > 4) { PERF.botCap -= 2; if (!PERF.warned) { PERF.warned = true; log('Máy đang nặng: tự giảm số người chơi hiển thị để mượt hơn.', '#93c6cf'); } }
+  else if (fps > 52 && PERF.botCap < 8) PERF.botCap += 1; }
 function worldTick() { // once a second: the off-screen world keeps playing
   for (const b of S.bots) { if (inParty(b)) continue; b.stT -= 1;
     if (b.map !== TOWN && !ents.has(b.id)) { botGain(b, expNeed(b.lv) / lvSeconds(b.lv) * 0.5); b.gold += Math.round((5 + b.lv) * rr(2, 6)); if (Math.random() < 0.025) botLoot(b); }
@@ -74,11 +80,11 @@ function worldTick() { // once a second: the off-screen world keeps playing
 // bots trade with each other: the market keeps moving even when you are away
 function botMarket() { if (Math.random() > 0.2) return; const sellers = S.bots.filter(b => b.inv.length && !inParty(b)); if (!sellers.length) return; const s = pick(sellers);
   const buyers = S.bots.filter(b => b !== s && b.map === s.map && !inParty(b)); if (!buyers.length) return; const b = pick(buyers); const g = pick(s.inv);
-  const price = Math.round((g.slot === 'charm' ? 2500 + g.lv * 100 : sellPrice(g) * 2) * rr(0.8, 1.2)); if (b.gold < price) return;
+  const price = Math.round((g.slot === 'charm' ? (2500 + g.lv * 100) * CHARMS[g.charm].pv : sellPrice(g) * 2) * rr(0.8, 1.2)); if (b.gold < price) return;
   const item = takeOne(s.inv, g); b.gold -= price; s.gold += price; b.traded = (b.traded || 0) + price; s.traded = (s.traded || 0) + price; if (!stackInto(b.inv, item)) { b.inv.push(item); if (b.inv.length > 12) b.inv.shift(); }
   if (s.map === S.map) { const e = ents.get(b.id); if (e) botSay(e, 'Mua được ' + item.name + '!'); if (isTown() && Math.random() < 0.5) log(`🛒 ${b.name} mua [${item.name}] của ${s.name} giá ${fmt(price)} vàng.`, '#c8b88a'); } }
 function botMove(e, tx, tz, dt, sp) { const dx = tx - e.pos.x, dz = tz - e.pos.z, d = Math.hypot(dx, dz); if (d < 0.05) return false;
-  let ux = dx / d, uz = dz / d; if (!los(e.pos.x, e.pos.z, tx, tz)) { if (!e.nav || Math.hypot(e.nav.tx - tx, e.nav.tz - tz) > 1 || S.time - e.nav.t > 1.5) { const pts = findPath(e.pos.x, e.pos.z, tx, tz); e.nav = { tx, tz, t: S.time, pts: pts || [[tx, tz]], i: 0 }; }
+  let ux = dx / d, uz = dz / d; if (!los(e.pos.x, e.pos.z, tx, tz)) { if (!e.nav || ((Math.hypot(e.nav.tx - tx, e.nav.tz - tz) > 1 || S.time - e.nav.t > 1.5) && pathBudget-- > 0)) { const pts = findPath(e.pos.x, e.pos.z, tx, tz); e.nav = { tx, tz, t: S.time, pts: pts || [[tx, tz]], i: 0 }; }
     const N = e.nav; while (N.i < N.pts.length - 1 && Math.hypot(N.pts[N.i][0] - e.pos.x, N.pts[N.i][1] - e.pos.z) < 0.35) N.i++; const w = N.pts[N.i], wd = Math.hypot(w[0] - e.pos.x, w[1] - e.pos.z) || 1; ux = (w[0] - e.pos.x) / wd; uz = (w[1] - e.pos.z) / wd; }
   const st = Math.min(d, sp * dt), nx = e.pos.x + ux * st, nz = e.pos.z + uz * st; if (!collides(nx, e.pos.z, 0.45)) e.pos.x = nx; if (!collides(e.pos.x, nz, 0.45)) e.pos.z = nz;
   const r = Math.hypot(e.pos.x, e.pos.z); if (r > 21) { e.pos.x *= 21 / r; e.pos.z *= 21 / r; }
@@ -94,8 +100,12 @@ function botTakeDmg(e, dmg) { const st = botStats(e.b); dmg *= 1 - st.def / (st.
 function partyLeaderPos() { if (!S.party) return null; if (S.party.leader === 'me') return S.pos; const e = ents.get(S.party.leader); return e && !e.dead ? e.pos : null; }
 function updateBots(dt, t) {
   if (!S) return; worldT -= dt; if (worldT <= 0) { worldT = 1; worldTick(); }
+  perfTick(dt); pathBudget = 2; frusM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); frus.setFromProjectionMatrix(frusM);
   const town = isTown(); let k = 0;
-  for (const e of ents.values()) { const b = e.b, C = e.C; k++; C.mx.update(dt);
+  for (const e of ents.values()) { const b = e.b, C = e.C; k++;
+    frusS.center.set(e.pos.x, 1, e.pos.z); frusS.radius = 2.2; const seen = frus.intersectsSphere(frusS); const far = Math.hypot(e.pos.x - camera.position.x, e.pos.z - camera.position.z) > 15;
+    C.g.visible = seen && !(e.dead > 0); C.animAcc += dt; if (seen && (!far || C.animAcc > 0.06)) { C.mx.update(C.animAcc); C.animAcc = 0; }
+    const ol = seen && !far && PERF.botCap >= 6; if (ol !== C.olOn) { C.olOn = ol; for (const o of C.outl) o.visible = ol; }
     if (e.sayHide && S.time > e.sayHide) { e.sayEl.style.display = 'none'; e.sayHide = 0; }
     if (e.dead > 0) { e.dead -= dt; if (e.dead <= 0) { e.hp = e.maxHp; const L = partyLeaderPos() || S.pos; e.pos.set(L.x + rr(-1.5, 1.5), 0, L.z + rr(-1.5, 1.5)); C.g.visible = C.shadow.visible = true; fxBeam(e.pos.x, e.pos.z, '#9fe8ff', 1); } continue; }
     const st = botStats(b); e.maxHp = st.hp; if (S.time - (e.lastHit || -9) > 4) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.03 * dt);

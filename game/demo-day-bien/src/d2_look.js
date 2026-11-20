@@ -16,9 +16,9 @@ const LOOK_TH = { value: LOOK.outline };
 function lookOutlineMat(k) { const m = new THREE.MeshBasicMaterial({ color: LOOK.outlineCol, side: THREE.BackSide });
   m.onBeforeCompile = s => { s.uniforms.uTh = LOOK_TH; s.vertexShader = 'uniform float uTh;\n' + s.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = position + normal * uTh * ${k.toFixed(3)};`); }; m.customProgramCacheKey = () => 'heroOutline' + k; return m; }
 const lookOM = lookOutlineMat(1), lookOMS = lookOutlineMat(0.65);
-function lookOutline(model) { const meshes = []; model.traverse(o => { if (o.isMesh) meshes.push(o); });
+function lookOutline(model) { const meshes = [], made = []; model.traverse(o => { if (o.isMesh) meshes.push(o); });
   for (const o of meshes) { if (o.material === heroMats.glow) continue; let ol; if (o.isSkinnedMesh) { ol = new THREE.SkinnedMesh(o.geometry, lookOM); ol.bind(o.skeleton, o.bindMatrix); } else ol = new THREE.Mesh(o.geometry, lookOMS);
-    ol.position.copy(o.position); ol.quaternion.copy(o.quaternion); ol.scale.copy(o.scale); ol.frustumCulled = false; o.parent.add(ol); } }
+    ol.position.copy(o.position); ol.quaternion.copy(o.quaternion); ol.scale.copy(o.scale); ol.frustumCulled = false; o.parent.add(ol); made.push(ol); } return made; }
 function heroLookBuild(model) { lookOutline(model); heroG.scale.setScalar(LOOK.size); }
 // the same armour treatment for bots and NPCs (their own coloured materials)
 function lookMats(M) { M.suit.color.multiplyScalar(0.45); M.suit.userData.u.uRim.value.setHex(0x9fd0ff); M.suit.userData.u.uRimStr.value = 0.75; M.suit.userData.u.uRimPow.value = 2.2;
@@ -53,7 +53,7 @@ wingR.material = wingL.material = wingB;
 const lookSparks = []; { const sm = new THREE.SpriteMaterial({ map: haloTex, color: 0xffffff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
   for (let i = 0; i < 36; i++) { const sp = new THREE.Sprite(sm.clone()); sp.visible = false; scene.add(sp); lookSparks.push({ sp, life: 0, v: new THREE.Vector3() }); } }
 const lookTip = new THREE.Vector3(), lookBack = new THREE.Vector3();
-function heroLookTick(dt, t) { const on = !!(S && heroG.visible && !S.dead);
+function heroLookTick(dt, t) { const on = !!(S && heroG.visible && !S.dead); shieldTick(t);
   for (const k of ['uRoot', 'uTip', 'uEdge']) wingB.uniforms[k].value.copy(wingMat.uniforms[k].value); wingB.uniforms.uB.value = wingMat.uniforms.uB.value * 0.92;
   const p = LOOK.outlineGlow * (0.82 + 0.18 * Math.sin(t * 3)); lookOM.color.setHex(LOOK.outlineCol).multiplyScalar(p); lookOMS.color.copy(lookOM.color);
   lookKey.visible = lookShade.visible = on;
@@ -61,3 +61,13 @@ function heroLookTick(dt, t) { const on = !!(S && heroG.visible && !S.dead);
     for (const w of [wingL, wingR]) if (Math.random() < 0.55) { const s = lookSparks.find(q => q.life <= 0); if (!s) break; const ang = -1.9 + Math.random() * 2.75, L = 1.4 + Math.random() * 1.3;
       w.localToWorld(lookTip.set(1.45 + Math.cos(ang) * L, 0.6 + Math.sin(ang) * L, 0)); s.sp.position.copy(lookTip); s.v.set((Math.random() - 0.5) * 0.3, -0.25 - Math.random() * 0.3, (Math.random() - 0.5) * 0.3); s.life = 1.4; s.sp.material.color.setHSL(Math.random(), 0.9, 0.7).multiplyScalar(1.8); } }
   for (const s of lookSparks) { if (s.life <= 0) { s.sp.visible = false; continue; } s.life -= dt; s.sp.visible = true; s.sp.position.addScaledVector(s.v, dt); const k = Math.max(0, s.life / 1.4); s.sp.scale.setScalar((0.06 + 0.08 * Math.sin(k * Math.PI)) * LOOK.size); s.sp.material.opacity = k; } }
+
+// floating guard shield beside the hero (shows when a shield is equipped)
+const heroShield = (() => { const g = new THREE.Group(); const sh = new THREE.Shape(); sh.moveTo(0, 0.42); sh.quadraticCurveTo(0.3, 0.4, 0.3, 0.12); sh.quadraticCurveTo(0.28, -0.22, 0, -0.42); sh.quadraticCurveTo(-0.28, -0.22, -0.3, 0.12); sh.quadraticCurveTo(-0.3, 0.4, 0, 0.42);
+  const face = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.04, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 }), stylized({ color: 0x3a4a6a, metalness: 0.9, roughness: 0.25, envMapIntensity: 1.6 }, 0xcfeaff, 0.7, 2.2));
+  const rim = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.02, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.045, bevelSegments: 2 }), heroMats.gold); rim.position.z = -0.02; rim.scale.setScalar(1.04);
+  const em = new THREE.MeshBasicMaterial({ color: new THREE.Color(0x9fd0ff).multiplyScalar(2.4) }); const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), em); star.position.z = 0.09; star.scale.set(1, 1.5, 0.4);
+  const cross = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.5, 0.02), em); cross.position.z = 0.075; const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, 0.02), em); cross2.position.set(0, 0.08, 0.075);
+  g.add(rim, face, star, cross, cross2); g.userData = { em, star }; g.visible = false; heroBody.add(g); lookOutline(g); return g; })();
+function lookShield() { const sd = S && S.eq.shield; heroShield.visible = !!sd; if (!sd) return; const tr = tier(sd.plus || 0); heroShield.userData.em.color.set(tr ? TIER_COL[tr] : 0x9fd0ff).multiplyScalar(2.2 + tr * 0.5); }
+function shieldTick(t) { if (!heroShield.visible) return; heroShield.position.set(-0.42 * HERO_H / 1.15, HERO_H * 0.52 + Math.sin(t * 1.8) * 0.03, 0.18); heroShield.rotation.set(0.05, -0.5 + Math.sin(t * 1.2) * 0.05, 0.08); heroShield.scale.setScalar(HERO_H / 1.15 * 0.8); heroShield.userData.star.rotation.y = t * 1.5; }
