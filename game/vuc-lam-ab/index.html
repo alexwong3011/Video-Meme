@@ -2747,7 +2747,8 @@ const wingB = new THREE.ShaderMaterial({ uniforms: { uTime: U.uTime, uRoot: { va
       float ph = r * 0.42 - uTime * uRs;
       float wave = pow(1.0 - fract(ph), 2.2) * smoothstep(0.0, 0.25, fract(ph) + 0.02) + pow(1.0 - fract(ph + 0.5), 5.0) * 0.45;
       vec3 rb = 0.55 + 0.45 * cos(6.2831 * (vec3(0.0, 0.33, 0.67) + ph * 1.6 + th * 0.12));
-      col = mix(col, col * 0.7 + rb * 0.25, clamp(uRb, 0.0, 1.0) * 0.6) + rb * wave * cov * uRb * 1.7;
+      float cm = clamp(cov, 0.0, 1.0); // everything below is masked by the feathers, so empty parts of the wing plane stay black
+      col = col * (1.0 - 0.3 * clamp(uRb, 0.0, 1.0) * cm) + rb * cm * 0.18 * uRb + rb * wave * cov * uRb * 1.7;
       float s1 = (th + 1.9) / 2.75; if (s1 > 0.0 && s1 < 1.0) { float fi = floor(s1 * 12.0); float sc = (fi + 0.5) / 12.0; float L = mix(1.0, 2.75, pow(sc, 1.25)); float ang = -1.9 + sc * 2.75;
         float d = length(vP - vec2(cos(ang), sin(ang)) * L * 0.86); float tw = pow(0.5 + 0.5 * sin(uTime * 3.0 + fi * 2.7), 10.0); col += vec3(1.0, 0.97, 0.92) * exp(-d * d * 700.0) * tw * 1.8; }
       gl_FragColor = vec4(col * uB, 1.0);`)
