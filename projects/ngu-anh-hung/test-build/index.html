@@ -123,6 +123,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 #bagGrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}
 .tile{position:relative;aspect-ratio:1;width:100%;max-width:62px;border-radius:8px;display:grid;place-items:center;padding:0;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.08),rgba(0,0,0,.35));border:1px solid rgba(255,255,255,.12);color:var(--r0);cursor:pointer}
 .tile svg{width:60%;height:60%}
+.sellbar{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:0 0 8px}.sellbar .pb{border-color:var(--rc);color:var(--rc);padding:5px 9px;font-size:12px}.sellbar .pb.pri{color:#fff}
 .tile img.art{width:86%;height:86%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 .dollwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);gap:6px;align-items:center;margin:4px 0}
 .dcol{display:flex;flex-direction:column;gap:6px;align-items:center}.drow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:6px}
@@ -940,7 +941,7 @@ const KN = { ready: false, on: false, err: null, gltf: null, bones: {}, clips: {
 const KN_TAU = Math.PI * 2, KN_REF = 1.85;            // the poses below are in metres for a 1.85 m knight, scaled to the game's size
 const KN_CLIP = { walk: 'Walk_Fight_Forward', run: 'RunFast', hit: 'Hit_Reaction', combo: ['Attack', 'Left_Slash', 'Thrust_Slash', 'Charged_Slash'],
   skill: { flamewave: ['Sword_Judgment', 0.75], meteor: ['Charged_Spell_Cast', 0.85], firespin: ['Double_Blade_Spin', 0.7] } };
-const KN_IDLE = { bladeUp: [-0.5, 0.72, 0.42], R: [-0.07, -0.34, 0.3], L: [0.15, -0.52, 0.05] };
+const KN_IDLE = { bladeUp: [-0.5, 0.72, 0.42], bladeDown: [0.4, -0.75, 0.45], R: [-0.07, -0.34, 0.3], L: [0.15, -0.52, 0.05], L2: [0.09, -0.4, 0.24] };   // L2: the left hand with a second blade
 const KN_SWORD = { aspect: 282.5 / 848, gp: [0.5283, 0.1206], tip: [0.015, 0.9979], L: 1.25 };
 const KN_ARMOR = [
   { lv: 0,  tint: [1.0, 1.0, 1.0],    rim: [0.37, 0.69, 1.0, 0.0],  flow: [0.5, 0.75, 1.0, 0.0],  aura: [0.37, 0.69, 1.0, 0.0],  env: 0.35, rough: 1.0 },
@@ -1039,7 +1040,9 @@ function knLoad() {
     const gltf = await new Promise((res, rej) => loader.parse(out, 'assets/meshy/', res, rej));
     const tl = new THREE.TextureLoader(), tex = src => new Promise(res => tl.load(src, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
     const sw = await Promise.all(['assets/weapon/greatsword_front.png', 'assets/weapon/greatsword_back.png'].map(tex));
+    try { const lj = await (await fetch('assets/meshy/knight_lod.json')).json(); KN.lod = new Uint32Array(Uint8Array.from(atob(lj.indices), c => c.charCodeAt(0)).buffer); } catch (e) { KN.lod = null; }
     knSetup(gltf, sw); if (S && S.cls === 'fire') buildHero3D();
+    for (const [id, e] of [...ents]) if (!e.C.kn && !e.dead) { const p = e.pos.clone(); despawnBot(id); spawnBot(e.b, p.x, p.z); }   // bots already on the map put the armour on
   })().catch(e => { KN.err = String(e && e.message || e); console.warn('knight:', e); });
 }
 function knSetup(gltf, swTex) {
@@ -1070,6 +1073,15 @@ function knSetup(gltf, swTex) {
   blade.rotation.z = Math.PI; KN.guard = new THREE.Object3D(); KN.guard.position.set(0, -0.12 * L, 0); blade.add(KN.guard); KN.tip = new THREE.Object3D(); KN.tip.position.set(0, (v.gp[1] - v.tip[1]) * L * 0.85, 0); blade.add(KN.tip);
   sword.visible = false; KN.root.add(sword); KN.sword = sword; KN.swordMats = blade.children.filter(c => c.isMesh).map(c => c.material);
   KN.restPose(); KN.boneList = Object.values(B); knFingerSetup();
+  KN.sword2 = sword.clone(true); KN.sword2.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); KN.swordMats.push(o.material); } }); KN.root.add(KN.sword2);
+  // the bots' knight: a light copy (same vertices, skeleton and painted texture, ~15% of the triangles), fists closed, greatsword in the right fist
+  { KN.tip.name = 'kntip'; if (KN.fingers) { knCurl('right', 1); knCurl('left', 0.4); }
+    const proto = SkeletonUtils.clone(model); proto.updateMatrixWorld(true);
+    proto.traverse(o => { if (o.isSkinnedMesh) { const g = new THREE.BufferGeometry(); for (const n in o.geometry.attributes) g.setAttribute(n, o.geometry.attributes[n]);
+      g.setIndex(KN.lod ? new THREE.BufferAttribute(KN.lod, 1) : o.geometry.index); g.boundingSphere = o.geometry.boundingSphere; o.geometry = g; } });
+    const bs = sword.clone(true); bs.traverse(o => { if (o.isMesh) o.material = o.material.clone(); }); bs.visible = true;
+    const f = KN.fingers ? knFist('right') : { G: knW(KN.handR) }; bs.position.copy(f.G); if (KN.fingers) bs.quaternion.copy(knBladeQ(f.axis, f.flat)); bs.scale.setScalar(KN.h / KN_REF); bs.updateMatrixWorld(true);
+    proto.getObjectByName(KN.handR.name).attach(bs); KN.proto = proto; KN.restPose(); }
   // glowing ink outline (the hero look's colour) and the level aura shell, both pushed out along the skinned normals in view space
   KN.hullMats = []; KN.auras = [];
   for (const o of hulls) {
@@ -1111,12 +1123,13 @@ function knIdlePose(t, F) {
   if (B.leftshoulder) knSpin(B.leftshoulder, cv([0, 0, 1]), 0.015 * br2); if (B.rightshoulder) knSpin(B.rightshoulder, cv([0, 0, 1]), -0.015 * br2);
   const lift = cp([0, 0.045 * br2, 0.01 * br2]);
   knIK(B.rightarm, B.rightforearm, B.righthand, knW(B.rightarm).add(cp(KN_IDLE.R)).add(lift), cv([-0.5, -0.7, -0.5]));
-  knIK(B.leftarm, B.leftforearm, B.lefthand, knW(B.leftarm).add(cp(KN_IDLE.L)).add(lift), cv([0.5, -0.7, -0.5]));
+  knIK(B.leftarm, B.leftforearm, B.lefthand, knW(B.leftarm).add(cp(KN.dual ? KN_IDLE.L2 : KN_IDLE.L)).add(lift), cv([0.5, -0.7, -0.5]));
   if (KN.fingers) knTurn(B.righthand, knW(B.righthandindex1).sub(knW(B.righthandpinky1)), cv(KN_IDLE.bladeUp));
+  if (KN.fingers && KN.dual) knTurn(B.lefthand, knW(B.lefthandindex1).sub(knW(B.lefthandpinky1)), cv(KN_IDLE.bladeDown));
 }
 function knArmorLevel() { return clamp(Math.max(...['helm', 'armor', 'pants', 'gloves', 'boots'].map(k => S.eq[k]?.plus || 0)), 0, 15); }   // the best of the five body pieces
 function knTick(dt, t, moving) {
-  if (!KN.on) return; const B = KN.bones; heroG.updateMatrixWorld(true);
+  if (!KN.on) return; KN.dual = S.eq.shield?.slot === 'weapon'; const B = KN.bones; heroG.updateMatrixWorld(true);
   const F = KN.h * heroG.scale.x / KN_REF;
   const acting = S.time < KN.actUntil && !(moving && KN.actBasic);
   if (!acting) { KN.actBasic = false;
@@ -1133,10 +1146,12 @@ function knTick(dt, t, moving) {
   // fists round the grip, the greatsword through the right fist
   // (the sword lives under the knight's root, so it hides and moves with the hero; its pose is worked out in world space)
   const G = new THREE.Vector3(), Qs = new THREE.Quaternion();
-  if (KN.fingers) { knCurl('right', 1); knCurl('left', 0.4); const f = knFist('right'); G.copy(f.G); Qs.copy(knBladeQ(f.axis, f.flat)); }
+  if (KN.fingers) { knCurl('right', 1); knCurl('left', KN.dual ? 1 : 0.4); const f = knFist('right'); G.copy(f.G); Qs.copy(knBladeQ(f.axis, f.flat)); }
   else { KN.handR.getWorldPosition(G); KN.handR.getWorldQuaternion(Qs); }
-  const rq = KN.root.getWorldQuaternion(new THREE.Quaternion()), rs = KN.root.getWorldScale(new THREE.Vector3()).x;
-  KN.sword.position.copy(KN.root.worldToLocal(G)); KN.sword.quaternion.copy(rq.invert().multiply(Qs)); KN.sword.scale.setScalar(F / rs); KN.sword.visible = true;
+  const rq = KN.root.getWorldQuaternion(new THREE.Quaternion()).invert(), rs = KN.root.getWorldScale(new THREE.Vector3()).x;
+  KN.sword.position.copy(KN.root.worldToLocal(G)); KN.sword.quaternion.copy(rq.clone().multiply(Qs)); KN.sword.scale.setScalar(F / rs); KN.sword.visible = true;
+  KN.sword2.visible = !!(KN.dual && KN.fingers);          // dual wield: a second greatsword through the left fist, a little smaller
+  if (KN.sword2.visible) { const f2 = knFist('left'); KN.sword2.position.copy(KN.root.worldToLocal(f2.G.clone())); KN.sword2.quaternion.copy(rq.clone().multiply(knBladeQ(f2.axis, f2.flat))); KN.sword2.scale.setScalar(F / rs * 0.9); }
   // wings from between the shoulder blades
   if (KN.chest && B.neck && B.leftarm && B.rightarm) { const S2 = knW(KN.chest), N = knW(B.neck), lx = knW(B.leftarm).sub(knW(B.rightarm)).normalize(), up = N.clone().sub(S2).normalize(), fw = new THREE.Vector3().crossVectors(lx, up).normalize();
     const C = S2.lerp(N, 0.75).addScaledVector(fw, -0.13 * F); wings.position.copy(heroBody.worldToLocal(C)); }
@@ -1937,7 +1952,7 @@ const heroShield = (() => { const g = new THREE.Group(); const sh = new THREE.Sh
   const em = new THREE.MeshBasicMaterial({ color: new THREE.Color(0x9fd0ff).multiplyScalar(2.4) }); const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), em); star.position.z = 0.09; star.scale.set(1, 1.5, 0.4);
   const cross = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.5, 0.02), em); cross.position.z = 0.075; const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, 0.02), em); cross2.position.set(0, 0.08, 0.075);
   g.add(rim, face, star, cross, cross2); g.userData = { em, star }; g.visible = false; heroBody.add(g); lookOutline(g); return g; })();
-function lookShield() { const sd = S && S.eq.shield; heroShield.visible = !!sd; if (!sd) return; const tr = tier(sd.plus || 0); heroShield.userData.em.color.set(tr ? TIER_COL[tr] : 0x9fd0ff).multiplyScalar(2.2 + tr * 0.5); }
+function lookShield() { const sd = S && S.eq.shield && S.eq.shield.slot === 'shield' ? S.eq.shield : null; /* a second weapon in the left hand is not a shield */ heroShield.visible = !!sd; if (!sd) return; const tr = tier(sd.plus || 0); heroShield.userData.em.color.set(tr ? TIER_COL[tr] : 0x9fd0ff).multiplyScalar(2.2 + tr * 0.5); }
 function shieldTick(t) { if (!heroShield.visible) return; heroShield.position.set(-0.42 * HERO_H / 1.15, HERO_H * 0.52 + Math.sin(t * 1.8) * 0.03, 0.18); heroShield.rotation.set(0.05, -0.5 + Math.sin(t * 1.2) * 0.05, 0.08); heroShield.scale.setScalar(HERO_H / 1.15 * 0.8); heroShield.userData.star.rotation.y = t * 1.5; }
 
 // =====================================================================
@@ -2020,6 +2035,8 @@ const PLAIN = { weapon: ['Kiếm Hải Lam', 'Kích San Hô', 'Thương Triều 
 // MU-style body pieces: pants, gloves and boots join helm and armour; the old armour stats are spread over armour, pants and boots
 Object.assign(SLOTS, { pants: { n: 'Quần', base: { def: 3, hp: 20 } }, gloves: { n: 'Găng tay', base: { atk: 2, crit: 1 } }, boots: { n: 'Giày', base: { def: 2, hp: 12 } } });
 SLOTS.armor.base = { def: 4, hp: 30 };
+SLOTS.shield.n = 'Khiên / tay trái';      // the left hand takes a shield or a second weapon
+const OFFHAND = { atk: 0.6, as: 0.5 };   // a second weapon adds 60% of its attack and half its attack speed
 Object.assign(PLAIN, { pants: ['Quần Vảy Bạc', 'Quần Da Cá Mập'], gloves: ['Găng Ngọc Trai', 'Găng Vảy Bạc'], boots: ['Giày Vỏ Sò', 'Giày Lân Quang'] });
 // Bộ Cánh Lam: the Azure Wing set from the concept art (every piece has its own painted sprite); drops from bosses in every realm
 SETS.azure = { n: 'Bộ Cánh Lam', col: '#7fb8ff', names: { helm: 'Mũ Cánh Lam', armor: 'Giáp Cánh Lam', pants: 'Quần Cánh Lam', gloves: 'Găng Cánh Lam', boots: 'Giày Cánh Lam', weapon: 'Đại Kiếm Cánh Lam' },
@@ -2033,7 +2050,8 @@ const ART = { helm: { icon: 'helm', pieces: ['helmet'] }, armor: { icon: 'cuiras
 const DOLL = { x: -301, y: -837, w: 586, h: 843, p: {
   leggings: { z: 10, o: [-130.25, -412.0], s: [262.75, 358.0] }, boot_left: { z: 15, o: [-230.0, -197.75], s: [127.25, 199.25] }, boot_right: { z: 15, o: [103.0, -199.0], s: [128.5, 200.5] },
   chestplate: { z: 20, o: [-164.5, -633.0], s: [331.0, 312.0] }, helmet: { z: 30, o: [-84.5, -832.25], s: [169.75, 235.5] },
-  greatsword: { z: 35, o: [-260 - 0.5283 * 127.1, -364 - 0.1206 * 381.6], s: [127.1, 381.6] },          // pivot at the grip, in the right hand (screen left), point down
+  greatsword: { z: 35, o: [-260 - 0.5283 * 127.1, -364 - 0.1206 * 381.6], s: [127.1, 381.6] },
+  greatsword_off: { z: 35, o: [235 - 0.4717 * 127.1, -364 - 0.1206 * 381.6], s: [127.1, 381.6], img: 'greatsword', flip: true },   // left hand (screen right), mirrored          // pivot at the grip, in the right hand (screen left), point down
   gauntlet_left: { z: 40, o: [-296.5, -604.5], s: [91.25, 328.0] }, gauntlet_right: { z: 40, o: [191.5, -605.0], s: [89.0, 331.75] } } };
 const hexHue = hex => { const c = new THREE.Color(hex), o = {}; c.getHSL(o); return o.h * 360; };
 function artFilter(g) {      // the art is violet-blue steel: shift it to the set's colour, or by rarity for loose pieces
@@ -2259,10 +2277,10 @@ const gearAS = (lv, r) => Math.round((10 + 0.3 * lv) * ASR[r]);
 function gearStats(g) { const o = {}; for (const k in g.base) o[k] = k === 'crit' ? +(g.base[k] + g.plus * 0.5).toFixed(1) : k === 'as' ? g.base[k] + g.plus : Math.round(g.base[k] * plusMult(g.plus)); return o; }
 const gearScore = g => { const s = gearStats(g); return (s.atk || 0) * 3 + (s.def || 0) * 2.5 + (s.hp || 0) * 0.25 + (s.crit || 0) * 4 + (s.as || 0) * 4 + (g.set ? 6 : 0); };
 const sellPrice = g => Math.round((20 + g.lv * 6) * RMULT[g.r] * (1 + g.plus * 0.3) * (g.charm ? CHARMS[g.charm].pv : 1));
-function setCounts() { const c = {}; for (const s of SLOT_ORDER) { const g = S.eq[s]; if (g && g.set) c[g.set] = (c[g.set] || 0) + 1; } return c; }
+function setCounts() { const c = {}, seen = new Set(); for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g || !g.set || seen.has(g.set + g.slot)) continue; seen.add(g.set + g.slot); c[g.set] = (c[g.set] || 0) + 1; } return c; }   // two weapons of one set count once
 function heroStats() {
   const Cl = CLS[S.cls]; const st = { atk: (12 + S.lv * 3.2) * Cl.atk, def: S.lv * 1.2, hp: (380 + S.lv * 55) * Cl.hp, mp: 100 + S.lv * 3, crit: 0, as: Math.round(S.lv * 0.1) };
-  for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g) continue; const gs = gearStats(g); for (const k in gs) st[k] += gs[k]; }
+  for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g) continue; const gs = gearStats(g); if (s === 'shield' && g.slot === 'weapon') for (const k in OFFHAND) if (gs[k]) gs[k] = Math.round(gs[k] * OFFHAND[k]); for (const k in gs) st[k] += gs[k]; }
   st.def += WDEF[S.wing]; st.hp += WHP[S.wing]; st.as += S.wing * 8;
   const P = curPet(), Mt = curMount(); if (P) st.as += P.as; if (Mt) { st.as += Mt.as; st.def *= 1 + Mt.defP; st.hp *= 1 + Mt.hpP; }
   const b = { atkP: 0, hpP: 0, defP: 0, dmgP: 0, crit: 0 }; const sc = setCounts();
@@ -2859,12 +2877,20 @@ function charMats(hue, cls) { const c = (s, l) => new THREE.Color().setHSL(hue, 
   return { suit: stylized({ color: c(0.5, 0.1), roughness: 0.75 }, 0x5d7dff, 0.25, 3), steel: stylized({ color: c(0.2, 0.68), metalness: 0.9, roughness: 0.28, envMapIntensity: 1.2 }, 0x8fe6ff, 0.45, 2.6),
     dark: stylized({ color: c(0.45, 0.2), metalness: 0.85, roughness: 0.34 }, 0x7fb8ff, 0.35, 2.6), gold: heroMats.gold, blade: heroMats.blade,
     cape: stylized({ color: c(0.7, 0.32), roughness: 0.7, side: THREE.DoubleSide, emissive: c(0.7, 0.08) }, 0x9f8bff, 0.5, 2), glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(CLS[cls].glow).multiplyScalar(2.4) }) }; }
-function makeChar(cls, hue, wingTier) {
+function makeChar(cls, hue, wingTier, asKnight) {
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body); scene.add(g);
-  const model = SkeletonUtils.clone(heroGLTF.scene); const T3 = { tip: null }; buildArmor(model, cls, lookMats(charMats(hue, cls)), T3); const outl = lookOutline(model);
-  const box = new THREE.Box3().setFromObject(model); const k = HERO_H / (box.max.y - box.min.y); model.scale.setScalar(k); model.position.y = -box.min.y * k; body.add(model);
-  model.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
-  const mx = new THREE.AnimationMixer(model), acts = {}; for (const c of heroGLTF.animations) acts[c.name] = mx.clipAction(c);
+  const kn = !!(asKnight && KN.proto); let model, T3 = { tip: null }, outl = [], mx, acts = {};
+  if (kn) {        // bots wear the Azure Wing armour: the light knight copy, its own slightly tinted material, the library clips
+    model = SkeletonUtils.clone(KN.proto); const mats = new Map(); T3.tip = model.getObjectByName('kntip');
+    model.traverse(o => { if (!o.isMesh) return; o.frustumCulled = false; if (!o.isSkinnedMesh) return;
+      if (!mats.has(o.material)) { const m = o.material.clone(); m.onBeforeCompile = () => {}; m.customProgramCacheKey = () => 'knBot'; m.color.set(0xffffff).lerp(new THREE.Color().setHSL(hue, 0.55, 0.72), 0.14); m.envMapIntensity = 0.45; mats.set(o.material, m); }
+      o.material = mats.get(o.material); });
+    body.add(model); mx = new THREE.AnimationMixer(model); for (const c of Object.values(KN.clips)) acts[c.name] = mx.clipAction(c);
+  } else {
+    model = SkeletonUtils.clone(heroGLTF.scene); buildArmor(model, cls, lookMats(charMats(hue, cls)), T3); outl = lookOutline(model);
+    const box = new THREE.Box3().setFromObject(model); const k = HERO_H / (box.max.y - box.min.y); model.scale.setScalar(k); model.position.y = -box.min.y * k; body.add(model);
+    model.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+    mx = new THREE.AnimationMixer(model); for (const c of heroGLTF.animations) acts[c.name] = mx.clipAction(c); }
   let wg = null, wR = null, wL = null, sw = null; if (SWING[wingTier]) { sw = makeSWings(wingTier); sw.position.set(0, HERO_H * 0.66, -0.3 * HERO_H / 2.3); sw.scale.setScalar(HERO_H * 0.95 / SWING_REF * WSCALE[wingTier] * 1.6); body.add(sw); }
   else if (wingTier === 1) { const wm = wingB.clone(); wm.uniforms.uTime = U.uTime; const W = WTIER[Math.min(5, wingTier)]; wm.uniforms.uRoot.value.setHex(W[0]); wm.uniforms.uTip.value.setHex(new THREE.Color().setHSL(hue, 0.9, 0.5).getHex()); wm.uniforms.uEdge.value.setHex(W[2]); wm.uniforms.uB.value = 0.62 + wingTier * 0.05;
     wg = new THREE.Group(); wg.position.set(0, HERO_H * 0.66, -0.3 * HERO_H / 2.3); wg.scale.setScalar(HERO_H / 2.3 * 1.15 * WSCALE[Math.min(5, wingTier)]); body.add(wg);
@@ -2872,18 +2898,20 @@ function makeChar(cls, hue, wingTier) {
   g.scale.setScalar(LOOK.size); const shadow = blob(1.5 * LOOK.size); scene.add(shadow);
   const C = { g, body, model, mx, acts, cur: null, tip: T3.tip, wR, wL, sw, shadow, outl, olOn: true, animAcc: 0, melee: CLS[cls].melee, phase: rr(0, 6.28) };
   C.idle = C.melee ? 'Sword_Idle' : 'Spell_Simple_Idle_Loop'; C.atk = C.melee ? 'Sword_Attack' : 'Spell_Simple_Shoot';
+  if (kn) { C.kn = true; C.idle = knFind('Combat_Stance'); C.run = knFind(KN_CLIP.run); C.atk = knFind(C.melee ? pick(KN_CLIP.combo) : 'Charged_Spell_Cast'); }
   mx.addEventListener('finished', () => charPlay(C, C.idle, 0.25)); charPlay(C, C.idle, 0); return C;
 }
 function charPlay(C, name, dur, once = false, speed = 1) { const a = C.acts[name]; if (!a) return; if (C.cur === a && !once) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = once; a.timeScale = speed; a.enabled = true; a.setEffectiveWeight(1);
   if (C.cur && C.cur !== a) a.crossFadeFrom(C.cur, dur, false); a.play(); C.cur = a; }
-function charPose(C, x, z, face, t, moving) { C.g.position.set(x, 0.55 + Math.sin(t * 2.2 + C.phase) * 0.1, z); C.g.rotation.y = face; C.shadow.position.set(x, 0.03, z);
-  C.body.rotation.x = lerp(C.body.rotation.x, moving ? 0.22 : 0, 0.1); if (C.sw) animSWings(C.sw, t, moving, C.phase); if (C.wR) { const fl = Math.sin(t * 2.2 + C.phase + 0.6); C.wR.rotation.set(-0.5 + fl * 0.08, -0.12 - fl * 0.22 - (moving ? 0.25 : 0), 0.05 + fl * 0.1); C.wL.rotation.set(-0.5 + fl * 0.08, 0.12 + fl * 0.22 + (moving ? 0.25 : 0), -0.05 - fl * 0.1); } }
+function charPose(C, x, z, face, t, moving) { C.g.position.set(x, C.kn ? 0.02 : 0.55 + Math.sin(t * 2.2 + C.phase) * 0.1, z);
+  if (C.kn) { const busy = C.cur && C.cur.loop === THREE.LoopOnce && C.cur.isRunning(); if (!busy) charPlay(C, moving ? C.run : C.idle, 0.2); } C.g.rotation.y = face; C.shadow.position.set(x, 0.03, z);
+  C.body.rotation.x = lerp(C.body.rotation.x, moving && !C.kn ? 0.22 : 0, 0.1); if (C.sw) animSWings(C.sw, t, moving, C.phase); if (C.wR) { const fl = Math.sin(t * 2.2 + C.phase + 0.6); C.wR.rotation.set(-0.5 + fl * 0.08, -0.12 - fl * 0.22 - (moving ? 0.25 : 0), 0.05 + fl * 0.1); C.wL.rotation.set(-0.5 + fl * 0.08, 0.12 + fl * 0.22 + (moving ? 0.25 : 0), -0.05 - fl * 0.1); } }
 function charRemove(C) { scene.remove(C.g); scene.remove(C.shadow); }
 
 // ---------- bots that share the map with the player ----------
 const ents = new Map(); // bot id -> live entity
 function charLabel(html, cls) { const el = document.createElement('div'); el.className = 'lbl ' + cls; el.innerHTML = html; el.style.display = 'none'; labelsEl.appendChild(el); return el; }
-function spawnBot(b, x, z) { if (!heroGLTF || ents.has(b.id)) return; const st = botStats(b); const C = makeChar(b.cls, b.hue, botWing(b));
+function spawnBot(b, x, z) { if (!heroGLTF || ents.has(b.id)) return; const st = botStats(b); const C = makeChar(b.cls, b.hue, botWing(b), true);
   const el = charLabel(`<div class="nm">${botName(b)}</div><div class="hp"><i></i></div><div class="say"></div>`, 'bot');
   const e = { b, C, el, bar: el.querySelector('.hp i'), sayEl: el.querySelector('.say'), pos: new THREE.Vector3(x, 0, z), face: rr(0, 6.28), hp: st.hp, maxHp: st.hp, atkCd: 0, skT: rr(2, 4), tgt: null, dead: 0, alive: true, wT: 0, wing: botWing(b), goal: null, sayT: rr(4, 15), nav: null, stuck: 0 };
   ents.set(b.id, e); fxBeam(x, z, '#9fe8ff', 0.9, 0.7); return e; }
@@ -3133,13 +3161,18 @@ function setInfo() { const sc = HS.sets; const ks = Object.keys(sc); if (!ks.len
 const eqSlot = s => `<div class="eqslot"><span>${SLOTS[s].n}</span>${S.eq[s] ? tileHtml(S.eq[s]) : `<div class="tile empty">${gIcon(s)}</div>`}</div>`;
 function dollHtml() {       // MU-style: the worn pieces drawn in place over a dark body silhouette
   const pct = (v, o, d) => ((v - o) / d * 100).toFixed(2) + '%'; let layers = '';
-  for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g || !ART[s]) continue; const f = artFilter(g);
-    for (const n of ART[s].pieces) { const P = DOLL.p[n];
-      layers += `<img alt="" data-id="${g.id}" src="assets/equip/pieces/${n}.png" style="left:${pct(P.o[0], DOLL.x, DOLL.w)};top:${pct(P.o[1], DOLL.y, DOLL.h)};width:${(P.s[0] / DOLL.w * 100).toFixed(2)}%;height:${(P.s[1] / DOLL.h * 100).toFixed(2)}%;z-index:${P.z};filter:${f}">`; } }
+  for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g || !ART[g.slot]) continue; const f = artFilter(g);
+    for (const n0 of ART[g.slot].pieces) { const n = s === 'shield' && n0 === 'greatsword' ? 'greatsword_off' : n0, P = DOLL.p[n];
+      layers += `<img alt="" data-id="${g.id}" src="assets/equip/pieces/${P.img || n}.png" style="left:${pct(P.o[0], DOLL.x, DOLL.w)};top:${pct(P.o[1], DOLL.y, DOLL.h)};width:${(P.s[0] / DOLL.w * 100).toFixed(2)}%;height:${(P.s[1] / DOLL.h * 100).toFixed(2)}%;z-index:${P.z};filter:${f}${P.flip ? ';transform:scaleX(-1)' : ''}">`; } }
   return `<div class="dollwrap"><div class="dcol">${['helm', 'armor', 'pants'].map(eqSlot).join('')}</div>
     <div class="doll" aria-label="Hình nhân vật với đồ đang mặc"><img class="base" alt="" src="assets/equip/silhouette.png">${layers}</div>
     <div class="dcol">${['weapon', 'shield', 'gloves'].map(eqSlot).join('')}</div></div>
     <div class="drow">${['boots', 'ring', 'pendant'].map(eqSlot).join('')}</div>`; }
+let sellArm = -1;
+const sellable = r => S.inv.filter(g => g.r === r && !g.set && !g.plus && !g.charm);
+function sellBar() { return `<div class="sellbar"><span class="muted">Bán nhanh:</span>${RARITY.map((R0, r) => { const L = sellable(r), sum = L.reduce((v, g) => v + sellPrice(g), 0);
+    return `<button class="pb${sellArm === r ? ' pri' : ''}" data-sell="${r}" style="--rc:${R0.css}"${L.length ? '' : ' disabled'}>${sellArm === r ? `Bán ${L.length} món · ${fmt(sum)} vàng?` : `${R0.n} (${L.length})`}</button>`; }).join('')}
+    <span class="muted" style="width:100%">Không bán đồ bộ, đồ đã cường hóa và bùa.</span></div>`; }
 function renderGear() {
   const st = HS, r = rates();
   bagBody.innerHTML = `<div class="grid2"><div class="col">
@@ -3153,11 +3186,17 @@ function renderGear() {
     ${setInfo()}
     <div class="box" id="detail"></div><div class="msg" role="status"></div>
   </div><div class="col">
-    <div class="sect" style="display:flex;justify-content:space-between;align-items:center">Túi đồ ${S.inv.length}/${BAG_MAX}<span><button class="pb" id="bBest">Mặc đồ tốt nhất</button> <button class="pb" id="bSellC">Bán đồ thường</button></span></div>
+    <div class="sect" style="display:flex;justify-content:space-between;align-items:center">Túi đồ ${S.inv.length}/${BAG_MAX}<span><button class="pb" id="bBest">Mặc đồ tốt nhất</button></span></div>
+    ${sellBar()}
     <div id="bagGrid">${S.inv.map(g => tileHtml(g)).join('')}${'<div class="tile empty"></div>'.repeat(Math.max(0, BAG_MAX - S.inv.length))}</div>
   </div></div>`;
   bagBody.querySelectorAll('.tile[data-id], .doll img[data-id]').forEach(b => b.onclick = () => { selId = b.dataset.id; renderBag(); });
-  $('bBest').onclick = bestGear; $('bSellC').onclick = () => { const c = S.inv.filter(g => g.r === 0 && !g.set && g.plus === 0); let sum = 0; for (const g of c) sum += sellPrice(g); S.inv = S.inv.filter(g => !c.includes(g)); S.gold += sum; afterChange(); flash(c.length ? `Đã bán ${c.length} món, nhận ${fmt(sum)} vàng.` : 'Không có đồ thường để bán.'); };
+  $('bBest').onclick = bestGear;
+  bagBody.querySelectorAll('[data-sell]').forEach(btn => btn.onclick = () => { const r = +btn.dataset.sell, list = sellable(r);
+    if (!list.length) { flash('Không có ' + RARITY[r].n.toLowerCase() + ' nào để bán.'); return; }
+    if (sellArm !== r) { sellArm = r; renderBag(); return; }          // the first tap arms the button, the second sells
+    let sum = 0; for (const g of list) sum += sellPrice(g); S.inv = S.inv.filter(g => !list.includes(g)); S.gold += sum; sellArm = -1; if (selId && !findItem(selId)) selId = null;
+    afterChange(); flash(`Đã bán ${list.length} món ${RARITY[r].n.toLowerCase()}, nhận ${fmt(sum)} vàng.`, 'ok'); });
   renderDetail();
 }
 function renderDetail() {
@@ -3173,12 +3212,12 @@ function renderDetail() {
     <p class="muted">${SLOTS[g.slot].n} · ${RARITY[g.r].n} · cấp ${g.lv}${g.set ? ' · ' + SETS[g.set].n : ''}${equipped ? ' · <b style="color:var(--cyan)">Đang mặc</b>' : ''}</p></div></div>
     <ul class="stl">${statLines(g, !equipped && cur ? cur : null)}</ul>
     ${canUp ? `<div class="upb"><b>+${g.plus} → +${g.plus + 1}</b><span>Tỉ lệ thành công ${Math.round(rate * 100)}%${g.plus >= 9 ? ' · thất bại giảm 1 cấp' : ''}</span><span>Cần ${cost.stones} Đá Cường Hóa · ${fmt(cost.gold)} vàng</span></div>` : '<p class="muted">Đã đạt +15.</p>'}
-    <div class="acts"><button class="pb" id="aEq">${equipped ? 'Tháo ra' : 'Mặc vào'}</button>${canUp ? `<button class="pb pri" id="aUp"${S.mats.e < cost.stones || S.gold < cost.gold ? ' disabled' : ''}>Cường hóa</button>` : ''}${equipped ? '' : `<button class="pb" id="aSell">Bán · ${fmt(sellPrice(g))} vàng</button>`}</div>`;
-  $('aEq').onclick = () => equipToggle(g, equipped);
+    <div class="acts"><button class="pb" id="aEq">${equipped ? 'Tháo ra' : g.slot === 'weapon' ? 'Cầm tay phải' : 'Mặc vào'}</button>${!equipped && g.slot === 'weapon' ? '<button class="pb" id="aEq2">Cầm tay trái</button>' : ''}${canUp ? `<button class="pb pri" id="aUp"${S.mats.e < cost.stones || S.gold < cost.gold ? ' disabled' : ''}>Cường hóa</button>` : ''}${equipped ? '' : `<button class="pb" id="aSell">Bán · ${fmt(sellPrice(g))} vàng</button>`}</div>`;
+  $('aEq').onclick = () => equipToggle(g, equipped); if ($('aEq2')) $('aEq2').onclick = () => equipToggle(g, false, 'shield');
   if (canUp) $('aUp').onclick = () => enhance(g);
   if (!equipped) $('aSell').onclick = () => { S.inv = S.inv.filter(x => x !== g); S.gold += sellPrice(g); selId = null; afterChange(); flash('Đã bán ' + g.name + '.'); };
 }
-function equipToggle(g, equipped) { if (equipped) { if (S.inv.length >= BAG_MAX) { flash('Túi đầy, không tháo được.', 'bad'); return; } delete S.eq[g.slot]; S.inv.push(g); } else { const old = S.eq[g.slot]; S.inv = S.inv.filter(x => x !== g); if (old) S.inv.push(old); S.eq[g.slot] = g; } afterChange(); }
+function equipToggle(g, equipped, to) { if (equipped) { if (S.inv.length >= BAG_MAX) { flash('Túi đầy, không tháo được.', 'bad'); return; } const k = SLOT_ORDER.find(s => S.eq[s] === g); if (k) delete S.eq[k]; S.inv.push(g); } else { const k = to || g.slot; const old = S.eq[k]; S.inv = S.inv.filter(x => x !== g); if (old) S.inv.push(old); S.eq[k] = g; } afterChange(); }
 function enhance(g) { const cost = upCost(g.plus); if (S.mats.e < cost.stones || S.gold < cost.gold) return; S.mats.e -= cost.stones; S.gold -= cost.gold; const ok = Math.random() < upRate(g.plus);
   if (ok) g.plus++; else if (g.plus >= 9) g.plus--; afterChange();
   flash(ok ? `Thành công! ${g.name} +${g.plus}` : g.plus >= 8 ? `Thất bại. ${g.name} còn +${g.plus}.` : 'Thất bại. Đồ giữ nguyên cấp.', ok ? 'ok' : 'bad');
