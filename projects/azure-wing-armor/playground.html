@@ -1,0 +1,555 @@
+<meta charset="utf-8">
+<title>Sân Tập Cánh Lam</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one-screen sandbox. Thin top bar, the arena canvas fills the rest; HUD, touch controls and the equipment panel float over the arena. Single dark look on purpose (game scene). */
+:root {
+  color-scheme: dark;
+  --bg: #0c0f15;
+  --panel: rgba(18, 23, 33, .94);
+  --panel-solid: #161c27;
+  --line: #2b3546;
+  --fg: #e4e9f3;
+  --muted: #8e99ae;
+  --azure: #5fb0ff;
+  --azure-dim: rgba(95, 176, 255, .16);
+  --gold: #e8c26a;
+  --red: #ff6b6b;
+  --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden;
+}
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.bar h1 { margin: 0; font: 700 20px/1.1 var(--font-display); letter-spacing: .03em; }
+.bar h1 span { color: var(--azure); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; margin-left: 10px; }
+.keys { color: var(--muted); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+kbd { font: 500 11px var(--font-mono); background: var(--panel-solid); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--fg); }
+.btn { font: 600 13px var(--font-body); color: var(--fg); background: var(--panel-solid); border: 1px solid var(--line); border-radius: 5px; padding: 7px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--azure); }
+.btn[aria-pressed="true"] { background: var(--azure-dim); border-color: var(--azure); }
+.btn:focus-visible, .slot:focus-visible, .inv-item:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
+.bar .actions { display: flex; gap: 8px; }
+
+.stage { position: relative; flex: 1; min-height: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #10141c; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+
+.hud { position: absolute; left: 12px; top: 12px; display: grid; gap: 6px; pointer-events: none; max-width: calc(100% - 24px); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; font-size: 12px; color: var(--muted); }
+.chip b { font: 500 13px var(--font-mono); color: var(--fg); font-variant-numeric: tabular-nums; margin-left: 4px; }
+.chip.set b { color: var(--gold); }
+.meter { position: absolute; right: 12px; top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; pointer-events: none; display: grid; gap: 2px; min-width: 150px; }
+.meter div { display: flex; justify-content: space-between; gap: 14px; font-size: 12px; color: var(--muted); }
+.meter b { font: 500 13px var(--font-mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.meter .dps b { color: var(--azure); font-size: 18px; }
+
+.touch { position: absolute; inset: auto 0 0 0; height: 0; }
+.stick { position: absolute; left: max(18px, env(safe-area-inset-left, 0px)); bottom: 18px; width: 120px; height: 120px; border-radius: 50%; background: rgba(95,176,255,.08); border: 1px solid rgba(95,176,255,.35); touch-action: none; }
+.stick i { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(95,176,255,.35); border: 1px solid var(--azure); }
+.atk { position: absolute; right: 18px; bottom: 26px; width: 88px; height: 88px; border-radius: 50%; border: 1px solid var(--gold); background: rgba(232,194,106,.16); color: var(--gold); font: 700 14px var(--font-display); letter-spacing: .08em; touch-action: none; }
+
+.menu { position: absolute; inset: 12px; margin: auto; max-width: 760px; max-height: calc(100% - 24px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 14px; align-content: start; backdrop-filter: blur(6px); }
+.menu-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.menu-head h2 { margin: 0; font: 700 18px var(--font-display); letter-spacing: .04em; }
+.menu-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 640px) { .menu-grid { grid-template-columns: minmax(0, 1fr); } }
+.menu h3 { margin: 0 0 8px; font: 600 12px var(--font-display); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.slot, .inv-item { position: relative; display: grid; justify-items: center; gap: 4px; padding: 8px 6px; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 6px; color: inherit; font: inherit; cursor: pointer; text-align: center; }
+.slot img, .inv-item img { width: 64px; height: 64px; }
+.slot .ph { width: 64px; height: 64px; border: 1px dashed var(--line); border-radius: 6px; display: grid; place-items: center; color: var(--muted); font-size: 11px; }
+.slot small, .inv-item small { font-size: 11.5px; color: var(--muted); line-height: 1.25; }
+.slot.on { border-color: color-mix(in srgb, var(--azure) 55%, var(--line)); }
+.slot:hover, .inv-item:hover { border-color: var(--azure); }
+.inv { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; min-height: 100px; }
+.inv .empty { grid-column: 1 / -1; color: var(--muted); font-size: 13px; padding: 10px 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.seg button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; padding: 6px 11px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--azure-dim); color: var(--fg); }
+.seg button:disabled { opacity: .45; cursor: not-allowed; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.stats div { background: var(--panel-solid); padding: 7px 9px; }
+.stats b { display: block; font: 500 16px var(--font-mono); font-variant-numeric: tabular-nums; }
+.stats span { font-size: 11.5px; color: var(--muted); }
+.bonus { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; font-size: 13px; }
+.bonus li { color: var(--muted); }
+.bonus li.on { color: var(--fg); }
+.bonus li b { font-family: var(--font-display); color: var(--muted); margin-right: 6px; }
+.bonus li.on b { color: var(--gold); }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+@media (max-width: 640px) {
+  .keys { display: none; }
+  .bar h1 span { display: none; }
+  .meter { top: auto; bottom: 124px; min-width: 132px; padding: 6px 10px; }
+  .meter .dps b { font-size: 15px; }
+}
+</style>
+
+<div class="bar">
+  <h1>Sân Tập Cánh Lam<span>sandbox</span></h1>
+  <div class="keys">
+    <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / mũi tên: di chuyển</span>
+    <span><kbd>J</kbd> / <kbd>Space</kbd> / nhấp: tấn công (giữ để đánh liên tục)</span>
+    <span><kbd>I</kbd>: trang bị</span>
+    <span><kbd>H</kbd>: hitbox</span>
+  </div>
+  <div class="actions">
+    <button class="btn" type="button" id="btn-hitbox" aria-pressed="false">Hitbox</button>
+    <button class="btn" type="button" id="btn-menu">Trang bị</button>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <canvas id="game" tabindex="0" aria-label="Sân tập: nhân vật mặc giáp Cánh Lam và hình nộm tập"></canvas>
+  <div class="hud" aria-live="off">
+    <div class="chips" id="chips"></div>
+  </div>
+  <div class="meter" aria-live="off">
+    <div class="dps"><span>DPS (5 giây)</span><b id="m-dps">0</b></div>
+    <div><span>Đòn cuối</span><b id="m-last">–</b></div>
+    <div><span>Số đòn</span><b id="m-hits">0</b></div>
+    <div><span>Tổng sát thương</span><b id="m-total">0</b></div>
+  </div>
+  <div class="touch" id="touch" hidden>
+    <div class="stick" id="stick"><i id="knob"></i></div>
+    <button class="atk" type="button" id="atk">CHÉM</button>
+  </div>
+  <section class="menu" id="menu" hidden aria-label="Trang bị">
+    <div class="menu-head">
+      <h2>Trang bị</h2>
+      <div class="row">
+        <button class="btn" type="button" id="all-on">Mặc toàn bộ</button>
+        <button class="btn" type="button" id="all-off">Tháo hết</button>
+        <button class="btn" type="button" id="menu-close">Đóng <kbd>I</kbd></button>
+      </div>
+    </div>
+    <div class="menu-grid">
+      <div>
+        <h3>Đang mặc</h3>
+        <div class="slots" id="slots"></div>
+        <h3 style="margin-top:14px">Cầm kiếm</h3>
+        <div class="seg" role="group" aria-label="Tay cầm kiếm" id="hand-seg">
+          <button type="button" data-hand="right">Tay phải</button>
+          <button type="button" data-hand="left">Tay trái</button>
+          <button type="button" data-hand="both">Hai tay</button>
+        </div>
+      </div>
+      <div>
+        <h3>Túi đồ</h3>
+        <div class="inv" id="inv"></div>
+        <h3 style="margin-top:14px">Chỉ số</h3>
+        <div class="stats" id="stats"></div>
+        <h3 style="margin-top:14px">Hiệu ứng bộ</h3>
+        <ul class="bonus" id="bonus"></ul>
+      </div>
+    </div>
+  </section>
+  <div class="loading" id="loading">Đang tải bộ giáp…</div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const canvas = $("game"), ctx = canvas.getContext("2d"), stage = $("stage");
+const ARMOR = ["helm", "cuirass", "greaves", "gauntlets", "sabatons"];
+const SLOTS = [["helm", "Đầu"], ["cuirass", "Ngực"], ["greaves", "Chân"], ["gauntlets", "Tay"], ["sabatons", "Bàn chân"], ["greatsword", "Vũ khí"]];
+const STAT_VI = [["attack", "Tấn công"], ["crit_rate", "Chí mạng %"], ["attack_speed", "Tốc đánh %"], ["move_speed", "Tốc chạy %"],
+                 ["defense", "Phòng thủ"], ["hp", "Máu"], ["magic_resist", "Kháng phép"], ["evasion", "Né tránh %"]];
+const DIRS = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
+const DOLL_H = 844;                      // armour height in @1x px (helmet top to floor)
+
+let SET, IMG = {}, ST, W = 0, H = 0, DPR = 1, floorCanvas = null, S = 0.22, debug = false, menuOpen = false, last = 0, clock = 0;
+const keys = new Set(), stick = { x: 0, y: 0, on: false };
+let holdAttack = false;
+const P = { x: 0, y: 0, facing: "down", moving: false, walk: 0, atk: null, cd: 0, turn: 0 };
+const D = { x: 0, y: 0, hp: 1, max: 20000, wob: 0, wobV: 0, flash: 0, lastHit: -99, downAt: -1 };
+let floaters = [], sparks = [], hits = [], totalDmg = 0;
+
+// ---------- equipment state (remembered per viewer when storage is available) ----------
+const equip = (() => {
+  const def = { helm: true, cuirass: true, greaves: true, gauntlets: true, sabatons: true, greatsword: true, hand: "right" };
+  try { const s = JSON.parse(localStorage.getItem("azure-sandbox-equip") || "null"); if (s) return Object.assign(def, s); } catch (e) {}
+  return def;
+})();
+function saveEquip() { try { localStorage.setItem("azure-sandbox-equip", JSON.stringify(equip)); } catch (e) {} }
+
+function computeStats() {
+  const s = { attack: 20, crit_rate: 5, attack_speed: 0, move_speed: 0, defense: 0, hp: 800, magic_resist: 0, evasion: 0 };
+  for (const id of [...ARMOR, "greatsword"]) if (equip[id]) for (const [k, v] of Object.entries(SET.items[id].stats)) s[k] = (s[k] || 0) + v;
+  const n = ARMOR.filter(i => equip[i]).length;
+  if (n >= 2) s.defense = Math.round(s.defense * 1.08);
+  if (n >= 4) s.move_speed += 12;
+  s.pieces = n; s.aura = n >= 5;
+  return s;
+}
+
+// ---------- helpers ----------
+const ease = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u);
+const lerp = (a, b, u) => a + (b - a) * u;
+const viewOf = f => f === "up" ? "back" : "front";
+const k = () => S / 0.22;                                   // animation amplitudes scale with the character
+const pieceForSide = (view, side) => ["gauntlet_left", "gauntlet_right"].find(g => SET.pieces[g].views[view].character_side === side);
+function weaponSides() { return !equip.greatsword ? [] : equip.hand === "both" ? ["right", "left"] : [equip.hand]; }
+function attackTime(sword) { return (sword ? 0.62 : 0.42) / Math.max(0.3, 1 + ST.attack_speed / 100); }
+// sword swing angle (radians, canvas clockwise) for the hand on the screen-left (r = 1) or screen-right (r = -1)
+function swingAngle(u, r) {
+  const wind = 2.4 * r, follow = -1.05 * r;
+  if (u < 0.3) return lerp(0, wind, ease(u / 0.3));
+  if (u < 0.55) return lerp(wind, follow, Math.pow((u - 0.3) / 0.25, 1.6));
+  return lerp(follow, 0, ease((u - 0.55) / 0.45));
+}
+
+// ---------- loading ----------
+function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = "assets/" + src; }); }
+async function boot() {
+  SET = await (await fetch("assets/azure_wing_set.json")).json();
+  const jobs = [];
+  for (const [n, p] of Object.entries(SET.pieces)) for (const v of ["front", "back"]) jobs.push(loadImg(p.views[v].files["@1x"]).then(i => IMG[v + "/" + n] = i));
+  for (const [n, v] of Object.entries(SET.weapon.variants)) jobs.push(loadImg(v.files["@1x"]).then(i => IMG["weapon/" + n] = i));
+  for (const id of Object.keys(SET.items)) jobs.push(loadImg(SET.items[id].icon.framed).then(i => IMG["icon/" + id] = i));
+  await Promise.all(jobs);
+  ST = computeStats();
+  $("loading").hidden = true;
+  resize(true); renderChips();
+  if (matchMedia("(pointer: coarse)").matches) $("touch").hidden = false;
+  requestAnimationFrame(frame);
+}
+
+// ---------- layout / floor ----------
+function resize(first) {
+  const r = stage.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = r.width; H = r.height; canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+  S = Math.max(0.1, Math.min(0.26, (H * 0.34) / DOLL_H, (W * 0.5) / DOLL_H));
+  D.x = W * 0.66; D.y = H * 0.56;
+  if (first || !P.x) { P.x = W * 0.3; P.y = H * 0.62; D.hp = D.max; }
+  clampPlayer(); paintFloor();
+}
+function paintFloor() {
+  floorCanvas = document.createElement("canvas"); floorCanvas.width = canvas.width; floorCanvas.height = canvas.height;
+  const g = floorCanvas.getContext("2d"); g.scale(DPR, DPR);
+  g.fillStyle = "#121722"; g.fillRect(0, 0, W, H);
+  const T = Math.max(40, 150 * S); let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let y = 0, row = 0; y < H + T; y += T * 0.62, row++) {
+    for (let x = -(row % 2) * T / 2; x < W + T; x += T) {
+      const l = 15 + rnd() * 7, b = 22 + rnd() * 8;
+      g.fillStyle = `rgb(${l},${l + 4},${b})`; g.fillRect(x + 1.5, y + 1.5, T - 3, T * 0.62 - 3);
+    }
+  }
+  const v = g.createRadialGradient(W / 2, H * 0.55, Math.min(W, H) * 0.2, W / 2, H * 0.55, Math.max(W, H) * 0.75);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.6)"); g.fillStyle = v; g.fillRect(0, 0, W, H);
+}
+function clampPlayer() {
+  const m = 40 * k(); P.x = Math.max(m, Math.min(W - m, P.x)); P.y = Math.max(DOLL_H * S * 0.75, Math.min(H - 10, P.y));
+}
+
+// ---------- input ----------
+const MOVE_KEYS = { w: [0, -1], arrowup: [0, -1], s: [0, 1], arrowdown: [0, 1], a: [-1, 0], arrowleft: [-1, 0], d: [1, 0], arrowright: [1, 0] };
+window.addEventListener("keydown", e => {
+  const key = e.key.toLowerCase();
+  if (key in MOVE_KEYS || key === " ") e.preventDefault();
+  if (key === "i" || key === "tab") { e.preventDefault(); if (!e.repeat) toggleMenu(); return; }
+  if (key === "escape" && menuOpen) { toggleMenu(false); return; }
+  if (key === "h" && !e.repeat) { setDebug(!debug); return; }
+  keys.add(key);
+});
+window.addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
+window.addEventListener("blur", () => { keys.clear(); holdAttack = false; });
+canvas.addEventListener("pointerdown", e => { if (e.pointerType === "mouse") { holdAttack = true; canvas.focus(); } });
+window.addEventListener("pointerup", e => { if (e.pointerType === "mouse") holdAttack = false; });
+(() => {
+  const el = $("stick"), knob = $("knob");
+  const move = e => {
+    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let dx = e.clientX - cx, dy = e.clientY - cy; const d = Math.hypot(dx, dy), m = r.width / 2;
+    if (d > m) { dx *= m / d; dy *= m / d; }
+    stick.x = dx / m; stick.y = dy / m; knob.style.transform = `translate(${dx}px, ${dy}px)`;
+  };
+  el.addEventListener("pointerdown", e => { stick.on = true; el.setPointerCapture(e.pointerId); move(e); });
+  el.addEventListener("pointermove", e => { if (stick.on) move(e); });
+  const end = () => { stick.on = false; stick.x = stick.y = 0; knob.style.transform = ""; };
+  el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+  const atk = $("atk");
+  atk.addEventListener("pointerdown", e => { e.preventDefault(); holdAttack = true; atk.setPointerCapture(e.pointerId); });
+  atk.addEventListener("pointerup", () => holdAttack = false); atk.addEventListener("pointercancel", () => holdAttack = false);
+})();
+function setDebug(on) { debug = on; $("btn-hitbox").setAttribute("aria-pressed", String(on)); }
+$("btn-hitbox").addEventListener("click", () => setDebug(!debug));
+$("btn-menu").addEventListener("click", () => toggleMenu());
+$("menu-close").addEventListener("click", () => toggleMenu(false));
+
+// ---------- simulation ----------
+function startAttack() {
+  if (P.atk || P.cd > 0 || menuOpen) return;
+  const sides = weaponSides(), sword = sides.length > 0;
+  const side = sword ? sides[P.turn % sides.length] : (P.turn % 2 ? "left" : "right");
+  P.turn++;
+  const dur = attackTime(sword);
+  P.atk = { t: 0, dur, side, sword, hit: false }; P.cd = dur;
+}
+function bodyCenter() { return [P.x, P.y - DOLL_H * S * 0.5]; }
+function attackBox() {
+  const [cx, cy] = bodyCenter(), [dx, dy] = DIRS[P.facing], L = DOLL_H * S;
+  const sword = P.atk ? P.atk.sword : weaponSides().length > 0;
+  const reach = sword ? 0.42 * L : 0.26 * L, rad = sword ? 0.42 * L : 0.2 * L;
+  return [cx + dx * reach, cy + dy * reach * 0.8, rad];
+}
+function dummyBox() { return [D.x, D.y - 100 * k(), 46 * k()]; }
+function resolveHit() {
+  if (D.hp <= 0) return;
+  const [ax, ay, ar] = attackBox(), [bx, by, br] = dummyBox();
+  if (Math.hypot(ax - bx, ay - by) > ar + br) return;
+  const crit = Math.random() < ST.crit_rate / 100;
+  const dmg = Math.round(ST.attack * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
+  D.hp = Math.max(0, D.hp - dmg); D.flash = 1; D.lastHit = clock;
+  D.wobV += (P.x < D.x ? 1 : -1) * (crit ? 4.2 : 2.6);
+  if (D.hp === 0) D.downAt = clock;
+  hits.push([clock, dmg]); totalDmg += dmg;
+  $("m-last").textContent = dmg.toLocaleString("vi-VN") + (crit ? " ✦" : "");
+  $("m-hits").textContent = hits.length.toLocaleString("vi-VN");
+  $("m-total").textContent = totalDmg.toLocaleString("vi-VN");
+  floaters.push({ x: bx + (Math.random() - 0.5) * 30 * k(), y: by - 40 * k(), txt: dmg.toLocaleString("vi-VN"), crit, t: 0 });
+  for (let i = 0; i < (crit ? 22 : 12); i++) {
+    const a = Math.random() * Math.PI * 2, v = (60 + Math.random() * 160) * k();
+    sparks.push({ x: bx, y: by, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40 * k(), t: 0, life: 0.35 + Math.random() * 0.3, gold: crit || Math.random() < 0.3 });
+  }
+}
+function update(dt) {
+  clock += dt;
+  // movement
+  let mx = 0, my = 0;
+  if (!menuOpen) {
+    for (const key of keys) if (MOVE_KEYS[key]) { mx += MOVE_KEYS[key][0]; my += MOVE_KEYS[key][1]; }
+    if (stick.on) { mx += stick.x; my += stick.y; }
+  }
+  const mag = Math.hypot(mx, my);
+  P.moving = mag > 0.15;
+  if (P.moving) {
+    mx /= Math.max(1, mag); my /= Math.max(1, mag);
+    const speed = 210 * k() * (1 + ST.move_speed / 100) * (P.atk ? 0.55 : 1);
+    P.x += mx * speed * dt; P.y += my * speed * dt * 0.8;
+    if (!P.atk) P.facing = Math.abs(mx) > Math.abs(my) ? (mx < 0 ? "left" : "right") : (my < 0 ? "up" : "down");
+    P.walk += dt * 10 * (1 + ST.move_speed / 200);
+    // keep out of the dummy's base
+    const rr = 38 * k(), dx = P.x - D.x, dy = (P.y - D.y) * 1.6, d = Math.hypot(dx, dy);
+    if (d < rr && d > 0) { P.x = D.x + dx / d * rr; P.y = D.y + dy / d * rr / 1.6; }
+    clampPlayer();
+  }
+  // attacking
+  P.cd = Math.max(0, P.cd - dt);
+  if ((holdAttack || keys.has(" ") || keys.has("j")) && !menuOpen) startAttack();
+  if (P.atk) {
+    P.atk.t += dt;
+    if (!P.atk.hit && P.atk.t / P.atk.dur >= (P.atk.sword ? 0.42 : 0.3)) { P.atk.hit = true; resolveHit(); }
+    if (P.atk.t >= P.atk.dur) P.atk = null;
+  }
+  // dummy: spring wobble, flash, respawn / regen
+  D.wobV += (-38 * D.wob - 5.5 * D.wobV) * dt; D.wob += D.wobV * dt;
+  D.flash = Math.max(0, D.flash - dt * 6);
+  if (D.hp === 0 && clock - D.downAt > 1.4) D.hp = D.max;
+  if (D.hp > 0 && D.hp < D.max && clock - D.lastHit > 4) D.hp = Math.min(D.max, D.hp + D.max * dt * 0.8);
+  // effects
+  for (const f of floaters) f.t += dt;
+  floaters = floaters.filter(f => f.t < 0.9);
+  for (const s of sparks) { s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 420 * k() * dt; }
+  sparks = sparks.filter(s => s.t < s.life);
+  hits = hits.filter(h => clock - h[0] < 60);
+}
+
+// ---------- drawing: character ----------
+const BOB = { helmet: [3, 0], chestplate: [2, 0.5], leggings: [1.2, 1], gauntlet_left: [4, 1.6], gauntlet_right: [4, 2.1], boot_left: [0, 0], boot_right: [0, 0] };
+function pieceAnim(name, view) {
+  let dx = 0, dy = Math.sin(clock * 2.2 + BOB[name][1]) * BOB[name][0], sc = 1;
+  if (P.moving) {
+    const ph = P.walk;
+    if (name === "boot_left") dy -= Math.max(0, Math.sin(ph)) * 10;
+    if (name === "boot_right") dy -= Math.max(0, Math.sin(ph + Math.PI)) * 10;
+    if (name === "leggings" || name === "chestplate" || name === "helmet") dy -= Math.abs(Math.sin(ph)) * 3;
+    if (name === "gauntlet_left") dy += Math.sin(ph + Math.PI) * 6;
+    if (name === "gauntlet_right") dy += Math.sin(ph) * 6;
+  }
+  if (P.atk && name === pieceForSide(view, P.atk.side)) {
+    const u = P.atk.t / P.atk.dur;
+    if (P.atk.sword) {
+      const out = name === "gauntlet_left" ? -1 : 1;
+      const lift = u < 0.3 ? ease(u / 0.3) : u < 0.55 ? 1 - ease((u - 0.3) / 0.25) : 0;
+      const push = u < 0.3 ? 0 : u < 0.55 ? ease((u - 0.3) / 0.25) : 1 - ease((u - 0.55) / 0.45);
+      dx += out * (10 * lift - 16 * push); dy += -16 * lift + 10 * push;
+    } else {
+      const ext = u < 0.35 ? ease(u / 0.35) : 1 - ease((u - 0.35) / 0.65), [fx, fy] = DIRS[P.facing];
+      dx += fx * 30 * ext; dy += fy * 18 * ext; sc = 1 + (fy > 0 ? 0.2 : fy < 0 ? -0.1 : 0.05) * ext;
+    }
+  }
+  return [dx * k(), dy * k(), sc];
+}
+function drawCharacter() {
+  const view = viewOf(P.facing), L = DOLL_H * S;
+  ctx.save(); ctx.translate(P.x, P.y);
+  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(0, 0, 150 * S, 34 * S, 0, 0, Math.PI * 2); ctx.fill();
+  if (ST.aura) {   // 5-piece set: azure glow
+    const gl = ctx.createRadialGradient(0, -L * 0.55, 0, 0, -L * 0.55, L * 0.6);
+    gl.addColorStop(0, `rgba(95,176,255,${0.18 + Math.sin(clock * 3) * 0.05})`); gl.addColorStop(1, "rgba(95,176,255,0)");
+    ctx.fillStyle = gl; ctx.fillRect(-L, -L * 1.2, L * 2, L * 1.3);
+  }
+  if (P.facing === "left" || P.facing === "right") { const d = P.facing === "left" ? -1 : 1; ctx.transform(0.92, 0, -0.08 * d, 1, 0, 0); }
+  const layers = [];
+  for (const id of ARMOR) if (equip[id]) for (const n of SET.items[id].pieces) layers.push({ z: SET.pieces[n].z, n });
+  for (const side of weaponSides()) layers.push({ z: SET.weapon.hold.z, sword: pieceForSide(view, side), side });
+  layers.sort((a, b) => a.z - b.z);
+  let trail = null;
+  for (const Lr of layers) {
+    if (Lr.n) {
+      const p = SET.pieces[Lr.n].views[view], img = IMG[view + "/" + Lr.n]; if (!img) continue;
+      const [dx, dy, sc] = pieceAnim(Lr.n, view), w = p.size_1x[0] * S * sc, h = p.size_1x[1] * S * sc;
+      const x = p.offset_1x[0] * S + dx - (w - p.size_1x[0] * S) / 2, y = p.offset_1x[1] * S + dy - (h - p.size_1x[1] * S) / 2;
+      ctx.drawImage(img, x, y, w, h);
+    } else {
+      const g = Lr.sword, gp = SET.pieces[g].views[view], variant = SET.weapon.hold[view][g], v = SET.weapon.variants[variant];
+      const img = IMG["weapon/" + variant]; if (!img) continue;
+      const [dx, dy] = pieceAnim(g, view), gx = gp.grip_1x[0] * S + dx, gy = gp.grip_1x[1] * S + dy;
+      const kk = S * SET.weapon.recommended_scale, w = v.size_1x[0] * kk, h = v.size_1x[1] * kk;
+      const r = g === "gauntlet_left" ? 1 : -1;
+      let ang = Math.sin(clock * 2.2 + 1.8) * 0.04 * r;
+      const swinging = P.atk && P.atk.sword && P.atk.side === Lr.side;
+      if (swinging) {
+        const u = P.atk.t / P.atk.dur; ang = swingAngle(u, r);
+        if (u > 0.3 && u < 0.62) trail = { gx, gy, a0: swingAngle(Math.max(0.3, u - 0.12), r), a1: ang, len: h * (1 - v.grip_pivot[1]) };
+      }
+      ctx.save(); ctx.translate(gx, gy); ctx.rotate(ang);
+      ctx.drawImage(img, -v.grip_pivot[0] * w, -v.grip_pivot[1] * h, w, h); ctx.restore();
+    }
+  }
+  if (trail) {   // slash arc: annular sector between the previous and current blade angle
+    const a0 = Math.PI / 2 + trail.a0, a1 = Math.PI / 2 + trail.a1, ccw = a1 < a0;
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    const grd = ctx.createRadialGradient(trail.gx, trail.gy, trail.len * 0.3, trail.gx, trail.gy, trail.len);
+    grd.addColorStop(0, "rgba(95,176,255,0)"); grd.addColorStop(0.7, "rgba(120,190,255,.35)"); grd.addColorStop(1, "rgba(255,226,150,.75)");
+    ctx.fillStyle = grd; ctx.beginPath();
+    ctx.arc(trail.gx, trail.gy, trail.len, a0, a1, ccw); ctx.arc(trail.gx, trail.gy, trail.len * 0.35, a1, a0, !ccw);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ---------- drawing: training dummy (drawn in code, in local units scaled by k) ----------
+function dummyShapes(c, white) {
+  const wood = white || "#6b4a2e", straw = white || "#c9a467", strawDark = white || "#9c7b45", rope = white || "#5b4630";
+  c.fillStyle = wood; c.fillRect(-7, -150, 14, 150);                                   // post
+  c.fillStyle = wood; c.fillRect(-52, -128, 104, 11);                                  // arms
+  c.fillStyle = straw; c.beginPath(); c.ellipse(0, -96, 36, 50, 0, 0, Math.PI * 2); c.fill();   // body sack
+  c.fillStyle = strawDark; for (let i = -2; i <= 2; i++) { c.fillRect(i * 12 - 1, -140, 2, 88); }
+  c.fillStyle = straw; c.beginPath(); c.arc(0, -168, 21, 0, Math.PI * 2); c.fill();   // head
+  c.fillStyle = rope; c.fillRect(-36, -64, 72, 6); c.fillRect(-30, -132, 60, 5); c.fillRect(-14, -150, 28, 5);
+  if (!white) {
+    for (const [r, col] of [[24, "#b33a3a"], [16, "#efe6d2"], [8, "#b33a3a"]]) { c.fillStyle = col; c.beginPath(); c.arc(0, -98, r, 0, Math.PI * 2); c.fill(); }
+  }
+}
+function drawDummy() {
+  const kk = k();
+  ctx.save(); ctx.translate(D.x, D.y);
+  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(0, 0, 60 * kk, 16 * kk, 0, 0, Math.PI * 2); ctx.fill();
+  // azure training circle on the floor
+  ctx.strokeStyle = "rgba(95,176,255,.22)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, 0, 92 * kk, 26 * kk, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.scale(kk, kk); ctx.rotate(D.wob * 0.12);
+  ctx.fillStyle = "#3d2b1b"; ctx.beginPath(); ctx.ellipse(0, 0, 30, 9, 0, 0, Math.PI * 2); ctx.fill();   // base
+  if (D.hp === 0) ctx.globalAlpha = 0.45;
+  dummyShapes(ctx);
+  if (D.flash > 0) { ctx.globalAlpha = D.flash * 0.75; dummyShapes(ctx, "#ffffff"); }
+  ctx.restore();
+  // HP bar
+  const bw = 130 * kk, bh = 8 * kk, bx = D.x - bw / 2, by = D.y - 215 * kk;
+  ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+  ctx.fillStyle = D.hp / D.max > 0.3 ? "#5fd07a" : "#ff6b6b"; ctx.fillRect(bx, by, bw * D.hp / D.max, bh);
+  ctx.fillStyle = "#e4e9f3"; ctx.font = `600 ${Math.max(11, 12 * kk)}px "Be Vietnam Pro", sans-serif`; ctx.textAlign = "center";
+  ctx.fillText(D.hp === 0 ? "Hạ gục!" : `Hình nộm · ${Math.ceil(D.hp).toLocaleString("vi-VN")}`, D.x, by - 6 * kk);
+}
+
+function drawEffects() {
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  for (const s of sparks) {
+    const a = 1 - s.t / s.life; ctx.fillStyle = s.gold ? `rgba(255,214,120,${a})` : `rgba(110,185,255,${a})`;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 2.6 * k() * a + 0.6, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+  ctx.textAlign = "center";
+  for (const f of floaters) {
+    const a = 1 - Math.max(0, f.t - 0.5) / 0.4, y = f.y - f.t * 70 * k(), sz = (f.crit ? 26 : 19) * Math.max(0.8, k()) * (f.t < 0.08 ? 1.3 : 1);
+    ctx.globalAlpha = a; ctx.font = `700 ${sz}px "Chakra Petch", sans-serif`; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(0,0,0,.7)";
+    ctx.strokeText(f.txt, f.x, y); ctx.fillStyle = f.crit ? "#ffd27a" : "#ffffff"; ctx.fillText(f.txt, f.x, y);
+  }
+  ctx.globalAlpha = 1;
+}
+function drawDebug() {
+  const circle = (x, y, r, col) => { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); };
+  const [ax, ay, ar] = attackBox(), [bx, by, br] = dummyBox();
+  circle(ax, ay, ar, P.atk ? "rgba(255,107,107,.95)" : "rgba(255,107,107,.4)");
+  circle(bx, by, br, "rgba(95,208,122,.9)");
+  ctx.strokeStyle = "rgba(232,194,106,.8)"; ctx.beginPath(); ctx.ellipse(D.x, D.y, 38 * k(), 38 * k() / 1.6, 0, 0, Math.PI * 2); ctx.stroke();
+  const [cx, cy] = bodyCenter(); ctx.fillStyle = "#e8c26a"; ctx.fillRect(cx - 3, cy - 3, 6, 6); ctx.fillRect(P.x - 3, P.y - 3, 6, 6);
+  ctx.font = '500 12px "JetBrains Mono", monospace'; ctx.textAlign = "left"; ctx.fillStyle = "#e4e9f3";
+  ctx.fillText(`hướng ${P.facing} · mặt ${viewOf(P.facing)} · đòn ${P.atk ? (P.atk.t / P.atk.dur).toFixed(2) : "–"} · nhịp ${attackTime(weaponSides().length > 0).toFixed(2)}s`, 12, H - 12);
+}
+
+function frame(ts) {
+  const dt = Math.min(0.05, (ts - (last || ts)) / 1000); last = ts;
+  update(dt);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.drawImage(floorCanvas, 0, 0, W, H);
+  // depth: whoever stands lower on screen is drawn later
+  if (P.y < D.y) { drawCharacter(); drawDummy(); } else { drawDummy(); drawCharacter(); }
+  drawEffects();
+  if (debug) drawDebug();
+  if (Math.floor(clock * 5) !== Math.floor((clock - dt) * 5)) {
+    const now = clock, recent = hits.filter(h => now - h[0] <= 5), span = recent.length ? Math.max(1, Math.min(5, now - recent[0][0])) : 1;
+    $("m-dps").textContent = Math.round(recent.reduce((s, h) => s + h[1], 0) / span).toLocaleString("vi-VN");
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---------- HUD + equipment menu ----------
+function renderChips() {
+  const n = ST.pieces;
+  $("chips").innerHTML = `<span class="chip">Tấn công<b>${ST.attack}</b></span><span class="chip">Chí mạng<b>${ST.crit_rate}%</b></span>
+    <span class="chip">Tốc đánh<b>${ST.attack_speed > 0 ? "+" : ""}${ST.attack_speed}%</b></span><span class="chip">Tốc chạy<b>+${ST.move_speed}%</b></span>
+    <span class="chip set">Bộ Cánh Lam<b>${n}/5</b></span>`;
+}
+function itemName(id) { return SET.items[id].name_vi; }
+function renderMenu() {
+  $("slots").innerHTML = SLOTS.map(([id, label]) => equip[id]
+    ? `<button type="button" class="slot on" data-off="${id}" title="Tháo ${itemName(id)}"><img src="assets/${SET.items[id].icon.framed}" alt=""><small>${itemName(id)}</small></button>`
+    : `<button type="button" class="slot" data-on="${id}" title="Mặc ${itemName(id)}"><span class="ph">${label}</span><small>Trống · bấm để mặc</small></button>`).join("");
+  const bag = SLOTS.map(s => s[0]).filter(id => !equip[id]);
+  $("inv").innerHTML = bag.length ? bag.map(id => `<button type="button" class="inv-item" data-on="${id}" title="Mặc ${itemName(id)}"><img src="assets/${SET.items[id].icon.framed}" alt=""><small>${itemName(id)}</small></button>`).join("")
+    : `<p class="empty">Túi trống: mọi món đang được mặc. Bấm vào một ô bên trái để tháo.</p>`;
+  document.querySelectorAll("[data-on]").forEach(b => b.addEventListener("click", () => setEquip(b.dataset.on, true)));
+  document.querySelectorAll("[data-off]").forEach(b => b.addEventListener("click", () => setEquip(b.dataset.off, false)));
+  document.querySelectorAll("#hand-seg button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.hand === equip.hand)); b.disabled = !equip.greatsword; });
+  $("stats").innerHTML = STAT_VI.map(([key, label]) => `<div><b>${ST[key] > 0 && key.endsWith("speed") ? "+" : ""}${ST[key] || 0}</b><span>${label}</span></div>`).join("");
+  $("bonus").innerHTML = SET.set_bonus.map(b => `<li class="${ST.pieces >= b.pieces ? "on" : ""}"><b>${b.pieces} món</b>${b.vi}</li>`).join("");
+}
+function setEquip(id, on) { equip[id] = on; changed(); }
+function changed() { ST = computeStats(); saveEquip(); renderChips(); if (menuOpen) renderMenu(); }
+document.querySelectorAll("#hand-seg button").forEach(b => b.addEventListener("click", () => { equip.hand = b.dataset.hand; changed(); }));
+$("all-on").addEventListener("click", () => { SLOTS.forEach(([id]) => equip[id] = true); changed(); });
+$("all-off").addEventListener("click", () => { SLOTS.forEach(([id]) => equip[id] = false); changed(); });
+function toggleMenu(force) {
+  menuOpen = force === undefined ? !menuOpen : force;
+  $("menu").hidden = !menuOpen; keys.clear(); holdAttack = false;
+  if (menuOpen) renderMenu(); else canvas.focus();
+}
+
+new ResizeObserver(() => { if (SET) resize(false); }).observe(stage);
+boot().catch(() => { $("loading").textContent = "Không tải được assets/azure_wing_set.json. Mở trang này cùng thư mục assets/."; });
+</script>

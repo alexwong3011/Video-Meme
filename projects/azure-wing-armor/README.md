@@ -6,6 +6,11 @@ Mọi pixel lấy trực tiếp từ ảnh gốc (không vẽ lại), nên độ
 
 Xem trước: mở `viewer.html` qua một web server tĩnh (`npx serve projects/azure-wing-armor`), vì trang `fetch` JSON.
 
+Sân tập: `playground.html` (cùng cách mở). Nhân vật ráp từ sprite @1x theo `azure_wing_set.json`, đi 4 hướng
+(xuống/ngang dùng mặt trước, lên dùng mặt sau, đi ngang thì nghiêng người theo hướng đi), menu trang bị mặc/tháo từng món
+và chọn tay cầm kiếm, hình nộm có máu, số sát thương, chí mạng và DPS. Phím: WASD/mũi tên, J/Space/nhấp để chém,
+I mở trang bị, H hiện hitbox. Điện thoại có cần điều khiển ảo và nút chém.
+
 ## Nội dung `assets/`
 
 | Đường dẫn | Mô tả |
