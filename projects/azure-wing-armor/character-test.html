@@ -187,6 +187,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
@@ -1126,7 +1127,7 @@ function k3Load() {
     dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);
     dv.setUint32(12, js.length + jp, true); dv.setUint32(16, 0x4E4F534A, true); u8.set(js, 20); u8.fill(0x20, 20 + js.length, 20 + js.length + jp);
     const o = 20 + js.length + jp; dv.setUint32(o, bin.length + bp, true); dv.setUint32(o + 4, 0x004E4942, true); u8.set(bin, o + 8);
-    const gltf = await new Promise((res, rej) => loader.parse(out, "", res, rej));
+    const gltf = await new Promise((res, rej) => loader.parse(out, "assets/meshy/", res, rej));      // textures sit beside the model
     const tl = new THREE.TextureLoader();
     const tex = src => new Promise(res => tl.load(src, t => { t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
     const swordTex = await Promise.all(["assets/sprites/weapon/front/@2x/greatsword.png", "assets/sprites/weapon/back/@2x/greatsword.png"].map(tex));
@@ -1138,14 +1139,19 @@ function k3Setup(gltf, swordTex, wtex) {
   R3 = new THREE.WebGLRenderer({ alpha: true, antialias: true, premultipliedAlpha: true });
   R3.outputEncoding = THREE.sRGBEncoding; R3.setClearColor(0x000000, 0); R3.toneMapping = THREE.NoToneMapping;
   scene3 = new THREE.Scene();
-  scene3.add(new THREE.HemisphereLight(0xb8c8ff, 0x1c1630, 0.55));
-  const key = new THREE.DirectionalLight(0xfff0e0, 1.25); key.position.set(-3, 6, 5); scene3.add(key);
+  scene3.add(new THREE.HemisphereLight(0xb8c8ff, 0x1c1630, 0.45));
+  const key = new THREE.DirectionalLight(0xfff0e0, 1.6); key.position.set(-3, 6, 5); scene3.add(key);
   const rim = new THREE.DirectionalLight(0x5fb0ff, 1.4); rim.position.set(4, 3, -5); scene3.add(rim);
   const rim2 = new THREE.DirectionalLight(0x9b7bff, 0.8); rim2.position.set(-4, 2, -4); scene3.add(rim2);
   cam3 = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 50);
   cam3.position.set(0, Math.sin(PITCH) * 20, Math.cos(PITCH) * 20); cam3.up.set(0, 1, 0); cam3.lookAt(0, 0, 0);
   model3 = gltf.scene; root3 = new THREE.Group(); root3.add(model3); scene3.add(root3);
-  model3.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.frustumCulled = false; if (o.material) { o.material.metalness = 0.15; o.material.roughness = 0.6; if (o.material.map) { o.material.emissive = new THREE.Color(0xffffff); o.material.emissiveMap = o.material.map; o.material.emissiveIntensity = 0.22; } } }
+  // armour shading: the painted base colour, Meshy's normal and metal/roughness maps, a soft studio reflection for the metal sheen
+  if (THREE.RoomEnvironment) { const pm = new THREE.PMREMGenerator(R3); scene3.environment = pm.fromScene(new THREE.RoomEnvironment(), 0.04).texture; }
+  const hulls = [];
+  model3.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.frustumCulled = false; const m = o.material; if (m) {
+      m.envMapIntensity = 0.25; if (m.normalMap) m.normalScale.set(1.3, 1.3); m.metalness = m.metalnessMap ? 0.6 : 0.3; m.roughness = m.roughnessMap ? 1 : 0.5; }
+      if (o.isSkinnedMesh) hulls.push(o); }
                          if (o.isBone) bones3[o.name.toLowerCase()] = o; });
   // Meshy rigs keep bones in centimetres under a 0.01 armature: size and ground the model from its bones, not from the bind mesh
   const hips = bones3.hips, hip0 = hips ? hips.position.clone() : null;
@@ -1166,7 +1172,7 @@ function k3Setup(gltf, swordTex, wtex) {
   // greatsword: crossed cards from the weapon sheet, grip in the right hand
   const v = SET.weapon.variants.front, aspect = v.size_1x[0] / v.size_1x[1], L = 1.25;
   const card = (t, ry) => { const g = new THREE.PlaneGeometry(aspect * L, L); g.translate((0.5 - v.grip_pivot[0]) * aspect * L, (v.grip_pivot[1] - 0.5) * L, 0);
-    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.3, roughness: 0.5, emissive: 0x1a2440, emissiveMap: t, emissiveIntensity: 0.25 })); m.rotation.y = ry; return m; };
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.3, roughness: 0.55, emissive: 0x1a2440, emissiveMap: t, emissiveIntensity: 0.1 })); m.rotation.y = ry; return m; };
   sword3 = new THREE.Group(); const blade = new THREE.Group(); [card(swordTex[0], 0), card(swordTex[1], Math.PI / 2)].forEach(c => blade.add(c)); sword3.add(blade); sword3.userData.blade = blade;
   sword3.userData.guard = new THREE.Object3D(); sword3.userData.tip = new THREE.Object3D(); blade.add(sword3.userData.guard); blade.add(sword3.userData.tip);
   sword3.userData.guard.position.set(0, -(0.1) * L, 0); sword3.userData.tip.position.set(0, (v.grip_pivot[1] - v.tip[1]) * L, 0);
@@ -1184,6 +1190,13 @@ function k3Setup(gltf, swordTex, wtex) {
         emissive: new THREE.Color(w.glow || "#5fb0ff"), emissiveMap: t, emissiveIntensity: name === "dragon" ? 0.3 : 0.6 }));
       mesh.rotation.y = Math.PI; const pivot = new THREE.Group(); pivot.add(mesh); wings3.group.add(pivot); set[side] = pivot; }
     wings3.sets[name] = set; }
+  // a thin dark outline (inverted hull pushed along the skinned normals) keeps the silhouette crisp on the dark floor
+  for (const o of hulls) {
+    const mat = new THREE.MeshBasicMaterial({ color: 0x07060d, side: THREE.BackSide });
+    o.geometry.computeBoundingBox(); const th = (o.geometry.boundingBox.max.y - o.geometry.boundingBox.min.y) * 0.0035;   // in the mesh's own units
+    mat.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace("#include <project_vertex>", "transformed += normalize(objectNormal) * " + th.toFixed(6) + ";\n#include <project_vertex>"); };
+    const hull = new THREE.SkinnedMesh(o.geometry, mat); hull.frustumCulled = false; hull.bind(o.skeleton, o.bindMatrix); o.parent.add(hull);
+  }
   // hit windows from the clips themselves: the frames where the sword hand moves fastest
   K3.hitWin = {}; for (const n of Object.keys(clips3)) K3.hitWin[n] = k3Swing(n);
   mixer3.stopAllAction(); K3.cur = null; K3.ready = true; k3Play("idle", true); k3Menu();
