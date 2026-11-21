@@ -80,6 +80,23 @@ Gốc nhân vật (giữa hai bàn chân trên sàn) là `origin` trong `rig.jso
 hông nhún và dồn trọng tâm, gối nhấc, tay đánh ngược chân, thở khi đứng; vung kiếm 3 nhịp (lấy đà, chém, thu) với vệt sáng,
 khựng hình khi trúng; va chạm kiếm tính theo đoạn thẳng của lưỡi kiếm. Có camera bám theo, cột đá, bụi chân và hình nộm.
 
+## Kỵ sĩ 3D (`knight-3d.html`, `assets/3d/azure_knight.glb`)
+
+`assets/3d/azure_knight.glb` là mô hình 3D có xương, dựng hoàn toàn trong môi trường này:
+
+1. **TripoSR** (Stability AI, chạy CPU) dựng hình khối 3D từ ảnh nhân vật mặt trước (`3d/run_tsr.py`).
+2. **Blender 5.3** (`pip install bpy`, chạy không giao diện) khớp bóng hai bản vẽ với mô hình (khớp 89% mặt trước, 78% mặt sau),
+   chiếu hoa văn gốc mặt trước và mặt sau lên theo hướng bề mặt và độ che khuất, rồi nướng thành một texture 2048 (`3d/project_bake.py`).
+3. Blender gắn 17 xương (`root, hips, spine, chest, head, upper_arm/forearm/hand, thigh/shin/foot` × `.L/.R`, theo nhân vật)
+   và tự tính trọng lượng (`3d/rig3d.py`). 40.000 tam giác, texture JPEG, 7 MB, mở được trong Blender, Unity, Godot, Unreal.
+
+`knight-3d.html` (three.js 0.147): đi theo hướng camera, Shift chạy, xoay người theo hướng đi, hoạt ảnh đi/chạy/thở/chém
+tính theo khung xương mỗi khung hình, đại kiếm gắn vào lòng bàn tay (tay phải hoặc trái), vệt chém, tia lửa, khựng hình,
+camera kéo để xoay, lăn để zoom. Kiếm là các tấm ảnh bắt chéo nhau (chưa có mô hình 3D của kiếm).
+
+Mặt trước và mặt sau giống bản vẽ; hai bên hông chỉ có màu nội suy nên mờ hơn. Tay chạm đùi trong mô hình gốc nên khi vung
+tay có thể thấy một dải lưới kéo giãn nhỏ ở hông. Dựng lại: `bash 3d/build3d.sh` (cần mạng tới huggingface.co và github.com).
+
 ## Tạo lại
 
 ```bash
