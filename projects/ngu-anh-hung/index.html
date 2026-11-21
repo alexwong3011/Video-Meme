@@ -3339,7 +3339,7 @@ const SAFE_SHADER = { uniforms: { tDiffuse: { value: null } },
 function makeComposer() { const w = innerWidth, h = innerHeight; const rt = new THREE.WebGLRenderTarget(w * DPR, h * DPR, { type: THREE.HalfFloatType, samples: 4 }); const c = new EffectComposer(renderer, rt); c.setPixelRatio(DPR); c.setSize(w, h);
   c.addPass(new RenderPass(scene, camera)); c.addPass(new ShaderPass(SAFE_SHADER)); c.addPass(new UnrealBloomPass(new THREE.Vector2(w / 2, h / 2), 0.35, 0.4, 0.95)); c.addPass(new OutputPass()); return c; }
 let composer = makeComposer(), fitCam = true;
-const CAM_ZOOM = 1.3 * 1.2;      // the follow camera sits 1.56x closer than the sample's (1.3, then 1.2 more)
+const CAM_ZOOM = 1.3 * 1.2 * 1.3;      // the follow camera sits ~2x closer than the sample's (1.3, then 1.2, then 1.3 more)
 function onResize() { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.fov = innerHeight > innerWidth ? 46 : 36; camera.updateProjectionMatrix(); composer.dispose?.(); composer = makeComposer(); const s = innerHeight * DPR * 0.5; pMat.uniforms.uScale.value = s; moteMats.forEach(m => m.uniforms.uScale.value = s); }
 addEventListener('resize', onResize); onResize();
 // title screen backdrop
