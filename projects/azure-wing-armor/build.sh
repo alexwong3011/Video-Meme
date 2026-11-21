@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rebuild the Azure Wing armor assets from the reference sheets (front + back, see views.py).
+# Rebuild the Azure Wing armor assets from the reference sheets (armour front + back, weapon; see views.py).
 #   bash projects/azure-wing-armor/build.sh            -> projects/azure-wing-armor/assets/
 # Needs: python3 + numpy + pillow + opencv-python-headless, node >= 18, npm (models come from the npm registry).
 set -euo pipefail
@@ -16,7 +16,7 @@ if [ ! -d "$TOOLS/up/node_modules/@upscalerjs" ]; then
   (cd "$TOOLS/up" && npm init -y >/dev/null && npm i --no-audit --no-fund --legacy-peer-deps @tensorflow/tfjs@4.22.0 @tensorflow/tfjs-backend-wasm@4.22.0 @upscalerjs/esrgan-thick@1.0.0)
 fi
 
-for VIEW in front back; do
+for VIEW in front back weapon; do
   W="$WORK/$VIEW"; mkdir -p "$W"; cd "$W"
   # 2. crops: 3x boxes for the segmentation model + the figure crop everything else works on
   python3 "$HERE/prep.py" "$VIEW"
@@ -29,5 +29,5 @@ for VIEW in front back; do
   python3 "$HERE/pieces.py" "$VIEW" 4 figure_x4.png p4
 done
 # 6. pack sprites, paper dolls, atlas, icons, JSON
-rm -rf "$HERE/assets"; python3 "$HERE/pack.py" "$HERE/assets" front="$WORK/front/p4" back="$WORK/back/p4"
+rm -rf "$HERE/assets"; python3 "$HERE/pack.py" "$HERE/assets" front="$WORK/front/p4" back="$WORK/back/p4" weapon="$WORK/weapon/p4"
 echo "done -> $HERE/assets"

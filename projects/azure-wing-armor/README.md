@@ -1,7 +1,7 @@
 # Bộ Giáp Cánh Lam (Azure Wing Armor Set)
 
-Tách hai tấm thiết kế `source/azure-wing-sheet.jpg` (mặt trước) và `source/azure-wing-sheet-back.jpg` (mặt sau)
-thành bộ sprite trong suốt để nhúng vào game.
+Tách ba tấm thiết kế `source/azure-wing-sheet.jpg` (giáp mặt trước), `source/azure-wing-sheet-back.jpg` (giáp mặt sau)
+và `source/azure-wing-weapon-sheet.jpg` (đại kiếm hai mặt) thành bộ sprite trong suốt để nhúng vào game.
 Mọi pixel lấy trực tiếp từ ảnh gốc (không vẽ lại), nên độ giống bản vẽ là tối đa; chỉ phóng to bằng AI (ESRGAN).
 
 Xem trước: mở `viewer.html` qua một web server tĩnh (`npx serve projects/azure-wing-armor`), vì trang `fetch` JSON.
@@ -15,7 +15,9 @@ Xem trước: mở `viewer.html` qua một web server tĩnh (`npx serve projects
 | `atlas/azure_wing@2x.png/.json` | Atlas 14 frame tên `front/<mảnh>`, `back/<mảnh>`, định dạng TexturePacker JSON Hash, có `pivot` |
 | `paperdoll/azure_wing_{front,back}@{4x,2x}.png` | Toàn bộ giáp đã ráp đúng vị trí bản vẽ, mỗi mặt một ảnh |
 | `icons/<item>_{256,128,64}.png` | Icon túi đồ nền trong suốt; `icons/framed/` có khung ô đồ |
-| `azure_wing_set.json` | 5 món trang bị (ô, tên VI/EN, mô tả, chỉ số mẫu, hiệu ứng bộ) + dữ liệu ráp cho từng mặt |
+| `sprites/weapon/{front,back}[_mirrored]/@{4x,2x,1x}/greatsword.png` | Đại kiếm Cánh Lam: hai mặt từ tấm vũ khí, kèm bản lật gương để cầm tay còn lại |
+| `atlas/azure_wing_weapon@2x.png/.json` | Atlas 4 frame kiếm `weapon/<biến thể>`, pivot đặt ở giữa chuôi cầm |
+| `azure_wing_set.json` | 6 món (5 giáp + kiếm: ô, tên VI/EN, mô tả, chỉ số mẫu, hiệu ứng bộ) + dữ liệu ráp cho từng mặt |
 
 Tên `*_left` / `*_right` theo vị trí **trên ảnh**. Trường `character_side` cho biết đó là tay/chân nào của nhân vật:
 mặt trước thì găng bên trái ảnh là tay phải, mặt sau thì là tay trái.
@@ -27,6 +29,13 @@ mặt trước thì găng bên trái ảnh là tay phải, mặt sau thì là ta
 - `pivot`: điểm khớp chuẩn hóa 0..1 (cổ cho mũ, ngực, hông, cổ tay, đế giày) để gắn vào xương/slot.
 - `z` (chung cho mọi mặt): thứ tự vẽ (chân 10 → giày 15 → ngực 20 → mũ 30 → găng 40).
 - Hai tấm thiết kế có bố cục hơi khác nhau (mặt sau mũ nhỏ hơn, hai ống chân tách rời), nên mỗi mặt có offset riêng.
+
+### Vũ khí (`weapon` trong JSON)
+
+- `variants.<front|back|front_mirrored|back_mirrored>`: kích thước, `grip_pivot` (giữa chuôi cầm), `tip` (mũi kiếm), `pommel` (quả đấm), đều chuẩn hoá 0..1.
+- Găng có thêm `grip_1x` / `grip_pivot` (lòng bàn tay) ở mỗi mặt. Đặt `grip_pivot` của kiếm trùng `grip_1x` của găng, vẽ kiếm ở `hold.z = 35` (ngay sau găng) để vuốt găng ôm chuôi.
+- `hold.<front|back>.<gauntlet_left|gauntlet_right>` chọn biến thể cho từng tay để mũi cong hướng ra ngoài; cầm được tay trái, tay phải hoặc cả hai.
+- `recommended_scale` = 0.45 so với giáp cùng độ phân giải: kiếm hạ mũi xuống vừa chạm gần mặt sàn. Ảnh gốc vẽ kiếm mũi hướng xuống; muốn giơ kiếm thì xoay quanh `grip_pivot`.
 
 ### Phaser 3
 

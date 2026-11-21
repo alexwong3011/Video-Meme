@@ -73,7 +73,7 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 14px; letter
 .spec td:last-child { font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; word-break: break-all; }
 .note { font-size: 12px; color: var(--muted); margin: 0; }
 
-.items { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.items { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 760px) { .items { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 440px) { .items { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .item { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; display: grid; gap: 6px; justify-items: center; text-align: center; cursor: pointer; color: inherit; font: inherit; }
@@ -102,7 +102,7 @@ pre { margin: 12px 0 0; background: #0b0e13; border: 1px solid var(--line); bord
 <div class="wrap">
   <header>
     <div>
-      <div class="eyebrow">Bộ trang bị · 5 món · 2 góc nhìn · 14 sprite</div>
+      <div class="eyebrow">Bộ trang bị · 5 món giáp + đại kiếm · 2 góc nhìn</div>
       <h1>Bộ Giáp Cánh Lam<small>Azure Wing Armor Set</small></h1>
     </div>
     <span class="rarity">Huyền thoại</span>
@@ -118,6 +118,12 @@ pre { margin: 12px 0 0; background: #0b0e13; border: 1px solid var(--line); bord
         <div class="seg" role="group" aria-label="Bố cục">
           <button type="button" id="lay-ref" aria-pressed="true">Bố cục gốc</button>
           <button type="button" id="lay-exp" aria-pressed="false">Tách rời</button>
+        </div>
+        <div class="seg" role="group" aria-label="Cầm kiếm" id="hold-group">
+          <button type="button" id="hold-none" aria-pressed="false">Không kiếm</button>
+          <button type="button" id="hold-gauntlet_left" aria-pressed="false">Tay trái ảnh</button>
+          <button type="button" id="hold-gauntlet_right" aria-pressed="false">Tay phải ảnh</button>
+          <button type="button" id="hold-both" aria-pressed="true">Hai tay</button>
         </div>
         <div class="seg" role="group" aria-label="Nền">
           <button type="button" id="bg-dark" aria-pressed="true">Nền tối</button>
@@ -155,8 +161,10 @@ pre { margin: 12px 0 0; background: #0b0e13; border: 1px solid var(--line); bord
             <tr><td>sprites/*/@2x, @1x</td><td>Cùng sprite, thu nhỏ có premultiply alpha</td></tr>
             <tr><td>atlas/azure_wing@2x.*</td><td>Atlas 14 frame "front/…", "back/…" + JSON Hash (Phaser, PixiJS, Cocos, Defold)</td></tr>
             <tr><td>paperdoll/*.png</td><td>Toàn bộ giáp đã ráp, mỗi mặt một ảnh</td></tr>
+            <tr><td>sprites/weapon/&lt;mặt&gt;[_mirrored]/</td><td>Đại kiếm hai mặt + bản lật gương cho tay còn lại, @4x/@2x/@1x</td></tr>
+            <tr><td>atlas/azure_wing_weapon@2x.*</td><td>Atlas 4 frame kiếm, pivot đặt ở chuôi cầm</td></tr>
             <tr><td>icons/, icons/framed/</td><td>Icon túi đồ 256/128/64 px, bản có khung</td></tr>
-            <tr><td>azure_wing_set.json</td><td>Ô trang bị, pivot, offset, thứ tự vẽ, chỉ số</td></tr>
+            <tr><td>azure_wing_set.json</td><td>Ô trang bị, pivot, offset, thứ tự vẽ, điểm cầm, chỉ số</td></tr>
           </tbody>
         </table>
       </div>
@@ -175,62 +183,81 @@ Object.entries(set.pieces)
     const [ox, oy] = p.offset_1x, [px, py] = p.pivot, [w, h] = p.size_1x;
     this.add.image(x + (ox + px * w) * k * s, y + (oy + py * h) * k * s, 'azure', `${view}/${name}`)
       .setOrigin(px, py).setScale(s);   // s = tỉ lệ nhân vật
-  });</pre>
+  });
+
+// kiếm ở một tay: hand = 'gauntlet_left' | 'gauntlet_right'
+// (preload thêm: this.load.atlas('azureWeapon', 'atlas/azure_wing_weapon@2x.png', 'atlas/azure_wing_weapon@2x.json'))
+const W = set.weapon, variant = W.hold[view][hand], v = W.variants[variant];
+const [gx, gy] = set.pieces[hand].views[view].grip_1x;
+this.add.image(x + gx * k * s, y + gy * k * s, 'azureWeapon', `weapon/${variant}`)
+  .setOrigin(...v.grip_pivot).setScale(s * W.recommended_scale)
+  .setDepth(W.hold.z);   // ngay sau găng (z 40)</pre>
     </div>
   </section>
 </div>
 
 <script>
-const SLOT_VI = { head: "Đầu", chest: "Ngực", legs: "Chân", hands: "Tay", feet: "Bàn chân" };
-const STAT_VI = { defense: "Phòng thủ", magic_resist: "Kháng phép", crit_resist: "Kháng chí mạng", hp: "Máu", move_speed: "Tốc chạy %", attack: "Tấn công", attack_speed: "Tốc đánh %", evasion: "Né tránh %" };
+const SLOT_VI = { head: "Đầu", chest: "Ngực", legs: "Chân", hands: "Tay", feet: "Bàn chân", weapon: "Vũ khí" };
+const STAT_VI = { defense: "Phòng thủ", magic_resist: "Kháng phép", crit_resist: "Kháng chí mạng", hp: "Máu", move_speed: "Tốc chạy %", attack: "Tấn công", attack_speed: "Tốc đánh %", evasion: "Né tránh %", crit_rate: "Chí mạng %" };
 const PIECE_VI = { helmet: "Mũ", chestplate: "Giáp ngực", leggings: "Giáp chân", gauntlet_left: "Găng (trái ảnh)", gauntlet_right: "Găng (phải ảnh)", boot_left: "Giày (trái ảnh)", boot_right: "Giày (phải ảnh)" };
+const VARIANT_VI = { front: "Mặt trước", front_mirrored: "Mặt trước, lật gương", back: "Mặt sau", back_mirrored: "Mặt sau, lật gương" };
 const EXPLODE = { helmet: [0, -46], chestplate: [0, -14], leggings: [0, 22], gauntlet_left: [-52, -6], gauntlet_right: [52, -6], boot_left: [-40, 56], boot_right: [40, 56] };
 
 const doll = document.getElementById("doll"), stage = document.getElementById("stage");
-let SET, current = null, pieceEls = {}, hitCanvases = {}, view = "front", exploded = false;
+let SET, current = null, layers = [], view = "front", exploded = false, hold = "both";
 const PV = name => SET.pieces[name].views[view];
 
 function press(groupIds, id) { groupIds.forEach(g => document.getElementById(g).setAttribute("aria-pressed", String(g === id))); }
 
-function layout() {
-  const B = SET.paperdoll[view].bounds_1x;
-  for (const [name, el] of Object.entries(pieceEls)) {
-    const [dx, dy] = exploded ? EXPLODE[name] : [0, 0];
-    const px = dx / B.w * doll.clientWidth, py = dy / B.h * doll.clientHeight;
-    el.style.transform = `translate(${px}px, ${py}px)`;
-  }
-  doll.dataset.exploded = exploded ? "1" : "";
+// every drawn sprite: { el, z, item, follow (piece whose explode offset it shares), g (hit-test canvas) }
+function addLayer(src, alt, box, z, item, follow) {
+  const B = SET.paperdoll[view].bounds_1x, img = new Image(), L = { el: img, z, item, follow, g: null };
+  img.src = "assets/" + src; img.alt = alt; img.decoding = "async";
+  img.style.left = ((box.x - B.x) / B.w * 100) + "%";
+  img.style.top = ((box.y - B.y) / B.h * 100) + "%";
+  img.style.width = (box.w / B.w * 100) + "%";
+  img.style.zIndex = z;
+  if (current) img.classList.toggle("on", item === current);
+  img.onload = () => {
+    const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    L.g = c.getContext("2d", { willReadFrequently: true }); L.g.drawImage(img, 0, 0);
+  };
+  doll.appendChild(img); layers.push(L);
 }
 
 function buildDoll() {
   const B = SET.paperdoll[view].bounds_1x;
-  doll.innerHTML = ""; pieceEls = {}; hitCanvases = {};
+  doll.innerHTML = ""; layers = [];
   doll.style.aspectRatio = `${B.w} / ${B.h}`;
-  // a little room so the exploded layout stays on stage
   stage.style.paddingBlock = "9% 11%";
-  Object.entries(SET.pieces).sort((a, b) => a[1].z - b[1].z).forEach(([name, piece]) => {
-    const p = piece.views[view], img = new Image();
-    img.src = "assets/" + p.files["@2x"]; img.alt = PIECE_VI[name]; img.decoding = "async";
-    img.style.left = ((p.offset_1x[0] - B.x) / B.w * 100) + "%";
-    img.style.top = ((p.offset_1x[1] - B.y) / B.h * 100) + "%";
-    img.style.width = (p.size_1x[0] / B.w * 100) + "%";
-    img.style.zIndex = piece.z;
-    if (current) img.classList.toggle("on", piece.item === current);
-    img.onload = () => {
-      const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
-      const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0); hitCanvases[name] = g;
-    };
-    doll.appendChild(img); pieceEls[name] = img;
-  });
+  for (const [name, piece] of Object.entries(SET.pieces)) {
+    const p = piece.views[view];
+    addLayer(p.files["@2x"], PIECE_VI[name], { x: p.offset_1x[0], y: p.offset_1x[1], w: p.size_1x[0] }, piece.z, piece.item, name);
+  }
+  const W = SET.weapon;
+  if (!W) return;
+  const hands = hold === "both" ? ["gauntlet_left", "gauntlet_right"] : hold === "none" ? [] : [hold];
+  for (const g of hands) {
+    const v = W.variants[W.hold[view][g]], [gx, gy] = PV(g).grip_1x, k = W.recommended_scale;
+    const w = v.size_1x[0] * k, h = v.size_1x[1] * k;
+    addLayer(v.files["@2x"], SET.items.greatsword.name_vi, { x: gx - v.grip_pivot[0] * w, y: gy - v.grip_pivot[1] * h, w }, W.hold.z, "greatsword", g);
+  }
 }
 
-function pieceAt(clientX, clientY) {
-  const names = Object.keys(pieceEls).sort((a, b) => SET.pieces[b].z - SET.pieces[a].z);
-  for (const n of names) {
-    const r = pieceEls[n].getBoundingClientRect(), g = hitCanvases[n];
+function layout() {
+  const B = SET.paperdoll[view].bounds_1x;
+  for (const L of layers) {
+    const [dx, dy] = exploded ? EXPLODE[L.follow] : [0, 0];
+    L.el.style.transform = `translate(${dx / B.w * doll.clientWidth}px, ${dy / B.h * doll.clientHeight}px)`;
+  }
+}
+
+function layerAt(clientX, clientY) {
+  for (const L of [...layers].sort((a, b) => b.z - a.z)) {
+    const r = L.el.getBoundingClientRect(), g = L.g;
     if (!g || clientX < r.left || clientX > r.right || clientY < r.top || clientY > r.bottom) continue;
     const x = Math.floor((clientX - r.left) / r.width * g.canvas.width), y = Math.floor((clientY - r.top) / r.height * g.canvas.height);
-    try { if (g.getImageData(x, y, 1, 1).data[3] > 40) return n; } catch (e) { return n; }
+    try { if (g.getImageData(x, y, 1, 1).data[3] > 40) return L; } catch (e) { return L; }
   }
   return null;
 }
@@ -239,8 +266,16 @@ function selectItem(itemId) {
   current = itemId;
   document.querySelectorAll(".item").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.item === itemId)));
   doll.classList.toggle("has-focus", !!itemId);
-  for (const [n, el] of Object.entries(pieceEls)) el.classList.toggle("on", SET.pieces[n].item === itemId);
+  for (const L of layers) L.el.classList.toggle("on", L.item === itemId);
   renderInspector();
+}
+
+function head(it) {
+  const stats = Object.entries(it.stats).map(([k, v]) => `<div class="stat"><b>${v > 0 ? "+" : ""}${v}</b><span>${STAT_VI[k] || k}</span></div>`).join("");
+  return `<div class="insp-head"><img src="assets/${it.icon.framed}" alt=""><div>
+      <div class="slot">${SLOT_VI[it.slot]} · ${it.slot}</div><div class="insp-name">${it.name_vi}</div><div class="insp-en">${it.name_en}</div></div></div>
+    <p class="insp-desc">${it.desc_vi}</p>
+    <div class="stats">${stats}</div>`;
 }
 
 function renderInspector() {
@@ -248,28 +283,35 @@ function renderInspector() {
   if (!current) {
     const n = Object.keys(SET.pieces).length;
     box.innerHTML = `<div><div class="slot">Toàn bộ</div><div class="insp-name">${SET.name_vi}</div><div class="insp-en">${SET.name_en}</div></div>
-      <p class="insp-desc">Bộ giáp bạc tím viền lam, tách từ hai tấm thiết kế gốc (mặt trước, mặt sau) thành ${n} mảnh mỗi mặt, nền trong suốt. Ráp lại theo offset trong JSON là ra đúng dáng như bản vẽ.</p>
+      <p class="insp-desc">Bộ giáp bạc tím viền lam và đại kiếm Cánh Lam, tách từ ba tấm thiết kế gốc thành sprite nền trong suốt: ${n} mảnh giáp mỗi mặt, kiếm có hai mặt và bản lật gương. Ráp lại theo offset trong JSON là ra đúng dáng như bản vẽ.</p>
       <table class="spec"><tbody>
         <tr><td>Khung ráp (@1x)</td><td>${SET.paperdoll[view].bounds_1x.w} × ${SET.paperdoll[view].bounds_1x.h} px</td></tr>
         <tr><td>Góc nhìn</td><td>mặt trước · mặt sau</td></tr>
         <tr><td>Gốc nhân vật</td><td>giữa hai bàn chân, mặt sàn</td></tr>
         <tr><td>Độ phân giải</td><td>@1x · @2x · @4x</td></tr>
       </tbody></table>
-      <p class="note">Chọn một món bên dưới hoặc chạm vào mảnh giáp.</p>`;
+      <p class="note">Chọn một món bên dưới hoặc chạm vào mảnh giáp, thanh kiếm.</p>`;
     return;
   }
   const it = SET.items[current];
-  const stats = Object.entries(it.stats).map(([k, v]) => `<div class="stat"><b>+${v}</b><span>${STAT_VI[k] || k}</span></div>`).join("");
+  if (current === "greatsword") {
+    const W = SET.weapon, hv = W.hold[view];
+    const rows = Object.entries(W.variants).map(([k, v]) => `<tr><td>${VARIANT_VI[k]}</td><td>weapon/${k}/greatsword.png<br>${Math.round(v.size_1x[0] * 4)} × ${Math.round(v.size_1x[1] * 4)} px @4x<br>grip ${v.grip_pivot[0].toFixed(2)}, ${v.grip_pivot[1].toFixed(2)} · mũi ${v.tip[0].toFixed(2)}, ${v.tip[1].toFixed(2)}</td></tr>`).join("");
+    box.innerHTML = head(it) + `<table class="spec"><tbody>
+        <tr><td>Cầm ở</td><td>tay trái hoặc tay phải, hoặc cả hai</td></tr>
+        <tr><td>Mặt này: găng trái ảnh</td><td>${VARIANT_VI[hv.gauntlet_left]}</td></tr>
+        <tr><td>Mặt này: găng phải ảnh</td><td>${VARIANT_VI[hv.gauntlet_right]}</td></tr>
+        <tr><td>Tỉ lệ so với giáp</td><td>${W.recommended_scale} · z ${W.hold.z}</td></tr>
+        ${rows}</tbody></table>
+      <p class="note">Đặt điểm grip của kiếm vào grip_1x của găng; kiếm vẽ ngay sau găng để vuốt găng ôm lấy chuôi.</p>`;
+    return;
+  }
   const SIDE_VI = { left: "tay/chân trái nhân vật", right: "tay/chân phải nhân vật", center: "" };
   const rows = it.pieces.map(n => {
     const p = PV(n), side = SIDE_VI[p.character_side];
     return `<tr><td>${PIECE_VI[n]}${side ? "<br>" + side : ""}</td><td>${view}/${n}.png<br>${Math.round(p.size_1x[0] * 4)} × ${Math.round(p.size_1x[1] * 4)} px @4x<br>pivot ${p.pivot[0].toFixed(2)}, ${p.pivot[1].toFixed(2)} · z ${SET.pieces[n].z}</td></tr>`;
   }).join("");
-  box.innerHTML = `<div class="insp-head"><img src="assets/${it.icon.framed}" alt=""><div>
-      <div class="slot">${SLOT_VI[it.slot]} · ${it.slot}</div><div class="insp-name">${it.name_vi}</div><div class="insp-en">${it.name_en}</div></div></div>
-    <p class="insp-desc">${it.desc_vi}</p>
-    <div class="stats">${stats}</div>
-    <table class="spec"><tbody>${rows}</tbody></table>`;
+  box.innerHTML = head(it) + `<table class="spec"><tbody>${rows}</tbody></table>`;
 }
 
 function renderItems() {
@@ -280,15 +322,18 @@ function renderItems() {
   document.getElementById("bonus").innerHTML = SET.set_bonus.map(b => `<li><b>${b.pieces} món</b><span>${b.vi}</span></li>`).join("");
 }
 
+function rebuild() { buildDoll(); layout(); doll.classList.toggle("has-focus", !!current); renderInspector(); }
+
 function start() {
+  if (!SET.weapon) document.getElementById("hold-group").hidden = true;
   buildDoll(); renderItems(); renderInspector();
-  doll.addEventListener("click", e => { const n = pieceAt(e.clientX, e.clientY); selectItem(n ? (SET.pieces[n].item === current ? null : SET.pieces[n].item) : null); });
-  doll.addEventListener("mousemove", e => { doll.style.cursor = pieceAt(e.clientX, e.clientY) ? "pointer" : "default"; });
-  const lay = ["lay-ref", "lay-exp"], bgs = ["bg-dark", "bg-check", "bg-light"], views = ["view-front", "view-back"];
+  doll.addEventListener("click", e => { const L = layerAt(e.clientX, e.clientY); selectItem(L ? (L.item === current ? null : L.item) : null); });
+  doll.addEventListener("mousemove", e => { doll.style.cursor = layerAt(e.clientX, e.clientY) ? "pointer" : "default"; });
+  const lay = ["lay-ref", "lay-exp"], bgs = ["bg-dark", "bg-check", "bg-light"], views = ["view-front", "view-back"],
+        holds = ["hold-none", "hold-gauntlet_left", "hold-gauntlet_right", "hold-both"];
   lay.forEach(id => document.getElementById(id).addEventListener("click", () => { exploded = id === "lay-exp"; press(lay, id); layout(); }));
-  views.forEach(id => document.getElementById(id).addEventListener("click", () => {
-    view = id.slice(5); press(views, id); buildDoll(); layout(); doll.classList.toggle("has-focus", !!current); renderInspector();
-  }));
+  views.forEach(id => document.getElementById(id).addEventListener("click", () => { view = id.slice(5); press(views, id); rebuild(); }));
+  holds.forEach(id => document.getElementById(id).addEventListener("click", () => { hold = id.slice(5); press(holds, id); rebuild(); }));
   bgs.forEach(id => document.getElementById(id).addEventListener("click", () => { press(bgs, id); stage.dataset.bg = id.slice(3); }));
   new ResizeObserver(() => layout()).observe(doll);
 }

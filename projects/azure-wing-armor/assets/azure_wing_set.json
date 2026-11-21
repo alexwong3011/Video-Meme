@@ -121,6 +121,30 @@
     },
     "framed": "icons/framed/sabatons_256.png"
    }
+  },
+  "greatsword": {
+   "slot": "weapon",
+   "hands": [
+    "main_hand",
+    "off_hand"
+   ],
+   "name_vi": "Đại Kiếm Cánh Lam",
+   "name_en": "Azure Wing Greatsword",
+   "pieces": [],
+   "desc_vi": "Đại kiếm lưỡi cong ánh tím viền vàng, chắn tay xòe đôi cánh lông vũ lam, chuôi bọc da đan chéo và quả đấm khảm đá lam. Cầm được ở tay trái hoặc tay phải.",
+   "stats": {
+    "attack": 118,
+    "crit_rate": 8,
+    "attack_speed": -4
+   },
+   "icon": {
+    "plain": {
+     "256": "icons/greatsword_256.png",
+     "128": "icons/greatsword_128.png",
+     "64": "icons/greatsword_64.png"
+    },
+    "framed": "icons/framed/greatsword_256.png"
+   }
   }
  },
  "set_bonus": [
@@ -437,7 +461,15 @@
       "@4x": "sprites/front/@4x/gauntlet_left.png",
       "@2x": "sprites/front/@2x/gauntlet_left.png",
       "@1x": "sprites/front/@1x/gauntlet_left.png"
-     }
+     },
+     "grip_1x": [
+      -260,
+      -364
+     ],
+     "grip_pivot": [
+      0.4,
+      0.7332
+     ]
     },
     "back": {
      "size_1x": [
@@ -461,7 +493,15 @@
       "@4x": "sprites/back/@4x/gauntlet_left.png",
       "@2x": "sprites/back/@2x/gauntlet_left.png",
       "@1x": "sprites/back/@1x/gauntlet_left.png"
-     }
+     },
+     "grip_1x": [
+      -262,
+      -378
+     ],
+     "grip_pivot": [
+      0.4206,
+      0.756
+     ]
     }
    }
   },
@@ -491,7 +531,15 @@
       "@4x": "sprites/front/@4x/gauntlet_right.png",
       "@2x": "sprites/front/@2x/gauntlet_right.png",
       "@1x": "sprites/front/@1x/gauntlet_right.png"
-     }
+     },
+     "grip_1x": [
+      235,
+      -364
+     ],
+     "grip_pivot": [
+      0.4888,
+      0.7265
+     ]
     },
     "back": {
      "size_1x": [
@@ -515,7 +563,15 @@
       "@4x": "sprites/back/@4x/gauntlet_right.png",
       "@2x": "sprites/back/@2x/gauntlet_right.png",
       "@1x": "sprites/back/@1x/gauntlet_right.png"
-     }
+     },
+     "grip_1x": [
+      237,
+      -378
+     ],
+     "grip_pivot": [
+      0.4313,
+      0.7584
+     ]
     }
    }
   }
@@ -554,5 +610,121 @@
    }
   }
  },
- "atlas": "atlas/azure_wing@2x.json"
+ "atlas": "atlas/azure_wing@2x.json",
+ "weapon": {
+  "item": "greatsword",
+  "variants": {
+   "front": {
+    "size_1x": [
+     282.5,
+     848.0
+    ],
+    "grip_pivot": [
+     0.5283,
+     0.1206
+    ],
+    "tip": [
+     0.015,
+     0.9979
+    ],
+    "pommel": [
+     0.5248,
+     0.005
+    ],
+    "mirrored": false,
+    "files": {
+     "@4x": "sprites/weapon/front/@4x/greatsword.png",
+     "@2x": "sprites/weapon/front/@2x/greatsword.png",
+     "@1x": "sprites/weapon/front/@1x/greatsword.png"
+    }
+   },
+   "front_mirrored": {
+    "size_1x": [
+     282.5,
+     848.0
+    ],
+    "grip_pivot": [
+     0.4717,
+     0.1206
+    ],
+    "tip": [
+     0.985,
+     0.9979
+    ],
+    "pommel": [
+     0.4752,
+     0.005
+    ],
+    "mirrored": true,
+    "files": {
+     "@4x": "sprites/weapon/front_mirrored/@4x/greatsword.png",
+     "@2x": "sprites/weapon/front_mirrored/@2x/greatsword.png",
+     "@1x": "sprites/weapon/front_mirrored/@1x/greatsword.png"
+    }
+   },
+   "back": {
+    "size_1x": [
+     279.25,
+     850.75
+    ],
+    "grip_pivot": [
+     0.4808,
+     0.1222
+    ],
+    "tip": [
+     0.9964,
+     0.9968
+    ],
+    "pommel": [
+     0.4808,
+     0.0071
+    ],
+    "mirrored": false,
+    "files": {
+     "@4x": "sprites/weapon/back/@4x/greatsword.png",
+     "@2x": "sprites/weapon/back/@2x/greatsword.png",
+     "@1x": "sprites/weapon/back/@1x/greatsword.png"
+    }
+   },
+   "back_mirrored": {
+    "size_1x": [
+     279.25,
+     850.75
+    ],
+    "grip_pivot": [
+     0.5192,
+     0.1222
+    ],
+    "tip": [
+     0.0036,
+     0.9968
+    ],
+    "pommel": [
+     0.5192,
+     0.0071
+    ],
+    "mirrored": true,
+    "files": {
+     "@4x": "sprites/weapon/back_mirrored/@4x/greatsword.png",
+     "@2x": "sprites/weapon/back_mirrored/@2x/greatsword.png",
+     "@1x": "sprites/weapon/back_mirrored/@1x/greatsword.png"
+    }
+   }
+  },
+  "recommended_scale": 0.45,
+  "hold": {
+   "note": "Pivot the sprite at grip_pivot and place it at the gauntlet's grip_1x, drawn just behind the gauntlet (z 35) so the claws close over the grip. As drawn the sword hangs point-down; rotate for other poses. The variants below make the curved tip point away from the body in either hand.",
+   "rotation_deg": 0,
+   "z": 35,
+   "front": {
+    "gauntlet_left": "front",
+    "gauntlet_right": "front_mirrored"
+   },
+   "back": {
+    "gauntlet_left": "back_mirrored",
+    "gauntlet_right": "back"
+   }
+  },
+  "atlas": "atlas/azure_wing_weapon@2x.json"
+ }
 }

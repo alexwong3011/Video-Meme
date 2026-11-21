@@ -1,0 +1,111 @@
+{
+ "frames": {
+  "weapon/front": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 565,
+    "h": 1696
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 565,
+    "h": 1696
+   },
+   "sourceSize": {
+    "w": 565,
+    "h": 1696
+   },
+   "pivot": {
+    "x": 0.5283,
+    "y": 0.1206
+   }
+  },
+  "weapon/front_mirrored": {
+   "frame": {
+    "x": 567,
+    "y": 0,
+    "w": 565,
+    "h": 1696
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 565,
+    "h": 1696
+   },
+   "sourceSize": {
+    "w": 565,
+    "h": 1696
+   },
+   "pivot": {
+    "x": 0.4717,
+    "y": 0.1206
+   }
+  },
+  "weapon/back": {
+   "frame": {
+    "x": 0,
+    "y": 1704,
+    "w": 558,
+    "h": 1702
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 558,
+    "h": 1702
+   },
+   "sourceSize": {
+    "w": 558,
+    "h": 1702
+   },
+   "pivot": {
+    "x": 0.4808,
+    "y": 0.1222
+   }
+  },
+  "weapon/back_mirrored": {
+   "frame": {
+    "x": 567,
+    "y": 1704,
+    "w": 558,
+    "h": 1702
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 558,
+    "h": 1702
+   },
+   "sourceSize": {
+    "w": 558,
+    "h": 1702
+   },
+   "pivot": {
+    "x": 0.5192,
+    "y": 0.1222
+   }
+  }
+ },
+ "meta": {
+  "app": "azure-wing-armor/pack.py",
+  "version": "1.2",
+  "image": "azure_wing_weapon@2x.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 1132,
+   "h": 3406
+  },
+  "scale": "2"
+ }
+}

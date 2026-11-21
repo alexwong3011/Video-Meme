@@ -8,6 +8,10 @@ V = VIEWS[sys.argv[1]]; s = int(sys.argv[2]); src = sys.argv[3]; out = sys.argv[
 FX, FY = V["figure"][:2]
 fig = cv2.cvtColor(cv2.imread(src), cv2.COLOR_BGR2RGB).astype(np.float32)
 H, W = fig.shape[:2]
+for x0, y0, x1, y1 in V.get("inpaint_rows", []):     # remove thin horizontal lines by vertical interpolation
+    X0, X1 = round((x0 - FX) * s), round((x1 - FX) * s); Y0, Y1 = round((y0 - FY) * s) - 1, round((y1 - FY) * s)
+    t = ((np.arange(Y0 + 1, Y1) - Y0) / (Y1 - Y0))[:, None, None]
+    fig[Y0 + 1:Y1, X0:X1] = fig[Y0, X0:X1][None] * (1 - t) + fig[Y1, X0:X1][None] * t
 bg = cv2.resize(np.load("bg.npy"), (W, H), interpolation=cv2.INTER_CUBIC)
 am = cv2.resize(np.load("am.npy"), (W, H), interpolation=cv2.INTER_LINEAR)
 D = np.sqrt(((fig - bg) ** 2).sum(2))
@@ -68,7 +72,9 @@ for name, R in regions.items():
     a = np.maximum(Ar, fill.astype(np.float32) * R * keepR)
     sil = (cl | (1 - ff)).astype(np.uint8) * R * keepR
     # shaded armour close to the background colour, and the segmentation model's confident interior
-    a = np.maximum(a, np.clip((-lumd - 4) / 8, 0, 1) * sil)
+    dark = np.clip((-lumd - 4) / 8, 0, 1) * sil
+    if V.get("floor_shadow"): dark *= 1 - floor
+    a = np.maximum(a, dark)
     amc = cv2.erode((am > 0.9).astype(np.uint8), ell(3 * s))
     a = np.maximum(a, amc * cv2.dilate(sil, np.ones((3, 3), np.uint8)) * R * keepR)
     a = np.maximum(a, solid * R)

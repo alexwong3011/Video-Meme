@@ -9,9 +9,13 @@ Each view lists:
   solid        optional polygons forced opaque (dark inner faces the matte cannot tell from the background)
   lines/dots   leader lines and their end dots to erase: polyline (thickness 7 px) or (polyline, thickness) / (x, y, radius)
   erase        extra polygons to erase everywhere (text-panel borders, floor under the soles)
+  inpaint_rows optional (x0, y0, x1, y1) boxes over a thin horizontal line: rows inside are interpolated from the rows outside
   floor_y      y where the floor glow starts (matte gets stricter below it)
+  floor_shadow optional: below floor_y, dark pixels are cast shadow, not shaded metal
   origin       character origin: between the feet, on the floor
   attach       piece -> socket point (pivot) used for rigging
+  grip         armour views: palm centre of each gauntlet, where a held weapon's grip goes
+  tip/pommel   weapon sheet: blade tip and pommel, to orient the weapon in code
 """
 
 def rect(x0, y0, x1, y1): return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
@@ -45,6 +49,7 @@ VIEWS = {
     origin=(900, 969),
     attach={"leggings": (900, 560), "chestplate": (900, 452), "helmet": (900, 362), "gauntlet_left": (646, 470),
             "gauntlet_right": (1140, 470), "boot_left": (735, 966), "boot_right": (1065, 966)},
+    grip={"gauntlet_left": (640, 605), "gauntlet_right": (1135, 605)},   # palm centre: where a weapon handle goes
   ),
   "back": dict(
     source="source/azure-wing-sheet-back.jpg",
@@ -77,5 +82,31 @@ VIEWS = {
     origin=(900, 978),
     attach={"leggings": (900, 560), "chestplate": (900, 452), "helmet": (900, 335), "gauntlet_left": (642, 470),
             "gauntlet_right": (1140, 470), "boot_left": (735, 975), "boot_right": (1060, 975)},
+    grip={"gauntlet_left": (638, 600), "gauntlet_right": (1137, 600)},
+  ),
+  # weapon sheet: one greatsword shown from both faces. attach = centre of the grip; tip/pommel help orient it in code
+  "weapon": dict(
+    source="source/azure-wing-weapon-sheet.jpg",
+    figure=(520, 120, 1255, 995),
+    seg_boxes={"sword_front": (525, 125, 830, 985), "sword_back": (945, 125, 1250, 985)},
+    regions={"greatsword_front": [("+", rect(525, 128, 830, 985))], "greatsword_back": [("+", rect(945, 128, 1250, 985))]},
+    # lines stop a few px short of the blade; the last stretch is erased as a 3 px strip (erase) so the gold edge survives
+    lines=[[(440, 433), (545, 470), (614, 470)], [(450, 655), (540, 620), (628, 620)],
+           [(500, 220), (570, 220), (633, 282)], [(572, 828), (556, 845), (495, 845)],
+           [(1160, 470), (1220, 470), (1310, 433)], [(1140, 620), (1205, 620), (1240, 650), (1318, 650)],
+           [(1130, 282), (1190, 222), (1265, 222)], [(1208, 832), (1230, 852), (1300, 852)]],
+
+    dots=[(633, 282, 6.5), (572, 828, 7), (1130, 282, 6.5), (1208, 832, 7)],
+    # where a line runs into the blade's glow: rebuild those rows from the rows just above and below (measured on the 4x image)
+    inpaint_rows=[(606, 466.5, 629, 473.5), (622, 617.5, 645.3, 624), (1145.5, 467.5, 1170, 473), (1126.9, 619.5, 1150, 625.5)],
+    erase=[           rect(520, 981, 1255, 995),   # cast shadow under each blade, just below its lower edge
+           [(530, 977), (580, 975), (600, 973), (620, 969), (640, 964), (660, 957), (680, 950), (700, 945), (700, 995), (530, 995)],
+           [(1090, 944), (1100, 945), (1120, 955), (1140, 963), (1160, 969), (1180, 973), (1200, 975), (1240, 978), (1255, 978), (1255, 995), (1090, 995)]],
+    floor_y=950,
+    floor_shadow=True,          # the blade casts a dark shadow on the floor: never treat dark pixels below floor_y as metal
+    origin=(900, 980),
+    attach={"greatsword_front": (684, 232), "greatsword_back": (1093, 232)},
+    tip={"greatsword_front": (539, 976), "greatsword_back": (1237, 976)},
+    pommel={"greatsword_front": (683, 134), "greatsword_back": (1093, 134)},
   ),
 }
