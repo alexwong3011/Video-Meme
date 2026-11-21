@@ -170,6 +170,14 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
       </div>
     </div>
     <div>
+      <h3>Nhân vật</h3>
+      <div class="seg" role="group" aria-label="Kiểu nhân vật" id="k3-seg">
+        <button type="button" data-k3="1">3D (Meshy)</button>
+        <button type="button" data-k3="0">2D (tranh)</button>
+      </div>
+      <p class="note" id="k3-note">Đang tải mô hình 3D…</p>
+    </div>
+    <div>
       <h3>Chỉ số</h3>
       <div class="stats" id="stats"></div>
     </div>
@@ -177,6 +185,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
   <div class="loading" id="loading">Đang tải nhân vật…</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
@@ -254,7 +264,7 @@ async function boot() {
   await Promise.all(jobs);
   DARK.sword = darken(IMG.sword.front, 0.4);
   DARK.wings = {}; for (const n in IMG.wings) DARK.wings[n] = darken(IMG.wings[n].R, 0.45);
-  ST = stats(); buildMenu(); applyEquip();
+  ST = stats(); buildMenu(); applyEquip(); k3Load();
   $("loading").hidden = true; resize(true);
   if (matchMedia("(pointer: coarse)").matches) $("touch").hidden = false;
   requestAnimationFrame(frame);
@@ -878,7 +888,7 @@ const SK = { cd: { single: 0, aoe: 0, chop: 0, rain: 0 }, hold: { single: false,
 const CAST = { kind: "single", w: 0, pulse: 0, last: -9 };
 let CH = null;    // last built character (for hand positions)
 const inRange = (d, r) => distM(P.x, P.y, d.x, d.y) - dummyR(d) <= r;
-function faceTo(x, y) { const dx = x - P.x, dy = (y - P.y) / DEP; P.facing = Math.abs(dx) > Math.abs(dy) * 1.1 ? (dx < 0 ? "left" : "right") : dy < 0 ? "up" : "down"; }
+function faceTo(x, y) { const dx = x - P.x, dy = (y - P.y) / DEP; P.aim = Math.atan2(dx, dy); P.facing = Math.abs(dx) > Math.abs(dy) * 1.1 ? (dx < 0 ? "left" : "right") : dy < 0 ? "up" : "down"; }
 function handWorld(role) { if (PH && P.atk && poseState()) return PH[role === "off" ? "off" : "main"]; if (!CH) return [P.x, P.y - 0.9 * M]; const vb = VB[CH.view], a = role === "off" ? vb.off : vb.main, h = CH.hands[a].hand; return ap(CH.base, h[0], h[1]); }
 function castSkill(kind) {
   if (SK.cd[kind] > 0 || menuOpen || !CH || (P.atk && P.atk.def.special)) return;
@@ -1091,6 +1101,163 @@ function update(dt) {
   cam.y += (clamp(P.y - P.hover * 0.5 + P.vy * 0.25 - H * 0.6, -60, WORLD.h - H + 60) - cam.y) * Math.min(1, dt * 5);
 }
 
+// ---------- 3D knight (Meshy model, rigged, library animations) drawn into the 2.5D scene ----------
+// An orthographic camera pitched so that the floor compresses by DEP, at M pixels per metre: the model lands on the same floor,
+// shadows, effects and hit tests as the drawn rig. Rendered each frame into an offscreen WebGL canvas, then drawn like a sprite.
+const K3 = { on: true, ready: false, err: null, yaw: 0, act: null, actKey: "", atkRef: null, castT: -9, cur: null };
+const PITCH = Math.asin(DEP);
+const K3CLIP = {            // game state -> clip name fragment (Meshy library names), timing taken from the clip itself
+  idle: "Combat_Stance", walk: "Walk_Fight_Forward", run: "RunFast", cast: "Charged_Spell_Cast", single: "Left_Slash", aoe: "Double_Blade_Spin",
+  chop: "Sword_Judgment", rain: "Charged_Ground_Slam", hit: "Hit_Reaction",
+  combo: ["Attack", "Left_Slash", "Thrust_Slash", "Charged_Slash", "Triple_Combo_Attack"],
+};
+let R3 = null, scene3, cam3, root3, model3, mixer3, clips3 = {}, actions3 = {}, bones3 = {}, sword3 = null, wings3 = null, box3 = { w: 0, h: 0 };
+function k3Load() {
+  if (!window.THREE || !THREE.GLTFLoader) { K3.err = "three.js"; return; }
+  const loader = new THREE.GLTFLoader();
+  loader.register(parser => { parser.textureLoader = new THREE.TextureLoader(parser.options.manager); return { name: "img_textures" }; });
+  (async () => {
+    const r = await fetch("assets/meshy/knight.gltf.json"); if (!r.ok) throw new Error("model " + r.status);
+    const j = await r.json(), uri = j.buffers[0].uri, bin = Uint8Array.from(atob(uri.slice(uri.indexOf(",") + 1)), c => c.charCodeAt(0)); delete j.buffers[0].uri;
+    const js = new TextEncoder().encode(JSON.stringify(j)), jp = (4 - js.length % 4) % 4, bp = (4 - bin.length % 4) % 4;
+    const total = 12 + 8 + js.length + jp + 8 + bin.length + bp, out = new ArrayBuffer(total), dv = new DataView(out), u8 = new Uint8Array(out);
+    dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);
+    dv.setUint32(12, js.length + jp, true); dv.setUint32(16, 0x4E4F534A, true); u8.set(js, 20); u8.fill(0x20, 20 + js.length, 20 + js.length + jp);
+    const o = 20 + js.length + jp; dv.setUint32(o, bin.length + bp, true); dv.setUint32(o + 4, 0x004E4942, true); u8.set(bin, o + 8);
+    const gltf = await new Promise((res, rej) => loader.parse(out, "", res, rej));
+    const tl = new THREE.TextureLoader();
+    const tex = src => new Promise(res => tl.load(src, t => { t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
+    const swordTex = await Promise.all(["assets/sprites/weapon/front/@2x/greatsword.png", "assets/sprites/weapon/back/@2x/greatsword.png"].map(tex));
+    const wtex = {}; for (const [n, w] of Object.entries(WINGS || {})) wtex[n] = { L: await tex("assets/wings/" + w.L.file), R: await tex("assets/wings/" + w.R.file) };
+    k3Setup(gltf, swordTex, wtex);
+  })().catch(e => { K3.err = String(e && e.message || e); console.warn("3D knight:", e); });
+}
+function k3Setup(gltf, swordTex, wtex) {
+  R3 = new THREE.WebGLRenderer({ alpha: true, antialias: true, premultipliedAlpha: true });
+  R3.outputEncoding = THREE.sRGBEncoding; R3.setClearColor(0x000000, 0); R3.toneMapping = THREE.NoToneMapping;
+  scene3 = new THREE.Scene();
+  scene3.add(new THREE.HemisphereLight(0xb8c8ff, 0x1c1630, 0.55));
+  const key = new THREE.DirectionalLight(0xfff0e0, 1.25); key.position.set(-3, 6, 5); scene3.add(key);
+  const rim = new THREE.DirectionalLight(0x5fb0ff, 1.4); rim.position.set(4, 3, -5); scene3.add(rim);
+  const rim2 = new THREE.DirectionalLight(0x9b7bff, 0.8); rim2.position.set(-4, 2, -4); scene3.add(rim2);
+  cam3 = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 50);
+  cam3.position.set(0, Math.sin(PITCH) * 20, Math.cos(PITCH) * 20); cam3.up.set(0, 1, 0); cam3.lookAt(0, 0, 0);
+  model3 = gltf.scene; root3 = new THREE.Group(); root3.add(model3); scene3.add(root3);
+  model3.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.frustumCulled = false; if (o.material) { o.material.metalness = 0.15; o.material.roughness = 0.6; if (o.material.map) { o.material.emissive = new THREE.Color(0xffffff); o.material.emissiveMap = o.material.map; o.material.emissiveIntensity = 0.22; } } }
+                         if (o.isBone) bones3[o.name.toLowerCase()] = o; });
+  // Meshy rigs keep bones in centimetres under a 0.01 armature: size and ground the model from its bones, not from the bind mesh
+  const hips = bones3.hips, hip0 = hips ? hips.position.clone() : null;
+  for (const c of gltf.animations) {      // in-place: the game moves the knight, so drop the hips' sideways and forward drift
+    if (hip0) for (const t of c.tracks) if (/hips\.position$/i.test(t.name)) for (let i = 0; i < t.values.length; i += 3) { t.values[i] = hip0.x; t.values[i + 2] = hip0.z; }
+    clips3[c.name] = c; }
+  mixer3 = new THREE.AnimationMixer(model3);
+  for (const c of Object.values(clips3)) actions3[c.name] = mixer3.clipAction(c);
+  { const a = actions3[Object.keys(clips3)[0]]; a.play(); mixer3.update(0); root3.updateMatrixWorld(true);
+    let lo = Infinity, hi = -Infinity; for (const [n, b] of Object.entries(bones3)) { const y = b.getWorldPosition(new THREE.Vector3()).y; if (/foot|toe/.test(n)) lo = Math.min(lo, y); if (/head_end|headfront|^head$/.test(n)) hi = Math.max(hi, y); }
+    const s = 1.85 / Math.max(0.1, hi - lo); model3.scale.multiplyScalar(s); root3.updateMatrixWorld(true);
+    lo = Infinity; for (const [n, b] of Object.entries(bones3)) if (/foot|toe/.test(n)) lo = Math.min(lo, b.getWorldPosition(new THREE.Vector3()).y);
+    model3.position.y -= lo - 0.03; a.stop(); }
+  const findBone = (...res) => { for (const re of res) for (const [n, b] of Object.entries(bones3)) if (re.test(n)) return b; return null; };
+  K3.handR = findBone(/^righthand$/, /right.?hand$/, /hand.?r$/, /r.?hand$/);
+  K3.handL = findBone(/^lefthand$/, /left.?hand$/, /hand.?l$/, /l.?hand$/);
+  K3.chest = findBone(/^spine02$/, /spine2$/, /chest/, /^spine01$/, /spine1$/, /spine/);
+  // greatsword: crossed cards from the weapon sheet, grip in the right hand
+  const v = SET.weapon.variants.front, aspect = v.size_1x[0] / v.size_1x[1], L = 1.25;
+  const card = (t, ry) => { const g = new THREE.PlaneGeometry(aspect * L, L); g.translate((0.5 - v.grip_pivot[0]) * aspect * L, (v.grip_pivot[1] - 0.5) * L, 0);
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.3, roughness: 0.5, emissive: 0x1a2440, emissiveMap: t, emissiveIntensity: 0.25 })); m.rotation.y = ry; return m; };
+  sword3 = new THREE.Group(); const blade = new THREE.Group(); [card(swordTex[0], 0), card(swordTex[1], Math.PI / 2)].forEach(c => blade.add(c)); sword3.add(blade); sword3.userData.blade = blade;
+  sword3.userData.guard = new THREE.Object3D(); sword3.userData.tip = new THREE.Object3D(); blade.add(sword3.userData.guard); blade.add(sword3.userData.tip);
+  sword3.userData.guard.position.set(0, -(0.1) * L, 0); sword3.userData.tip.position.set(0, (v.grip_pivot[1] - v.tip[1]) * L, 0);
+  scene3.add(sword3);
+  if (K3.handR) { mixer3.stopAllAction(); model3.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); root3.updateMatrixWorld(true);
+    const bY = new THREE.Vector3(0, -0.35, 1).normalize(), bZ = new THREE.Vector3(1, 0, 0), bX = new THREE.Vector3().crossVectors(bY, bZ).normalize(); bZ.crossVectors(bX, bY);
+    const qW = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(bX, bY, bZ));
+    K3.gripQ = K3.handR.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(qW); }
+  // wings: the wing sheets as cards on the upper back
+  wings3 = { group: new THREE.Group(), sets: {} }; scene3.add(wings3.group);
+  for (const [name, w] of Object.entries(WINGS || {})) { const set = {};
+    for (const side of ["L", "R"]) { const e = w[side], t = wtex[name] && wtex[name][side]; if (!t) continue; const k = 1.3 / Math.max(e.size[0], e.size[1]);
+      const g = new THREE.PlaneGeometry(e.size[0] * k, e.size[1] * k); g.translate(-(e.root[0] - e.size[0] / 2) * k, (e.root[1] - e.size[1] / 2) * k, 0);
+      const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.45, metalness: 0.2,
+        emissive: new THREE.Color(w.glow || "#5fb0ff"), emissiveMap: t, emissiveIntensity: name === "dragon" ? 0.3 : 0.6 }));
+      mesh.rotation.y = Math.PI; const pivot = new THREE.Group(); pivot.add(mesh); wings3.group.add(pivot); set[side] = pivot; }
+    wings3.sets[name] = set; }
+  // hit windows from the clips themselves: the frames where the sword hand moves fastest
+  K3.hitWin = {}; for (const n of Object.keys(clips3)) K3.hitWin[n] = k3Swing(n);
+  mixer3.stopAllAction(); K3.cur = null; K3.ready = true; k3Play("idle", true); k3Menu();
+}
+const k3Find = frag => { const f = String(frag).toLowerCase(), ks = Object.keys(clips3); return ks.find(n => n.toLowerCase() === f) || ks.find(n => n.toLowerCase().includes(f)) || null; };
+function k3Swing(name) {     // [start, end] of the fastest stretch of the right hand, as fractions of the clip
+  const c = clips3[name], a = mixer3.clipAction(c), N = 40, sp = []; let prev = null;
+  mixer3.stopAllAction(); a.reset().play();
+  for (let i = 0; i <= N; i++) { a.time = c.duration * i / N; mixer3.update(0); root3.updateMatrixWorld(true);
+    const p = K3.handR ? K3.handR.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(); if (prev) sp.push(p.distanceTo(prev)); prev = p; }
+  a.stop(); const mx = Math.max(...sp, 1e-6), hot = sp.map(v => v > 0.55 * mx);
+  const i0 = hot.indexOf(true), i1 = hot.lastIndexOf(true);
+  return [Math.max(0, i0 / N - 0.03), Math.min(1, (i1 + 1) / N + 0.03)];
+}
+function k3Play(key, loop, dur, restart) {
+  const frag = K3CLIP[key] && !Array.isArray(K3CLIP[key]) ? K3CLIP[key] : key, name = k3Find(frag); if (!name) return null;
+  const a = actions3[name], c = clips3[name];
+  if (K3.cur === a && !restart) { if (dur) a.timeScale = c.duration / dur; return a; }
+  a.reset(); a.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity); a.clampWhenFinished = !loop; a.timeScale = dur ? c.duration / dur : 1;
+  if (K3.cur && K3.cur !== a) a.crossFadeFrom(K3.cur, loop ? 0.18 : 0.08, false); a.play(); K3.cur = a; K3.curName = name; return a;
+}
+function k3State(dt) {
+  const sp = Math.hypot(P.vx, P.vy / DEP) / M, a = P.atk;
+  if (a) {
+    if (K3.atkRef !== a) { K3.atkRef = a;
+      const key = a.def.special || (P.combo > 0 ? K3CLIP.combo[(P.combo - 1) % K3CLIP.combo.length] : "Attack");
+      k3Play(key, false, a.dur, true); a.k3 = K3.curName; }
+  } else if (clock - CAST.last < 0.22) {
+    if (K3.castT !== CAST.last) { K3.castT = CAST.last; k3Play(CAST.kind === "aoe" ? "aoe" : "single", false, CAST.kind === "aoe" ? 0.5 : 0.32, true); }
+  } else { K3.atkRef = null; k3Play(sp > 2.2 ? "run" : sp > 0.15 ? "walk" : "idle", true); if (sp > 0.15) K3.cur.timeScale = clamp(sp / (sp > 2.2 ? 4.2 : 1.7), 0.6, 1.6); }
+  // facing: toward the target while acting, along the motion otherwise
+  let want = K3.yaw;
+  if ((a || clock - CAST.last < 0.3) && P.aim != null) want = P.aim; else if (sp > 0.15) want = Math.atan2(P.vx, P.vy / DEP);
+  else want = { down: 0, up: Math.PI, left: -Math.PI / 2, right: Math.PI / 2 }[P.facing] ?? K3.yaw;
+  let d = want - K3.yaw; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; K3.yaw += d * Math.min(1, dt * 14);
+  mixer3.update(hitStop > 0 ? 0 : dt);
+}
+function drawK3(lift, dt) {
+  k3State(dt);
+  root3.rotation.y = K3.yaw; root3.updateMatrixWorld(true);
+  // sword in the right hand (left hand too for dual), cards along the hand's axis
+  const mode = equip.mode; sword3.visible = mode !== "none" && RAIN.state === "done" && !!K3.handR;
+  if (sword3.visible) { K3.handR.getWorldPosition(sword3.position); K3.handR.getWorldQuaternion(sword3.quaternion); if (K3.gripQ) sword3.quaternion.multiply(K3.gripQ);
+    sword3.userData.blade.rotation.set(0, 0, Math.PI); sword3.scale.setScalar(mode === "two" ? 1.15 : 1); }
+  // wings on the upper back
+  const wn = equip.wings; wings3.group.visible = wn !== "none" && !!K3.chest;
+  if (wings3.group.visible) { const C = K3.chest.getWorldPosition(new THREE.Vector3()), Q = root3.quaternion, ph = P.flap * TAU, fl = P.fly;
+    const flare = P.atk ? Math.sin(Math.PI * clamp(P.atk.t / P.atk.dur, 0, 1)) : 0, flap = lerp(0.5 * Math.sin(ph), 0.3, flare) * fl, sweep = lerp(0.35 + 0.25 * Math.cos(ph), 0.1, flare) * fl + (1 - fl) * 0.9 * (1 - flare);
+    for (const [n, set] of Object.entries(wings3.sets)) for (const [side, p] of Object.entries(set)) { p.visible = n === wn; if (n !== wn) continue;
+      const sg = side === "L" ? 1 : -1; p.position.copy(C).add(new THREE.Vector3(0.08 * sg, 0.05, -0.2).applyQuaternion(Q));
+      p.quaternion.copy(Q).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, sg * sweep, sg * (flap + 0.12 - (1 - fl) * 0.4), "YXZ"))); } }
+  // camera box around the knight: M px per metre, the feet at 78% of the box height
+  const bw = Math.ceil(3.4 * M), bh = Math.ceil(3.6 * M), fy = 0.78;
+  if (bw !== box3.w || bh !== box3.h || R3.getPixelRatio() !== DPR) { box3.w = bw; box3.h = bh; R3.setPixelRatio(DPR); R3.setSize(bw, bh, false); }
+  cam3.left = -bw / 2 / M; cam3.right = bw / 2 / M; cam3.top = fy * bh / M; cam3.bottom = -(1 - fy) * bh / M; cam3.updateProjectionMatrix();
+  R3.render(scene3, cam3);
+  const ox = P.x - bw / 2, oy = P.y - lift - fy * bh;
+  ctx.drawImage(R3.domElement, ox, oy, bw, bh);
+  // the blade in screen space for hits, trails and the glow
+  const toScr = o => { const v = o.getWorldPosition(new THREE.Vector3()).project(cam3); return [ox + (v.x + 1) / 2 * bw, oy + (1 - v.y) / 2 * bh]; };
+  if (sword3.visible) {
+    const a = toScr(sword3.userData.guard), b = toScr(sword3.userData.tip); CUR_BLADE = [a, b]; VFX.blade(a, b, 1);
+    const at = P.atk, def = at && !at.def.special ? at.def : null;
+    if (def) { const u = at.t / at.dur, w = (K3.hitWin && K3.hitWin[at.k3]) || def.hit;
+      if (u > w[0] - 0.05 && u < w[1] + 0.05) P.trails.main.push([a, b, clock]);
+      if (u >= w[0] && u <= w[1]) tryHit("main", a, b, 0); }
+  } else CUR_BLADE = null;
+  PH = K3.handR ? { main: toScr(K3.handR), off: K3.handL ? toScr(K3.handL) : toScr(K3.handR), back: K3.chest ? toScr(K3.chest) : [P.x, P.y - M] } : null;
+}
+
+function k3Menu() {
+  const seg = $("k3-seg"); if (!seg) return;
+  seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.k3 === "1") === (K3.on && K3.ready))));
+  $("k3-note").textContent = K3.ready ? "3D: mô hình Meshy, 14 động tác thư viện. 2D: rig cắt từ tấm vẽ và tư thế vẽ tay." : K3.err ? "Không tải được mô hình 3D (" + K3.err + "), đang dùng rig 2D." : "Đang tải mô hình 3D…";
+}
+
 // ---------- drawing ----------
 const tileShade = (i, j) => { const h = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return h - Math.floor(h); };
 function drawFloor() {
@@ -1125,6 +1292,11 @@ function drawCharacter() {
   if (P.atk && P.atk.def.special === "chop") { const u = P.atk.t / P.atk.dur, sp = ease(clamp((u - 0.06) / 0.34, 0, 1)), i0 = SPIN.indexOf(P.atk.face0);
     facing = SPIN[(i0 + Math.round(sp * 4)) % 4]; spinLeap = leapK(u) * 0.55 * M * (1 - P.fly); }
   const lift = P.hover + spinLeap, mir = mirOf(facing);
+  if (K3.on && K3.ready) {
+    const sh = clamp(1 - P.hover / (2.5 * M), 0.4, 1);
+    ctx.fillStyle = `rgba(0,0,0,${0.42 * sh})`; ctx.beginPath(); ctx.ellipse(P.x, P.y, 120 * S * sh, 120 * S * sh * DEP * 0.75, 0, 0, Math.PI * 2); ctx.fill();
+    drawK3(P.hover, FRAME_DT); drawTrails(); return;
+  }
   const ps = poseState();
   if (ps) {
     const sh = clamp(1 - lift / (2.5 * M), 0.4, 1);
@@ -1229,9 +1401,9 @@ function drawPillar(pl) {
   cyl(pl.x, pl.y - h - 18 * k, pl.y - h, w * 0.68, ry * 1.36, gb, "#525c71");
   ctx.strokeStyle = "rgba(95,176,255,.55)"; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.ellipse(pl.x, pl.y - h - 18 * k, w * 0.68 - 4 * k, ry * 1.36 - 3 * k, 0, 0, Math.PI * 2); ctx.stroke();
 }
-let shX = 0, shY = 0;
+let shX = 0, shY = 0, FRAME_DT = 0;
 function frame(ts) {
-  const dt = clamp((ts - (last || ts)) / 1000, 0, 0.05); last = ts;
+  const dt = clamp((ts - (last || ts)) / 1000, 0, 0.05); last = ts; FRAME_DT = dt;
   update(dt);
   shX = shake ? (Math.random() - 0.5) * shake : 0; shY = shake ? (Math.random() - 0.5) * shake : 0;
   ctx.setTransform(DPR, 0, 0, DPR, (-cam.x + shX) * DPR, (-cam.y + shY) * DPR);
@@ -1275,6 +1447,7 @@ function frame(ts) {
 
 // ---------- equipment menu ----------
 function buildMenu() {
+  document.querySelectorAll("#k3-seg button").forEach(b => b.addEventListener("click", () => { K3.on = b.dataset.k3 === "1"; k3Menu(); }));
   const list = [["none", "Không cánh", null]].concat(Object.entries(WINGS).map(([k, w]) => [k, w.name_vi, "assets/wings/" + w.L.file]));
   $("wing-list").innerHTML = list.map(([k, name, src]) => `<button type="button" class="wing" data-wing="${k}" aria-pressed="false">${src ? `<img src="${src}" alt="">` : '<span class="ph">—</span>'}<small>${name}</small></button>`).join("");
   document.querySelectorAll("#wing-list .wing").forEach(b => b.addEventListener("click", () => { equip.wings = b.dataset.wing; if (equip.wings !== "none") equip.flying = true; changed(); }));

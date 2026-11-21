@@ -60,6 +60,18 @@ Kéo `sprites/front/@4x/*.png` và `sprites/back/@4x/*.png` vào project (Unity:
 Đặt pivot của từng sprite = `pivot` trong JSON (Unity: Custom Pivot, lưu ý Unity tính y từ dưới lên → `1 - pivot.y`;
 Godot: `Sprite2D.offset = -pivot * size`). Vị trí con so với gốc nhân vật = `offset_1x + pivot * size_1x`.
 
+## Nhân vật 3D từ Meshy (`assets/meshy/knight.gltf.json`)
+
+Bốn ảnh dang tay (`source/apose/`, làm sạch bằng `apose.py`) được gửi lên Meshy API: Multi-Image to 3D (Meshy 7.1, khoảng 31 nghìn tam giác,
+texture 2K), Rigging (cao 2 m), rồi Animation với 14 động tác thư viện (Combat_Stance, Walk_Fight_Forward, RunFast, Attack, Left_Slash,
+Thrust_Slash, Charged_Slash, Triple_Combo_Attack, Sword_Judgment, Double_Blade_Spin, Basic_Jump, Charged_Ground_Slam, Charged_Spell_Cast,
+Hit_Reaction). `3d/meshy_merge.py` gộp các file động tác về một mô hình, nén texture, xuất glTF JSON có buffer base64 (trang artifact không
+phục vụ .glb). `character-test.html` dựng mô hình bằng three.js trong một canvas WebGL phụ, camera trực giao chúc xuống sao cho sàn nén đúng
+DEP và M px mỗi mét, rồi vẽ vào cảnh 2,5D như một sprite: sàn, bóng, hiệu ứng, số sát thương và va chạm dùng chung với bản 2D. Xương bị
+đặt theo centimet dưới armature 0,01, nên kích thước lấy theo xương; độ trượt ngang của hông bị khoá để nhân vật đi tại chỗ theo điều khiển.
+Thời điểm chém của mỗi đòn lấy từ chính động tác (đoạn tay phải di chuyển nhanh nhất). Kiếm và cánh là thẻ dán ảnh gốc, gắn vào xương tay
+và ngực. Menu Trang bị có nút chuyển 3D / 2D để so sánh.
+
 ## Góc camera 45° (`source/turntable/` → `assets/rig45/`)
 
 `character-test.html` nhìn nhân vật từ trên xuống chéo 45°, đúng góc của các tấm turntable và tấm tư thế. Rig được dựng lại từ
