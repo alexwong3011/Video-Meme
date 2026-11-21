@@ -60,7 +60,23 @@ Kéo `sprites/front/@4x/*.png` và `sprites/back/@4x/*.png` vào project (Unity:
 Đặt pivot của từng sprite = `pivot` trong JSON (Unity: Custom Pivot, lưu ý Unity tính y từ dưới lên → `1 - pivot.y`;
 Godot: `Sprite2D.offset = -pivot * size`). Vị trí con so với gốc nhân vật = `offset_1x + pivot * size_1x`.
 
-## Bản 2,5D (`character-test.html`)
+## Mức 3: sprite 8 hướng render từ mô hình 3D
+
+1. **Hoa văn từ 6 góc nhìn** (`source/turntable/view01-06.jpg`, camera 45°): `3d/mv_fit.py` tìm góc xoay, góc nghiêng và khoảng cách
+   camera của từng ảnh bằng cách khớp bóng với mô hình (IoU 0,72–0,81; trước/sau chọn theo nội dung ảnh vì bóng giống nhau).
+   `3d/mv_bake.py` chiếu từng ảnh (và bản lật gương, vì giáp đối xứng) lên từng texel của UV, có z-buffer cho phần bị che, mỗi texel
+   lấy góc nhìn thẳng nhất; giữ texture cũ (sắc nét từ tấm thiết kế) ở mặt trước/sau, dùng góc mới cho hông, vai, mặt chéo (24% texel).
+   `3d/swap_texture.py` thay texture trong glb đã gắn xương. Lưu ý: ảnh 01, 02, 06 thực tế gần cùng một góc dù nhãn ghi 0°/60°/300°.
+2. **Render sprite**: `knight-3d.html#sprites` dựng camera trực giao 45°, nền trong suốt, và trả về từng khung cùng vị trí lưỡi kiếm,
+   bàn tay, điểm gắn cánh. `sprites/render.js` render 5 hướng (s, se, e, ne, n; sw, w, nw là bản lật gương) × 4 cách cầm × các clip:
+   idle 6, walk 8, run 6, mỗi đòn chém 8, castS/castA 2, chop 10, rain 8, fly 6, flym 6 khung (1.520 khung, ~0,2 s/khung trên CPU).
+   `sprites/pack_sprites.py` cắt viền, xếp vào trang WebP 2048 px: `assets/sprites25/<cách cầm>/p*.webp` + `<cách cầm>.json`
+   (khung, điểm gốc chân, lưỡi kiếm, bàn tay, điểm gắn cánh theo từng khung), tổng 7,9 MB, mỗi cách cầm ~2 MB, tải khi cần.
+3. `character-test.html` (2,5D) vẽ nhân vật từ các sprite này: 8 hướng xoay mượt theo hướng đi, va chạm và vệt chém lấy từ lưỡi kiếm
+   của đúng khung đang vẽ, cánh ảnh là lớp riêng gắn ở điểm lưng của từng khung (trước/sau/nghiêng). `knight-3d.html` dùng cùng mô hình,
+   ba bộ cánh ảnh dạng tấm 3D vỗ theo nhịp bay, camera mặc định 45°.
+
+## Bản 2,5D dựng bằng rig cắt từ tấm vẽ (phiên bản trước)
 
 Ba tấm nhân vật (`source/azure-wing-body-{front,back,side}.jpg`) được cắt thành rig có khớp: mặt trước, mặt sau (10 phần mỗi mặt) và
 góc nghiêng (6 phần; tay và chân phía xa vẽ lại từ phần phía gần, tối màu hơn; chỗ cánh tay và bàn tay che thân/đùi được lấp bằng hoa
