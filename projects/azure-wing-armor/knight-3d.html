@@ -223,7 +223,9 @@ const save = () => { try { localStorage.setItem("azure-knight-3d", JSON.stringif
 const loader = new THREE.GLTFLoader();
 const texLoader = new THREE.TextureLoader();
 Promise.all([
-  new Promise((res, rej) => loader.load("assets/3d/azure_knight.glb", res, undefined, rej)),
+  // the binary .glb when served, else the same model as glTF JSON with embedded buffers
+  new Promise((res, rej) => loader.load("assets/3d/azure_knight.glb", res, undefined,
+    () => loader.load("assets/3d/azure_knight.gltf.json", res, undefined, rej))),
   fetch("assets/azure_wing_set.json").then(r => r.json()),
   new Promise(res => texLoader.load("assets/sprites/weapon/front/@2x/greatsword.png", res)),
   new Promise(res => texLoader.load("assets/sprites/weapon/back/@2x/greatsword.png", res)),
