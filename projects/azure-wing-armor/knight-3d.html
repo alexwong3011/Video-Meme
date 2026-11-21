@@ -147,7 +147,9 @@ const ease = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u);
 const HEIGHT = 1.85;                                    // knight height in metres
 
 // ---------- renderer / scene ----------
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ antialias: true }); }
+catch (e) { document.getElementById("loading").textContent = "Thiết bị hoặc trình duyệt này không bật được WebGL, nên không hiển thị được cảnh 3D."; throw e; }
 renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
 renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.82;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -221,17 +223,36 @@ const save = () => { try { localStorage.setItem("azure-knight-3d", JSON.stringif
 
 // ---------- loading ----------
 const loader = new THREE.GLTFLoader();
+// decode embedded textures through <img> (blob: images are allowed) instead of fetch + createImageBitmap (blocked by CSP)
+loader.register(parser => { parser.textureLoader = new THREE.TextureLoader(parser.options.manager); return { name: "img_textures" }; });
 const texLoader = new THREE.TextureLoader();
 Promise.all([
-  // the binary .glb when served, else the same model as glTF JSON with embedded buffers
-  new Promise((res, rej) => loader.load("assets/3d/azure_knight.glb", res, undefined,
-    () => loader.load("assets/3d/azure_knight.gltf.json", res, undefined, rej))),
+  loadKnight(),
   fetch("assets/azure_wing_set.json").then(r => r.json()),
   new Promise(res => texLoader.load("assets/sprites/weapon/front/@2x/greatsword.png", res)),
   new Promise(res => texLoader.load("assets/sprites/weapon/back/@2x/greatsword.png", res)),
 ]).then(([gltf, set, tf, tb]) => { SET = set; setup(gltf, tf, tb); $("loading").hidden = true; requestAnimationFrame(frame); })
-  .catch(e => { console.error(e); $("loading").textContent = "Không tải được mô hình (assets/3d/azure_knight.glb). Trình duyệt cần hỗ trợ WebGL."; });
+  .catch(e => { console.error(e); $("loading").textContent = "Không tải được mô hình 3D: " + (e && e.message ? e.message : e); });
 
+// The binary .glb when it is served; otherwise the same model stored as glTF JSON with a base64 buffer.
+// Both are fetched by relative URL and parsed from memory: the artifact viewer's CSP blocks fetch() of data: URIs.
+async function loadKnight() {
+  let buf = null;
+  try { const r = await fetch("assets/3d/azure_knight.glb"); if (r.ok) buf = await r.arrayBuffer(); } catch (e) {}
+  if (!buf) {
+    const r = await fetch("assets/3d/azure_knight.gltf.json"); if (!r.ok) throw new Error("model file missing (" + r.status + ")");
+    const j = await r.json(), uri = j.buffers[0].uri, b64 = uri.slice(uri.indexOf(",") + 1);
+    const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0)); delete j.buffers[0].uri;
+    // re-assemble a GLB: header + JSON chunk (space-padded) + BIN chunk (zero-padded)
+    let js = new TextEncoder().encode(JSON.stringify(j)); const jp = (4 - js.length % 4) % 4, bp = (4 - bin.length % 4) % 4;
+    const total = 12 + 8 + js.length + jp + 8 + bin.length + bp, out = new ArrayBuffer(total), dv = new DataView(out), u8 = new Uint8Array(out);
+    dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);
+    dv.setUint32(12, js.length + jp, true); dv.setUint32(16, 0x4E4F534A, true); u8.set(js, 20); u8.fill(0x20, 20 + js.length, 20 + js.length + jp);
+    const o = 20 + js.length + jp; dv.setUint32(o, bin.length + bp, true); dv.setUint32(o + 4, 0x004E4942, true); u8.set(bin, o + 8);
+    buf = out;
+  }
+  return new Promise((res, rej) => loader.parse(buf, "", res, rej));
+}
 const bname = n => n.replace(/[^a-z_]/gi, "");      // GLTFLoader strips "." from node names
 function setup(gltf, texF, texB) {
   const model = gltf.scene;
