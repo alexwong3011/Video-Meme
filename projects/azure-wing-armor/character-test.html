@@ -1231,9 +1231,9 @@ function drawK3(lift, dt) {
   // wings on the upper back
   const wn = equip.wings; wings3.group.visible = wn !== "none" && !!K3.chest;
   if (wings3.group.visible) { const C = K3.chest.getWorldPosition(new THREE.Vector3()), Q = root3.quaternion, ph = P.flap * TAU, fl = P.fly;
-    const flare = P.atk ? Math.sin(Math.PI * clamp(P.atk.t / P.atk.dur, 0, 1)) : 0, flap = lerp(0.5 * Math.sin(ph), 0.3, flare) * fl, sweep = lerp(0.35 + 0.25 * Math.cos(ph), 0.1, flare) * fl + (1 - fl) * 0.9 * (1 - flare);
+    const flare = P.atk ? Math.sin(Math.PI * clamp(P.atk.t / P.atk.dur, 0, 1)) : 0, flap = lerp(0.5 * Math.sin(ph), 0.3, flare) * fl, sweep = lerp(0.12 + 0.12 * Math.cos(ph), 0.05, flare) * fl + (1 - fl) * 0.55 * (1 - flare);
     for (const [n, set] of Object.entries(wings3.sets)) for (const [side, p] of Object.entries(set)) { p.visible = n === wn; if (n !== wn) continue;
-      const sg = side === "L" ? 1 : -1; p.position.copy(C).add(new THREE.Vector3(0.08 * sg, 0.05, -0.2).applyQuaternion(Q));
+      const sg = side === "L" ? 1 : -1; p.position.copy(C).add(new THREE.Vector3(0.08 * sg, 0.12, -0.16).applyQuaternion(Q));
       p.quaternion.copy(Q).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, sg * sweep, sg * (flap + 0.12 - (1 - fl) * 0.4), "YXZ"))); } }
   // camera box around the knight: M px per metre, the feet at 78% of the box height
   const bw = Math.ceil(3.4 * M), bh = Math.ceil(3.6 * M), fy = 0.78;
