@@ -1132,6 +1132,8 @@ function knTick(dt, t, moving) {
     const C = S2.lerp(N, 0.75).addScaledVector(fw, -0.13 * F); wings.position.copy(heroBody.worldToLocal(C)); }
   // armour level: tint, rim, running light, a close shell at the silhouette and thin smoke wisps rising from the body
   const lv = knArmorLevel(), Lk = knLook(lv); KN_U.uTime.value = t;
+  // the game's tone mapping and bloom lift emissive light a lot more than the flat test page: keep the armour's own colours readable
+  Lk.tint = Lk.tint.map(v => 1 + (v - 1) * 0.55); Lk.rim[3] *= 0.6; Lk.flow[3] *= 0.5;
   KN_U.uRimColor.value.setRGB(Lk.rim[0], Lk.rim[1], Lk.rim[2]); KN_U.uRimInt.value = Lk.rim[3]; KN_U.uFlowColor.value.setRGB(Lk.flow[0], Lk.flow[1], Lk.flow[2]); KN_U.uFlowInt.value = Lk.flow[3];
   for (const m of KN.armorMats) { m.color.copy(m.userData.base0).multiply(new THREE.Color(Lk.tint[0], Lk.tint[1], Lk.tint[2])); m.envMapIntensity = Lk.env; m.roughness = m.roughnessMap ? Lk.rough : 0.5 * Lk.rough; }
   for (const sh of KN.auras) { sh.visible = Lk.aura[3] > 0.01; sh.material.uniforms.uColor.value.setRGB(Lk.aura[0], Lk.aura[1], Lk.aura[2]); sh.material.uniforms.uInt.value = Math.min(Lk.aura[3], 1.1) * 0.45; sh.material.uniforms.uGrow.value = 0.03 * F; }
