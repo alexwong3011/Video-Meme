@@ -61,7 +61,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
 .menu-head h2 { margin: 0; font: 700 18px var(--font-display); letter-spacing: .04em; }
 .menu h3 { margin: 0 0 8px; font: 600 12px var(--font-display); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-#rate, #lvl { width: 100%; accent-color: var(--azure); }
+#rate, #lvl, #zoom { width: 100%; accent-color: var(--azure); }
 .rate-val { font: 600 13px var(--font-body); color: var(--azure); margin-left: 6px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
 .seg button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; padding: 6px 11px; cursor: pointer; }
@@ -152,6 +152,10 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
     <div class="menu-head">
       <h2>Trang bị</h2>
       <button class="btn" type="button" id="menu-close">Đóng <kbd>I</kbd></button>
+    </div>
+    <div>
+      <h3>Thu phóng <span class="rate-val" id="zoom-val">0,5×</span></h3>
+      <input type="range" id="zoom" min="0.3" max="1.2" step="0.05" value="0.5" aria-label="Thu phóng camera">
     </div>
     <div>
       <h3>Tốc độ đánh <span class="rate-val" id="rate-val">1 đòn/giây</span></h3>
@@ -305,7 +309,8 @@ const PILLARS = [], DUMMIES = [], RC = { x: 0, y: 0 };
 function resize(first) {
   const r = stage.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1);
   W = r.width; H = r.height; canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
-  S = clamp(H * 0.42 / 850, 0.15, 0.6); M = MPX * S;
+  const oldM = M, oldMain = DUMMIES[0] ? [DUMMIES[0].x, DUMMIES[0].y] : null;
+  S = clamp(H * 0.42 / 850 * (equip.zoom ?? 0.5), 0.06, 0.6); M = MPX * S;
   WORLD.w = Math.max(W * 2, 12 * M); WORLD.h = Math.max(H * 1.8, 9 * M * DEP);
   const k = kS();
   PILLARS.length = 0;
@@ -318,6 +323,7 @@ function resize(first) {
     Object.assign(d, { x, y, sc, name, max });
   });
   if (first) { P.x = mainX - 2 * M; P.y = mainY + 1.6 * M * DEP; cam.x = P.x - W / 2; cam.y = P.y - H * 0.6; }
+  else if (oldMain && oldM && oldM !== M) { const k = M / oldM; P.x = mainX + (P.x - oldMain[0]) * k; P.y = mainY + (P.y - oldMain[1]) * k; P.vx *= k; P.vy *= k; cam.x = P.x - W / 2; cam.y = P.y - H * 0.6; }
 }
 const dumK = d => kS() * 1.05 * d.sc;
 const dummyCircle = d => { const k = dumK(d); return [d.x, d.y - 105 * k, 46 * k]; };
@@ -761,6 +767,17 @@ const VFX = (() => {
   };
   const cache = {};
   const T = (name, col) => cache[name + col] || (cache[name + col] = MAKE[name](C[col]));
+  // a thin wisp of smoke: a few soft curling strands rising from a point, in any colour (cached per rounded colour)
+  const wispTex = rgb => { const key = "wisp" + rgb.map(v => Math.round(v * 10)).join(","); if (cache[key]) return cache[key];
+    const c = rgb.map(v => Math.round(clamp(v, 0, 1) * 255));
+    return cache[key] = mk(64, 192, g => { g.globalCompositeOperation = "lighter"; g.lineCap = "round";
+      for (let k = 0; k < 4; k++) { const sx = 32 + (k - 1.5) * 4, ph = k * 1.7;
+        for (let pass = 0; pass < 2; pass++) { g.beginPath(); g.moveTo(sx, 186);
+          for (let y = 186; y > 8; y -= 6) { const u = (186 - y) / 178; g.lineTo(32 + (sx - 32) * (1 - u) + Math.sin(u * 7 + ph) * 12 * u, y); }
+          g.strokeStyle = pass ? `rgba(255,255,255,0.10)` : `rgba(${c[0]},${c[1]},${c[2]},0.14)`; g.lineWidth = pass ? 2.2 : 9; g.shadowColor = `rgba(${c[0]},${c[1]},${c[2]},0.8)`; g.shadowBlur = pass ? 4 : 14; g.stroke(); } }
+      const fade = g.createLinearGradient(0, 0, 0, 192); fade.addColorStop(0, "rgba(0,0,0,1)"); fade.addColorStop(0.75, "rgba(0,0,0,0)");
+      g.globalCompositeOperation = "destination-out"; g.fillStyle = fade; g.fillRect(0, 0, 64, 192); }); };
+  let wispAcc = 0;
   const items = [], timers = [];
   const easeOut = u => 1 - Math.pow(1 - u, 3);
   const add = o => { const it = Object.assign({ t: -(o.delay || 0), life: 0.3, a: 1, fi: 0.08, fo: 0.45, s0: 1, s1: 1, rot: 0, spin: 0, h: 0, vx: 0, vy: 0, vh: 0, g: 0 }, o);
@@ -787,6 +804,14 @@ const VFX = (() => {
       for (let i = 0; i < n; i++) { const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r * M;
         add({ kind: "bill", img: T("smoke", col), x: x + Math.cos(a) * d, y: y + Math.sin(a) * d * DEP, h: (o.h ?? 0.25) * M * Math.random(), vx: Math.cos(a) * 0.25 * M, vy: Math.sin(a) * 0.1 * M, vh: 0.12 * M,
               s0: o.s0 ?? 0.3, s1: o.s1 ?? 0.7, a: o.a ?? 0.4, life: (o.life ?? 0.9) * (0.7 + Math.random() * 0.5), fi: 0.25, fo: 0.4, rot: Math.random() * TAU, spin: (Math.random() - 0.5) * 0.8, delay: o.delay || 0 }); } },
+    // smoke aura: wisps rise from points on the body (screen space), drifting and curling, faint and additive
+    auraWisps(dt, pts, rgb, A) {
+      if (!pts || !pts.length || A <= 0.01) return; wispAcc += dt * 7 * A;
+      const cx = pts.reduce((v, q) => v + q[0], 0) / pts.length;
+      while (wispAcc >= 1) { wispAcc -= 1; const q = pts[Math.floor(Math.random() * pts.length)], img = wispTex(rgb), sd = q[0] === cx ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(q[0] - cx);
+        add({ kind: "bill", img, x: q[0] + sd * (0.1 + Math.random() * 0.18) * M, y: q[1] + (Math.random() - 0.5) * 0.08 * M, h: 0,     // from the edges of the body, not over the chest
+              vx: (Math.random() - 0.5) * 0.12 * M, vy: -(0.28 + Math.random() * 0.25) * M, s0: 0.16 + Math.random() * 0.08, s1: 0.3 + Math.random() * 0.12,
+              rot: (Math.random() - 0.5) * 0.5, spin: (Math.random() - 0.5) * 0.4, life: 1.1 + Math.random() * 0.7, fi: 0.25, fo: 0.45, a: Math.min(0.32, 0.2 * A) }); } },
     keyed(key, make, refresh) { const it = items.find(q => q.key === key && q.t < q.life); if (it) refresh(it); else make().key = key; },
     after(dt, fn) { timers.push({ t: dt, fn }); },
     update(dt) {
@@ -1201,7 +1226,7 @@ function applyArmor(t) {
   ARMOR_U.uFlowColor.value.setRGB(L.flow[0], L.flow[1], L.flow[2]); ARMOR_U.uFlowInt.value = L.flow[3];
   for (const m of K3.armorMats || []) { m.color.copy(m.userData.base0).multiply(new THREE.Color(L.tint[0], L.tint[1], L.tint[2])); m.envMapIntensity = L.env; m.roughness = m.roughnessMap ? L.rough : 0.5 * L.rough; }
   for (const [sh, k] of K3.auras || []) { sh.visible = L.aura[3] > 0.01; sh.material.uniforms.uColor.value.setRGB(L.aura[0], L.aura[1], L.aura[2]);
-    sh.material.uniforms.uInt.value = k === 0 ? L.aura[3] : L.aura[4]; }
+    sh.material.uniforms.uInt.value = k === 0 ? Math.min(L.aura[3], 1.1) * 0.45 : 0; if (k === 1) sh.visible = false; }
 }
 function setLevel(v) {
   equip.level = clamp(Math.round(+v || 0), 0, 15); save();
@@ -1230,14 +1255,46 @@ const wpos = b => b.getWorldPosition(new THREE.Vector3());
 function setWorldRot(b, q) { const pq = b.parent.getWorldQuaternion(new THREE.Quaternion()).invert(); b.quaternion.copy(pq.multiply(q)); b.updateMatrixWorld(true); }
 function turnBone(b, from, to) { const q = new THREE.Quaternion().setFromUnitVectors(from.clone().normalize(), to.clone().normalize()); setWorldRot(b, q.multiply(b.getWorldQuaternion(new THREE.Quaternion()))); }
 function spinBone(b, axis, ang) { if (b) setWorldRot(b, new THREE.Quaternion().setFromAxisAngle(axis, ang).multiply(b.getWorldQuaternion(new THREE.Quaternion()))); }
-function armIK3(side, target, pole) {            // two-bone IK in world space, elbow bent toward `pole`
-  const A = bones3[side + "arm"], B = bones3[side + "forearm"], C = bones3[side + "hand"]; if (!A || !B || !C) return;
+function armIK3(side, target, pole) { ik3(bones3[side + "arm"], bones3[side + "forearm"], bones3[side + "hand"], target, pole); }
+function ik3(A, B, C, target, pole) {            // two-bone IK in world space, middle joint bent toward `pole`
+  if (!A || !B || !C) return;
   const a = wpos(A), b = wpos(B), c = wpos(C), L1 = a.distanceTo(b), L2 = b.distanceTo(c);
   const d = target.clone().sub(a), dist = clamp(d.length(), Math.abs(L1 - L2) + 1e-4, (L1 + L2) * 0.999); d.normalize();
   const ca = clamp((L1 * L1 + dist * dist - L2 * L2) / (2 * L1 * dist), -1, 1), sa = Math.sqrt(1 - ca * ca);
   const pn = pole.clone().sub(d.clone().multiplyScalar(pole.dot(d))).normalize();
   turnBone(A, b.clone().sub(a), d.clone().multiplyScalar(ca).addScaledVector(pn, sa));
   const b2 = wpos(B), c2 = wpos(C); turnBone(B, c2.sub(b2), target.clone().sub(b2));
+}
+// ---------- hands: with the finger rig the fingers close round the grip and the blade runs through the fist ----------
+const FING = ["index", "middle", "ring", "pinky"];
+function fistFrame(side) {        // grip point inside the fist, the handle's axis (pinky -> index side) and the flat's normal (along the fingers)
+  const b = n => wpos(bones3[side + "hand" + n]), H = wpos(bones3[side + "hand"]);
+  const k1 = FING.reduce((v, f) => v.add(b(f + "1")), new THREE.Vector3()).multiplyScalar(0.25), k2 = FING.reduce((v, f) => v.add(b(f + "2")), new THREE.Vector3()).multiplyScalar(0.25);
+  return { G: k1.clone().lerp(k2, 0.55).lerp(H, 0.15), axis: b("index1").sub(b("pinky1")).normalize(), flat: b("middle1").sub(H).normalize() };
+}
+function curlHand(side, amt) {
+  if (!K3.fingers) return;
+  for (const [bn, q] of K3.fingerRest[side]) bn.quaternion.copy(q);          // from rest each frame: the clips do not move the fingers
+  bones3[side + "hand"].updateMatrixWorld(true);
+  const ax = wpos(bones3[side + "handindex1"]).sub(wpos(bones3[side + "handpinky1"])).normalize(), sg = K3.curlSign[side];
+  for (const f of FING) [70, 88, 58].forEach((d, i) => spinBone(bones3[side + "hand" + f + (i + 1)], ax, sg * d * Math.PI / 180 * amt));
+  const fx = wpos(bones3[side + "handmiddle1"]).sub(wpos(bones3[side + "hand"])).normalize();
+  [22, 30, 24].forEach((d, i) => spinBone(bones3[side + "handthumb" + (i + 1)], fx, K3.thumbSign[side] * d * Math.PI / 180 * amt));
+}
+function k3FingerSetup() {
+  K3.fingers = ["left", "right"].every(sd => FING.every(f => bones3[sd + "hand" + f + "1"] && bones3[sd + "hand" + f + "2"]) && bones3[sd + "handthumb1"]);
+  if (!K3.fingers) return;
+  K3.fingerRest = {}; K3.curlSign = {}; K3.thumbSign = {};
+  for (const sd of ["left", "right"]) {
+    K3.fingerRest[sd] = Object.entries(bones3).filter(([n]) => n.startsWith(sd + "hand") && n !== sd + "hand").map(([, b]) => [b, b.quaternion.clone()]);
+    const rest = () => { for (const [b, q] of K3.fingerRest[sd]) b.quaternion.copy(q); bones3[sd + "hand"].updateMatrixWorld(true); };
+    const ax = wpos(bones3[sd + "handindex1"]).sub(wpos(bones3[sd + "handpinky1"])).normalize(), th = wpos(bones3[sd + "handthumb1"]);
+    const tip = sg => { rest(); spinBone(bones3[sd + "handmiddle1"], ax, sg * 1.2); spinBone(bones3[sd + "handmiddle2"], ax, sg * 1.2); return wpos(bones3[sd + "handmiddle3"]).distanceTo(th); };
+    K3.curlSign[sd] = tip(1) < tip(-1) ? 1 : -1;                               // the side that brings the fingertips toward the thumb
+    const fx = wpos(bones3[sd + "handmiddle1"]).sub(wpos(bones3[sd + "hand"])).normalize(), mid = wpos(bones3[sd + "handmiddle1"]);
+    const tt = sg => { rest(); spinBone(bones3[sd + "handthumb1"], fx, sg * 0.6); return wpos(bones3[sd + "handthumb3"]).distanceTo(mid); };
+    K3.thumbSign[sd] = tt(1) < tt(-1) ? 1 : -1; rest();
+  }
 }
 const K3IDLE = {      // character space (metres; +X the knight's left, +Y up, +Z forward), relative to each shoulder joint
   bladeUp: [-0.5, 0.72, 0.42], bladeDown: [0.4, -0.75, 0.45],
@@ -1246,16 +1303,25 @@ const K3IDLE = {      // character space (metres; +X the knight's left, +Y up, +
 function idlePose(t) {
   K3.restPose();
   const Q = root3.quaternion, cv = a => new THREE.Vector3(...a).applyQuaternion(Q), left = cv([1, 0, 0]);
-  const br = Math.sin(t * TAU / 3.6), br2 = Math.sin(t * TAU / 3.6 - 0.6);           // one slow, even breath every 3.6 s
+  const br = Math.sin(t * TAU / 3), br2 = Math.sin(t * TAU / 3 - 0.6);               // the whole body on one even 3 s cycle
+  // bob: the hips sink a little and rise, the knees give, the feet stay planted
+  const feet = ["left", "right"].map(sd => bones3[sd + "foot"] ? wpos(bones3[sd + "foot"]) : null);
+  if (bones3.hips) { const hp = wpos(bones3.hips).add(cv([0, -0.028 * (0.5 - 0.5 * Math.cos(t * TAU / 3)), 0])); bones3.hips.position.copy(bones3.hips.parent.worldToLocal(hp)); root3.updateMatrixWorld(true); }
+  ["left", "right"].forEach((sd, i) => { if (feet[i]) ik3(bones3[sd + "upleg"], bones3[sd + "leg"], bones3[sd + "foot"], feet[i], cv([sd === "left" ? 0.15 : -0.15, 0, 1])); });
   spinBone(bones3.spine01, left, -0.012 * br); spinBone(bones3.spine02, left, -0.02 * br);   // the chest rises and falls
   spinBone(bones3.neck, left, 0.022 * br);                                                // the head stays level, eyes forward
   if (bones3.leftshoulder) spinBone(bones3.leftshoulder, cv([0, 0, 1]), 0.015 * br2);
   if (bones3.rightshoulder) spinBone(bones3.rightshoulder, cv([0, 0, 1]), -0.015 * br2);
-  const mode = equip.mode, sh = side => wpos(bones3[side + "arm"]), lift = cv([0, 0.012 * br2, 0]);
+  const mode = equip.mode, sh = side => wpos(bones3[side + "arm"]), lift = cv([0, 0.045 * br2, 0.01 * br2]);   // the arms rise and lower with the breath
   const rT = sh("right").add(cv(mode === "none" ? K3IDLE.R.rest : K3IDLE.R.sword)).add(lift);
   let lT = sh("left").add(cv(mode === "dual" ? K3IDLE.L.sword : K3IDLE.L.rest)).add(lift);
   if (mode === "two") lT = rT.clone().addScaledVector(cv(K3IDLE.bladeUp).normalize(), -0.13).add(cv([0.03, 0, 0]));
   armIK3("right", rT, cv([-0.5, -0.7, -0.5])); armIK3("left", lT, cv([0.5, -0.7, -0.5]));
+  if (K3.fingers) {
+    const aim = (sd, dir) => { const h = bones3[sd + "hand"], ax = wpos(bones3[sd + "handindex1"]).sub(wpos(bones3[sd + "handpinky1"])); turnBone(h, ax, cv(dir)); };
+    if (mode !== "none") aim("right", K3IDLE.bladeUp);
+    if (mode === "dual") aim("left", K3IDLE.bladeDown);
+  }
 }
 function k3Load() {
   if (!window.THREE || !THREE.GLTFLoader) { K3.err = "three.js"; return; }
@@ -1328,7 +1394,7 @@ function k3Setup(gltf, swordTex, wtex) {
   if (K3.handR) { mixer3.stopAllAction(); K3.restPose();
     const grip = (hand, dir) => { const q = bladeQ(dir, new THREE.Vector3(1, 0, 0)); return hand.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(q); };
     K3.gripQ = grip(K3.handR, new THREE.Vector3(0, -0.35, 1)); if (K3.handL) K3.gripQL = grip(K3.handL, new THREE.Vector3(0, -0.35, 1));
-    K3.boneList = Object.values(bones3); }
+    K3.boneList = Object.values(bones3); k3FingerSetup(); }
   // wings: the wing sheets as cards on the upper back
   wings3 = { group: new THREE.Group(), sets: {} }; scene3.add(wings3.group);
   for (const [name, w] of Object.entries(WINGS || {})) { const set = {};
@@ -1401,7 +1467,10 @@ function drawK3(lift, dt) {
   root3.rotation.y = K3.yaw; root3.updateMatrixWorld(true);
   // swords: the clip's grip, or the stance's held angles while idle (right blade up, left blade down when dual wielding)
   const mode = equip.mode, Qr = root3.quaternion, cv = a => new THREE.Vector3(...a).applyQuaternion(Qr);
+  if (K3.fingers) { curlHand("right", mode === "none" ? 0.75 : 1); curlHand("left", mode === "dual" || mode === "two" ? 1 : mode === "none" ? 0.75 : 0.35); }
   const place = (sw, hand, grip, idleDir, show) => { sw.visible = show && !!hand; if (!sw.visible) return;
+    if (K3.fingers) { const f = fistFrame(hand === K3.handR ? "right" : "left"); sw.position.copy(f.G); sw.quaternion.copy(bladeQ(f.axis, f.flat));
+      sw.userData.blade.rotation.set(0, 0, Math.PI); sw.scale.setScalar(mode === "two" ? 1.15 : mode === "dual" ? 0.9 : 1); return; }
     hand.getWorldPosition(sw.position); const qa = hand.getWorldQuaternion(new THREE.Quaternion()); if (grip) qa.multiply(grip);
     sw.quaternion.copy(IDLE3.w > 0.002 ? qa.slerp(bladeQ(cv(idleDir), cv([1, 0, 0])), IDLE3.w) : qa);
     sw.userData.blade.rotation.set(0, 0, Math.PI); sw.scale.setScalar(mode === "two" ? 1.15 : mode === "dual" ? 0.9 : 1); };
@@ -1440,6 +1509,8 @@ function drawK3(lift, dt) {
   if (sword3L.visible && P.atk && !P.atk.def.special) { const a2 = toScr(sword3L.userData.guard), b2 = toScr(sword3L.userData.tip); VFX.blade(a2, b2, 0.8);
     const at = P.atk, u = at.t / at.dur, w = (K3.hitWin && K3.hitWin[at.k3]) || at.def.hit; if (u >= w[0] && u <= w[1]) tryHit("off", a2, b2, 0); }
   else if (sword3L.visible) { VFX.blade(toScr(sword3L.userData.guard), toScr(sword3L.userData.tip), 0.8); }
+  { const L = armorLook(equip.level || 0), names = ["spine", "spine01", "spine02", "neck", "head", "leftarm", "rightarm", "leftforearm", "rightforearm", "leftupleg", "rightupleg", "leftleg", "rightleg"];
+    const pts = names.filter(n => bones3[n]).map(n => toScr(bones3[n])); VFX.auraWisps(dt, pts, L.aura.slice(0, 3), L.aura[3] * (equip.level >= 7 ? 1 : 0.5)); }
   PH = K3.handR ? { main: toScr(K3.handR), off: K3.handL ? toScr(K3.handL) : toScr(K3.handR), back: K3.chest ? toScr(K3.chest) : [P.x, P.y - M] } : null;
 }
 
@@ -1641,6 +1712,9 @@ function buildMenu() {
   $("rate").addEventListener("input", e => setRate(e.target.value));
   document.querySelectorAll("#rate-seg button").forEach(b => b.addEventListener("click", () => setRate(b.dataset.rate)));
   setRate(equip.rate || 1);
+  const zoomUI = () => { $("zoom").value = String(equip.zoom ?? 0.5); $("zoom-val").textContent = (equip.zoom ?? 0.5).toLocaleString("vi-VN") + "×"; };
+  $("zoom").addEventListener("input", e => { equip.zoom = +e.target.value; save(); zoomUI(); resize(false); });
+  zoomUI();
   $("lvl").addEventListener("input", e => setLevel(e.target.value));
   document.querySelectorAll("#lvl-seg button").forEach(b => b.addEventListener("click", () => setLevel(b.dataset.lvl)));
   setLevel(equip.level ?? 7);
