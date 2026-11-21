@@ -90,6 +90,13 @@ khựng hình khi trúng; va chạm kiếm tính theo đoạn thẳng của lư�
 3. Blender gắn 17 xương (`root, hips, spine, chest, head, upper_arm/forearm/hand, thigh/shin/foot` × `.L/.R`, theo nhân vật)
    và tự tính trọng lượng (`3d/rig3d.py`). 40.000 tam giác, texture JPEG, 7 MB, mở được trong Blender, Unity, Godot, Unreal.
 
+Cầm vũ khí và tấn công: hai cánh tay giải bằng IK hai đốt tới vị trí nắm tay của từng tư thế; kiếm gắn vào nắm tay theo hướng lưỡi
+riêng. Bốn cách cầm (phím Q): **một tay** (kiếm thấp bên hông, mũi chĩa xuống trước; chuỗi chém chéo → quét ngang → bổ dọc),
+**song kiếm** (hai lưỡi dựng chéo lên; chém phải → chém trái → chém chữ X), **hai tay** (một đại kiếm ngang thân, hai nắm tay
+trên chuôi; quét đại kiếm → bổ trời), **tay không** (đấm thẳng → đấm trái → móc hàm). Giữ J để đánh liên hoàn; mỗi đòn có lấy đà,
+vặn thân, hạ trọng tâm và lao người tới. Cánh (phím F): cánh màng dựng bằng code (khung kim loại, màng tím than, vân lam phát sáng),
+vỗ theo nhịp; khi bay nhân vật lơ lửng, một gối co cao, chân kia buông ra sau, chúi người theo hướng bay; cánh xòe khi ra đòn.
+
 `knight-3d.html` (three.js 0.147): đi theo hướng camera, Shift chạy, xoay người theo hướng đi, hoạt ảnh đi/chạy/thở/chém
 tính theo khung xương mỗi khung hình, đại kiếm gắn vào lòng bàn tay (tay phải hoặc trái), vệt chém, tia lửa, khựng hình,
 camera kéo để xoay, lăn để zoom. Kiếm là các tấm ảnh bắt chéo nhau (chưa có mô hình 3D của kiếm).

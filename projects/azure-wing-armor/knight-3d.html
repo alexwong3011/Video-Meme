@@ -84,7 +84,9 @@ canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !imp
   <div class="keys">
     <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>: đi</span>
     <span><kbd>Shift</kbd>: chạy</span>
-    <span><kbd>J</kbd> / <kbd>Space</kbd> / nhấp: chém</span>
+    <span><kbd>J</kbd> / <kbd>Space</kbd> / nhấp: chém (giữ: liên hoàn)</span>
+    <span><kbd>Q</kbd>: đổi cách cầm</span>
+    <span><kbd>F</kbd>: bay / đáp</span>
     <span>kéo chuột: xoay camera · lăn: zoom</span>
     <span><kbd>I</kbd>: trang bị</span>
   </div>
@@ -114,25 +116,29 @@ canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !imp
       <button class="btn" type="button" id="menu-close">Đóng <kbd>I</kbd></button>
     </div>
     <div>
-      <h3>Đại Kiếm Cánh Lam</h3>
-      <div class="row">
-        <div class="seg" role="group" aria-label="Cầm kiếm" id="sword-seg">
-          <button type="button" data-sword="1">Cầm kiếm</button>
-          <button type="button" data-sword="0">Tay không</button>
-        </div>
-        <div class="seg" role="group" aria-label="Tay cầm" id="hand-seg">
-          <button type="button" data-hand="R">Tay phải</button>
-          <button type="button" data-hand="L">Tay trái</button>
-        </div>
+      <h3>Cách cầm Đại Kiếm Cánh Lam <kbd>Q</kbd></h3>
+      <div class="seg" role="group" aria-label="Cách cầm vũ khí" id="mode-seg">
+        <button type="button" data-mode="one">Một tay</button>
+        <button type="button" data-mode="dual">Song kiếm</button>
+        <button type="button" data-mode="two">Hai tay</button>
+        <button type="button" data-mode="none">Tay không</button>
+      </div>
+      <p class="note" style="margin-top:8px">Chuỗi đòn: <span id="combo-list"></span></p>
+    </div>
+    <div>
+      <h3>Cánh <kbd>F</kbd></h3>
+      <div class="seg" role="group" aria-label="Cánh" id="wing-seg">
+        <button type="button" data-wings="1">Đeo cánh, bay</button>
+        <button type="button" data-wings="0">Tháo cánh, đi bộ</button>
       </div>
     </div>
     <div>
       <h3>Chỉ số</h3>
       <div class="stats" id="stats"></div>
     </div>
-    <p class="note">Bộ giáp Cánh Lam là một mô hình liền (dựng từ hai tấm thiết kế bằng TripoSR, chiếu hoa văn gốc lên rồi gắn xương trong Blender), nên luôn mặc.</p>
+    <p class="note">Bộ giáp Cánh Lam là một mô hình liền (TripoSR + Blender), nên luôn mặc. Song kiếm đánh nhanh hơn nhưng mỗi đòn nhẹ hơn; hai tay đánh chậm và nặng.</p>
   </section>
-  <div class="loading" id="loading">Đang tải mô hình 3D (7 MB)…</div>
+  <div class="loading" id="loading">Đang tải mô hình 3D (khoảng 10 MB)…</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
@@ -213,27 +219,22 @@ const dMats = [];
 })();
 
 // ---------- state ----------
-let swordCards = [], knight = null, bones = {}, rest = {}, sword = null, swordFront = null, swordBack = null, swordInfo = null;
-const P = { pos: new THREE.Vector3(0, 0, 1.6), vel: new THREE.Vector3(), yaw: Math.PI, phase: 0, walk: 0, run: 0, atk: null, cd: 0 };
-const cam = { yaw: Math.PI * 0.08, pitch: 0.32, dist: 5.2, target: new THREE.Vector3() };
+const MODE_VI = { one: "Một tay", dual: "Song kiếm", two: "Hai tay", none: "Tay không" };
+let knight = null, bones = {}, rest = {}, REST = null, SET = null, ST = null, swordTex = null;
+const P = { pos: new THREE.Vector3(0, 0, 1.6), vel: new THREE.Vector3(), yaw: Math.PI, phase: 0, walk: 0, run: 0, atk: null, cd: 0,
+            combo: 0, lastAtkEnd: -9, queued: false, fly: 0, flap: 0, hover: 0 };
+const cam = { yaw: Math.PI * 0.08, pitch: 0.3, dist: 5.6, target: new THREE.Vector3() };
 const keys = new Set(), stick = { x: 0, y: 0, on: false };
-let holdAttack = false, menuOpen = false, debug = false, clock = 0, hitStop = 0, shake = 0, totalDmg = 0, hits = [], SET = null, ST = null;
-const equip = (() => { const d = { sword: true, hand: "R" }; try { return Object.assign(d, JSON.parse(localStorage.getItem("azure-knight-3d") || "{}")); } catch (e) { return d; } })();
-const save = () => { try { localStorage.setItem("azure-knight-3d", JSON.stringify(equip)); } catch (e) {} };
+let holdAttack = false, menuOpen = false, debug = false, clock = 0, hitStop = 0, shake = 0, totalDmg = 0, hits = [];
+const equip = (() => { const d = { mode: "one", wings: true }; try { return Object.assign(d, JSON.parse(localStorage.getItem("azure-knight-3d-v2") || "{}")); } catch (e) { return d; } })();
+const save = () => { try { localStorage.setItem("azure-knight-3d-v2", JSON.stringify(equip)); } catch (e) {} };
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
 // ---------- loading ----------
 const loader = new THREE.GLTFLoader();
 // decode embedded textures through <img> (blob: images are allowed) instead of fetch + createImageBitmap (blocked by CSP)
 loader.register(parser => { parser.textureLoader = new THREE.TextureLoader(parser.options.manager); return { name: "img_textures" }; });
 const texLoader = new THREE.TextureLoader();
-Promise.all([
-  loadKnight(),
-  fetch("assets/azure_wing_set.json").then(r => r.json()),
-  new Promise(res => texLoader.load("assets/sprites/weapon/front/@2x/greatsword.png", res)),
-  new Promise(res => texLoader.load("assets/sprites/weapon/back/@2x/greatsword.png", res)),
-]).then(([gltf, set, tf, tb]) => { SET = set; setup(gltf, tf, tb); $("loading").hidden = true; requestAnimationFrame(frame); })
-  .catch(e => { console.error(e); $("loading").textContent = "Không tải được mô hình 3D: " + (e && e.message ? e.message : e); });
-
 // The binary .glb when it is served; otherwise the same model stored as glTF JSON with a base64 buffer.
 // Both are fetched by relative URL and parsed from memory: the artifact viewer's CSP blocks fetch() of data: URIs.
 async function loadKnight() {
@@ -243,8 +244,7 @@ async function loadKnight() {
     const r = await fetch("assets/3d/azure_knight.gltf.json"); if (!r.ok) throw new Error("model file missing (" + r.status + ")");
     const j = await r.json(), uri = j.buffers[0].uri, b64 = uri.slice(uri.indexOf(",") + 1);
     const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0)); delete j.buffers[0].uri;
-    // re-assemble a GLB: header + JSON chunk (space-padded) + BIN chunk (zero-padded)
-    let js = new TextEncoder().encode(JSON.stringify(j)); const jp = (4 - js.length % 4) % 4, bp = (4 - bin.length % 4) % 4;
+    const js = new TextEncoder().encode(JSON.stringify(j)), jp = (4 - js.length % 4) % 4, bp = (4 - bin.length % 4) % 4;
     const total = 12 + 8 + js.length + jp + 8 + bin.length + bp, out = new ArrayBuffer(total), dv = new DataView(out), u8 = new Uint8Array(out);
     dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);
     dv.setUint32(12, js.length + jp, true); dv.setUint32(16, 0x4E4F534A, true); u8.set(js, 20); u8.fill(0x20, 20 + js.length, 20 + js.length + jp);
@@ -253,127 +253,312 @@ async function loadKnight() {
   }
   return new Promise((res, rej) => loader.parse(buf, "", res, rej));
 }
+Promise.all([
+  loadKnight(),
+  fetch("assets/azure_wing_set.json").then(r => r.json()),
+  new Promise(res => texLoader.load("assets/sprites/weapon/front/@2x/greatsword.png", res)),
+  new Promise(res => texLoader.load("assets/sprites/weapon/back/@2x/greatsword.png", res)),
+]).then(([gltf, set, tf, tb]) => { SET = set; swordTex = [tf, tb]; setup(gltf); $("loading").hidden = true; requestAnimationFrame(frame); })
+  .catch(e => { console.error(e); $("loading").textContent = "Không tải được mô hình 3D: " + (e && e.message ? e.message : e); });
+
 const bname = n => n.replace(/[^a-z_]/gi, "");      // GLTFLoader strips "." from node names
-function setup(gltf, texF, texB) {
+const local = (obj) => knight.worldToLocal(obj.getWorldPosition(new THREE.Vector3()));
+function setup(gltf) {
   const model = gltf.scene;
-  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
-    if (o.material) { o.material.envMapIntensity = 0.7; } } if (o.isBone) bones[bname(o.name)] = o; });
-  // fit to HEIGHT, feet on the floor, centred
-  const box = new THREE.Box3().setFromObject(model), size = box.getSize(new THREE.Vector3());
-  const s = HEIGHT / size.y; model.scale.setScalar(s);
-  model.position.set(-(box.min.x + box.max.x) / 2 * s, -box.min.y * s, -(box.min.z + box.max.z) / 2 * s);
-  knight = new THREE.Group(); knight.add(model); scene.add(knight);
-  knight.updateMatrixWorld(true);
-  // rest pose: local quaternion, parent's rotation in character space, rest position
-  const kInv = new THREE.Quaternion();
+  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; if (o.material) o.material.envMapIntensity = 0.7; }
+                        if (o.isBone) bones[bname(o.name)] = o; });
+  const box = new THREE.Box3().setFromObject(model), size = box.getSize(new THREE.Vector3()), s = HEIGHT / size.y;
+  model.scale.setScalar(s); model.position.set(-(box.min.x + box.max.x) / 2 * s, -box.min.y * s, -(box.min.z + box.max.z) / 2 * s);
+  knight = new THREE.Group(); knight.add(model); scene.add(knight); knight.updateMatrixWorld(true);
   for (const [n, b] of Object.entries(bones)) {
-    const pq = new THREE.Quaternion(); b.parent.getWorldQuaternion(pq); pq.premultiply(kInv);
+    const pq = new THREE.Quaternion(); b.parent.getWorldQuaternion(pq);
     rest[n] = { q: b.quaternion.clone(), pos: b.position.clone(), pq, pqi: pq.clone().invert(), ws: b.parent.getWorldScale(new THREE.Vector3()).x };
   }
-  // greatsword: two cards (front art / back art) back to back, grip in the palm
-  const v = SET.weapon.variants.front, aspect = v.size_1x[0] / v.size_1x[1], len = HEIGHT * 0.46, wid = len * aspect;
-  for (const t of [texF, texB]) { t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; }
-  const mk = (tex, flip) => {
-    const geo = new THREE.PlaneGeometry(wid, len);
-    geo.translate((0.5 - v.grip_pivot[0]) * wid, (v.grip_pivot[1] - 0.5) * len, 0);   // grip -> origin
-    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, alphaTest: 0.5, side: THREE.FrontSide, metalness: 0.55, roughness: 0.35, envMapIntensity: 1.2 }));
-    if (flip) m.rotation.y = Math.PI;
-    m.castShadow = true; return m;
-  };
-  sword = new THREE.Group(); swordFront = mk(texF, false); swordBack = mk(texB, true);
-  const sideA = mk(texF, false), sideB = mk(texB, true); sideA.rotation.y = Math.PI / 2; sideB.rotation.y = -Math.PI / 2;
-  sideA.castShadow = sideB.castShadow = false;
-  sword.add(swordFront, swordBack, sideA, sideB); scene.add(sword); swordCards = [swordFront, swordBack, sideA, sideB];
-  swordInfo = { len, tipLocal: new THREE.Vector3((0.5 - v.grip_pivot[0]) * wid + (v.tip[0] - 0.5) * wid, (v.grip_pivot[1] - v.tip[1]) * len, 0), gripLocal: new THREE.Vector3(0, 0, 0) };
-  ST = stats(); applyEquip(); resize();
+  // rest geometry of the arms, in character space (metres; +Z forward, +Y up, -X = character's right)
+  REST = { chest: local(bones.chest) };
+  for (const s of ["R", "L"]) {
+    const S = local(bones["upper_arm" + s]), E = local(bones["forearm" + s]), W = local(bones["hand" + s]);
+    REST[s] = { S, L1: E.distanceTo(S), L2: W.distanceTo(E), ru: E.clone().sub(S).normalize(), rf: W.clone().sub(E).normalize() };
+  }
+  buildSwords(); buildWings(); ST = stats(); applyEquip(); resize();
 }
 
 // ---------- stats ----------
 function stats() {
   const s = { attack: 20, crit_rate: 5, attack_speed: 0, move_speed: 0, defense: 0, hp: 800 };
-  for (const id of ["helm", "cuirass", "greaves", "gauntlets", "sabatons"].concat(equip.sword ? ["greatsword"] : []))
+  for (const id of ["helm", "cuirass", "greaves", "gauntlets", "sabatons"].concat(equip.mode !== "none" ? ["greatsword"] : []))
     for (const [k, v] of Object.entries(SET.items[id].stats)) if (k in s) s[k] += v;
+  if (equip.mode === "dual") { s.attack = Math.round(s.attack * 0.75); s.attack_speed += 18; }   // two lighter blades, faster
+  if (equip.mode === "two") { s.attack = Math.round(s.attack * 1.35); s.attack_speed -= 12; }  // both hands on one heavy blade
   s.defense = Math.round(s.defense * 1.08); s.move_speed += 12;
   return s;
 }
 
-// ---------- posing: rotations are given in character space and converted to each bone's local frame ----------
-const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _v = new THREE.Vector3();
-function rotChar(x, y, z) { _e.set(x, y, z, "YXZ"); return new THREE.Quaternion().setFromEuler(_e); }
-function setBone(n, x = 0, y = 0, z = 0) {
-  const b = bones[n], r = rest[n]; if (!b) return;
-  _q.copy(r.pqi).multiply(rotChar(x, y, z)).multiply(r.pq).multiply(r.q); b.quaternion.copy(_q);
-}
-function offsetBone(n, dx, dy, dz) {
-  const b = bones[n], r = rest[n]; if (!b) return;
-  _v.set(dx, dy, dz).applyQuaternion(r.pqi).divideScalar(r.ws * knight.scale.x); b.position.copy(r.pos).add(_v);
-}
-// character space: +Z forward, +Y up, -X = character's right. rotX(-a) swings a hanging limb forward.
-function pose(dt) {
-  const w = P.walk, rn = P.run, ph = P.phase, sn = Math.sin(ph), cs = Math.cos(ph), t = clock, idle = 1 - w;
-  const A = 0.42 + 0.28 * rn;
-  const leg = { R: sn, L: -sn };                                   // +1 = that leg forward
-  const J = {};
-  const add = (n, x = 0, y = 0, z = 0) => { const j = J[n] || (J[n] = [0, 0, 0]); j[0] += x; j[1] += y; j[2] += z; };
-  // idle: breathing, weight shift
-  add("chest", 0.025 * Math.sin(t * 1.7) * idle); add("head", -0.03 * Math.sin(t * 1.7 + 0.5) * idle, 0.04 * Math.sin(t * 0.37) * idle);
-  add("upper_armR", 0, 0, -0.05 - 0.02 * Math.sin(t * 1.7) * idle); add("upper_armL", 0, 0, 0.05 + 0.02 * Math.sin(t * 1.7 + 0.4) * idle);
-  add("forearmR", -0.12); add("forearmL", -0.12);
-  let hipY = -0.006 * Math.sin(t * 1.7) * idle, hipX = 0.012 * Math.sin(t * 0.6) * idle;
-  // locomotion
-  for (const s of ["R", "L"]) {
-    const f = leg[s], swingPhase = Math.max(0, s === "R" ? cs : -cs);          // leg moving forward = foot in the air
-    add("thigh" + s, -A * f * w);
-    add("shin" + s, (0.95 + 0.4 * rn) * swingPhase * w + 0.08 * w);
-    add("foot" + s, (-0.25 * swingPhase + 0.18 * Math.max(0, -f)) * w);
-    const arm = leg[s === "R" ? "L" : "R"];                         // arm swings with the opposite leg
-    add("upper_arm" + s, -(0.32 + 0.3 * rn) * arm * w);
-    add("forearm" + s, -(0.25 + 0.6 * rn) * Math.max(0, arm) * w - 0.15 * rn * w);
+// ---------- greatsword: crossed cards (front art / back art), grip at the origin, tip toward local -Y ----------
+let swords = {};
+function buildSwords() {
+  const v = SET.weapon.variants.front, aspect = v.size_1x[0] / v.size_1x[1];
+  for (const t of swordTex) { t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; }
+  const mk = (tex, rotY) => {
+    const geo = new THREE.PlaneGeometry(aspect, 1); geo.translate((0.5 - v.grip_pivot[0]) * aspect, (v.grip_pivot[1] - 0.5), 0);
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, alphaTest: 0.5, metalness: 0.55, roughness: 0.35, envMapIntensity: 1.2 }));
+    m.rotation.y = rotY; m.castShadow = rotY === 0 || rotY === Math.PI; return m;
+  };
+  for (const side of ["R", "L"]) {
+    const g = new THREE.Group(), cards = [mk(swordTex[0], 0), mk(swordTex[1], Math.PI), mk(swordTex[0], Math.PI / 2), mk(swordTex[1], -Math.PI / 2)];
+    cards.forEach(c => g.add(c));
+    if (side === "L") cards.forEach(c => { c.scale.x = -1; c.material.side = THREE.BackSide; });   // mirrored: curve away from the body
+    g.visible = false; knight.add(g);
+    swords[side] = { g, len: 1, tipY: v.tip[1] - v.grip_pivot[1], trail: makeTrail() };
   }
-  hipY += (-0.035 - 0.03 * rn) * sn * sn * w + 0.01 * w;
-  hipX += 0.025 * sn * w * (1 - rn * 0.5);
-  add("hips", 0.1 * rn * w * 0.3, 0.12 * sn * w, -0.05 * sn * w);
-  add("spine", 0.08 * rn * w, -0.15 * sn * w, 0.04 * sn * w);
-  add("chest", 0.06 * rn * w, -0.06 * sn * w);
-  add("head", -0.12 * rn * w, 0.1 * sn * w);
-  // attack (overhead diagonal slash with the sword hand; punch when empty-handed)
-  if (P.atk) {
-    const u = P.atk.t / P.atk.dur, s = P.atk.hand, o = s === "R" ? 1 : -1, other = s === "R" ? "L" : "R";
-    const k3 = (a, b, c) => u < 0.33 ? lerp(0, a, ease(u / 0.33)) : u < 0.52 ? lerp(a, b, Math.pow((u - 0.33) / 0.19, 1.4)) : lerp(b, c, ease((u - 0.52) / 0.48));
-    if (P.atk.sword) {
-      add("upper_arm" + s, k3(-2.7, -0.45, 0), k3(0.2 * o, -0.3 * o, 0), k3(-0.45 * o, 0.25 * o, 0));
-      add("forearm" + s, k3(-0.7, -0.15, 0)); add("hand" + s, k3(-0.4, -0.75, 0));
-      add("upper_arm" + other, k3(-0.5, -0.9, 0), 0, k3(0.2 * o, -0.35 * o, 0)); add("forearm" + other, k3(-0.6, -0.9, 0));
-      add("spine", k3(-0.12, 0.28, 0), k3(-0.45 * o, 0.5 * o, 0)); add("chest", k3(-0.08, 0.15, 0), k3(-0.15 * o, 0.2 * o, 0));
-      add("hips", 0, k3(-0.15 * o, 0.25 * o, 0));
-      add("thigh" + s, k3(0.15, -0.35, 0)); add("shin" + s, k3(0.1, 0.35, 0)); add("thigh" + other, k3(-0.1, 0.3, 0)); add("shin" + other, k3(0.15, 0.25, 0));
-      add("head", k3(-0.15, 0.2, 0));
-      hipY += k3(0.01, -0.08, 0);
-    } else {
-      const ext = u < 0.35 ? ease(u / 0.35) : 1 - ease((u - 0.35) / 0.65);
-      add("upper_arm" + s, -1.45 * ext, 0, 0.2 * o * ext); add("forearm" + s, 0.1 * ext); add("spine", 0, 0.35 * o * ext); add("chest", 0, 0.15 * o * ext);
-    }
-  }
-  for (const n of Object.keys(rest)) { const j = J[n] || [0, 0, 0]; setBone(n, j[0], j[1], j[2]); }
-  offsetBone("hips", hipX, hipY, 0);
+}
+const _m4 = new THREE.Matrix4(), _X = new THREE.Vector3(), _Y = new THREE.Vector3(), _Z = new THREE.Vector3();
+function bladeQuat(b) {   // local -Y = blade direction
+  _Y.copy(b).negate(); const ref = Math.abs(b.x) < 0.8 ? V3(1, 0, 0) : V3(0, 0, 1);
+  _Z.crossVectors(ref, _Y).normalize(); _X.crossVectors(_Y, _Z).normalize();
+  return new THREE.Quaternion().setFromRotationMatrix(_m4.makeBasis(_X, _Y, _Z));
 }
 
-// sword follows the palm of the sword hand
-const _m = new THREE.Matrix4(), _p0 = new THREE.Vector3(), _p1 = new THREE.Vector3(), _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion();
-function placeSword() {
-  if (!equip.sword) { sword.visible = false; return; }
-  sword.visible = true;
-  const s = equip.hand, hand = bones["hand" + s], fore = bones["forearm" + s];
-  hand.getWorldPosition(_p0); fore.getWorldPosition(_p1);
-  const dir = _p0.clone().sub(_p1).normalize();
-  sword.position.copy(_p0).addScaledVector(dir, 0.07);
-  // blade points along the hand (tip down at rest), its face turned the same way as the character, curve away from the body
-  hand.getWorldQuaternion(_qa);
-  _qb.copy(rest["hand" + s].pq).multiply(rest["hand" + s].q).invert();       // undo the hand's rest orientation
-  sword.quaternion.copy(_qa).multiply(_qb);
-  // left hand: mirror the cards so the curve still points away from the body (mirroring flips the visible face)
-  const mirror = s === "L";
-  for (const m of swordCards) { m.scale.x = mirror ? -1 : 1; m.material.side = mirror ? THREE.BackSide : THREE.FrontSide; }
+// ---------- stances and attacks (hand targets o and blade directions b are in the chest's frame, metres) ----------
+const IDLE = {
+  one:  { R: { o: [-0.31, -0.34, 0.16], b: [-0.38, -0.52, 0.76] }, L: { o: [0.29, -0.37, 0.05] } },        // sword low at the side, point forward-down
+  dual: { R: { o: [-0.42, -0.08, 0.20], b: [-0.35, 0.85, 0.35] }, L: { o: [0.42, -0.08, 0.20], b: [0.35, 0.85, 0.35] } },  // both blades up and out
+  two:  { G: { o: [0.00, -0.24, 0.30], b: [-0.90, -0.20, 0.35] } },                                          // one blade across the body, two fists on the grip
+  none: { R: { o: [-0.28, -0.34, 0.10] }, L: { o: [0.28, -0.34, 0.10] } },
+};
+const mir = k => ({ t: k.t, o: k.o && [-k.o[0], k.o[1], k.o[2]], b: k.b && [-k.b[0], k.b[1], k.b[2]] });
+const SLASH_R = [ { t: 0 }, { t: 0.30, o: [-0.38, 0.18, -0.02], b: [-0.35, 0.75, -0.55] }, { t: 0.46, o: [0.10, -0.18, 0.36], b: [0.45, -0.35, 0.82] },
+                  { t: 0.58, o: [0.22, -0.34, 0.22], b: [0.70, -0.60, 0.35] }, { t: 1 } ];
+const BODY_SLASH = [ { t: 0 }, { t: 0.30, sy: -0.45, sx: -0.05, drop: 0.02 }, { t: 0.48, sy: 0.45, sx: 0.22, drop: -0.08, lunge: 0.22 }, { t: 1, lunge: 0.25 } ];
+const ATTACKS = {
+  one: [
+    { name: "Chém chéo", dur: 0.62, dmg: 1, hit: [0.36, 0.56], hands: { R: SLASH_R }, body: BODY_SLASH },
+    { name: "Quét ngang", dur: 0.60, dmg: 1.1, hit: [0.34, 0.56], hands: { R: [ { t: 0 }, { t: 0.28, o: [0.18, -0.10, 0.26], b: [0.85, 0.15, -0.50] },
+        { t: 0.44, o: [-0.05, -0.12, 0.40], b: [0.10, 0.05, 1] }, { t: 0.58, o: [-0.40, -0.10, 0.18], b: [-0.85, 0, 0.45] }, { t: 1 } ] },
+      body: [ { t: 0 }, { t: 0.28, sy: 0.40, drop: 0.0 }, { t: 0.5, sy: -0.50, sx: 0.1, drop: -0.06, lunge: 0.15 }, { t: 1, lunge: 0.18 } ] },
+    { name: "Bổ dọc", dur: 0.85, dmg: 1.6, hit: [0.50, 0.66], heavy: true, hands: { R: [ { t: 0 }, { t: 0.35, o: [-0.18, 0.30, -0.06], b: [0, 0.60, -0.80] },
+        { t: 0.52, o: [-0.10, 0.14, 0.36], b: [0, 0.45, 0.90] }, { t: 0.62, o: [-0.08, -0.30, 0.38], b: [0, -0.70, 0.70] }, { t: 1 } ],
+        L: [ { t: 0 }, { t: 0.35, o: [0.20, 0.0, 0.25] }, { t: 0.62, o: [0.28, -0.30, 0.0] }, { t: 1 } ] },
+      body: [ { t: 0 }, { t: 0.35, sx: -0.15, drop: 0.03 }, { t: 0.62, sx: 0.35, drop: -0.13, lunge: 0.32 }, { t: 1, lunge: 0.35 } ] },
+  ],
+  dual: [
+    { name: "Chém phải", dur: 0.5, dmg: 1, hit: [0.36, 0.56], hands: { R: SLASH_R }, body: BODY_SLASH },
+    { name: "Chém trái", dur: 0.5, dmg: 1, hit: [0.36, 0.56], hands: { L: SLASH_R.map(mir) }, body: BODY_SLASH.map(k => ({ ...k, sy: k.sy && -k.sy })) },
+    { name: "Chém chữ X", dur: 0.78, dmg: 1.5, hit: [0.42, 0.62], heavy: true,
+      hands: { R: [ { t: 0 }, { t: 0.36, o: [-0.38, 0.20, -0.02], b: [-0.30, 0.80, -0.50] }, { t: 0.58, o: [0.12, -0.28, 0.32], b: [0.55, -0.55, 0.60] }, { t: 1 } ],
+               L: [ { t: 0 }, { t: 0.36, o: [0.38, 0.20, -0.02], b: [0.30, 0.80, -0.50] }, { t: 0.58, o: [-0.12, -0.28, 0.32], b: [-0.55, -0.55, 0.60] }, { t: 1 } ] },
+      body: [ { t: 0 }, { t: 0.36, sx: -0.18, drop: 0.03 }, { t: 0.58, sx: 0.3, drop: -0.12, lunge: 0.3 }, { t: 1, lunge: 0.32 } ] },
+  ],
+  two: [
+    { name: "Quét đại kiếm", dur: 0.9, dmg: 1.3, hit: [0.38, 0.64], hands: { G: [ { t: 0 }, { t: 0.32, o: [-0.25, -0.12, 0.05], b: [-0.75, 0.10, -0.65] },
+        { t: 0.50, o: [0, -0.15, 0.36], b: [0, 0, 1] }, { t: 0.64, o: [0.22, -0.15, 0.20], b: [0.80, -0.05, 0.55] }, { t: 1 } ] },
+      body: [ { t: 0 }, { t: 0.32, sy: -0.60, drop: 0.0 }, { t: 0.6, sy: 0.6, drop: -0.1, lunge: 0.2 }, { t: 1, lunge: 0.22 } ] },
+    { name: "Bổ trời", dur: 1.0, dmg: 1.8, hit: [0.52, 0.70], heavy: true, hands: { G: [ { t: 0 }, { t: 0.36, o: [0, 0.28, 0.06], b: [0, 0.55, -0.80] },
+        { t: 0.54, o: [0, 0.08, 0.38], b: [0, 0.40, 0.90] }, { t: 0.66, o: [0, -0.30, 0.36], b: [0, -0.75, 0.65] }, { t: 1 } ] },
+      body: [ { t: 0 }, { t: 0.36, sx: -0.2, drop: 0.04 }, { t: 0.66, sx: 0.4, drop: -0.16, lunge: 0.38 }, { t: 1, lunge: 0.4 } ] },
+  ],
+  none: [
+    { name: "Đấm thẳng", dur: 0.38, dmg: 0.5, hit: [0.25, 0.45], hands: { R: [ { t: 0 }, { t: 0.35, o: [-0.10, 0.0, 0.44] }, { t: 1 } ] }, body: [ { t: 0 }, { t: 0.35, sy: 0.35, lunge: 0.1 }, { t: 1, lunge: 0.1 } ] },
+    { name: "Đấm trái", dur: 0.38, dmg: 0.5, hit: [0.25, 0.45], hands: { L: [ { t: 0 }, { t: 0.35, o: [0.10, 0.0, 0.44] }, { t: 1 } ] }, body: [ { t: 0 }, { t: 0.35, sy: -0.35, lunge: 0.1 }, { t: 1, lunge: 0.1 } ] },
+    { name: "Móc hàm", dur: 0.55, dmg: 0.9, hit: [0.35, 0.55], heavy: true, hands: { R: [ { t: 0 }, { t: 0.25, o: [-0.20, -0.35, 0.15] }, { t: 0.45, o: [-0.08, 0.20, 0.34] }, { t: 1 } ] },
+      body: [ { t: 0 }, { t: 0.25, sy: -0.2, drop: 0.06 }, { t: 0.45, sy: 0.3, sx: -0.1, drop: -0.04, lunge: 0.15 }, { t: 1, lunge: 0.15 } ] },
+  ],
+};
+const SWORD_LEN = { one: 0.85, dual: 0.8, two: 1.15, none: 0 };
+
+function segment(keyList, u) {
+  let i = 0; while (i < keyList.length - 2 && u > keyList[i + 1].t) i++;
+  const a = keyList[i], b = keyList[i + 1]; return [a, b, ease((u - a.t) / Math.max(1e-6, b.t - a.t))];
+}
+function sampleHand(keyList, u, idle) {
+  const [a, b, f] = segment(keyList, u), A = a.o || idle.o, B = b.o || idle.o;
+  const out = { o: A.map((x, i) => lerp(x, B[i], f)) };
+  const ib = idle.b || [0, -1, 0], Ab = a.b || ib, Bb = b.b || ib;
+  out.b = Ab.map((x, i) => lerp(x, Bb[i], f)); return out;
+}
+function sampleBody(keyList, u) {
+  const [a, b, f] = segment(keyList, u), r = {};
+  for (const k of ["sy", "sx", "drop", "lunge"]) r[k] = lerp(a[k] || 0, b[k] || 0, f);
+  return r;
+}
+
+// ---------- posing ----------
+// Bone rotations are given as character-space deltas. FK bones take them directly; the arms are solved with two-bone IK.
+const rotChar = (x, y, z) => new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z, "YXZ"));
+function applyR(n, q) { const b = bones[n], r = rest[n]; if (b) b.quaternion.copy(r.pqi).multiply(q).multiply(r.pq).multiply(r.q); }
+function offsetBone(n, dx, dy, dz) { const b = bones[n], r = rest[n]; if (!b) return; b.position.copy(r.pos).add(V3(dx, dy, dz).applyQuaternion(r.pqi).divideScalar(r.ws)); }
+function ik(S, T, L1, L2, pole) {
+  const d = T.clone().sub(S), dist = clamp(d.length(), Math.abs(L1 - L2) + 1e-3, (L1 + L2) * 0.999), u = d.normalize();
+  const cosA = clamp((L1 * L1 + dist * dist - L2 * L2) / (2 * L1 * dist), -1, 1), sinA = Math.sqrt(1 - cosA * cosA);
+  const v = pole.clone().sub(u.clone().multiplyScalar(pole.dot(u))).normalize();
+  const E = S.clone().addScaledVector(u, L1 * cosA).addScaledVector(v, L1 * sinA), W = S.clone().addScaledVector(u, dist);
+  return { du: E.clone().sub(S).normalize(), df: W.clone().sub(E).normalize(), W };
+}
+const hand = { R: null, L: null };
+function pose(dt) {
+  const w = P.walk * (1 - P.fly), rn = P.run, ph = P.phase, sn = Math.sin(ph), cs = Math.cos(ph), t = clock, idle = 1 - P.walk, fl = P.fly;
+  const J = {}, add = (n, x = 0, y = 0, z = 0) => { const j = J[n] || (J[n] = [0, 0, 0]); j[0] += x; j[1] += y; j[2] += z; };
+  const sp = Math.hypot(P.vel.x, P.vel.z), mv = clamp(sp / 3, 0, 1);
+  // breathing
+  add("chest", 0.025 * Math.sin(t * 1.7) * idle); add("head", -0.03 * Math.sin(t * 1.7 + 0.5) * idle, 0.04 * Math.sin(t * 0.37) * idle);
+  let hipY = -0.006 * Math.sin(t * 1.7) * idle * (1 - fl), hipX = 0.012 * Math.sin(t * 0.6) * idle * (1 - fl);
+  // walking / running (fades out while flying)
+  const A = 0.42 + 0.28 * rn;
+  for (const s of ["R", "L"]) {
+    const f = s === "R" ? sn : -sn, swing = Math.max(0, s === "R" ? cs : -cs);
+    add("thigh" + s, -A * f * w); add("shin" + s, (0.95 + 0.4 * rn) * swing * w + 0.08 * w); add("foot" + s, (-0.25 * swing + 0.18 * Math.max(0, -f)) * w);
+  }
+  hipY += (-0.035 - 0.03 * rn) * sn * sn * w + 0.01 * w; hipX += 0.025 * sn * w * (1 - rn * 0.5);
+  add("hips", 0.03 * rn * w, 0.12 * sn * w, -0.05 * sn * w); add("spine", 0.08 * rn * w, -0.15 * sn * w, 0.04 * sn * w);
+  add("chest", 0.06 * rn * w, -0.06 * sn * w); add("head", -0.12 * rn * w, 0.1 * sn * w);
+  // flying: one knee drawn up, the other leg trailing, toes pointed; lean into the flight direction
+  const fb = Math.sin(P.flap * Math.PI * 2);
+  add("thighR", fl * (-0.95 + 0.6 * mv + 0.05 * fb)); add("shinR", fl * (1.45 - 0.3 * mv)); add("footR", fl * 0.55);
+  add("thighL", fl * (0.22 + 0.25 * mv - 0.05 * fb)); add("shinL", fl * (0.75 + 0.25 * mv)); add("footL", fl * 0.7);
+  add("hips", fl * (0.08 + 0.22 * mv)); add("spine", fl * (0.06 + 0.12 * mv)); add("head", fl * -0.15 * mv);
+  hipY += fl * 0.015 * fb;
+  // attack body motion
+  let atk = null, u = 0;
+  if (P.atk) { atk = P.atk.def; u = P.atk.t / P.atk.dur; const bd = sampleBody(atk.body, u); add("spine", bd.sx * 0.6, bd.sy * 0.65); add("chest", bd.sx * 0.4, bd.sy * 0.35); add("hips", 0, bd.sy * 0.25); add("head", -bd.sx * 0.5, -bd.sy * 0.3); hipY += bd.drop * (1 - fl * 0.5);
+    if (bd.drop < -0.02 && fl < 0.5) { add("thighR", 0.25 * bd.drop / -0.1 * -0.6); add("shinR", 0.5 * bd.drop / -0.1); add("thighL", 0.2 * bd.drop / -0.1); add("shinL", 0.35 * bd.drop / -0.1); } }
+  // FK bones (everything but the arms)
+  const R = {};
+  for (const n of Object.keys(rest)) { if (/arm|hand/.test(n)) continue; const j = J[n] || [0, 0, 0]; R[n] = rotChar(j[0], j[1], j[2]); applyR(n, R[n]); }
+  offsetBone("hips", hipX, hipY, 0);
+  knight.updateMatrixWorld(true);
+  // chest frame: current position and accumulated rotation
+  const Dchest = R.hips.clone().multiply(R.spine).multiply(R.chest), C = local(bones.chest);
+  const toLocal = o => C.clone().add(V3(o[0], o[1], o[2]).sub(V3(0, 0, 0)).applyQuaternion(Dchest));
+  const dirLocal = b => V3(b[0], b[1], b[2]).normalize().applyQuaternion(Dchest);
+  // hand targets for the current stance (+ attack keys), arms swing a little while walking
+  const mode = equip.mode, idl = IDLE[mode], tgt = {};
+  const swingArm = s => (s === "R" ? -sn : sn) * 0.07 * w;
+  if (mode === "two") {
+    const g = atk && atk.hands.G ? sampleHand(atk.hands.G, u, idl.G) : { o: idl.G.o, b: idl.G.b };
+    g.o = [g.o[0], g.o[1] + 0.02 * Math.sin(t * 1.7) * idle, g.o[2]];
+    const b = V3(...g.b).normalize();
+    tgt.R = { o: [g.o[0] + b.x * 0.04, g.o[1] + b.y * 0.04, g.o[2] + b.z * 0.04], b: g.b };
+    tgt.L = { o: [g.o[0] - b.x * 0.05, g.o[1] - b.y * 0.05, g.o[2] - b.z * 0.05] };
+  } else {
+    for (const s of ["R", "L"]) {
+      const id = idl[s], h = atk && atk.hands[s] ? sampleHand(atk.hands[s], u, id) : { o: id.o, b: id.b };
+      const quiet = !(atk && atk.hands[s]);
+      tgt[s] = { o: [h.o[0], h.o[1] + (quiet ? 0.015 * Math.sin(t * 1.7 + (s === "R" ? 0 : 1)) : 0), h.o[2] + (quiet ? swingArm(s) : 0)], b: h.b };
+    }
+  }
+  for (const s of ["R", "L"]) {
+    const r = REST[s], sgn = s === "R" ? -1 : 1;
+    const S = local(bones["upper_arm" + s]), T = toLocal(tgt[s].o);
+    const pole = dirLocal([0.75 * sgn, -0.35, -0.55]);                  // elbows out, down and back
+    const sol = ik(S, T, r.L1, r.L2, pole);
+    const Qu = new THREE.Quaternion().setFromUnitVectors(r.ru, sol.du), Qf = new THREE.Quaternion().setFromUnitVectors(r.rf, sol.df);
+    applyR("upper_arm" + s, Dchest.clone().invert().multiply(Qu)); applyR("forearm" + s, Qu.clone().invert().multiply(Qf)); applyR("hand" + s, new THREE.Quaternion());
+    hand[s] = { wrist: sol.W, df: sol.df, b: tgt[s].b ? dirLocal(tgt[s].b) : null };
+  }
+  knight.updateMatrixWorld(true);
+}
+
+// swords sit in the fists: grip a few cm past the wrist, blade along the stance's direction
+function placeSwords() {
+  const mode = equip.mode, len = SWORD_LEN[mode];
+  for (const s of ["R", "L"]) {
+    const sw = swords[s], use = (mode === "one" && s === "R") || mode === "dual" || (mode === "two" && s === "R");
+    sw.g.visible = use; if (!use) continue;
+    const h = hand[s], grip = local(bones["hand" + s]).addScaledVector(h.df, 0.07);
+    sw.g.position.copy(grip); sw.g.quaternion.copy(bladeQuat(h.b)); sw.g.scale.setScalar(len); sw.len = len;
+  }
+}
+function blade(s) {   // world-space segment from just past the guard to the tip
+  const sw = swords[s], b = V3(0, -1, 0).applyQuaternion(sw.g.quaternion);
+  const a = sw.g.position.clone().addScaledVector(b, sw.len * 0.2), t = sw.g.position.clone().addScaledVector(b, sw.len * sw.tipY);
+  return [knight.localToWorld(a), knight.localToWorld(t)];
+}
+
+// ---------- wings: membrane wings built on spars, flapped every frame ----------
+let wings = null;
+function wingTextures() {
+  const W = 1024, H = 512, base = document.createElement("canvas"), vein = document.createElement("canvas");
+  base.width = vein.width = W; base.height = vein.height = H;
+  const g = base.getContext("2d"), gr = g.createLinearGradient(0, H, 0, 0);
+  gr.addColorStop(0, "#130f22"); gr.addColorStop(0.6, "#221a3d"); gr.addColorStop(1, "#2d2350"); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  for (let p = 0; p < 4; p++) { const x0 = p * W / 4; const e = g.createLinearGradient(x0, 0, x0 + W / 4, 0);
+    e.addColorStop(0, "rgba(140,130,200,.25)"); e.addColorStop(0.12, "rgba(0,0,0,0)"); e.addColorStop(0.88, "rgba(0,0,0,0)"); e.addColorStop(1, "rgba(140,130,200,.25)"); g.fillStyle = e; g.fillRect(x0, 0, W / 4, H); }
+  const v = vein.getContext("2d"); v.fillStyle = "#000"; v.fillRect(0, 0, W, H);
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const branch = (x, y, ang, len, wdt, depth) => {
+    v.lineWidth = wdt; v.strokeStyle = "#5fb0ff"; v.shadowColor = "#5fb0ff"; v.shadowBlur = 10;
+    v.beginPath(); v.moveTo(x, y);
+    let cx = x, cy = y;
+    for (let i = 0; i < 6; i++) { ang += (rnd() - 0.5) * 0.5; cx += Math.cos(ang) * len / 6; cy -= Math.sin(ang) * len / 6; v.lineTo(cx, cy); }
+    v.stroke();
+    if (depth > 0) for (let k = 0; k < 2; k++) branch(cx, cy, ang + (k ? 0.55 : -0.55), len * 0.55, wdt * 0.6, depth - 1);
+  };
+  for (let p = 0; p < 4; p++) for (let i = 0; i < 2; i++) branch(p * W / 4 + W / 4 * (0.3 + 0.4 * i), H, Math.PI / 2 + (rnd() - 0.5) * 0.4, H * 0.55, 3.2, 2);
+  const tb = new THREE.CanvasTexture(base), tv = new THREE.CanvasTexture(vein); tb.encoding = THREE.sRGBEncoding; tv.encoding = THREE.sRGBEncoding;
+  return [tb, tv];
+}
+const SEG_S = 10, SEG_T = 8, PANELS = 4;
+function buildWings() {
+  const [tb, tv] = wingTextures();
+  const memMat = new THREE.MeshStandardMaterial({ map: tb, emissive: 0xffffff, emissiveMap: tv, emissiveIntensity: 1.25, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.15, envMapIntensity: 0.4 });
+  const sparMat = new THREE.MeshStandardMaterial({ color: 0x8e86bc, metalness: 0.75, roughness: 0.32, envMapIntensity: 0.9 });
+  const clawMat = new THREE.MeshStandardMaterial({ color: 0xb9d6ff, metalness: 0.8, roughness: 0.25, emissive: 0x1a3a66 });
+  const group = new THREE.Group(); knight.add(group);
+  wings = { group, sides: {} };
+  for (const side of ["R", "L"]) {
+    const nv = PANELS * (SEG_S + 1) * (SEG_T + 1), pos = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), idx = [];
+    for (let p = 0; p < PANELS; p++) for (let i = 0; i <= SEG_S; i++) for (let j = 0; j <= SEG_T; j++) {
+      const k = p * (SEG_S + 1) * (SEG_T + 1) + i * (SEG_T + 1) + j; uv[k * 2] = (p + j / SEG_T) / PANELS; uv[k * 2 + 1] = i / SEG_S;
+      if (i < SEG_S && j < SEG_T) { const a = k, b = k + 1, c = k + SEG_T + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+    }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2)); geo.setIndex(idx);
+    const mem = new THREE.Mesh(geo, memMat); mem.castShadow = true; mem.frustumCulled = false; group.add(mem);
+    const spar = (r0, r1) => { const gg = new THREE.CylinderGeometry(r1, r0, 1, 8); gg.translate(0, 0.5, 0); const m = new THREE.Mesh(gg, sparMat); m.castShadow = true; group.add(m); return m; };
+    const spars = [spar(0.04, 0.03), spar(0.022, 0.006), spar(0.022, 0.006), spar(0.02, 0.006), spar(0.018, 0.005)];
+    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.12, 8), clawMat); group.add(claw);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 10), sparMat); group.add(knob);
+    wings.sides[side] = { mem, spars, claw, knob };
+  }
+}
+const FINGERS = [ [V3(0.55, 0.80, -0.10), 0.75], [V3(0.95, 0.25, -0.20), 0.95], [V3(0.90, -0.35, -0.20), 0.85], [V3(0.50, -0.85, -0.15), 0.75] ];
+const ARM = [V3(0.82, 0.50, -0.28).normalize(), 0.5], BODY_EDGE = [V3(0.12, -0.95, -0.05).normalize(), 0.62];
+const _Yup = V3(0, 1, 0);
+function placeSpar(m, a, b) { const d = b.clone().sub(a), L = d.length(); m.position.copy(a); m.quaternion.setFromUnitVectors(_Yup, d.divideScalar(L || 1)); m.scale.set(1, L, 1); }
+function updateWings(Dchest, C) {
+  const on = equip.wings; wings.group.visible = on; if (!on) return;
+  const ph = P.flap * Math.PI * 2, mv = clamp(Math.hypot(P.vel.x, P.vel.z) / 3, 0, 1);
+  let flare = P.atk ? Math.sin(Math.PI * clamp(P.atk.t / P.atk.dur, 0, 1)) : 0;
+  const theta = lerp(0.15 + 0.62 * Math.sin(ph), 0.35, flare), thetaF = lerp(0.15 + 0.72 * Math.sin(ph - 0.6), 0.35, flare);
+  const fold = lerp(Math.max(0, Math.cos(ph)) * 0.32 + 0.1 * mv, 0, flare) * (0.3 + 0.7 * P.fly) + (1 - P.fly) * 0.45;
+  const sc = 0.95;
+  for (const side of ["R", "L"]) {
+    const sg = side === "R" ? -1 : 1, W_ = wings.sides[side];
+    const toLocal = p => C.clone().add(V3(p.x * sg, p.y, p.z).add(V3(0.06 * sg, 0.1, -0.2)).applyQuaternion(Dchest));
+    const rz = a => new THREE.Quaternion().setFromAxisAngle(V3(0, 0, 1), a), ry = a => new THREE.Quaternion().setFromAxisAngle(V3(0, 1, 0), a);
+    const root = V3(0, 0, 0), wrist = ARM[0].clone().applyQuaternion(rz(theta)).multiplyScalar(ARM[1] * sc);
+    const tips = FINGERS.map(([d, L], i) => {
+      const dd = d.clone().normalize().lerp(ARM[0], fold * (0.25 + 0.15 * i)).normalize().applyQuaternion(ry(fold * 0.6)).applyQuaternion(rz(thetaF));
+      return wrist.clone().addScaledVector(dd, L * sc * (1 - 0.3 * fold));
+    });
+    const bodyTip = BODY_EDGE[0].clone().applyQuaternion(rz(theta * 0.25)).multiplyScalar(BODY_EDGE[1] * sc);
+    const curves = [[root, bodyTip], [wrist, tips[3]], [wrist, tips[2]], [wrist, tips[1]], [wrist, tips[0]]];
+    const pos = W_.mem.geometry.attributes.position.array;
+    for (let p = 0; p < PANELS; p++) {
+      const [a0, a1] = curves[p], [b0, b1] = curves[p + 1];
+      for (let i = 0; i <= SEG_S; i++) for (let j = 0; j <= SEG_T; j++) {
+        const s = i / SEG_S, tt = j / SEG_T, se = s * (1 - 0.3 * Math.sin(Math.PI * tt) * s);   // scalloped trailing edge
+        const A = a0.clone().lerp(a1, se), B = b0.clone().lerp(b1, se), q = A.lerp(B, tt);
+        q.z -= 0.05 * Math.sin(Math.PI * tt) * Math.sin(Math.PI * s);                            // membrane billows back
+        const l = toLocal(q), k = (p * (SEG_S + 1) * (SEG_T + 1) + i * (SEG_T + 1) + j) * 3; pos[k] = l.x; pos[k + 1] = l.y; pos[k + 2] = l.z;
+      }
+    }
+    W_.mem.geometry.attributes.position.needsUpdate = true; W_.mem.geometry.computeVertexNormals();
+    const Lr = toLocal(root), Lw = toLocal(wrist);
+    placeSpar(W_.spars[0], Lr, Lw); tips.forEach((tp, i) => placeSpar(W_.spars[i + 1], Lw, toLocal(tp)));
+    W_.knob.position.copy(Lw);
+    const up = toLocal(wrist.clone().add(ARM[0].clone().applyQuaternion(rz(theta)).multiplyScalar(0.12))).sub(Lw).normalize();
+    W_.claw.position.copy(Lw).addScaledVector(up, 0.06); W_.claw.quaternion.setFromUnitVectors(_Yup, up);
+  }
 }
 
 // ---------- input ----------
@@ -384,21 +569,24 @@ window.addEventListener("keydown", e => {
   if (key === "i" || key === "tab") { e.preventDefault(); if (!e.repeat) toggleMenu(); return; }
   if (key === "escape" && menuOpen) { toggleMenu(false); return; }
   if (key === "h" && !e.repeat) { setDebug(!debug); return; }
+  if (key === "f" && !e.repeat && SET) { equip.wings = !equip.wings; changed(); return; }
+  if (key === "q" && !e.repeat && SET) { const order = ["one", "dual", "two", "none"]; equip.mode = order[(order.indexOf(equip.mode) + 1) % 4]; changed(); return; }
+  if ((key === "j" || key === " ") && !e.repeat) P.queued = true;
   keys.add(key);
 });
 window.addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
 window.addEventListener("blur", () => { keys.clear(); holdAttack = false; });
 (() => {   // drag = orbit camera, short click = attack, wheel = zoom
   const el = renderer.domElement; let drag = null;
-  el.addEventListener("pointerdown", e => { if (e.target !== el) return; el.focus(); drag = { x: e.clientX, y: e.clientY, moved: 0, id: e.pointerId, mouse: e.pointerType === "mouse" }; el.setPointerCapture(e.pointerId); if (drag.mouse && e.button === 0) holdAttack = true; });
+  el.addEventListener("pointerdown", e => { el.focus(); drag = { x: e.clientX, y: e.clientY, moved: 0, id: e.pointerId, mouse: e.pointerType === "mouse" }; el.setPointerCapture(e.pointerId); if (drag.mouse && e.button === 0) { holdAttack = true; P.queued = true; } });
   el.addEventListener("pointermove", e => {
     if (!drag || e.pointerId !== drag.id) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved += Math.abs(dx) + Math.abs(dy); drag.x = e.clientX; drag.y = e.clientY;
-    if (drag.moved > 6) { holdAttack = false; cam.yaw -= dx * 0.006; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.05, 1.2); }
+    if (drag.moved > 6) { holdAttack = false; P.queued = false; cam.yaw -= dx * 0.006; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.02, 1.2); }
   });
   const end = e => { if (drag && e.pointerId === drag.id) { holdAttack = false; drag = null; } };
   el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
-  el.addEventListener("wheel", e => { e.preventDefault(); cam.dist = clamp(cam.dist * (1 + Math.sign(e.deltaY) * 0.1), 2.6, 11); }, { passive: false });
+  el.addEventListener("wheel", e => { e.preventDefault(); cam.dist = clamp(cam.dist * (1 + Math.sign(e.deltaY) * 0.1), 2.6, 12); }, { passive: false });
   const st = $("stick"), knob = $("knob");
   const move = e => { const r = st.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     let dx = e.clientX - cx, dy = e.clientY - cy; const d = Math.hypot(dx, dy), m = r.width / 2; if (d > m) { dx *= m / d; dy *= m / d; }
@@ -408,26 +596,36 @@ window.addEventListener("blur", () => { keys.clear(); holdAttack = false; });
   const sEnd = () => { stick.on = false; stick.x = stick.y = 0; knob.style.transform = ""; };
   st.addEventListener("pointerup", sEnd); st.addEventListener("pointercancel", sEnd);
   const atk = $("atk");
-  atk.addEventListener("pointerdown", e => { e.preventDefault(); holdAttack = true; atk.setPointerCapture(e.pointerId); });
+  atk.addEventListener("pointerdown", e => { e.preventDefault(); holdAttack = true; P.queued = true; atk.setPointerCapture(e.pointerId); });
   atk.addEventListener("pointerup", () => holdAttack = false); atk.addEventListener("pointercancel", () => holdAttack = false);
   if (matchMedia("(pointer: coarse)").matches) $("touch").hidden = false;
 })();
-function setDebug(on) { debug = on; $("btn-hitbox").setAttribute("aria-pressed", String(on)); hitLine.visible = on; dummyRing.visible = on; }
+function setDebug(on) { debug = on; $("btn-hitbox").setAttribute("aria-pressed", String(on)); hitLines.forEach(l => l.visible = on); dummyRing.visible = on; }
 $("btn-hitbox").addEventListener("click", () => setDebug(!debug));
 $("btn-menu").addEventListener("click", () => toggleMenu());
 $("menu-close").addEventListener("click", () => toggleMenu(false));
 
 // ---------- effects ----------
-const hitLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: 0xff6b6b, depthTest: false }));
-hitLine.visible = false; scene.add(hitLine);
+const hitLines = [0, 1].map(() => { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V3(), V3()]), new THREE.LineBasicMaterial({ color: 0xff6b6b, depthTest: false })); l.visible = false; scene.add(l); return l; });
 const dummyRing = new THREE.Mesh(new THREE.CylinderGeometry(D.r, D.r, 1.9, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0x5fd07a, wireframe: true }));
 dummyRing.position.set(D.pos.x, 0.95, D.pos.z); dummyRing.visible = false; scene.add(dummyRing);
-const TRAIL_N = 14, trailPts = [];
-const trailGeo = new THREE.BufferGeometry(); trailGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(TRAIL_N * 2 * 3), 3));
-trailGeo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(TRAIL_N * 2 * 4), 4));
-{ const idx = []; for (let i = 0; i < TRAIL_N - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } trailGeo.setIndex(idx); }
-const trail = new THREE.Mesh(trailGeo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-trail.frustumCulled = false; scene.add(trail);
+const TRAIL_N = 14;
+function makeTrail() {
+  const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(TRAIL_N * 6), 3)); geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(TRAIL_N * 8), 4));
+  const idx = []; for (let i = 0; i < TRAIL_N - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } geo.setIndex(idx);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  mesh.frustumCulled = false; scene.add(mesh); return { mesh, pts: [] };
+}
+function drawTrail(tr) {
+  while (tr.pts.length && (clock - tr.pts[0][2] > 0.14 || tr.pts.length > TRAIL_N)) tr.pts.shift();
+  const pa = tr.mesh.geometry.attributes.position.array, ca = tr.mesh.geometry.attributes.color.array, n = tr.pts.length;
+  for (let i = 0; i < TRAIL_N; i++) for (let k = 0; k < 2; k++) {
+    const tp = tr.pts[Math.min(i, Math.max(0, n - 1))], p = tp ? tp[k] : V3(0, -50, 0), o = i * 2 + k, on = tp && i < n && n > 1 ? i / (n - 1) : 0;
+    pa[o * 3] = p.x; pa[o * 3 + 1] = p.y; pa[o * 3 + 2] = p.z;
+    ca[o * 4] = k ? 1 : 0.37; ca[o * 4 + 1] = k ? 0.88 : 0.69; ca[o * 4 + 2] = k ? 0.6 : 1; ca[o * 4 + 3] = on * (k ? 0.85 : 0.1);
+  }
+  tr.mesh.geometry.attributes.position.needsUpdate = true; tr.mesh.geometry.attributes.color.needsUpdate = true;
+}
 const SPARK_N = 160, sparkPos = new Float32Array(SPARK_N * 3), sparks = [];
 const sparkGeo = new THREE.BufferGeometry(); sparkGeo.setAttribute("position", new THREE.BufferAttribute(sparkPos, 3));
 const sparkPts = new THREE.Points(sparkGeo, new THREE.PointsMaterial({ color: 0xffd27a, size: 0.05, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -438,30 +636,32 @@ function floatText(txt, crit, pos) { const el = document.createElement("div"); e
 // ---------- simulation ----------
 function startAttack() {
   if (P.atk || P.cd > 0 || menuOpen) return;
-  const sw = equip.sword, hand = sw ? equip.hand : ((P.turn = (P.turn || 0) + 1) % 2 ? "R" : "L");
-  const dur = (sw ? 0.78 : 0.45) / Math.max(0.3, 1 + ST.attack_speed / 100);
-  P.atk = { t: 0, dur, hand, sword: sw, hit: false }; P.cd = dur * 0.95; trailPts.length = 0;
+  const list = ATTACKS[equip.mode];
+  if (clock - P.lastAtkEnd > 0.6) P.combo = 0;                  // the chain resets after a pause
+  const def = list[P.combo % list.length]; P.combo++;
+  const dur = def.dur / Math.max(0.3, 1 + ST.attack_speed / 100);
+  P.atk = { def, t: 0, dur, hit: {}, lunged: 0 }; P.cd = dur * 0.9; P.queued = false;
 }
-function segDistToAxis(a, b) {   // closest approach between the blade segment and the dummy's vertical axis (XZ), within its height
+function segDistToAxis(a, b) {
   let best = Infinity;
-  for (let i = 0; i <= 10; i++) { const p = a.clone().lerp(b, i / 10); if (p.y < 0.2 || p.y > 2.1) continue; best = Math.min(best, Math.hypot(p.x - D.pos.x, p.z - D.pos.z)); }
+  for (let i = 0; i <= 12; i++) { const p = a.clone().lerp(b, i / 12); if (p.y < 0.1 || p.y > 2.2) continue; best = Math.min(best, Math.hypot(p.x - D.pos.x, p.z - D.pos.z)); }
   return best;
 }
-function tryHit(a, b) {
-  if (D.hp <= 0 || P.atk.hit) return;
-  if (segDistToAxis(a, b) > D.r) return;
-  P.atk.hit = true;
-  const crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
+function tryHit(key, a, b, reach) {
+  if (D.hp <= 0 || P.atk.hit[key]) return;
+  if (segDistToAxis(a, b) > D.r + reach) return;
+  P.atk.hit[key] = true;
+  const def = P.atk.def, crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * def.dmg * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
   D.hp = Math.max(0, D.hp - dmg); D.flash = 1; D.lastHit = clock; if (D.hp === 0) D.downAt = clock;
-  const push = D.pos.clone().sub(P.pos).setY(0).normalize().multiplyScalar(crit ? 2.2 : 1.4); D.wobV.x += push.x; D.wobV.y += push.z;
-  hitStop = crit ? 0.11 : 0.07; shake = crit ? 0.06 : 0.035;
+  const push = D.pos.clone().sub(P.pos).setY(0).normalize().multiplyScalar((crit ? 2.2 : 1.4) * (def.heavy ? 1.5 : 1)); D.wobV.x += push.x; D.wobV.y += push.z;
+  hitStop = (crit ? 0.11 : 0.07) * (def.heavy ? 1.5 : 1); shake = (crit ? 0.06 : 0.035) * (def.heavy ? 1.6 : 1);
   hits.push([clock, dmg]); totalDmg += dmg;
   $("m-last").textContent = dmg.toLocaleString("vi-VN") + (crit ? " ✦" : ""); $("m-hits").textContent = hits.length.toLocaleString("vi-VN"); $("m-total").textContent = totalDmg.toLocaleString("vi-VN");
-  const at = new THREE.Vector3(D.pos.x, 1.3, D.pos.z);
-  floatText(dmg.toLocaleString("vi-VN"), crit, at.clone().add(new THREE.Vector3((Math.random() - 0.5) * 0.4, 0.5, 0)));
+  const at = a.clone().lerp(b, 0.6); at.y = clamp(at.y, 0.5, 1.9); at.x = lerp(at.x, D.pos.x, 0.6); at.z = lerp(at.z, D.pos.z, 0.6);
+  floatText(dmg.toLocaleString("vi-VN"), crit, V3(D.pos.x + (Math.random() - 0.5) * 0.4, 1.9, D.pos.z));
   for (let i = 0; i < (crit ? 34 : 20); i++) {
-    const v = new THREE.Vector3(Math.random() - 0.5, Math.random() * 0.9, Math.random() - 0.5).normalize().multiplyScalar(2 + Math.random() * 3);
-    sparks.push({ p: at.clone().add(new THREE.Vector3(0, (Math.random() - 0.5) * 0.4, 0)), v, t: 0, life: 0.3 + Math.random() * 0.35 });
+    const v = V3(Math.random() - 0.5, Math.random() * 0.9, Math.random() - 0.5).normalize().multiplyScalar(2 + Math.random() * 3);
+    sparks.push({ p: at.clone(), v, t: 0, life: 0.3 + Math.random() * 0.35 });
   }
   if (sparks.length > SPARK_N) sparks.splice(0, sparks.length - SPARK_N);
 }
@@ -472,30 +672,34 @@ function collide(p) {
   }
   const r = Math.hypot(p.x, p.z); if (r > 9.3) { p.x *= 9.3 / r; p.z *= 9.3 / r; }
 }
-const _fwd = new THREE.Vector3(), _right = new THREE.Vector3();
+const _fwd = V3(), _right = V3();
 function update(dt) {
   clock += dt;
   let mx = 0, mz = 0;
   if (!menuOpen) { for (const k of keys) if (MOVE[k]) { mx += MOVE[k][0]; mz += MOVE[k][1]; } if (stick.on) { mx += stick.x; mz += stick.y; } }
   const mag = Math.hypot(mx, mz), want = mag > 0.15, running = want && (keys.has("shift") || (stick.on && mag > 0.92));
-  // camera-relative direction on the floor
   _fwd.set(-Math.sin(cam.yaw), 0, -Math.cos(cam.yaw)); _right.set(-_fwd.z, 0, _fwd.x);
-  const dir = new THREE.Vector3().addScaledVector(_right, mx).addScaledVector(_fwd, mz); if (want) dir.normalize();
-  const vmax = 1.7 * (1 + ST.move_speed / 100) * (running ? 2.1 : 1) * (P.atk ? 0.3 : 1) * Math.min(1, mag);
-  const target = dir.multiplyScalar(want ? vmax : 0);
-  P.vel.lerp(target, Math.min(1, dt * (want ? 8 : 10)));
+  const dir = V3().addScaledVector(_right, mx).addScaledVector(_fwd, mz); if (want) dir.normalize();
+  const flyMul = lerp(1, 1.35, P.fly);
+  const vmax = 1.7 * (1 + ST.move_speed / 100) * (running ? 2.1 : 1) * flyMul * (P.atk ? 0.3 : 1) * Math.min(1, mag);
+  P.vel.lerp(dir.multiplyScalar(want ? vmax : 0), Math.min(1, dt * (want ? lerp(8, 4, P.fly) : lerp(10, 3, P.fly))));   // flight carries more momentum
+  // attack lunge: root motion along the facing direction
+  if (P.atk) { const l = sampleBody(P.atk.def.body, P.atk.t / P.atk.dur).lunge, dl = l - P.atk.lunged; P.atk.lunged = l;
+    P.pos.x += Math.sin(P.yaw) * dl; P.pos.z += Math.cos(P.yaw) * dl; }
   P.pos.addScaledVector(P.vel, dt); collide(P.pos);
   const sp = Math.hypot(P.vel.x, P.vel.z);
-  if (sp > 0.15 && !P.atk) {   // turn toward the movement direction (shortest way round)
-    const want = Math.atan2(P.vel.x, P.vel.z); let d = want - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * Math.min(1, dt * 12);
-  }
+  if (sp > 0.15 && !P.atk) { const want = Math.atan2(P.vel.x, P.vel.z); let d = want - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * Math.min(1, dt * 12); }
   P.walk += (clamp(sp / 1.2, 0, 1) - P.walk) * Math.min(1, dt * 8);
   P.run += ((running && sp > 2.2 ? 1 : 0) - P.run) * Math.min(1, dt * 5);
   P.phase += dt * Math.PI * 2 * sp / (1.35 + 0.9 * P.run);
+  // flight: take off / land smoothly; wing beat drives the hover bob
+  P.fly += ((equip.wings ? 1 : 0) - P.fly) * Math.min(1, dt * 2.2);
+  P.flap += dt * lerp(1.0, 1.3 + 0.8 * clamp(sp / 3, 0, 1), P.fly);
+  P.hover = P.fly * (0.55 + 0.07 * Math.sin(P.flap * Math.PI * 2 - 0.9));
+  // attacks: hold to keep the combo going, tap to queue the next hit
   P.cd = Math.max(0, P.cd - dt);
-  if ((holdAttack || keys.has(" ") || keys.has("j")) && !menuOpen) startAttack();
-  if (P.atk) { if (hitStop > 0) hitStop -= dt; else { P.atk.t += dt; if (P.atk.t >= P.atk.dur) P.atk = null; } }
-  // dummy: spring wobble, flash, respawn / regen
+  if ((holdAttack || keys.has(" ") || keys.has("j") || P.queued) && !menuOpen) startAttack();
+  if (P.atk) { if (hitStop > 0) hitStop -= dt; else { P.atk.t += dt; if (P.atk.t >= P.atk.dur) { P.atk = null; P.lastAtkEnd = clock; } } }
   D.wobV.addScaledVector(D.wob, -40 * dt).multiplyScalar(Math.max(0, 1 - 5.5 * dt)); D.wob.addScaledVector(D.wobV, dt);
   D.flash = Math.max(0, D.flash - dt * 6);
   if (D.hp === 0 && clock - D.downAt > 1.4) D.hp = D.max;
@@ -504,32 +708,34 @@ function update(dt) {
 }
 
 // ---------- frame ----------
-const _a = new THREE.Vector3(), _b = new THREE.Vector3();
 let last = 0;
 function frame(ts) {
   const dt = Math.min(0.05, (ts - (last || ts)) / 1000); last = ts;
   update(dt);
-  knight.position.copy(P.pos); knight.rotation.y = P.yaw;
-  pose(dt); knight.updateMatrixWorld(true); placeSword(); sword.updateMatrixWorld(true);
-  // blade segment (grip -> tip) in world space
-  _a.set(0, -swordInfo.len * 0.18, 0).applyMatrix4(swordFront.matrixWorld); _b.copy(swordInfo.tipLocal).applyMatrix4(swordFront.matrixWorld);
-  if (!equip.sword) { bones["hand" + (P.atk ? P.atk.hand : "R")].getWorldPosition(_b); bones["forearm" + (P.atk ? P.atk.hand : "R")].getWorldPosition(_a); }
-  if (P.atk) { const u = P.atk.t / P.atk.dur; if (u > 0.33 && u < 0.62) tryHit(_a, _b); }
-  hitLine.geometry.setFromPoints([_a, _b]);
-  // trail ribbon
-  if (P.atk && P.atk.sword && P.atk.t / P.atk.dur > 0.25 && P.atk.t / P.atk.dur < 0.7) trailPts.push([_a.clone().lerp(_b, 0.35), _b.clone(), clock]);
-  while (trailPts.length && (clock - trailPts[0][2] > 0.14 || trailPts.length > TRAIL_N)) trailPts.shift();
-  const pa = trailGeo.attributes.position.array, ca = trailGeo.attributes.color.array;
-  for (let i = 0; i < TRAIL_N; i++) {
-    const tp = trailPts[Math.min(i, trailPts.length - 1)], al = trailPts.length > 1 ? i / (trailPts.length - 1) : 0;
-    for (let k = 0; k < 2; k++) {
-      const p = tp ? tp[k] : _b, o = (i * 2 + k);
-      pa[o * 3] = p.x; pa[o * 3 + 1] = p.y; pa[o * 3 + 2] = p.z;
-      const on = tp && i < trailPts.length ? al : 0;
-      ca[o * 4] = k ? 1 : 0.37; ca[o * 4 + 1] = k ? 0.88 : 0.69; ca[o * 4 + 2] = k ? 0.6 : 1; ca[o * 4 + 3] = on * (k ? 0.85 : 0.1);
+  knight.position.set(P.pos.x, P.hover, P.pos.z); knight.rotation.y = P.yaw; knight.updateMatrixWorld(true);
+  pose(dt); placeSwords();
+  // chest frame for the wings (same as used by the arms)
+  const Dchest = new THREE.Quaternion(); bones.chest.getWorldQuaternion(Dchest); Dchest.premultiply(knight.getWorldQuaternion(new THREE.Quaternion()).invert()).multiply(rest.chest.pq.clone().multiply(rest.chest.q).invert());
+  updateWings(Dchest, local(bones.chest));
+  knight.updateMatrixWorld(true);
+  // hits + trails
+  const mode = equip.mode, atkOn = P.atk ? P.atk.t / P.atk.dur : -1, def = P.atk && P.atk.def;
+  const inWin = def && atkOn >= def.hit[0] && atkOn <= def.hit[1];
+  let li = 0;
+  for (const s of ["R", "L"]) {
+    const sw = swords[s];
+    if (sw.g.visible) {
+      const [a, b] = blade(s);
+      const active = def && (mode === "two" ? true : !!def.hands[s]);
+      if (inWin && active) tryHit(s, a, b, 0);
+      if (def && active && atkOn > def.hit[0] - 0.08 && atkOn < def.hit[1] + 0.06) sw.trail.pts.push([a.clone().lerp(b, 0.3), b.clone(), clock]);
+      if (li < 2) { hitLines[li++].geometry.setFromPoints([a, b]); }
+    } else if (mode === "none" && def && def.hands[s] && inWin) {
+      const a = bones["forearm" + s].getWorldPosition(V3()), b = bones["hand" + s].getWorldPosition(V3()); b.addScaledVector(b.clone().sub(a).normalize(), 0.12);
+      tryHit(s, a, b, 0.12);
     }
+    drawTrail(sw.trail);
   }
-  trailGeo.attributes.position.needsUpdate = true; trailGeo.attributes.color.needsUpdate = true; trail.material.opacity = 1;
   // sparks
   for (const s of sparks) { s.t += dt; s.v.y -= 9 * dt; s.p.addScaledVector(s.v, dt); }
   for (let i = sparks.length - 1; i >= 0; i--) if (sparks[i].t > sparks[i].life) sparks.splice(i, 1);
@@ -537,20 +743,18 @@ function frame(ts) {
   sparkGeo.attributes.position.needsUpdate = true;
   // dummy
   dummyBody.rotation.set(D.wob.y * 0.12, 0, -D.wob.x * 0.12);
-  for (const m of dMats) m.emissive.setScalar(D.flash * 0.8);
-  dummyBody.visible = true; dummyBody.children.forEach(c => c.material.transparent = D.hp === 0);
-  dMats.forEach(m => m.opacity = D.hp === 0 ? 0.4 : 1);
-  // camera: orbit around the knight with lag
-  cam.target.lerp(new THREE.Vector3(P.pos.x, 1.15, P.pos.z), Math.min(1, dt * 6));
-  const cp = Math.cos(cam.pitch);
-  camera.position.set(cam.target.x + Math.sin(cam.yaw) * cp * cam.dist, cam.target.y + Math.sin(cam.pitch) * cam.dist, cam.target.z + Math.cos(cam.yaw) * cp * cam.dist);
+  for (const m of dMats) { m.emissive.setScalar(D.flash * 0.8); m.transparent = D.hp === 0; m.opacity = D.hp === 0 ? 0.4 : 1; }
+  // camera
+  cam.target.lerp(V3(P.pos.x, 1.15 + P.hover * 0.8, P.pos.z), Math.min(1, dt * 6));
+  const cp = Math.cos(cam.pitch), dist = cam.dist * (equip.wings ? 1.15 : 1);
+  camera.position.set(cam.target.x + Math.sin(cam.yaw) * cp * dist, cam.target.y + Math.sin(cam.pitch) * dist, cam.target.z + Math.cos(cam.yaw) * cp * dist);
   camera.lookAt(cam.target);
   if (shake > 0) { camera.position.x += (Math.random() - 0.5) * shake; camera.position.y += (Math.random() - 0.5) * shake; }
   sun.position.set(P.pos.x + 4, 9, P.pos.z + 5); sun.target.position.set(P.pos.x, 0, P.pos.z);
   renderer.render(scene, camera);
   // HTML overlays
-  const proj = (v) => { const p = v.clone().project(camera); return [(p.x + 1) / 2 * stage.clientWidth, (1 - p.y) / 2 * stage.clientHeight, p.z < 1]; };
-  const [hx, hy, hv] = proj(new THREE.Vector3(D.pos.x, 2.25, D.pos.z)); const hp = $("hp");
+  const proj = v => { const p = v.clone().project(camera); return [(p.x + 1) / 2 * stage.clientWidth, (1 - p.y) / 2 * stage.clientHeight, p.z < 1]; };
+  const [hx, hy, hv] = proj(V3(D.pos.x, 2.25, D.pos.z)), hp = $("hp");
   hp.style.transform = `translate(${hx}px, ${hy}px) translate(-50%, -100%)`; hp.style.visibility = hv ? "visible" : "hidden";
   $("hp-bar").style.width = (D.hp / D.max * 100) + "%"; $("hp-bar").style.background = D.hp / D.max > 0.3 ? "#5fd07a" : "#ff6b6b";
   $("hp-text").textContent = D.hp === 0 ? "Hạ gục!" : `Hình nộm · ${Math.ceil(D.hp).toLocaleString("vi-VN")}`;
@@ -559,22 +763,23 @@ function frame(ts) {
   if (Math.floor(clock * 5) !== Math.floor((clock - dt) * 5)) {
     const recent = hits.filter(h => clock - h[0] <= 5), span = recent.length ? Math.max(1, Math.min(5, clock - recent[0][0])) : 1;
     $("m-dps").textContent = Math.round(recent.reduce((s, h) => s + h[1], 0) / span).toLocaleString("vi-VN");
-    const spd = Math.hypot(P.vel.x, P.vel.z);
-    $("state").innerHTML = `${P.atk ? "<b>chém</b>" : spd < 0.15 ? "đứng" : P.run > 0.5 ? "<b>chạy</b>" : "<b>đi</b>"} · ${spd.toFixed(1)} m/s`;
+    const spd = Math.hypot(P.vel.x, P.vel.z), act = P.atk ? `<b>${P.atk.def.name}</b>` : spd < 0.15 ? (P.fly > 0.5 ? "bay lơ lửng" : "đứng") : P.fly > 0.5 ? "<b>bay</b>" : P.run > 0.5 ? "<b>chạy</b>" : "<b>đi</b>";
+    $("state").innerHTML = `${MODE_VI[equip.mode]} · ${act} · ${spd.toFixed(1)} m/s`;
   }
   requestAnimationFrame(frame);
 }
 
 // ---------- equipment menu ----------
 function applyEquip() {
-  document.querySelectorAll("#sword-seg button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.sword === "1") === equip.sword)));
-  document.querySelectorAll("#hand-seg button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.hand === equip.hand)); b.disabled = !equip.sword; });
+  document.querySelectorAll("#mode-seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === equip.mode)));
+  document.querySelectorAll("#wing-seg button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.wings === "1") === equip.wings)));
   const rows = [["attack", "Tấn công"], ["crit_rate", "Chí mạng %"], ["attack_speed", "Tốc đánh %"], ["move_speed", "Tốc chạy %"], ["defense", "Phòng thủ"], ["hp", "Máu"]];
   $("stats").innerHTML = rows.map(([k, l]) => `<div><b>${ST[k]}</b><span>${l}</span></div>`).join("");
+  $("combo-list").textContent = ATTACKS[equip.mode].map(a => a.name).join(" → ");
 }
-function changed() { ST = stats(); save(); applyEquip(); }
-document.querySelectorAll("#sword-seg button").forEach(b => b.addEventListener("click", () => { equip.sword = b.dataset.sword === "1"; changed(); }));
-document.querySelectorAll("#hand-seg button").forEach(b => b.addEventListener("click", () => { equip.hand = b.dataset.hand; changed(); }));
+function changed() { ST = stats(); save(); applyEquip(); P.atk = null; P.combo = 0; }
+document.querySelectorAll("#mode-seg button").forEach(b => b.addEventListener("click", () => { equip.mode = b.dataset.mode; changed(); }));
+document.querySelectorAll("#wing-seg button").forEach(b => b.addEventListener("click", () => { equip.wings = b.dataset.wings === "1"; changed(); }));
 function toggleMenu(force) { menuOpen = force === undefined ? !menuOpen : force; $("menu").hidden = !menuOpen; keys.clear(); holdAttack = false; if (!menuOpen) renderer.domElement.focus(); }
 
 function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
