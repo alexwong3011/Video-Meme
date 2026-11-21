@@ -61,7 +61,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
 .menu-head h2 { margin: 0; font: 700 18px var(--font-display); letter-spacing: .04em; }
 .menu h3 { margin: 0 0 8px; font: 600 12px var(--font-display); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-#rate { width: 100%; accent-color: var(--azure); }
+#rate, #lvl { width: 100%; accent-color: var(--azure); }
 .rate-val { font: 600 13px var(--font-body); color: var(--azure); margin-left: 6px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
 .seg button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; padding: 6px 11px; cursor: pointer; }
@@ -170,6 +170,14 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
         <button type="button" data-mode="none">Tay không</button>
       </div>
       <p class="note">Chuỗi đòn: <span id="combo-list"></span></p>
+    </div>
+    <div>
+      <h3>Cấp giáp <span class="rate-val" id="lvl-val">+0 · Thường</span></h3>
+      <input type="range" id="lvl" min="0" max="15" step="1" value="0" aria-label="Cấp nâng cấp bộ giáp, từ +0 đến +15">
+      <div class="seg" role="group" aria-label="Cấp nhanh" id="lvl-seg" style="margin-top:8px">
+        <button type="button" data-lvl="0">+0</button><button type="button" data-lvl="4">+4</button><button type="button" data-lvl="7">+7</button><button type="button" data-lvl="10">+10</button><button type="button" data-lvl="13">+13</button><button type="button" data-lvl="15">+15</button>
+      </div>
+      <p class="note">Cấp càng cao giáp càng sáng, bóng và có hào quang (bản 3D).</p>
     </div>
     <div>
       <h3>Cánh</h3>
@@ -790,7 +798,7 @@ const VFX = (() => {
       for (let i = timers.length - 1; i >= 0; i--) { timers[i].t -= dt; if (timers[i].t <= 0) { const f = timers[i].fn; timers.splice(i, 1); f(); } }
     },
     // always on: a glowing pool, a slow rune and two light arcs orbiting the feet; motes rising; glints on the wings
-    ambient(dt) {
+    ambient(dt) { return;      // the drifting motes and wing glints were removed: the armour level glow carries the look now
       if (!SET) return;
       moteT -= dt; glintT -= dt;
       if (moteT <= 0) { moteT = 0.07; const gold = Math.random() < 0.3;
@@ -804,6 +812,9 @@ const VFX = (() => {
       const disc = (img, r, rot, a) => { ctx.globalAlpha = a * k; ctx.save(); ctx.translate(x, y); ctx.scale(1, DEP); ctx.rotate(rot); ctx.drawImage(img, -r, -r, 2 * r, 2 * r); ctx.restore(); };
       ctx.save(); ctx.globalCompositeOperation = "lighter";
       disc(T("flare", "deep"), 1.0 * M, 0, 0.45);
+      { const L = armorLook(equip.level || 0), A = L.aura[3]; if (A > 0.01) { const r = (0.9 + 0.25 * A) * M, g = ctx.createRadialGradient(x, y, 0, x, y, r), c = L.aura.slice(0, 3).map(v => Math.round(v * 255)).join(",");
+        g.addColorStop(0, `rgba(${c},${0.38 * A * k})`); g.addColorStop(1, `rgba(${c},0)`); ctx.save(); ctx.translate(x, y); ctx.scale(1, DEP); ctx.translate(-x, -y); ctx.globalAlpha = 0.75 + 0.25 * Math.sin(clock * 1.6);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.restore(); } }
       disc(T("rune", "az"), 0.58 * M, clock * 0.35, 0.32);
       disc(T("crescent", "pale"), 0.44 * M, clock * 2.6, 0.9);
       disc(T("crescent", "vio"), 0.44 * M, clock * 2.6 + Math.PI, 0.9);
@@ -818,7 +829,7 @@ const VFX = (() => {
         ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(a[0] + nx * w * ww, a[1] + ny * w * ww); ctx.lineTo(b[0] + nx * w * ww * 0.3, b[1] + ny * w * ww * 0.3);
         ctx.lineTo(b[0] - nx * w * ww * 0.3, b[1] - ny * w * ww * 0.3); ctx.lineTo(a[0] - nx * w * ww, a[1] - ny * w * ww); ctx.closePath(); ctx.fill(); }
       ctx.restore();
-      if (Math.random() < 0.3 * k) { const u = 0.2 + Math.random() * 0.8;
+      if (false) { const u = 0.2 + Math.random() * 0.8;
         add({ kind: "bill", img: T("flare", Math.random() < 0.5 ? "az" : "pale"), x: a[0] + dx * u, y: a[1] + dy * u, h: 0, vh: 0.4 * M, s0: 0.04, s1: 0.02, life: 0.45, fi: 0.1, fo: 0.4 }); }
     },
     drawFloor() {
@@ -1122,6 +1133,82 @@ function update(dt) {
   cam.y += (clamp(P.y - P.hover * 0.5 + P.vy * 0.25 - H * 0.6, -60, WORLD.h - H + 60) - cam.y) * Math.min(1, dt * 5);
 }
 
+
+// ---------- armour level +0..+15 (MU-style): colour, sheen, a light running along the engraving, a rim glow and an aura shell ----------
+// Keys are interpolated by level. tint multiplies the painted colour (above 1 brightens); rim = fresnel edge light; flow = light running
+// along the bright engraved lines; aura = additive shell around the body (inner, outer); env/rough = how mirror-like the metal is.
+const ARMOR_KEYS = [
+  { lv: 0,  tint: [1.0, 1.0, 1.0],    rim: [0.37, 0.69, 1.0, 0.0],  flow: [0.5, 0.75, 1.0, 0.0],  aura: [0.37, 0.69, 1.0, 0.0, 0.0],  env: 0.25, rough: 1.0 },
+  { lv: 4,  tint: [1.0, 0.97, 1.18],  rim: [0.5, 0.42, 1.0, 0.6],   flow: [0.5, 0.75, 1.0, 0.35], aura: [0.5, 0.4, 1.0, 0.35, 0.0],   env: 0.45, rough: 0.8 },
+  { lv: 7,  tint: [0.95, 0.98, 1.35], rim: [0.35, 0.55, 1.0, 1.3],  flow: [0.4, 0.7, 1.0, 1.0],   aura: [0.45, 0.4, 1.0, 0.8, 0.35],  env: 0.6, rough: 0.65 },
+  { lv: 10, tint: [0.9, 1.1, 1.5],    rim: [0.25, 0.75, 1.0, 2.0],  flow: [0.4, 0.85, 1.0, 1.8],  aura: [0.3, 0.65, 1.0, 1.1, 0.7],   env: 0.8, rough: 0.5 },
+  { lv: 13, tint: [1.2, 1.0, 1.55],   rim: [0.75, 0.45, 1.0, 2.6],  flow: [1.0, 0.75, 0.45, 2.4], aura: [0.7, 0.4, 1.0, 1.4, 1.0],   env: 1.0, rough: 0.4 },
+  { lv: 15, tint: [1.45, 1.25, 1.05], rim: [1.0, 0.75, 0.35, 3.2],  flow: [1.0, 0.85, 0.45, 3.2], aura: [1.0, 0.72, 0.3, 1.7, 1.35],  env: 1.2, rough: 0.32 },
+];
+const ARMOR_NAME = lv => lv >= 13 ? "Thần thoại" : lv >= 10 ? "Huyền bí" : lv >= 7 ? "Rực sáng" : lv >= 4 ? "Bóng sáng" : "Thường";
+function armorLook(lv) {
+  let i = 0; while (i < ARMOR_KEYS.length - 2 && lv > ARMOR_KEYS[i + 1].lv) i++;
+  const a = ARMOR_KEYS[i], b = ARMOR_KEYS[i + 1], f = clamp((lv - a.lv) / (b.lv - a.lv), 0, 1), mixA = (x, y) => x.map((v, k) => lerp(v, y[k], f));
+  return { tint: mixA(a.tint, b.tint), rim: mixA(a.rim, b.rim), flow: mixA(a.flow, b.flow), aura: mixA(a.aura, b.aura), env: lerp(a.env, b.env, f), rough: lerp(a.rough, b.rough, f) };
+}
+const ARMOR_U = { uTime: { value: 0 }, uRimColor: { value: new THREE.Color() }, uRimInt: { value: 0 }, uFlowColor: { value: new THREE.Color() }, uFlowInt: { value: 0 } };
+function armorShader(m) {      // fresnel rim and the running light, added to the emissive term of the armour's standard material
+  m.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, ARMOR_U);
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform float uTime, uRimInt, uFlowInt; uniform vec3 uRimColor, uFlowColor;")
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+      {
+        vec3 vd = isOrthographic ? vec3(0.0, 0.0, 1.0) : normalize(vViewPosition);
+        float fr = pow(1.0 - clamp(abs(dot(normalize(normal), vd)), 0.0, 1.0), 2.6);
+        totalEmissiveRadiance += uRimColor * fr * uRimInt * (0.8 + 0.2 * sin(uTime * 2.2));
+        #ifdef USE_UV
+        float lum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));
+        float wave = pow(0.5 + 0.5 * sin(vUv.y * 46.0 + vUv.x * 17.0 - uTime * 2.4), 6.0);
+        totalEmissiveRadiance += uFlowColor * smoothstep(0.25, 0.6, lum) * (0.35 + wave) * uFlowInt;
+        #endif
+      }`);
+  };
+  m.customProgramCacheKey = () => "azure-armor";
+}
+const AURA_VS = `
+  #include <common>
+  #include <skinning_pars_vertex>
+  uniform float uGrow; varying float vFres;
+  void main() {
+    #include <beginnormal_vertex>
+    #include <skinbase_vertex>
+    #include <skinnormal_vertex>
+    #include <defaultnormal_vertex>
+    #include <begin_vertex>
+    #include <skinning_vertex>
+    vec3 nv = normalize(transformedNormal);
+    vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
+    mvPosition.xyz += nv * uGrow;                 // view space is in metres: the shell grows the same at any rig scale
+    gl_Position = projectionMatrix * mvPosition;
+    vFres = 1.0 - abs(nv.z);
+  }`;
+const AURA_FS = `
+  uniform vec3 uColor; uniform float uInt, uPow, uTime, uPhase; varying float vFres;
+  void main() { float a = pow(vFres, uPow) * uInt * (0.75 + 0.25 * sin(uTime * 1.6 + uPhase)); gl_FragColor = vec4(uColor * a, a); }`;
+function auraShell(o, grow, pow, phase) {
+  const mat = new THREE.ShaderMaterial({ vertexShader: AURA_VS, fragmentShader: AURA_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.FrontSide,
+    uniforms: { uGrow: { value: grow }, uPow: { value: pow }, uColor: { value: new THREE.Color() }, uInt: { value: 0 }, uTime: ARMOR_U.uTime, uPhase: { value: phase } } });
+  const sh = new THREE.SkinnedMesh(o.geometry, mat); sh.frustumCulled = false; sh.bind(o.skeleton, o.bindMatrix); sh.renderOrder = 5; o.parent.add(sh); return sh;
+}
+function applyArmor(t) {
+  if (!K3.ready) return; const L = armorLook(equip.level || 0); ARMOR_U.uTime.value = t;
+  ARMOR_U.uRimColor.value.setRGB(L.rim[0], L.rim[1], L.rim[2]); ARMOR_U.uRimInt.value = L.rim[3];
+  ARMOR_U.uFlowColor.value.setRGB(L.flow[0], L.flow[1], L.flow[2]); ARMOR_U.uFlowInt.value = L.flow[3];
+  for (const m of K3.armorMats || []) { m.color.copy(m.userData.base0).multiply(new THREE.Color(L.tint[0], L.tint[1], L.tint[2])); m.envMapIntensity = L.env; m.roughness = m.roughnessMap ? L.rough : 0.5 * L.rough; }
+  for (const [sh, k] of K3.auras || []) { sh.visible = L.aura[3] > 0.01; sh.material.uniforms.uColor.value.setRGB(L.aura[0], L.aura[1], L.aura[2]);
+    sh.material.uniforms.uInt.value = k === 0 ? L.aura[3] : L.aura[4]; }
+}
+function setLevel(v) {
+  equip.level = clamp(Math.round(+v || 0), 0, 15); save();
+  const el = $("lvl"); if (el) { el.value = String(equip.level); $("lvl-val").textContent = `+${equip.level} · ${ARMOR_NAME(equip.level)}`; }
+  document.querySelectorAll("#lvl-seg button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.lvl === equip.level)));
+}
+
 // ---------- 3D knight (Meshy model, rigged, library animations) drawn into the 2.5D scene ----------
 // An orthographic camera pitched so that the floor compresses by DEP, at M pixels per metre: the model lands on the same floor,
 // shadows, effects and hit tests as the drawn rig. Rendered each frame into an offscreen WebGL canvas, then drawn like a sprite.
@@ -1205,7 +1292,8 @@ function k3Setup(gltf, swordTex, wtex) {
   if (THREE.RoomEnvironment) { const pm = new THREE.PMREMGenerator(R3); scene3.environment = pm.fromScene(new THREE.RoomEnvironment(), 0.04).texture; }
   const hulls = [];
   model3.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.frustumCulled = false; const m = o.material; if (m) {
-      m.envMapIntensity = 0.25; if (m.normalMap) m.normalScale.set(1.3, 1.3); m.metalness = m.metalnessMap ? 0.6 : 0.3; m.roughness = m.roughnessMap ? 1 : 0.5; }
+      m.envMapIntensity = 0.25; if (m.normalMap) m.normalScale.set(1.3, 1.3); m.metalness = m.metalnessMap ? 0.6 : 0.3; m.roughness = m.roughnessMap ? 1 : 0.5;
+      if (o.isSkinnedMesh) { armorShader(m); m.userData.base0 = m.color.clone(); (K3.armorMats = K3.armorMats || []).push(m); } }
       if (o.isSkinnedMesh) hulls.push(o); }
                          if (o.isBone) bones3[o.name.toLowerCase()] = o; });
   // Meshy rigs keep bones in centimetres under a 0.01 armature: size and ground the model from its bones, not from the bind mesh
@@ -1253,9 +1341,11 @@ function k3Setup(gltf, swordTex, wtex) {
   // a thin dark outline (inverted hull pushed along the skinned normals) keeps the silhouette crisp on the dark floor
   for (const o of hulls) {
     const mat = new THREE.MeshBasicMaterial({ color: 0x07060d, side: THREE.BackSide });
-    o.geometry.computeBoundingBox(); const th = (o.geometry.boundingBox.max.y - o.geometry.boundingBox.min.y) * 0.0035;   // in the mesh's own units
-    mat.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace("#include <project_vertex>", "transformed += normalize(objectNormal) * " + th.toFixed(6) + ";\n#include <project_vertex>"); };
+    mat.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace("#include <project_vertex>",
+      "vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);\nmvPosition.xyz += normalize(transformedNormal) * 0.012;\ngl_Position = projectionMatrix * mvPosition;"); };
     const hull = new THREE.SkinnedMesh(o.geometry, mat); hull.frustumCulled = false; hull.bind(o.skeleton, o.bindMatrix); o.parent.add(hull);
+    // the level aura: a close shell and a wide soft one, both brightest at the silhouette's edge
+    (K3.auras = K3.auras || []).push([auraShell(o, 0.035, 1.5, 0), 0], [auraShell(o, 0.11, 1.8, 1.7), 1]);
   }
   // hit windows from the clips themselves: the frames where the sword hand moves fastest
   K3.hitWin = {}; for (const n of Object.keys(clips3)) K3.hitWin[n] = k3Swing(n);
@@ -1335,7 +1425,7 @@ function drawK3(lift, dt) {
   const bw = Math.ceil(3.4 * M), bh = Math.ceil(3.6 * M), fy = 0.78;
   if (bw !== box3.w || bh !== box3.h || R3.getPixelRatio() !== DPR) { box3.w = bw; box3.h = bh; R3.setPixelRatio(DPR); R3.setSize(bw, bh, false); }
   cam3.left = -bw / 2 / M; cam3.right = bw / 2 / M; cam3.top = fy * bh / M; cam3.bottom = -(1 - fy) * bh / M; cam3.updateProjectionMatrix();
-  R3.render(scene3, cam3);
+  applyArmor(clock); R3.render(scene3, cam3);
   const ox = P.x - bw / 2, oy = P.y - lift - fy * bh;
   ctx.drawImage(R3.domElement, ox, oy, bw, bh);
   // the blade in screen space for hits, trails and the glow
@@ -1551,6 +1641,9 @@ function buildMenu() {
   $("rate").addEventListener("input", e => setRate(e.target.value));
   document.querySelectorAll("#rate-seg button").forEach(b => b.addEventListener("click", () => setRate(b.dataset.rate)));
   setRate(equip.rate || 1);
+  $("lvl").addEventListener("input", e => setLevel(e.target.value));
+  document.querySelectorAll("#lvl-seg button").forEach(b => b.addEventListener("click", () => setLevel(b.dataset.lvl)));
+  setLevel(equip.level ?? 7);
   document.querySelectorAll("#k3-seg button").forEach(b => b.addEventListener("click", () => { K3.on = b.dataset.k3 === "1"; k3Menu(); }));
   const list = [["none", "Không cánh", null]].concat(Object.entries(WINGS).map(([k, w]) => [k, w.name_vi, "assets/wings/" + w.L.file]));
   $("wing-list").innerHTML = list.map(([k, name, src]) => `<button type="button" class="wing" data-wing="${k}" aria-pressed="false">${src ? `<img src="${src}" alt="">` : '<span class="ph">—</span>'}<small>${name}</small></button>`).join("");
