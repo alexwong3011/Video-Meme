@@ -1,0 +1,32 @@
+{
+  "name": "azure_wing_knight",
+  "views_white": "../../projects/azure-wing-armor/source/apose/clean/white",
+  "views_transparent": "../../projects/azure-wing-armor/source/apose/clean/transparent",
+  "views": ["front", "left", "back", "right"],
+  "out_dir": "work/azure_wing_knight",
+  "web_dir": "../../projects/azure-wing-armor/assets/meshy",
+  "web_name": "knight",
+  "height_m": 2.0,
+  "include_fingers": true,
+  "model": {
+    "ai_model": "latest",
+    "geometry_resolution": "2k",
+    "image_enhancement": false,
+    "should_texture": true,
+    "texture_resolution": "4k",
+    "enable_pbr": true,
+    "should_remesh": true,
+    "topology": "triangle",
+    "target_polycount": 80000,
+    "pose_mode": "a-pose"
+  },
+  "actions": [89, 21, 16, 4, 97, 240, 242, 105, 102, 91, 86, 127, 125, 178],
+  "action_names": {
+    "89": "Combat_Stance (idle, replaced in game by the procedural stance)", "21": "Walk_Fight_Forward", "16": "RunFast",
+    "4": "Attack", "97": "Left_Slash", "240": "Thrust_Slash", "242": "Charged_Slash", "105": "Triple_Combo_Attack",
+    "102": "Sword_Judgment (skill 3)", "91": "Double_Blade_Spin (skill 2)", "86": "Basic_Jump", "127": "Charged_Ground_Slam (skill 4)",
+    "125": "Charged_Spell_Cast", "178": "Hit_Reaction"
+  },
+  "bake": true,
+  "bake_size": 4096
+}
