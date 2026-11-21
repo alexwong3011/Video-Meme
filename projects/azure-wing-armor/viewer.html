@@ -102,7 +102,7 @@ pre { margin: 12px 0 0; background: #0b0e13; border: 1px solid var(--line); bord
 <div class="wrap">
   <header>
     <div>
-      <div class="eyebrow">Bộ trang bị · 5 món · 7 sprite</div>
+      <div class="eyebrow">Bộ trang bị · 5 món · 2 góc nhìn · 14 sprite</div>
       <h1>Bộ Giáp Cánh Lam<small>Azure Wing Armor Set</small></h1>
     </div>
     <span class="rarity">Huyền thoại</span>
@@ -111,6 +111,10 @@ pre { margin: 12px 0 0; background: #0b0e13; border: 1px solid var(--line); bord
   <section class="bench">
     <div class="stage-box">
       <div class="toolbar">
+        <div class="seg" role="group" aria-label="Góc nhìn">
+          <button type="button" id="view-front" aria-pressed="true">Mặt trước</button>
+          <button type="button" id="view-back" aria-pressed="false">Mặt sau</button>
+        </div>
         <div class="seg" role="group" aria-label="Bố cục">
           <button type="button" id="lay-ref" aria-pressed="true">Bố cục gốc</button>
           <button type="button" id="lay-exp" aria-pressed="false">Tách rời</button>
@@ -147,10 +151,10 @@ pre { margin: 12px 0 0; background: #0b0e13; border: 1px solid var(--line); bord
         <table>
           <thead><tr><th>Đường dẫn</th><th>Dùng cho</th></tr></thead>
           <tbody>
-            <tr><td>sprites/@4x/*.png</td><td>Sprite từng mảnh, phóng 4× bằng ESRGAN, nền trong suốt</td></tr>
-            <tr><td>sprites/@2x, @1x</td><td>Cùng sprite, thu nhỏ có premultiply alpha</td></tr>
-            <tr><td>atlas/azure_wing@2x.*</td><td>Atlas PNG + JSON Hash (Phaser, PixiJS, Cocos, Defold)</td></tr>
-            <tr><td>paperdoll/*.png</td><td>Toàn bộ giáp đã ráp đúng vị trí</td></tr>
+            <tr><td>sprites/front|back/@4x/</td><td>7 mảnh mỗi mặt, phóng 4× bằng ESRGAN, nền trong suốt</td></tr>
+            <tr><td>sprites/*/@2x, @1x</td><td>Cùng sprite, thu nhỏ có premultiply alpha</td></tr>
+            <tr><td>atlas/azure_wing@2x.*</td><td>Atlas 14 frame "front/…", "back/…" + JSON Hash (Phaser, PixiJS, Cocos, Defold)</td></tr>
+            <tr><td>paperdoll/*.png</td><td>Toàn bộ giáp đã ráp, mỗi mặt một ảnh</td></tr>
             <tr><td>icons/, icons/framed/</td><td>Icon túi đồ 256/128/64 px, bản có khung</td></tr>
             <tr><td>azure_wing_set.json</td><td>Ô trang bị, pivot, offset, thứ tự vẽ, chỉ số</td></tr>
           </tbody>
@@ -163,11 +167,13 @@ this.load.json('azureSet', 'azure_wing_set.json');
 
 // create: ráp bộ giáp quanh gốc nhân vật (x, y = giữa hai bàn chân)
 const set = this.cache.json.get('azureSet'), k = 2; // atlas @2x
+const view = 'front';                               // 'back' khi nhân vật quay lưng
 Object.entries(set.pieces)
   .sort((a, b) => a[1].z - b[1].z)
-  .forEach(([name, p]) => {
+  .forEach(([name, piece]) => {
+    const p = piece.views[view];
     const [ox, oy] = p.offset_1x, [px, py] = p.pivot, [w, h] = p.size_1x;
-    this.add.image(x + (ox + px * w) * k * s, y + (oy + py * h) * k * s, 'azure', name)
+    this.add.image(x + (ox + px * w) * k * s, y + (oy + py * h) * k * s, 'azure', `${view}/${name}`)
       .setOrigin(px, py).setScale(s);   // s = tỉ lệ nhân vật
   });</pre>
     </div>
@@ -181,12 +187,13 @@ const PIECE_VI = { helmet: "Mũ", chestplate: "Giáp ngực", leggings: "Giáp c
 const EXPLODE = { helmet: [0, -46], chestplate: [0, -14], leggings: [0, 22], gauntlet_left: [-52, -6], gauntlet_right: [52, -6], boot_left: [-40, 56], boot_right: [40, 56] };
 
 const doll = document.getElementById("doll"), stage = document.getElementById("stage");
-let SET, current = null, pieceEls = {}, hitCanvases = {};
+let SET, current = null, pieceEls = {}, hitCanvases = {}, view = "front", exploded = false;
+const PV = name => SET.pieces[name].views[view];
 
 function press(groupIds, id) { groupIds.forEach(g => document.getElementById(g).setAttribute("aria-pressed", String(g === id))); }
 
-function layout(exploded) {
-  const B = SET.paperdoll.bounds_1x;
+function layout() {
+  const B = SET.paperdoll[view].bounds_1x;
   for (const [name, el] of Object.entries(pieceEls)) {
     const [dx, dy] = exploded ? EXPLODE[name] : [0, 0];
     const px = dx / B.w * doll.clientWidth, py = dy / B.h * doll.clientHeight;
@@ -196,17 +203,19 @@ function layout(exploded) {
 }
 
 function buildDoll() {
-  const B = SET.paperdoll.bounds_1x;
+  const B = SET.paperdoll[view].bounds_1x;
+  doll.innerHTML = ""; pieceEls = {}; hitCanvases = {};
   doll.style.aspectRatio = `${B.w} / ${B.h}`;
   // a little room so the exploded layout stays on stage
   stage.style.paddingBlock = "9% 11%";
-  Object.entries(SET.pieces).sort((a, b) => a[1].z - b[1].z).forEach(([name, p]) => {
-    const img = new Image();
+  Object.entries(SET.pieces).sort((a, b) => a[1].z - b[1].z).forEach(([name, piece]) => {
+    const p = piece.views[view], img = new Image();
     img.src = "assets/" + p.files["@2x"]; img.alt = PIECE_VI[name]; img.decoding = "async";
     img.style.left = ((p.offset_1x[0] - B.x) / B.w * 100) + "%";
     img.style.top = ((p.offset_1x[1] - B.y) / B.h * 100) + "%";
     img.style.width = (p.size_1x[0] / B.w * 100) + "%";
-    img.style.zIndex = p.z;
+    img.style.zIndex = piece.z;
+    if (current) img.classList.toggle("on", piece.item === current);
     img.onload = () => {
       const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
       const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0); hitCanvases[name] = g;
@@ -239,9 +248,10 @@ function renderInspector() {
   if (!current) {
     const n = Object.keys(SET.pieces).length;
     box.innerHTML = `<div><div class="slot">Toàn bộ</div><div class="insp-name">${SET.name_vi}</div><div class="insp-en">${SET.name_en}</div></div>
-      <p class="insp-desc">Bộ giáp bạc tím viền lam, tách từ tấm thiết kế gốc thành ${n} sprite nền trong suốt. Ráp lại theo offset trong JSON là ra đúng dáng như bản vẽ.</p>
+      <p class="insp-desc">Bộ giáp bạc tím viền lam, tách từ hai tấm thiết kế gốc (mặt trước, mặt sau) thành ${n} mảnh mỗi mặt, nền trong suốt. Ráp lại theo offset trong JSON là ra đúng dáng như bản vẽ.</p>
       <table class="spec"><tbody>
-        <tr><td>Khung ráp (@1x)</td><td>${SET.paperdoll.bounds_1x.w} × ${SET.paperdoll.bounds_1x.h} px</td></tr>
+        <tr><td>Khung ráp (@1x)</td><td>${SET.paperdoll[view].bounds_1x.w} × ${SET.paperdoll[view].bounds_1x.h} px</td></tr>
+        <tr><td>Góc nhìn</td><td>mặt trước · mặt sau</td></tr>
         <tr><td>Gốc nhân vật</td><td>giữa hai bàn chân, mặt sàn</td></tr>
         <tr><td>Độ phân giải</td><td>@1x · @2x · @4x</td></tr>
       </tbody></table>
@@ -250,9 +260,10 @@ function renderInspector() {
   }
   const it = SET.items[current];
   const stats = Object.entries(it.stats).map(([k, v]) => `<div class="stat"><b>+${v}</b><span>${STAT_VI[k] || k}</span></div>`).join("");
+  const SIDE_VI = { left: "tay/chân trái nhân vật", right: "tay/chân phải nhân vật", center: "" };
   const rows = it.pieces.map(n => {
-    const p = SET.pieces[n];
-    return `<tr><td>${PIECE_VI[n]}</td><td>${n}.png<br>${Math.round(p.size_1x[0] * 4)} × ${Math.round(p.size_1x[1] * 4)} px @4x<br>pivot ${p.pivot[0].toFixed(2)}, ${p.pivot[1].toFixed(2)} · z ${p.z}</td></tr>`;
+    const p = PV(n), side = SIDE_VI[p.character_side];
+    return `<tr><td>${PIECE_VI[n]}${side ? "<br>" + side : ""}</td><td>${view}/${n}.png<br>${Math.round(p.size_1x[0] * 4)} × ${Math.round(p.size_1x[1] * 4)} px @4x<br>pivot ${p.pivot[0].toFixed(2)}, ${p.pivot[1].toFixed(2)} · z ${SET.pieces[n].z}</td></tr>`;
   }).join("");
   box.innerHTML = `<div class="insp-head"><img src="assets/${it.icon.framed}" alt=""><div>
       <div class="slot">${SLOT_VI[it.slot]} · ${it.slot}</div><div class="insp-name">${it.name_vi}</div><div class="insp-en">${it.name_en}</div></div></div>
@@ -273,11 +284,13 @@ function start() {
   buildDoll(); renderItems(); renderInspector();
   doll.addEventListener("click", e => { const n = pieceAt(e.clientX, e.clientY); selectItem(n ? (SET.pieces[n].item === current ? null : SET.pieces[n].item) : null); });
   doll.addEventListener("mousemove", e => { doll.style.cursor = pieceAt(e.clientX, e.clientY) ? "pointer" : "default"; });
-  const lay = ["lay-ref", "lay-exp"], bgs = ["bg-dark", "bg-check", "bg-light"];
-  let exploded = false;
-  lay.forEach(id => document.getElementById(id).addEventListener("click", () => { exploded = id === "lay-exp"; press(lay, id); layout(exploded); }));
+  const lay = ["lay-ref", "lay-exp"], bgs = ["bg-dark", "bg-check", "bg-light"], views = ["view-front", "view-back"];
+  lay.forEach(id => document.getElementById(id).addEventListener("click", () => { exploded = id === "lay-exp"; press(lay, id); layout(); }));
+  views.forEach(id => document.getElementById(id).addEventListener("click", () => {
+    view = id.slice(5); press(views, id); buildDoll(); layout(); doll.classList.toggle("has-focus", !!current); renderInspector();
+  }));
   bgs.forEach(id => document.getElementById(id).addEventListener("click", () => { press(bgs, id); stage.dataset.bg = id.slice(3); }));
-  new ResizeObserver(() => layout(exploded)).observe(doll);
+  new ResizeObserver(() => layout()).observe(doll);
 }
 
 document.getElementById("copy").addEventListener("click", e => {

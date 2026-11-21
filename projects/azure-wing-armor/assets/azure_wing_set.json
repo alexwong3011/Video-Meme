@@ -3,7 +3,11 @@
  "name_vi": "Bộ Giáp Cánh Lam",
  "name_en": "Azure Wing Armor Set",
  "rarity": "legendary",
- "units": "offset_1x/size_1x/socket_1x are in @1x px relative to the character origin (between the feet, on the floor), y down. At @2x/@4x multiply by 2/4.",
+ "views": [
+  "front",
+  "back"
+ ],
+ "units": "offset_1x/size_1x/socket_1x are @1x px relative to the character origin (between the feet, on the floor), y down. At @2x/@4x multiply by 2/4. Piece names say where the piece sits on the sheet; character_side says which hand/foot it is for that view.",
  "stats_note": "Stats are example values for balancing, not from the reference sheet.",
  "items": {
   "helm": {
@@ -140,193 +144,414 @@
   "leggings": {
    "item": "greaves",
    "z": 10,
-   "size_1x": [
-    262.75,
-    358.0
-   ],
-   "offset_1x": [
-    -130.25,
-    -412.0
-   ],
-   "pivot": [
-    0.4957,
-    0.0084
-   ],
-   "socket_1x": [
-    0,
-    -409
-   ],
-   "files": {
-    "@4x": "sprites/@4x/leggings.png",
-    "@2x": "sprites/@2x/leggings.png",
-    "@1x": "sprites/@1x/leggings.png"
-   }
-  },
-  "chestplate": {
-   "item": "cuirass",
-   "z": 20,
-   "size_1x": [
-    331.0,
-    312.0
-   ],
-   "offset_1x": [
-    -164.5,
-    -633.0
-   ],
-   "pivot": [
-    0.497,
-    0.3718
-   ],
-   "socket_1x": [
-    0,
-    -517
-   ],
-   "files": {
-    "@4x": "sprites/@4x/chestplate.png",
-    "@2x": "sprites/@2x/chestplate.png",
-    "@1x": "sprites/@1x/chestplate.png"
-   }
-  },
-  "helmet": {
-   "item": "helm",
-   "z": 30,
-   "size_1x": [
-    169.75,
-    235.5
-   ],
-   "offset_1x": [
-    -84.5,
-    -832.25
-   ],
-   "pivot": [
-    0.4978,
-    0.9565
-   ],
-   "socket_1x": [
-    0,
-    -607
-   ],
-   "files": {
-    "@4x": "sprites/@4x/helmet.png",
-    "@2x": "sprites/@2x/helmet.png",
-    "@1x": "sprites/@1x/helmet.png"
-   }
-  },
-  "gauntlet_left": {
-   "item": "gauntlets",
-   "z": 40,
-   "size_1x": [
-    91.25,
-    328.0
-   ],
-   "offset_1x": [
-    -296.5,
-    -604.5
-   ],
-   "pivot": [
-    0.4658,
-    0.3216
-   ],
-   "socket_1x": [
-    -254,
-    -499
-   ],
-   "files": {
-    "@4x": "sprites/@4x/gauntlet_left.png",
-    "@2x": "sprites/@2x/gauntlet_left.png",
-    "@1x": "sprites/@1x/gauntlet_left.png"
-   }
-  },
-  "gauntlet_right": {
-   "item": "gauntlets",
-   "z": 40,
-   "size_1x": [
-    89.0,
-    331.75
-   ],
-   "offset_1x": [
-    191.5,
-    -605.0
-   ],
-   "pivot": [
-    0.5449,
-    0.3195
-   ],
-   "socket_1x": [
-    240,
-    -499
-   ],
-   "files": {
-    "@4x": "sprites/@4x/gauntlet_right.png",
-    "@2x": "sprites/@2x/gauntlet_right.png",
-    "@1x": "sprites/@1x/gauntlet_right.png"
+   "views": {
+    "front": {
+     "size_1x": [
+      262.75,
+      358.0
+     ],
+     "offset_1x": [
+      -130.25,
+      -412.0
+     ],
+     "pivot": [
+      0.4957,
+      0.0084
+     ],
+     "socket_1x": [
+      0,
+      -409
+     ],
+     "character_side": "center",
+     "files": {
+      "@4x": "sprites/front/@4x/leggings.png",
+      "@2x": "sprites/front/@2x/leggings.png",
+      "@1x": "sprites/front/@1x/leggings.png"
+     }
+    },
+    "back": {
+     "size_1x": [
+      295.5,
+      326.75
+     ],
+     "offset_1x": [
+      -148.25,
+      -427.0
+     ],
+     "pivot": [
+      0.5017,
+      0.0275
+     ],
+     "socket_1x": [
+      0,
+      -418
+     ],
+     "character_side": "center",
+     "files": {
+      "@4x": "sprites/back/@4x/leggings.png",
+      "@2x": "sprites/back/@2x/leggings.png",
+      "@1x": "sprites/back/@1x/leggings.png"
+     }
+    }
    }
   },
   "boot_left": {
    "item": "sabatons",
    "z": 15,
-   "size_1x": [
-    127.25,
-    199.25
-   ],
-   "offset_1x": [
-    -230.0,
-    -197.75
-   ],
-   "pivot": [
-    0.5108,
-    0.9774
-   ],
-   "socket_1x": [
-    -165,
-    -3
-   ],
-   "files": {
-    "@4x": "sprites/@4x/boot_left.png",
-    "@2x": "sprites/@2x/boot_left.png",
-    "@1x": "sprites/@1x/boot_left.png"
+   "views": {
+    "front": {
+     "size_1x": [
+      127.25,
+      199.25
+     ],
+     "offset_1x": [
+      -230.0,
+      -197.75
+     ],
+     "pivot": [
+      0.5108,
+      0.9774
+     ],
+     "socket_1x": [
+      -165,
+      -3
+     ],
+     "character_side": "right",
+     "files": {
+      "@4x": "sprites/front/@4x/boot_left.png",
+      "@2x": "sprites/front/@2x/boot_left.png",
+      "@1x": "sprites/front/@1x/boot_left.png"
+     }
+    },
+    "back": {
+     "size_1x": [
+      100.75,
+      174.0
+     ],
+     "offset_1x": [
+      -215.5,
+      -172.0
+     ],
+     "pivot": [
+      0.5012,
+      0.9713
+     ],
+     "socket_1x": [
+      -165,
+      -3
+     ],
+     "character_side": "left",
+     "files": {
+      "@4x": "sprites/back/@4x/boot_left.png",
+      "@2x": "sprites/back/@2x/boot_left.png",
+      "@1x": "sprites/back/@1x/boot_left.png"
+     }
+    }
    }
   },
   "boot_right": {
    "item": "sabatons",
    "z": 15,
-   "size_1x": [
-    128.5,
-    200.5
-   ],
-   "offset_1x": [
-    103.0,
-    -199.0
-   ],
-   "pivot": [
-    0.4825,
-    0.9776
-   ],
-   "socket_1x": [
-    165,
-    -3
-   ],
-   "files": {
-    "@4x": "sprites/@4x/boot_right.png",
-    "@2x": "sprites/@2x/boot_right.png",
-    "@1x": "sprites/@1x/boot_right.png"
+   "views": {
+    "front": {
+     "size_1x": [
+      128.5,
+      200.5
+     ],
+     "offset_1x": [
+      103.0,
+      -199.0
+     ],
+     "pivot": [
+      0.4825,
+      0.9776
+     ],
+     "socket_1x": [
+      165,
+      -3
+     ],
+     "character_side": "left",
+     "files": {
+      "@4x": "sprites/front/@4x/boot_right.png",
+      "@2x": "sprites/front/@2x/boot_right.png",
+      "@1x": "sprites/front/@1x/boot_right.png"
+     }
+    },
+    "back": {
+     "size_1x": [
+      99.5,
+      174.0
+     ],
+     "offset_1x": [
+      106.0,
+      -172.0
+     ],
+     "pivot": [
+      0.5427,
+      0.9713
+     ],
+     "socket_1x": [
+      160,
+      -3
+     ],
+     "character_side": "right",
+     "files": {
+      "@4x": "sprites/back/@4x/boot_right.png",
+      "@2x": "sprites/back/@2x/boot_right.png",
+      "@1x": "sprites/back/@1x/boot_right.png"
+     }
+    }
+   }
+  },
+  "chestplate": {
+   "item": "cuirass",
+   "z": 20,
+   "views": {
+    "front": {
+     "size_1x": [
+      331.0,
+      312.0
+     ],
+     "offset_1x": [
+      -164.5,
+      -633.0
+     ],
+     "pivot": [
+      0.497,
+      0.3718
+     ],
+     "socket_1x": [
+      0,
+      -517
+     ],
+     "character_side": "center",
+     "files": {
+      "@4x": "sprites/front/@4x/chestplate.png",
+      "@2x": "sprites/front/@2x/chestplate.png",
+      "@1x": "sprites/front/@1x/chestplate.png"
+     }
+    },
+    "back": {
+     "size_1x": [
+      335.75,
+      220.75
+     ],
+     "offset_1x": [
+      -169.75,
+      -630.0
+     ],
+     "pivot": [
+      0.5056,
+      0.4711
+     ],
+     "socket_1x": [
+      0,
+      -526
+     ],
+     "character_side": "center",
+     "files": {
+      "@4x": "sprites/back/@4x/chestplate.png",
+      "@2x": "sprites/back/@2x/chestplate.png",
+      "@1x": "sprites/back/@1x/chestplate.png"
+     }
+    }
+   }
+  },
+  "helmet": {
+   "item": "helm",
+   "z": 30,
+   "views": {
+    "front": {
+     "size_1x": [
+      169.75,
+      235.5
+     ],
+     "offset_1x": [
+      -84.5,
+      -832.25
+     ],
+     "pivot": [
+      0.4978,
+      0.9565
+     ],
+     "socket_1x": [
+      0,
+      -607
+     ],
+     "character_side": "center",
+     "files": {
+      "@4x": "sprites/front/@4x/helmet.png",
+      "@2x": "sprites/front/@2x/helmet.png",
+      "@1x": "sprites/front/@1x/helmet.png"
+     }
+    },
+    "back": {
+     "size_1x": [
+      174.25,
+      215.0
+     ],
+     "offset_1x": [
+      -89.75,
+      -844.75
+     ],
+     "pivot": [
+      0.5151,
+      0.9384
+     ],
+     "socket_1x": [
+      0,
+      -643
+     ],
+     "character_side": "center",
+     "files": {
+      "@4x": "sprites/back/@4x/helmet.png",
+      "@2x": "sprites/back/@2x/helmet.png",
+      "@1x": "sprites/back/@1x/helmet.png"
+     }
+    }
+   }
+  },
+  "gauntlet_left": {
+   "item": "gauntlets",
+   "z": 40,
+   "views": {
+    "front": {
+     "size_1x": [
+      91.25,
+      328.0
+     ],
+     "offset_1x": [
+      -296.5,
+      -604.5
+     ],
+     "pivot": [
+      0.4658,
+      0.3216
+     ],
+     "socket_1x": [
+      -254,
+      -499
+     ],
+     "character_side": "right",
+     "files": {
+      "@4x": "sprites/front/@4x/gauntlet_left.png",
+      "@2x": "sprites/front/@2x/gauntlet_left.png",
+      "@1x": "sprites/front/@1x/gauntlet_left.png"
+     }
+    },
+    "back": {
+     "size_1x": [
+      85.0,
+      304.25
+     ],
+     "offset_1x": [
+      -297.75,
+      -608.0
+     ],
+     "pivot": [
+      0.4676,
+      0.3287
+     ],
+     "socket_1x": [
+      -258,
+      -508
+     ],
+     "character_side": "left",
+     "files": {
+      "@4x": "sprites/back/@4x/gauntlet_left.png",
+      "@2x": "sprites/back/@2x/gauntlet_left.png",
+      "@1x": "sprites/back/@1x/gauntlet_left.png"
+     }
+    }
+   }
+  },
+  "gauntlet_right": {
+   "item": "gauntlets",
+   "z": 40,
+   "views": {
+    "front": {
+     "size_1x": [
+      89.0,
+      331.75
+     ],
+     "offset_1x": [
+      191.5,
+      -605.0
+     ],
+     "pivot": [
+      0.5449,
+      0.3195
+     ],
+     "socket_1x": [
+      240,
+      -499
+     ],
+     "character_side": "left",
+     "files": {
+      "@4x": "sprites/front/@4x/gauntlet_right.png",
+      "@2x": "sprites/front/@2x/gauntlet_right.png",
+      "@1x": "sprites/front/@1x/gauntlet_right.png"
+     }
+    },
+    "back": {
+     "size_1x": [
+      92.75,
+      306.25
+     ],
+     "offset_1x": [
+      197.0,
+      -610.25
+     ],
+     "pivot": [
+      0.4636,
+      0.3339
+     ],
+     "socket_1x": [
+      240,
+      -508
+     ],
+     "character_side": "right",
+     "files": {
+      "@4x": "sprites/back/@4x/gauntlet_right.png",
+      "@2x": "sprites/back/@2x/gauntlet_right.png",
+      "@1x": "sprites/back/@1x/gauntlet_right.png"
+     }
+    }
    }
   }
  },
  "paperdoll": {
-  "bounds_1x": {
-   "x": -301,
-   "y": -837,
-   "w": 586,
-   "h": 843
+  "front": {
+   "bounds_1x": {
+    "x": -301,
+    "y": -837,
+    "w": 586,
+    "h": 843
+   },
+   "origin_in_image_1x": [
+    301,
+    837
+   ],
+   "files": {
+    "@4x": "paperdoll/azure_wing_front@4x.png",
+    "@2x": "paperdoll/azure_wing_front@2x.png"
+   }
   },
-  "origin_in_image_1x": [
-   301,
-   837
-  ],
-  "files": {
-   "@4x": "paperdoll/azure_wing_full@4x.png",
-   "@2x": "paperdoll/azure_wing_full@2x.png"
+  "back": {
+   "bounds_1x": {
+    "x": -302,
+    "y": -849,
+    "w": 596,
+    "h": 855
+   },
+   "origin_in_image_1x": [
+    302,
+    849
+   ],
+   "files": {
+    "@4x": "paperdoll/azure_wing_back@4x.png",
+    "@2x": "paperdoll/azure_wing_back@2x.png"
+   }
   }
  },
  "atlas": "atlas/azure_wing@2x.json"

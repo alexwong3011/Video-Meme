@@ -1,6 +1,6 @@
 {
  "frames": {
-  "leggings": {
+  "front/leggings": {
    "frame": {
     "x": 0,
     "y": 0,
@@ -24,7 +24,7 @@
     "y": 0.0084
    }
   },
-  "gauntlet_right": {
+  "front/gauntlet_right": {
    "frame": {
     "x": 528,
     "y": 0,
@@ -48,7 +48,7 @@
     "y": 0.3195
    }
   },
-  "gauntlet_left": {
+  "front/gauntlet_left": {
    "frame": {
     "x": 708,
     "y": 0,
@@ -72,10 +72,34 @@
     "y": 0.3216
    }
   },
-  "chestplate": {
+  "back/leggings": {
    "frame": {
     "x": 892,
     "y": 0,
+    "w": 591,
+    "h": 654
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 591,
+    "h": 654
+   },
+   "sourceSize": {
+    "w": 591,
+    "h": 654
+   },
+   "pivot": {
+    "x": 0.5017,
+    "y": 0.0275
+   }
+  },
+  "front/chestplate": {
+   "frame": {
+    "x": 0,
+    "y": 718,
     "w": 662,
     "h": 624
    },
@@ -96,10 +120,58 @@
     "y": 0.3718
    }
   },
-  "helmet": {
+  "back/gauntlet_right": {
    "frame": {
-    "x": 1556,
+    "x": 664,
+    "y": 718,
+    "w": 186,
+    "h": 612
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
     "y": 0,
+    "w": 186,
+    "h": 612
+   },
+   "sourceSize": {
+    "w": 186,
+    "h": 612
+   },
+   "pivot": {
+    "x": 0.4636,
+    "y": 0.3339
+   }
+  },
+  "back/gauntlet_left": {
+   "frame": {
+    "x": 852,
+    "y": 718,
+    "w": 170,
+    "h": 608
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 170,
+    "h": 608
+   },
+   "sourceSize": {
+    "w": 170,
+    "h": 608
+   },
+   "pivot": {
+    "x": 0.4676,
+    "y": 0.3287
+   }
+  },
+  "front/helmet": {
+   "frame": {
+    "x": 1024,
+    "y": 718,
     "w": 340,
     "h": 471
    },
@@ -120,10 +192,58 @@
     "y": 0.9565
    }
   },
-  "boot_right": {
+  "back/chestplate": {
+   "frame": {
+    "x": 1366,
+    "y": 718,
+    "w": 672,
+    "h": 442
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 672,
+    "h": 442
+   },
+   "sourceSize": {
+    "w": 672,
+    "h": 442
+   },
+   "pivot": {
+    "x": 0.5056,
+    "y": 0.4711
+   }
+  },
+  "back/helmet": {
    "frame": {
     "x": 0,
-    "y": 718,
+    "y": 1344,
+    "w": 348,
+    "h": 430
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 348,
+    "h": 430
+   },
+   "sourceSize": {
+    "w": 348,
+    "h": 430
+   },
+   "pivot": {
+    "x": 0.5151,
+    "y": 0.9384
+   }
+  },
+  "front/boot_right": {
+   "frame": {
+    "x": 350,
+    "y": 1344,
     "w": 257,
     "h": 401
    },
@@ -144,10 +264,10 @@
     "y": 0.9776
    }
   },
-  "boot_left": {
+  "front/boot_left": {
    "frame": {
-    "x": 259,
-    "y": 718,
+    "x": 609,
+    "y": 1344,
     "w": 254,
     "h": 398
    },
@@ -167,16 +287,64 @@
     "x": 0.5108,
     "y": 0.9774
    }
+  },
+  "back/boot_left": {
+   "frame": {
+    "x": 865,
+    "y": 1344,
+    "w": 202,
+    "h": 348
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 202,
+    "h": 348
+   },
+   "sourceSize": {
+    "w": 202,
+    "h": 348
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 0.9713
+   }
+  },
+  "back/boot_right": {
+   "frame": {
+    "x": 1069,
+    "y": 1344,
+    "w": 199,
+    "h": 348
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 199,
+    "h": 348
+   },
+   "sourceSize": {
+    "w": 199,
+    "h": 348
+   },
+   "pivot": {
+    "x": 0.5427,
+    "y": 0.9713
+   }
   }
  },
  "meta": {
   "app": "azure-wing-armor/pack.py",
-  "version": "1.0",
+  "version": "1.1",
   "image": "azure_wing@2x.png",
   "format": "RGBA8888",
   "size": {
    "w": 2048,
-   "h": 1121
+   "h": 1776
   },
   "scale": "2"
  }

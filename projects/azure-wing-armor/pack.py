@@ -1,33 +1,29 @@
 #!/usr/bin/env python3
-"""Pack the cut-out armor pieces into game-ready assets.
+"""Pack the cut-out armor pieces of every view into game-ready assets.
 
-usage: pack.py PIECES_DIR OUT_DIR
-  PIECES_DIR: output of pieces.py (PNG per piece + layout.json, at layout["scale"] x source resolution)
+usage: pack.py OUT_DIR VIEW=PIECES_DIR [VIEW=PIECES_DIR ...]      e.g. pack.py assets front=work/front/p4 back=work/back/p4
+  PIECES_DIR: output of pieces.py for that view (PNG per piece + layout.json)
 writes into OUT_DIR:
-  sprites/@4x|@2x|@1x/<piece>.png   trimmed transparent sprites
-  paperdoll/azure_wing_full@{4x,2x}.png   all pieces assembled in their reference positions
-  atlas/azure_wing@2x.png + .json   TexturePacker "JSON Hash" atlas (Phaser, PixiJS, Cocos, Defold importers...)
-  icons/<item>_{256,128,64}.png and icons/framed/<item>_256.png   inventory icons
-  azure_wing_set.json   item + layout data (slots, pivots, offsets, z-order, stats)
+  sprites/<view>/@4x|@2x|@1x/<piece>.png   trimmed transparent sprites
+  paperdoll/azure_wing_<view>@{4x,2x}.png  all pieces of a view assembled in their reference positions
+  atlas/azure_wing@2x.png + .json          TexturePacker "JSON Hash" atlas, frames named "<view>/<piece>"
+  icons/<item>_{256,128,64}.png, icons/framed/<item>_256.png   inventory icons (front view)
+  azure_wing_set.json                      items + per-view layout data (pivots, offsets, z-order)
 """
 import json, os, sys, math
 from PIL import Image, ImageDraw, ImageFilter
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from views import VIEWS
 
-src, out = sys.argv[1], sys.argv[2]
-L = json.load(open(os.path.join(src, "layout.json")))
-SC = L["scale"]                      # pieces are SC x the reference image
-FX, FY = 570, 110                    # figure crop origin in the reference image
-ORIGIN = (900, 969)                  # character origin in the reference image: between the feet, on the floor
+out = sys.argv[1]
+SRC = dict(a.split("=", 1) for a in sys.argv[2:])
+ITEM_OF = {"leggings": "greaves", "chestplate": "cuirass", "helmet": "helm", "gauntlet_left": "gauntlets",
+           "gauntlet_right": "gauntlets", "boot_left": "sabatons", "boot_right": "sabatons"}
+Z = {"leggings": 10, "boot_left": 15, "boot_right": 15, "chestplate": 20, "helmet": 30, "gauntlet_left": 40, "gauntlet_right": 40}
+# file names say where the piece sits on the sheet; which hand/foot of the character that is depends on the view
+SIDE = {"front": {"gauntlet_left": "right", "gauntlet_right": "left", "boot_left": "right", "boot_right": "left"},
+        "back":  {"gauntlet_left": "left", "gauntlet_right": "right", "boot_left": "left", "boot_right": "right"}}
 
-PIECES = {   # z: draw order on the paper doll (low = behind). attach = socket point in reference-image px
-  "leggings":       dict(item="greaves",   z=10, attach=(900, 560)),
-  "chestplate":     dict(item="cuirass",   z=20, attach=(900, 452)),
-  "helmet":         dict(item="helm",      z=30, attach=(900, 362)),
-  "gauntlet_left":  dict(item="gauntlets", z=40, attach=(646, 470)),
-  "gauntlet_right": dict(item="gauntlets", z=40, attach=(1140, 470)),
-  "boot_left":      dict(item="sabatons",  z=15, attach=(735, 966)),
-  "boot_right":     dict(item="sabatons",  z=15, attach=(1065, 966)),
-}
 ITEMS = {
   "helm":      dict(slot="head",  name_vi="Mũ Cánh Lam",        name_en="Azure Wing Helm",      pieces=["helmet"],
                     desc_vi="Mũ giáp bạc mỏ chim ưng, hai cánh lông vũ xanh lam ôm lấy thái dương; đôi mắt lam phát sáng khi chiến đấu.",
@@ -57,52 +53,51 @@ def resize(im, w, h):
     return im.convert("RGBa").resize((max(1, w), max(1, h)), Image.LANCZOS).convert("RGBA")
 
 def trim(im, pad=2):
-    bb = im.getchannel("A").point(lambda v: 255 if v > 3 else 0).getbbox()
-    x0, y0, x1, y1 = bb
+    x0, y0, x1, y1 = im.getchannel("A").point(lambda v: 255 if v > 3 else 0).getbbox()
     x0, y0 = max(0, x0 - pad), max(0, y0 - pad); x1, y1 = min(im.width, x1 + pad), min(im.height, y1 + pad)
     return im.crop((x0, y0, x1, y1)), (x0, y0)
 
-# ---------- sprites at three scales ----------
-sprites, data_pieces = {}, {}
-for name, info in PIECES.items():
-    raw = Image.open(os.path.join(src, name + ".png")).convert("RGBA")
-    m = L["pieces"][name]
-    im, (dx, dy) = trim(raw)
-    # top-left of the trimmed sprite in reference-image px
-    rx, ry = FX + (m["x"] + dx) / SC, FY + (m["y"] + dy) / SC
-    rw, rh = im.width / SC, im.height / SC
-    sprites[name] = im
-    for tag, k in (("@4x", 4), ("@2x", 2), ("@1x", 1)):
-        w, h = round(rw * k), round(rh * k)
-        (im if (k == SC and im.size == (w, h)) else resize(im, w, h)).save(os.path.join(sub("sprites", tag), name + ".png"), optimize=True)
-    ax, ay = info["attach"]
-    data_pieces[name] = dict(
-        item=info["item"], z=info["z"],
-        size_1x=[round(rw, 2), round(rh, 2)],
-        # where the sprite's top-left goes relative to the character origin (feet, floor), in @1x px; multiply by the scale you use
-        offset_1x=[round(rx - ORIGIN[0], 2), round(ry - ORIGIN[1], 2)],
-        # normalized pivot (0..1, origin top-left) at the piece's socket: rotate/attach around this point
-        pivot=[round((ax - rx) / rw, 4), round((ay - ry) / rh, 4)],
-        socket_1x=[ax - ORIGIN[0], ay - ORIGIN[1]],
-        files={t: f"sprites/{t}/{name}.png" for t in ("@4x", "@2x", "@1x")},
-    )
+pieces = {n: dict(item=ITEM_OF[n], z=Z[n], views={}) for n in Z}
+paperdolls, sprites = {}, {}
+for view, pdir in SRC.items():
+    V = VIEWS[view]; L = json.load(open(os.path.join(pdir, "layout.json"))); SC = L["scale"]
+    FX, FY = V["figure"][:2]; OX, OY = V["origin"]
+    for name in Z:
+        raw = Image.open(os.path.join(pdir, name + ".png")).convert("RGBA")
+        m = L["pieces"][name]
+        im, (dx, dy) = trim(raw)
+        rx, ry = FX + (m["x"] + dx) / SC, FY + (m["y"] + dy) / SC      # sprite top-left in reference px
+        rw, rh = im.width / SC, im.height / SC
+        sprites[(view, name)] = im
+        files = {}
+        for tag, k in (("@4x", 4), ("@2x", 2), ("@1x", 1)):
+            w, h = round(rw * k), round(rh * k)
+            files[tag] = f"sprites/{view}/{tag}/{name}.png"
+            (im if (k == SC and im.size == (w, h)) else resize(im, w, h)).save(os.path.join(sub("sprites", view, tag), name + ".png"), optimize=True)
+        ax, ay = V["attach"][name]
+        pieces[name]["views"][view] = dict(
+            size_1x=[round(rw, 2), round(rh, 2)],
+            offset_1x=[round(rx - OX, 2), round(ry - OY, 2)],          # sprite top-left relative to the character origin
+            pivot=[round((ax - rx) / rw, 4), round((ay - ry) / rh, 4)],  # normalized socket point inside the sprite
+            socket_1x=[ax - OX, ay - OY],
+            character_side=SIDE[view].get(name, "center"),
+            files=files)
+    # paper doll of this view
+    vs = [pieces[n]["views"][view] for n in Z]
+    bx0 = math.floor(min(p["offset_1x"][0] for p in vs)) - 4; by0 = math.floor(min(p["offset_1x"][1] for p in vs)) - 4
+    bx1 = math.ceil(max(p["offset_1x"][0] + p["size_1x"][0] for p in vs)) + 4
+    by1 = math.ceil(max(p["offset_1x"][1] + p["size_1x"][1] for p in vs)) + 4
+    for tag, k in (("@4x", 4), ("@2x", 2)):
+        doll = Image.new("RGBA", ((bx1 - bx0) * k, (by1 - by0) * k), (0, 0, 0, 0))
+        for n in sorted(Z, key=Z.get):
+            p = pieces[n]["views"][view]; im = Image.open(os.path.join(out, p["files"][tag]))
+            doll.alpha_composite(im, (round((p["offset_1x"][0] - bx0) * k), round((p["offset_1x"][1] - by0) * k)))
+        doll.save(os.path.join(sub("paperdoll"), f"azure_wing_{view}{tag}.png"), optimize=True)
+    paperdolls[view] = dict(bounds_1x=dict(x=bx0, y=by0, w=bx1 - bx0, h=by1 - by0), origin_in_image_1x=[-bx0, -by0],
+                            files={t: f"paperdoll/azure_wing_{view}{t}.png" for t in ("@4x", "@2x")})
 
-# ---------- paper doll (assembled) ----------
-xs = [data_pieces[n]["offset_1x"][0] for n in PIECES]; ys = [data_pieces[n]["offset_1x"][1] for n in PIECES]
-xe = [data_pieces[n]["offset_1x"][0] + data_pieces[n]["size_1x"][0] for n in PIECES]
-ye = [data_pieces[n]["offset_1x"][1] + data_pieces[n]["size_1x"][1] for n in PIECES]
-bx0, by0, bx1, by1 = math.floor(min(xs)) - 4, math.floor(min(ys)) - 4, math.ceil(max(xe)) + 4, math.ceil(max(ye)) + 4
-for tag, k in (("@4x", 4), ("@2x", 2)):
-    doll = Image.new("RGBA", ((bx1 - bx0) * k, (by1 - by0) * k), (0, 0, 0, 0))
-    for n in sorted(PIECES, key=lambda n: PIECES[n]["z"]):
-        p = data_pieces[n]; im = Image.open(os.path.join(out, p["files"][tag]))
-        doll.alpha_composite(im, (round((p["offset_1x"][0] - bx0) * k), round((p["offset_1x"][1] - by0) * k)))
-    doll.save(os.path.join(sub("paperdoll"), f"azure_wing_full{tag}.png"), optimize=True)
-paperdoll = dict(bounds_1x=dict(x=bx0, y=by0, w=bx1 - bx0, h=by1 - by0),
-                 origin_in_image_1x=[-bx0, -by0], files={t: f"paperdoll/azure_wing_full{t}.png" for t in ("@4x", "@2x")})
-
-# ---------- atlas (@2x, shelf packing) ----------
-ims = {n: Image.open(os.path.join(out, data_pieces[n]["files"]["@2x"])) for n in PIECES}
+# ---------- atlas (@2x, shelf packing), frames "<view>/<piece>" ----------
+ims = {f"{v}/{n}": Image.open(os.path.join(out, pieces[n]["views"][v]["files"]["@2x"])) for v in SRC for n in Z}
 order = sorted(ims, key=lambda n: -ims[n].height)
 AW, PAD = 2048, 2
 x = y = sh = 0; pos = {}
@@ -110,24 +105,23 @@ for n in order:
     w, h = ims[n].size
     if x + w + PAD > AW: x, y, sh = 0, y + sh + PAD, 0
     pos[n] = (x, y); x += w + PAD; sh = max(sh, h)
-AH = 1 << (y + sh).bit_length()
-atlas = Image.new("RGBA", (AW, AH), (0, 0, 0, 0)); frames = {}
+atlas = Image.new("RGBA", (AW, y + sh + PAD), (0, 0, 0, 0)); frames = {}
 for n, (px, py) in pos.items():
     atlas.alpha_composite(ims[n], (px, py)); w, h = ims[n].size
+    v, name = n.split("/")
+    pv = pieces[name]["views"][v]["pivot"]
     frames[n] = dict(frame=dict(x=px, y=py, w=w, h=h), rotated=False, trimmed=False,
-                     spriteSourceSize=dict(x=0, y=0, w=w, h=h), sourceSize=dict(w=w, h=h),
-                     pivot=dict(x=data_pieces[n]["pivot"][0], y=data_pieces[n]["pivot"][1]))
-bb = atlas.getbbox(); atlas = atlas.crop((0, 0, AW, bb[3] + PAD))
+                     spriteSourceSize=dict(x=0, y=0, w=w, h=h), sourceSize=dict(w=w, h=h), pivot=dict(x=pv[0], y=pv[1]))
 atlas.save(os.path.join(sub("atlas"), "azure_wing@2x.png"), optimize=True)
-json.dump(dict(frames=frames, meta=dict(app="azure-wing-armor/pack.py", version="1.0", image="azure_wing@2x.png",
+json.dump(dict(frames=frames, meta=dict(app="azure-wing-armor/pack.py", version="1.1", image="azure_wing@2x.png",
           format="RGBA8888", size=dict(w=atlas.width, h=atlas.height), scale="2")),
           open(os.path.join(out, "atlas", "azure_wing@2x.json"), "w"), indent=1)
 
 # ---------- inventory icons ----------
 def icon_art(item):
     names = ITEMS[item]["pieces"]
-    if len(names) == 1: return sprites[names[0]]
-    a, b = sprites[names[0]], sprites[names[1]]          # pairs: draw both, slightly overlapped
+    if len(names) == 1: return sprites[("front", names[0])]
+    a, b = sprites[("front", names[0])], sprites[("front", names[1])]          # pairs: draw both, slightly overlapped
     gap = -int(min(a.width, b.width) * 0.12)
     c = Image.new("RGBA", (a.width + b.width + gap, max(a.height, b.height)), (0, 0, 0, 0))
     c.alpha_composite(a, (0, c.height - a.height)); c.alpha_composite(b, (a.width + gap, c.height - b.height))
@@ -161,10 +155,12 @@ for item in ITEMS:
     icons[item] = dict(plain={str(S): f"icons/{item}_{S}.png" for S in (256, 128, 64)}, framed=f"icons/framed/{item}_256.png")
 
 data = dict(id="azure_wing", name_vi="Bộ Giáp Cánh Lam", name_en="Azure Wing Armor Set", rarity="legendary",
-            units="offset_1x/size_1x/socket_1x are in @1x px relative to the character origin (between the feet, on the floor), y down. "
-                  "At @2x/@4x multiply by 2/4.",
+            views=list(SRC),
+            units="offset_1x/size_1x/socket_1x are @1x px relative to the character origin (between the feet, on the floor), y down. "
+                  "At @2x/@4x multiply by 2/4. Piece names say where the piece sits on the sheet; character_side says which "
+                  "hand/foot it is for that view.",
             stats_note="Stats are example values for balancing, not from the reference sheet.",
             items={k: dict(v, icon=icons[k]) for k, v in ITEMS.items()}, set_bonus=SET_BONUS,
-            pieces=data_pieces, paperdoll=paperdoll, atlas="atlas/azure_wing@2x.json")
+            pieces=pieces, paperdoll=paperdolls, atlas="atlas/azure_wing@2x.json")
 json.dump(data, open(os.path.join(out, "azure_wing_set.json"), "w"), ensure_ascii=False, indent=1)
-print("atlas", atlas.size, "doll", (bx1 - bx0, by1 - by0))
+print("atlas", atlas.size, {v: (p["bounds_1x"]["w"], p["bounds_1x"]["h"]) for v, p in paperdolls.items()})
