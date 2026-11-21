@@ -598,7 +598,7 @@ function drawPoseCharacter(ps, lift) {
     grip = toW(show, ...m.grip); guard = toW(show, m.blade[0], m.blade[1]); tip = toW(show, m.blade[2], m.blade[3]);
   }
   PH = { main: grip, off: grip, back: toW(show, ...m.back) };
-  CUR_BLADE = [guard, tip];
+  CUR_BLADE = [guard, tip]; VFX.blade(guard, tip, 1.15);
   const def = P.atk.def, u = ps.u;
   if (!def.special) {
     if (u > def.hit[0] - 0.06 && u < def.hit[1] + 0.06) P.trails.main.push([guard, tip, clock, 0.6]);
@@ -677,15 +677,176 @@ const FX = (() => {
     },
   };
 })();
+
+// ---------- MU-style effect library ----------
+// A handful of procedural textures (flare, star, crescent, shock ring, rune circle, beam, mist, shard, cross slash) shared by every
+// skill; each skill is a short timeline of layers: a ground shape that reads at 45 degrees, light in the air, sparks, and a lingering mist.
+const VFX = (() => {
+  const C = { az: [95, 176, 255], pale: [214, 236, 255], vio: [155, 123, 255], gold: [255, 206, 110], deep: [50, 95, 210] };
+  const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  const mix = (c, k) => c.map(v => Math.round(v + (255 - v) * k));
+  const mk = (w, h, f) => { const c = document.createElement("canvas"); c.width = w; c.height = h; f(c.getContext("2d"), w, h); return c; };
+  const MID = -Math.PI * 1.15 / 2;                       // the crescent texture spans -207..0 degrees: this is its middle
+  const MAKE = {
+    flare: c => mk(128, 128, g => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.18, rgba(c, 0.9));
+      r.addColorStop(0.5, rgba(c, 0.25)); r.addColorStop(1, rgba(c, 0)); g.fillStyle = r; g.fillRect(0, 0, 128, 128); }),
+    star: c => mk(256, 256, g => { g.translate(128, 128); g.globalCompositeOperation = "lighter";
+      const ray = (len, wid, rot, a) => { g.save(); g.rotate(rot); const gr = g.createLinearGradient(-len, 0, len, 0); gr.addColorStop(0, rgba(c, 0)); gr.addColorStop(0.5, `rgba(255,255,255,${a})`);
+        gr.addColorStop(1, rgba(c, 0)); g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, len, wid, 0, 0, TAU); g.fill(); g.restore(); };
+      ray(126, 5, 0, 1); ray(126, 5, Math.PI / 2, 1); ray(72, 3, Math.PI / 4, 0.7); ray(72, 3, -Math.PI / 4, 0.7);
+      const r = g.createRadialGradient(0, 0, 0, 0, 0, 62); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.22, rgba(c, 0.85)); r.addColorStop(1, rgba(c, 0)); g.fillStyle = r; g.fillRect(-62, -62, 124, 124); }),
+    crescent: c => mk(256, 256, g => { g.translate(128, 128); g.globalCompositeOperation = "lighter"; g.lineCap = "round";
+      const a0 = -Math.PI * 1.15, N = 64, R = 118, at = u => a0 * (1 - u);
+      for (let i = 0; i < N; i++) { const u = i / N, w = 2 + 34 * Math.pow(u, 1.5); g.strokeStyle = rgba(c, 0.06 + 0.5 * u * u); g.lineWidth = w; g.beginPath(); g.arc(0, 0, R - w / 2, at(u), at((i + 1) / N) + 0.01); g.stroke(); }
+      for (let i = 0; i < N; i++) { const u = i / N; g.strokeStyle = `rgba(255,255,255,${0.95 * Math.pow(u, 1.6)})`; g.lineWidth = 1 + 3.5 * u; g.beginPath(); g.arc(0, 0, R - 1 - 2 * u, at(u), at((i + 1) / N) + 0.01); g.stroke(); } }),
+    ring: c => mk(256, 256, g => { const r = g.createRadialGradient(128, 128, 0, 128, 128, 128); r.addColorStop(0, rgba(c, 0)); r.addColorStop(0.68, rgba(c, 0.04)); r.addColorStop(0.88, rgba(c, 0.6));
+      r.addColorStop(0.94, "rgba(255,255,255,.95)"); r.addColorStop(1, rgba(c, 0)); g.fillStyle = r; g.fillRect(0, 0, 256, 256); }),
+    rune: c => mk(512, 512, g => { g.translate(256, 256); g.globalCompositeOperation = "lighter";
+      const pass = (lw, a, col) => { g.lineWidth = lw; g.strokeStyle = rgba(col, a);
+        for (const r of [244, 232, 170, 160, 96]) { g.beginPath(); g.arc(0, 0, r, 0, TAU); g.stroke(); }
+        for (let i = 0; i < 72; i++) { const an = i / 72 * TAU, l = i % 6 === 0 ? 24 : 10; g.beginPath(); g.moveTo(Math.cos(an) * (232 - l), Math.sin(an) * (232 - l)); g.lineTo(Math.cos(an) * 232, Math.sin(an) * 232); g.stroke(); }
+        for (const off of [0, Math.PI / 3]) { g.beginPath(); for (let k = 0; k <= 3; k++) { const an = off + k / 3 * TAU - Math.PI / 2; k ? g.lineTo(Math.cos(an) * 160, Math.sin(an) * 160) : g.moveTo(Math.cos(an) * 160, Math.sin(an) * 160); } g.stroke(); }
+        for (let i = 0; i < 8; i++) { g.save(); g.rotate(i / 8 * TAU); g.translate(0, -200); g.beginPath(); g.moveTo(0, -13); g.lineTo(8, 0); g.lineTo(0, 13); g.lineTo(-8, 0); g.closePath(); g.stroke(); g.restore(); }
+        for (let i = 0; i < 24; i++) { const an = i / 24 * TAU + 0.05; g.beginPath(); g.arc(0, 0, 190 + (i * 7 % 3) * 7, an, an + 0.13); g.stroke(); } };
+      pass(10, 0.1, c); pass(4, 0.3, c); pass(1.6, 0.95, mix(c, 0.5));
+      const r = g.createRadialGradient(0, 0, 0, 0, 0, 250); r.addColorStop(0, rgba(c, 0.22)); r.addColorStop(0.6, rgba(c, 0.07)); r.addColorStop(1, rgba(c, 0)); g.fillStyle = r; g.beginPath(); g.arc(0, 0, 250, 0, TAU); g.fill(); }),
+    beam: c => mk(64, 256, g => { for (let x = 0; x < 64; x++) { const d = Math.abs(x - 31.5) / 32, k = Math.exp(-d * d * 8), w = mix(c, k * k);
+      const gr = g.createLinearGradient(0, 256, 0, 0); gr.addColorStop(0, rgba(w, k)); gr.addColorStop(0.65, rgba(c, k * 0.45)); gr.addColorStop(1, rgba(c, 0)); g.fillStyle = gr; g.fillRect(x, 0, 1, 256); } }),
+    smoke: c => mk(128, 128, g => { for (let i = 0; i < 10; i++) { const x = 64 + (Math.random() - 0.5) * 54, y = 64 + (Math.random() - 0.5) * 54, r = 20 + Math.random() * 26;
+      const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, rgba(c, 0.32)); gr.addColorStop(1, rgba(c, 0)); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); } }),
+    shard: c => mk(32, 64, g => { g.translate(16, 32); const gr = g.createLinearGradient(-10, -30, 10, 30); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.5, rgba(c, 0.9)); gr.addColorStop(1, rgba(c, 0.25));
+      g.fillStyle = gr; g.beginPath(); g.moveTo(0, -30); g.lineTo(9, -4); g.lineTo(0, 30); g.lineTo(-9, -4); g.closePath(); g.fill(); g.strokeStyle = "rgba(255,255,255,.9)"; g.lineWidth = 1.2; g.stroke(); }),
+    xslash: c => mk(256, 256, g => { g.translate(128, 128); g.globalCompositeOperation = "lighter";
+      for (const r of [Math.PI / 4, -Math.PI / 4]) { g.save(); g.rotate(r); g.fillStyle = rgba(c, 0.3); g.beginPath(); g.ellipse(0, 0, 112, 15, 0, 0, TAU); g.fill();
+        const gr = g.createLinearGradient(-124, 0, 124, 0); gr.addColorStop(0, rgba(c, 0)); gr.addColorStop(0.5, "rgba(255,255,255,1)"); gr.addColorStop(1, rgba(c, 0)); g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, 124, 6, 0, 0, TAU); g.fill(); g.restore(); } }),
+  };
+  const cache = {};
+  const T = (name, col) => cache[name + col] || (cache[name + col] = MAKE[name](C[col]));
+  const items = [], timers = [];
+  const easeOut = u => 1 - Math.pow(1 - u, 3);
+  const add = o => { const it = Object.assign({ t: -(o.delay || 0), life: 0.3, a: 1, fi: 0.08, fo: 0.45, s0: 1, s1: 1, rot: 0, spin: 0, h: 0, vx: 0, vy: 0, vh: 0, g: 0 }, o);
+    items.push(it); if (items.length > 700) items.splice(0, items.length - 700); return it; };
+  const env = it => { const u = it.t / it.life; return it.a * Math.min(1, it.t / Math.max(1e-3, it.fi * it.life)) * (u > it.fo ? Math.max(0, 1 - (u - it.fo) / (1 - it.fo)) : 1); };
+  const size = it => lerp(it.s0, it.s1, easeOut(clamp(it.t / it.life, 0, 1))) * M;
+  let moteT = 0, glintT = 0;
+  const api = {
+    C, MID, T,
+    decal: (tex, col, x, y, o = {}) => add(Object.assign({ kind: "decal", img: T(tex, col), x, y }, o)),
+    bill: (tex, col, x, y, h, o = {}) => add(Object.assign({ kind: "bill", img: T(tex, col), x, y, h }, o)),
+    beam: (col, x, y, o = {}) => add(Object.assign({ kind: "beam", img: T("beam", col), base: T("flare", col), x, y, w: 0.2, hgt: 1.5, fi: 0.05, fo: 0.3 }, o)),
+    bolt: (a, b, col, life = 0.14, o = {}) => add(Object.assign({ kind: "bolt", a, b, col: C[col], life, fi: 0.01, fo: 0.5, next: 0, x: 0, y: 0 }, o)),
+    ribbon: (path, o = {}) => add(Object.assign({ kind: "ribbon", path, pts: [], col: C[o.col || "az"], w: 0.07, tail: 0.13, fi: 0.01, fo: 0.7, x: 0, y: 0 }, o, { col: C[o.col || "az"] })),
+    sparks(x, y, h, n, col, o = {}) {
+      for (let i = 0; i < n; i++) { const a = Math.random() * TAU, sp = (o.speed ?? 3.2) * M * (0.4 + Math.random() * 0.8);
+        add({ kind: "spark", x, y, h, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * DEP * 0.7, vh: (o.up ?? 1.2) * M * (0.2 + Math.random()), g: (o.grav ?? 7) * M,
+              col: C[col], life: (o.life ?? 0.32) * (0.6 + Math.random() * 0.7), fi: 0.01, fo: 0.4, len: o.len ?? 0.035 }); } },
+    shards(x, y, h, n, col, o = {}) {
+      for (let i = 0; i < n; i++) { const a = Math.random() * TAU, sp = (o.speed ?? 2.6) * M * (0.4 + Math.random() * 0.8);
+        add({ kind: "bill", img: T("shard", col), x, y, h, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * DEP * 0.7, vh: (o.up ?? 2.2) * M * (0.4 + Math.random()), g: 9 * M,
+              s0: 0.07, s1: 0.05, rot: Math.random() * TAU, spin: (Math.random() - 0.5) * 18, life: 0.6 + Math.random() * 0.3, fi: 0.02, fo: 0.6 }); } },
+    mist(x, y, r, n, col, o = {}) {
+      for (let i = 0; i < n; i++) { const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r * M;
+        add({ kind: "bill", img: T("smoke", col), x: x + Math.cos(a) * d, y: y + Math.sin(a) * d * DEP, h: (o.h ?? 0.25) * M * Math.random(), vx: Math.cos(a) * 0.25 * M, vy: Math.sin(a) * 0.1 * M, vh: 0.12 * M,
+              s0: o.s0 ?? 0.3, s1: o.s1 ?? 0.7, a: o.a ?? 0.4, life: (o.life ?? 0.9) * (0.7 + Math.random() * 0.5), fi: 0.25, fo: 0.4, rot: Math.random() * TAU, spin: (Math.random() - 0.5) * 0.8, delay: o.delay || 0 }); } },
+    keyed(key, make, refresh) { const it = items.find(q => q.key === key && q.t < q.life); if (it) refresh(it); else make().key = key; },
+    after(dt, fn) { timers.push({ t: dt, fn }); },
+    update(dt) {
+      for (const it of items) { it.t += dt; if (it.t < 0) continue;
+        if (it.follow) { it.x = P.x; it.y = P.y; }
+        it.x += it.vx * dt; it.y += it.vy * dt; it.vh -= it.g * dt; it.h = Math.max(0, it.h + it.vh * dt); if (it.h === 0 && it.g) it.vh = 0;
+        if (it.kind === "ribbon") { if (it.t <= it.life) it.pts.push([...it.path(it.t), it.t]); it.pts = it.pts.filter(q => it.t - q[3] < it.tail); } }
+      for (let i = items.length - 1; i >= 0; i--) { const it = items[i]; if (it.t >= it.life && !(it.kind === "ribbon" && it.pts.length)) items.splice(i, 1); }
+      for (let i = timers.length - 1; i >= 0; i--) { timers[i].t -= dt; if (timers[i].t <= 0) { const f = timers[i].fn; timers.splice(i, 1); f(); } }
+    },
+    // always on: a glowing pool, a slow rune and two light arcs orbiting the feet; motes rising; glints on the wings
+    ambient(dt) {
+      if (!SET) return;
+      moteT -= dt; glintT -= dt;
+      if (moteT <= 0) { moteT = 0.07; const gold = Math.random() < 0.3;
+        add({ kind: "bill", img: T("flare", gold ? "gold" : "az"), x: P.x + (Math.random() - 0.5) * 0.9 * M, y: P.y + (Math.random() - 0.5) * 0.25 * M, h: Math.random() * 0.3 * M + P.hover * 0.4,
+              vh: (0.3 + Math.random() * 0.35) * M, vx: (Math.random() - 0.5) * 0.1 * M, s0: 0.05, s1: 0.03, life: 1 + Math.random() * 0.5, fi: 0.25, fo: 0.5, a: 0.9 }); }
+      if (equip.wings !== "none" && glintT <= 0) { glintT = 0.09;
+        add({ kind: "bill", img: T("star", "pale"), x: P.x + (Math.random() - 0.5) * 1.7 * M, y: P.y, h: P.hover + (0.8 + Math.random() * 0.9) * M, s0: 0.03, s1: 0.16, life: 0.28, fi: 0.3, fo: 0.4, a: 0.85, rot: Math.random() * 0.4 }); }
+    },
+    drawAura() {
+      if (!SET) return; const k = 1 - 0.35 * P.fly, x = P.x, y = P.y;
+      const disc = (img, r, rot, a) => { ctx.globalAlpha = a * k; ctx.save(); ctx.translate(x, y); ctx.scale(1, DEP); ctx.rotate(rot); ctx.drawImage(img, -r, -r, 2 * r, 2 * r); ctx.restore(); };
+      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      disc(T("flare", "deep"), 1.0 * M, 0, 0.45);
+      disc(T("rune", "az"), 0.58 * M, clock * 0.35, 0.32);
+      disc(T("crescent", "pale"), 0.44 * M, clock * 2.6, 0.9);
+      disc(T("crescent", "vio"), 0.44 * M, clock * 2.6 + Math.PI, 0.9);
+      ctx.restore(); ctx.globalAlpha = 1;
+    },
+    // a glowing edge on the blade, pulsing, shedding motes
+    blade(a, b, k = 1) {
+      const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, w = (0.055 + 0.015 * Math.sin(clock * 9)) * M * k;
+      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      for (const [ww, al] of [[1, 0.28], [0.35, 0.6]]) {
+        const gr = ctx.createLinearGradient(a[0], a[1], b[0], b[1]); gr.addColorStop(0, "rgba(95,176,255,0)"); gr.addColorStop(0.25, `rgba(95,176,255,${al})`); gr.addColorStop(0.85, `rgba(200,230,255,${al})`); gr.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(a[0] + nx * w * ww, a[1] + ny * w * ww); ctx.lineTo(b[0] + nx * w * ww * 0.3, b[1] + ny * w * ww * 0.3);
+        ctx.lineTo(b[0] - nx * w * ww * 0.3, b[1] - ny * w * ww * 0.3); ctx.lineTo(a[0] - nx * w * ww, a[1] - ny * w * ww); ctx.closePath(); ctx.fill(); }
+      ctx.restore();
+      if (Math.random() < 0.3 * k) { const u = 0.2 + Math.random() * 0.8;
+        add({ kind: "bill", img: T("flare", Math.random() < 0.5 ? "az" : "pale"), x: a[0] + dx * u, y: a[1] + dy * u, h: 0, vh: 0.4 * M, s0: 0.04, s1: 0.02, life: 0.45, fi: 0.1, fo: 0.4 }); }
+    },
+    drawFloor() {
+      api.drawAura();
+      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      for (const it of items) { if (it.kind !== "decal" || it.t < 0) continue; const r = size(it);
+        ctx.globalAlpha = env(it); ctx.save(); ctx.translate(it.x, it.y); ctx.scale(1, DEP); ctx.rotate(it.rot + it.spin * it.t); if (it.flip) ctx.scale(1, -1);
+        ctx.drawImage(it.img, -r, -r, 2 * r, 2 * r); ctx.restore(); }
+      ctx.restore(); ctx.globalAlpha = 1;
+    },
+    drawAir() {
+      ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.lineCap = "round";
+      for (const it of items) { if (it.t < 0 || it.kind === "decal") continue; const a = env(it); if (a <= 0.003 && it.kind !== "ribbon") continue;
+        if (it.kind === "bill") { const r = size(it); ctx.globalAlpha = a; ctx.save(); ctx.translate(it.x, it.y - it.h); ctx.rotate(it.rot + it.spin * it.t);
+          const asp = it.img.height / it.img.width; ctx.drawImage(it.img, -r, -r * asp, 2 * r, 2 * r * asp); ctx.restore(); }
+        else if (it.kind === "beam") { const u = clamp(it.t / it.life, 0, 1), Hh = it.hgt * M * (0.45 + 0.55 * easeOut(u)), w = it.w * M * (1 - 0.45 * u);
+          ctx.globalAlpha = a; ctx.drawImage(it.img, it.x - w / 2, it.y - Hh, w, Hh); ctx.drawImage(it.base, it.x - w * 1.6, it.y - w * 0.9, w * 3.2, w * 1.8); }
+        else if (it.kind === "spark") { const vx = it.vx, vy = it.vy - it.vh, x0 = it.x, y0 = it.y - it.h, x1 = x0 - vx * it.len, y1 = y0 - vy * it.len;
+          const gr = ctx.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, `rgba(${it.col},0)`.replace(/(\d+),(\d+),(\d+),0\)/, "$1,$2,$3,0)"));
+          ctx.strokeStyle = gr; ctx.lineWidth = 2.2 * kS(); ctx.globalAlpha = 1; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); }
+        else if (it.kind === "bolt") { if (!it.pts || it.t >= it.next) { it.next = it.t + 0.035; const [ax, ay] = it.a, [bx, by] = it.b, L = Math.hypot(bx - ax, by - ay) || 1, nx = -(by - ay) / L, ny = (bx - ax) / L;
+            it.pts = []; for (let i = 0; i <= 9; i++) { const u = i / 9, j = (Math.random() - 0.5) * 0.28 * L * Math.sin(Math.PI * u); it.pts.push([ax + (bx - ax) * u + nx * j, ay + (by - ay) * u + ny * j]); } }
+          ctx.globalAlpha = a;
+          for (const [lw, col] of [[11, rgba(it.col, 0.18)], [4.5, rgba(it.col, 0.6)], [1.6, "rgba(255,255,255,1)"]]) { ctx.strokeStyle = col; ctx.lineWidth = lw * kS(); ctx.beginPath(); it.pts.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.stroke(); } }
+        else if (it.kind === "ribbon") { const q = it.pts, n = q.length; if (n < 2) continue; const al = it.t < it.life ? a : env({ ...it, t: Math.min(it.t, it.life * 0.999) });
+          for (let i = 1; i < n; i++) { const [x0, y0, h0] = q[i - 1], [x1, y1, h1] = q[i], X0 = x0, Y0 = y0 - h0, X1 = x1, Y1 = y1 - h1, L = Math.hypot(X1 - X0, Y1 - Y0) || 1, nx = -(Y1 - Y0) / L, ny = (X1 - X0) / L,
+              f = i / n, w = it.w * M * f; ctx.globalAlpha = al * f; ctx.fillStyle = rgba(it.col, 0.85);
+            ctx.beginPath(); ctx.moveTo(X0 + nx * w, Y0 + ny * w); ctx.lineTo(X1 + nx * w, Y1 + ny * w); ctx.lineTo(X1 - nx * w, Y1 - ny * w); ctx.lineTo(X0 - nx * w, Y0 - ny * w); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = Math.max(1, w * 0.45); ctx.beginPath(); ctx.moveTo(X0, Y0); ctx.lineTo(X1, Y1); ctx.stroke(); } }
+      }
+      ctx.restore(); ctx.globalAlpha = 1;
+    },
+  };
+  return api;
+})();
+// composite pieces used by several skills
+const FXK = { swing: 1, n: 0 };
+const groundAng = (x0, y0, x1, y1) => Math.atan2((y1 - y0) / DEP, x1 - x0);
+function fxSlash(cx, cy, ang, size, col, flip, life = 0.22, delay = 0) {
+  VFX.decal("crescent", col, cx, cy, { s0: size * 0.8, s1: size * 1.06, rot: flip ? ang + VFX.MID : ang - VFX.MID, flip, life, fi: 0.04, fo: 0.35, delay });
+}
+function fxHit(x, y, h, col, big = 1, n = 6) {
+  VFX.bill("star", col, x, y, h, { s0: 0.5 * big, s1: 0.12 * big, life: 0.15, fi: 0.01, fo: 0.2, rot: Math.random() * 0.6 });
+  VFX.bill("flare", col, x, y, h, { s0: 0.22 * big, s1: 0.4 * big, life: 0.16, fi: 0.01, fo: 0.2, a: 0.5 });
+  VFX.decal("ring", col, x, y, { s0: 0.08, s1: 0.45 * big, life: 0.22, fi: 0.01, fo: 0.3 });
+  VFX.sparks(x, y, h, n, col);
+}
 const floaters = [];
-function floatText(txt, crit, x, y, small) { floaters.push({ x, y, txt, crit, small, t: 0 }); if (floaters.length > 40) floaters.shift(); }
+// MU-style damage numbers: pop in large, settle, rise; one colour per kind; hits on one target stack upward
+const NUM = { hit: ["#ffffff", 21], crit: ["#ffd34d", 31], single: ["#8fd3ff", 18], aoe: ["#c9b4ff", 16], chop: ["#ffe7a3", 30], rain: ["#a6e2ff", 26] };
+function floatText(txt, kind, x, y) { floaters.push({ x, y, txt, kind, t: 0 }); if (floaters.length > 60) floaters.shift(); }
 
 // ---------- damage ----------
-function registerDamage(d, dmg, crit, small) {
+function registerDamage(d, dmg, crit, small, kind = "hit") {
   d.hp = Math.max(0, d.hp - dmg); d.flash = Math.max(d.flash, small ? 0.55 : 1); d.lastHit = clock; if (d.hp === 0) d.downAt = clock;
   hits.push([clock, dmg]); totalDmg += dmg;
   $("m-last").textContent = dmg.toLocaleString("vi-VN") + (crit ? " ✦" : ""); $("m-hits").textContent = hits.length.toLocaleString("vi-VN"); $("m-total").textContent = totalDmg.toLocaleString("vi-VN");
-  const [cx, cy] = dummyCircle(d); floatText(dmg.toLocaleString("vi-VN"), crit, cx + (Math.random() - 0.5) * 40 * kS(), cy - (60 + Math.random() * 30) * kS(), small);
+  if (clock - (d.stackT || -9) > 0.35) d.stack = 0; d.stackT = clock; const lane = (d.stack = (d.stack || 0) + 1) - 1;
+  const [cx, cy] = dummyCircle(d); floatText(dmg.toLocaleString("vi-VN"), crit ? "crit" : kind, cx + ((lane % 2) - 0.5) * 30 * kS(), cy - (62 + (lane % 6) * 19) * kS());
 }
 function segDist(px, py, ax, ay, bx, by) { const vx = bx - ax, vy = by - ay, u = clamp(((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy || 1), 0, 1); return Math.hypot(px - ax - u * vx, py - ay - u * vy); }
 function tryHit(key, a, b, reach) {
@@ -698,17 +859,17 @@ function tryHit(key, a, b, reach) {
     const crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * def.dmg * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
     d.wobV += (P.x < d.x ? 1 : -1) * (crit ? 4.5 : 2.8) * (def.heavy ? 1.5 : 1);
     hitStop = (crit ? 0.11 : 0.07) * (def.heavy ? 1.5 : 1); shake = (crit ? 9 : 5) * (def.heavy ? 1.5 : 1);
-    registerDamage(d, dmg, crit, false);
-    FX.emit(cx, d.y, d.y - cy, crit ? 26 : 14, { speed: 2.6, life: 0.4, up: 0.8, grav: 6, img: crit ? FX.G.gold : undefined });
+    registerDamage(d, dmg, crit, false, "hit");
+    fxHit(d.x, d.y, d.y - cy, crit ? "gold" : "az", crit ? 1.5 : 1.1, crit ? 16 : 9);
+    if (def.heavy) VFX.beam(crit ? "gold" : "az", d.x, d.y, { w: 0.2, hgt: 1.6, life: 0.25 });
   }
 }
 function skillHit(d, kind, extra = 1) {
   const crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * SKILLS[kind].mult * extra * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
   d.wobV += (P.x < d.x ? 1 : -1) * (kind === "aoe" ? 1.6 : kind === "single" ? 1.1 : 4);
-  registerDamage(d, dmg, crit, kind === "single" || kind === "aoe");
-  const [cx, cy] = dummyCircle(d);
-  FX.emit(cx, d.y, d.y - cy, crit ? 14 : 6, { speed: 2.2, life: 0.3, up: 0.6, grav: 3, img: crit ? FX.G.gold : undefined });
-  FX.sprite(cx, cy, { img: crit ? FX.G.gold : FX.G.pale, s0: 30, s1: crit ? 110 : 80, life: 0.16 });
+  registerDamage(d, dmg, crit, kind === "single" || kind === "aoe", kind);
+  const [, cy] = dummyCircle(d), big = kind === "chop" || kind === "rain" ? 1.5 : 1;
+  fxHit(d.x, d.y, d.y - cy, crit ? "gold" : kind === "aoe" ? "vio" : "pale", big * (crit ? 1.35 : 1), crit ? 10 : 5);
   if (crit) shake = Math.max(shake, 3);
 }
 
@@ -730,13 +891,18 @@ function castSkill(kind) {
     if (tgt) faceTo(tgt.x, tgt.y);
     const from = handWorld("main"), dir = P.facing === "left" ? [-1, 0] : P.facing === "right" ? [1, 0] : P.facing === "up" ? [0, -DEP] : [0, DEP];
     const to = tgt ? dummyCircle(tgt).slice(0, 2) : [from[0] + dir[0] * M, from[1] + dir[1] * M];
-    FX.lance(from, to, !!tgt); FX.sprite(from[0], from[1], { img: FX.G.pale, s0: 20, s1: 60, life: 0.1 });
-    if (tgt) skillHit(tgt, kind);
+    const sw = (FXK.swing = -FXK.swing), gx = tgt ? tgt.x : P.x + dir[0] * 0.8 * M, gy = tgt ? tgt.y : P.y + dir[1] * 0.8 * M, ang = groundAng(P.x, P.y, gx, gy);
+    fxSlash(lerp(P.x, gx, 0.55), lerp(P.y, gy, 0.55), ang, 0.78, sw > 0 ? "az" : "pale", sw < 0);
+    VFX.bill("star", "pale", from[0], from[1], 0, { s0: 0.28, s1: 0.06, life: 0.1, fi: 0.01 });
+    if (tgt) { VFX.beam("az", gx, gy, { w: 0.15, hgt: 1.35, life: 0.2 }); if (++FXK.n % 3 === 0) VFX.bolt(from, to, "az", 0.12); skillHit(tgt, kind); }
   } else {
-    FX.ring(P.x, P.y, M, { col: "140,200,255", col2: "155,123,255", column: 1.4, life: 0.34 });
-    for (let i = 0; i < 12; i++) { const a = Math.random() * 6.28, r = (0.2 + Math.random() * 0.8) * M;
-      FX.emit(P.x + Math.cos(a) * r, P.y + Math.sin(a) * r * DEP, 6, 1, { speed: 0.6, up: 2.5, grav: -1, life: 0.5, img: Math.random() < 0.5 ? FX.G.az : FX.G.vio }); }
-    for (let i = 0; i < 4; i++) { const a = Math.random() * 6.28; FX.sprite(P.x + Math.cos(a) * 0.3 * M, P.y - (0.7 + Math.random() * 0.6) * M - P.hover, { img: FX.feather, s0: 40, s1: 28, life: 0.45, vx: Math.cos(a) * 2.4 * M, vy: -1.2 * M, grav: 3 * M, rot: Math.random() * 6, spin: (Math.random() - 0.5) * 14 }); }
+    VFX.keyed("aoeRune", () => VFX.decal("rune", "az", P.x, P.y, { s0: 1.0, s1: 1.12, life: 0.45, fi: 0.2, fo: 0.55, spin: 1.8, a: 0.6, follow: true }), it => { it.t = Math.min(it.t, 0.12); });
+    VFX.decal("ring", "pale", P.x, P.y, { s0: 0.25, s1: 1.2, life: 0.26, fi: 0.01, fo: 0.3, follow: true });
+    for (let i = 0; i < 2; i++) { const a0 = Math.random() * TAU, sg = i ? 1 : -1;
+      VFX.ribbon(t => { const u = t / 0.28, r = (0.25 + 0.85 * u) * M, an = a0 + sg * u * 4.4; return [P.x + Math.cos(an) * r, P.y + Math.sin(an) * r * DEP, (0.8 - 0.65 * u) * M + P.hover * 0.5]; },
+                 { col: i ? "vio" : "az", w: 0.06, life: 0.28, tail: 0.12 }); }
+    if (Math.random() < 0.45) VFX.mist(P.x, P.y, 1.0, 1, "deep", { a: 0.35, life: 0.8 });
+    for (let i = 0; i < 2; i++) { const a = Math.random() * 6.28; FX.sprite(P.x + Math.cos(a) * 0.3 * M, P.y - (0.7 + Math.random() * 0.6) * M - P.hover, { img: FX.feather, s0: 40, s1: 28, life: 0.45, vx: Math.cos(a) * 2.4 * M, vy: -1.2 * M, grav: 3 * M, rot: Math.random() * 6, spin: (Math.random() - 0.5) * 14 }); }
     for (const d of alive) if (inRange(d, 1)) skillHit(d, kind);
   }
 }
@@ -760,12 +926,23 @@ function specialEvents() {
   const a = P.atk; if (!a || !a.def.special) return;
   const u = a.t / a.dur, f = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }[a.face0];
   if (a.def.special === "chop") {
-    if (u >= 0.5 && !a.fired.arc) { a.fired.arc = true; const hw = handWorld("main"); FX.crescent(P.x + f[0] * 0.5 * M, hw[1] + 20 * kS(), f[0] || 1, !!f[0]); }
+    if (u >= 0.1 && !a.fired.rib) { a.fired.rib = true; const a0 = Math.random() * TAU;
+      for (let i = 0; i < 3; i++) VFX.ribbon(t => { const v = t / 0.42, an = a0 + i * TAU / 3 + v * 7.5, r = 0.6 * M * (1 - 0.35 * v); return [P.x + Math.cos(an) * r, P.y + Math.sin(an) * r * DEP, (0.05 + 1.7 * v) * M + P.hover]; },
+                                          { col: i === 1 ? "gold" : "az", w: 0.08, life: 0.42, tail: 0.16 });
+      VFX.decal("rune", "az", P.x, P.y, { s0: 0.5, s1: 0.9, life: 0.6, spin: 3, a: 0.7, follow: true }); }
+    if (u >= 0.42 && !a.fired.charge) { a.fired.charge = true; const hw = handWorld("main"); VFX.bill("star", "gold", hw[0], hw[1], 0, { s0: 0.15, s1: 0.75, life: 0.2, fi: 0.3 }); }
+    if (u >= 0.5 && !a.fired.arc) { a.fired.arc = true; const ang = groundAng(0, 0, f[0], f[1] * DEP), cx = P.x + f[0] * 0.55 * M, cy = P.y + f[1] * 0.55 * M * DEP;
+      fxSlash(cx, cy, ang, 1.05, "gold", f[0] < 0, 0.3); fxSlash(cx, cy, ang, 1.25, "az", f[0] < 0, 0.32, 0.03); }
     if (u >= 0.6 && !a.fired.impact) {
       a.fired.impact = true;
       const ix = P.x + f[0] * 0.9 * M, iy = P.y + f[1] * 0.9 * M * DEP;
-      FX.ring(ix, iy, 0.8 * M, { life: 0.3, column: 0.8 }); FX.crack(ix, iy, 1.1); FX.flash(ix, iy - 0.4 * M, 1.4);
-      FX.emit(ix, iy, 4, 26, { speed: 3.5, up: 1.2, grav: 9, life: 0.8, img: FX.G.dust, size: 12 }); FX.emit(ix, iy, 10, 12, { speed: 3, up: 1, life: 0.4 });
+      FX.crack(ix, iy, 1.1); FX.emit(ix, iy, 4, 26, { speed: 3.5, up: 1.2, grav: 9, life: 0.8, img: FX.G.dust, size: 12 });
+      VFX.decal("rune", "gold", ix, iy, { s0: 0.6, s1: 1.3, life: 0.95, fi: 0.03, fo: 0.45, spin: 0.9 });
+      VFX.decal("ring", "az", ix, iy, { s0: 0.2, s1: 1.6, life: 0.32, fi: 0.01, fo: 0.3 }); VFX.decal("ring", "pale", ix, iy, { s0: 0.2, s1: 1.1, life: 0.3, fi: 0.01, fo: 0.3, delay: 0.08 });
+      VFX.beam("pale", ix, iy, { w: 0.32, hgt: 2.4, life: 0.32, a: 0.7 });
+      for (let i = 0; i < 6; i++) { const an = i / 6 * TAU + 0.3; VFX.beam(i % 2 ? "gold" : "az", ix + Math.cos(an) * 0.6 * M, iy + Math.sin(an) * 0.6 * M * DEP, { w: 0.13, hgt: 1.2 + Math.random() * 0.7, life: 0.26, delay: 0.03 * i }); }
+      VFX.bill("star", "pale", ix, iy, 0.45 * M, { s0: 1.0, s1: 0.3, life: 0.22, fi: 0.01, fo: 0.25, a: 0.85 }); VFX.bill("xslash", "gold", ix, iy, 0.5 * M, { s0: 0.4, s1: 1.1, life: 0.22, fi: 0.01, fo: 0.3 });
+      VFX.sparks(ix, iy, 6, 24, "gold", { speed: 4.2, up: 2 }); VFX.shards(ix, iy, 8, 10, "az"); VFX.mist(ix, iy, 1.1, 7, "deep", { a: 0.4, life: 1.0, s1: 0.9 });
       shake = Math.max(shake, 14); hitStop = 0.08;
       for (const d of DUMMIES) { if (d.hp <= 0) continue;
         const ahead = (d.x - P.x) * f[0] + (d.y - P.y) / DEP * f[1] > -0.1 * M;
@@ -774,6 +951,9 @@ function specialEvents() {
   } else if (u >= 0.3 && !a.fired.throw) {
     a.fired.throw = true; const hw = handWorld("main");
     Object.assign(RAIN, { state: "rise", t: 0, fx: hw[0], fy: P.y, fh: P.y - hw[1], ghost: equip.mode === "none" });
+    VFX.decal("rune", "az", RAIN.tx, RAIN.ty, { s0: 0.3, s1: SKILLS.rain.radius, life: 0.95, fi: 0.35, fo: 0.8, spin: 2.4, a: 0.85 });
+    VFX.decal("rune", "vio", RAIN.tx, RAIN.ty, { s0: 0.2, s1: SKILLS.rain.radius * 0.62, life: 0.95, fi: 0.35, fo: 0.8, spin: -3.2, a: 0.7 });
+    VFX.beam("pale", hw[0], P.y, { w: 0.18, hgt: (P.y - hw[1]) / M + 1.5, life: 0.25 });
     FX.sprite(hw[0], hw[1], { img: FX.G.pale, s0: 30, s1: 120, life: 0.25 });
   }
 }
@@ -793,16 +973,21 @@ function updateRain(dt) {
     R.x = lerp(R.fx, hw[0], e); R.y = lerp(R.fy, P.y, e); R.h = lerp(R.fh, P.y - hw[1], e) + Math.sin(Math.PI * u) * 2.2 * M; R.ang = u * Math.PI * 4;
     if (u >= 1) { R.state = "done"; FX.sprite(hw[0], hw[1], { img: FX.G.pale, s0: 20, s1: 70, life: 0.18 }); } }
   for (const g of R.ghosts) { g.t += dt; if (g.t < 0) continue; const u = Math.min(1, g.t / 0.2); g.h = lerp(g.h0, swordTip() * 0.6, u * u);
-    if (u >= 1 && !g.hit) { g.hit = true; FX.ring(g.x, g.y, 0.45 * M, { life: 0.25 }); FX.emit(g.x, g.y, 5, 8, { speed: 2, up: 1, life: 0.3 });
+    if (u >= 1 && !g.hit) { g.hit = true; VFX.beam("az", g.x, g.y, { w: 0.13, hgt: 2.2, life: 0.25 }); VFX.decal("ring", "pale", g.x, g.y, { s0: 0.1, s1: 0.55, life: 0.24, fi: 0.01 }); VFX.sparks(g.x, g.y, 4, 8, "az");
       for (const d of DUMMIES) if (d.hp > 0 && distM(g.x, g.y, d.x, d.y) - dummyR(d) <= 0.7) skillHit(d, "rain", SKILLS.rain.ghostMult / SKILLS.rain.mult); }
     if (g.hit) g.a = Math.max(0, 0.9 - (g.t - 0.2) / 0.35); }
   R.ghosts = R.ghosts.filter(g => g.a > 0);
 }
 const swordTip = () => { const v = SET.weapon.variants.front; return (v.tip[1] - v.grip_pivot[1]) * v.size_1x[1] * SET.weapon.recommended_scale * Math.max(1, SWORD_K[equip.mode]) * S; };
 function rainImpact() {
-  const R = RAIN; FX.ring(R.tx, R.ty, SKILLS.rain.radius * M, { life: 0.45, col2: "155,123,255", column: 1.6, wid: 9 }); FX.ring(R.tx, R.ty, SKILLS.rain.radius * 0.6 * M, { life: 0.3 });
-  FX.crack(R.tx, R.ty, 1.8, 1.8); FX.flash(R.tx, R.ty - 0.5 * M, 2.4);
-  FX.emit(R.tx, R.ty, 4, 44, { speed: 5, up: 1.3, grav: 9, life: 0.8, img: FX.G.dust, size: 13 }); FX.emit(R.tx, R.ty, 20, 20, { speed: 3, up: 1, life: 0.45 });
+  const R = RAIN, rr = SKILLS.rain.radius;
+  FX.crack(R.tx, R.ty, 1.8, 1.8); FX.emit(R.tx, R.ty, 4, 44, { speed: 5, up: 1.3, grav: 9, life: 0.8, img: FX.G.dust, size: 13 });
+  VFX.beam("pale", R.tx, R.ty, { w: 0.45, hgt: 4.8, life: 0.45, a: 0.75 }); VFX.beam("az", R.tx, R.ty, { w: 1.1, hgt: 3.2, life: 0.4, a: 0.35 });
+  VFX.bill("star", "pale", R.tx, R.ty, 0.6 * M, { s0: 1.7, s1: 0.4, life: 0.28, fi: 0.01, fo: 0.25, a: 0.8 });
+  for (let i = 0; i < 3; i++) VFX.decal("ring", i === 1 ? "vio" : "az", R.tx, R.ty, { s0: 0.3, s1: rr * (1.25 - i * 0.15), life: 0.36, fi: 0.01, fo: 0.3, delay: i * 0.07 });
+  VFX.decal("rune", "gold", R.tx, R.ty, { s0: rr * 0.8, s1: rr * 1.05, life: 1.2, fi: 0.02, fo: 0.5, spin: -1.2 });
+  for (let i = 0; i < 5; i++) { const an = i / 5 * TAU + Math.random() * 0.5; VFX.bolt([R.tx, R.ty - 0.2 * M], [R.tx + Math.cos(an) * rr * M, R.ty + Math.sin(an) * rr * M * DEP], i % 2 ? "vio" : "az", 0.2); }
+  VFX.sparks(R.tx, R.ty, 10, 34, "pale", { speed: 5, up: 2.4 }); VFX.shards(R.tx, R.ty, 10, 16, "az", { speed: 3.5 }); VFX.mist(R.tx, R.ty, rr, 10, "deep", { a: 0.42, life: 1.3, s1: 1.0 });
   shake = Math.max(shake, 18);
   for (const d of DUMMIES) if (d.hp > 0 && distM(R.tx, R.ty, d.x, d.y) - dummyR(d) <= SKILLS.rain.radius) skillHit(d, "rain");
 }
@@ -898,8 +1083,8 @@ function update(dt) {
   updateRain(dt);
   for (const d of DUMMIES) { d.wobV += (-38 * d.wob - 5.5 * d.wobV) * dt; d.wob += d.wobV * dt; d.flash = Math.max(0, d.flash - dt * 6);
     if (d.hp === 0 && clock - d.downAt > 1.4) d.hp = d.max; if (d.hp > 0 && d.hp < d.max && clock - d.lastHit > 4) d.hp = Math.min(d.max, d.hp + d.max * dt * 0.8); }
-  FX.update(dt);
-  for (const f of floaters) f.t += dt; while (floaters.length && floaters[0].t > 0.9) floaters.shift();
+  FX.update(dt); VFX.update(dt); VFX.ambient(dt);
+  for (const f of floaters) f.t += dt; while (floaters.length && floaters[0].t > 0.95) floaters.shift();
   for (const d of dust) { d.t += dt; d.x += d.vx * dt; } dust = dust.filter(d => d.t < d.life);
   hits = hits.filter(h => clock - h[0] < 60); shake = Math.max(0, shake - dt * 40);
   cam.x += (clamp(P.x + P.vx * 0.25 - W / 2, -60, WORLD.w - W + 60) - cam.x) * Math.min(1, dt * 5);
@@ -975,7 +1160,7 @@ function drawCharacter() {
   for (const s of C.swords) {
     const v = SET.weapon.variants[s.variant], hv = v.size_1x[1], tipY = (v.tip[1] - v.grip_pivot[1]) * hv;
     const a = ap(s.m, 0, tipY * 0.25), b = ap(s.m, (v.tip[0] - v.grip_pivot[0]) * v.size_1x[0], tipY);
-    s.seg = [a, b];
+    s.seg = [a, b]; VFX.blade(a, b, s.role === "main" ? 1 : 0.8);
     const role = s.role === "main" ? "M" : "O", active = def && (def.hands.G ? s.role === "main" : !!def.hands[role]);
     const tr = P.trails[s.role];
     if (active && u > def.hit[0] - 0.08 && u < def.hit[1] + 0.06) tr.push([a, b, clock]);
@@ -1023,7 +1208,7 @@ function drawDummy(d) {
   ctx.fillStyle = "#454c5b"; ctx.beginPath(); ctx.ellipse(0, -4, 38, 38 * DEP * 0.7, 0, 0, Math.PI * 2); ctx.fill();
   ctx.translate(0, -4); ctx.scale(1, 0.86); ctx.rotate(d.wob * 0.12);
   if (d.hp === 0) ctx.globalAlpha = 0.45;
-  dummyShapes(ctx); if (d.flash > 0) { ctx.globalAlpha = d.flash * 0.75; dummyShapes(ctx, "#cfe6ff"); }
+  dummyShapes(ctx); if (d.flash > 0) { ctx.globalAlpha = d.flash * 0.5; dummyShapes(ctx, "#cfe6ff"); }
   ctx.restore();
   const bw = (d.sc < 1 ? 90 : 130) * kS(), bh = 7 * kS(), bx = d.x - bw / 2, by = d.y - 200 * k;
   ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
@@ -1050,15 +1235,24 @@ function frame(ts) {
   update(dt);
   shX = shake ? (Math.random() - 0.5) * shake : 0; shY = shake ? (Math.random() - 0.5) * shake : 0;
   ctx.setTransform(DPR, 0, 0, DPR, (-cam.x + shX) * DPR, (-cam.y + shY) * DPR);
-  drawFloor(); FX.drawFloor();
+  drawFloor(); FX.drawFloor(); VFX.drawFloor();
   for (const d of dust) { const a = 1 - d.t / d.life, r = d.r * (1 + d.t * 1.8); ctx.fillStyle = `rgba(150,160,180,${0.09 * a})`; ctx.beginPath(); ctx.ellipse(d.x, d.y, r, r * 0.42, 0, 0, Math.PI * 2); ctx.fill(); }
   const things = [...PILLARS.map(p => ({ y: p.y, draw: () => drawPillar(p) })), ...DUMMIES.map(d => ({ y: d.y, draw: () => drawDummy(d) })), { y: P.y, draw: drawCharacter }];
   things.sort((a, b) => a.y - b.y).forEach(t => t.draw());
   ctx.setTransform(DPR, 0, 0, DPR, (-cam.x + shX) * DPR, (-cam.y + shY) * DPR);
-  drawRainSwords(); FX.drawAir();
-  ctx.textAlign = "center";
-  for (const f of floaters) { const a = 1 - Math.max(0, f.t - 0.5) / 0.4, y = f.y - f.t * 70 * kS(), sz = (f.crit ? (f.small ? 20 : 28) : (f.small ? 15 : 20)) * Math.max(0.8, kS()) * (f.t < 0.08 ? 1.3 : 1);
-    ctx.globalAlpha = a; ctx.font = `700 ${sz}px "Chakra Petch", sans-serif`; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(0,0,0,.7)"; ctx.strokeText(f.txt, f.x, y); ctx.fillStyle = f.crit ? "#ffd27a" : "#ffffff"; ctx.fillText(f.txt, f.x, y); }
+  drawRainSwords(); FX.drawAir(); VFX.drawAir();
+  // vignette: the edges sink into the dark so the light of the effects carries the eye
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const vg = ctx.createRadialGradient(W / 2, H * 0.55, Math.min(W, H) * 0.28, W / 2, H * 0.55, Math.max(W, H) * 0.78); vg.addColorStop(0, "rgba(2,5,12,0)"); vg.addColorStop(1, "rgba(2,5,12,.62)");
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  ctx.setTransform(DPR, 0, 0, DPR, (-cam.x + shX) * DPR, (-cam.y + shY) * DPR);
+  ctx.textAlign = "center"; ctx.lineJoin = "round";
+  for (const f of floaters) { const [col, base] = NUM[f.kind] || NUM.hit, pop = f.t < 0.07 ? lerp(2.2, 1, f.t / 0.07) : 1, a = 1 - Math.max(0, f.t - 0.6) / 0.35;
+    const y = f.y - Math.max(0, f.t - 0.07) * 52 * kS(), sz = base * Math.max(0.8, kS()) * pop;
+    ctx.globalAlpha = Math.max(0, a); ctx.font = `italic 700 ${sz}px "Chakra Petch", sans-serif`;
+    ctx.lineWidth = 6; ctx.strokeStyle = "rgba(4,8,20,.85)"; ctx.strokeText(f.txt, f.x, y);
+    ctx.lineWidth = 2.5; ctx.strokeStyle = f.kind === "crit" ? "rgba(255,120,40,.9)" : "rgba(60,120,255,.55)"; ctx.strokeText(f.txt, f.x, y);
+    ctx.fillStyle = col; ctx.fillText(f.txt, f.x, y); }
   ctx.globalAlpha = 1;
   if (debug) {
     ctx.lineWidth = 2;
