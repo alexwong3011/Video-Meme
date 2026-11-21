@@ -5,3 +5,4 @@ out/
 remotion/.remotion/
 *.log
 .DS_Store
+__pycache__/
