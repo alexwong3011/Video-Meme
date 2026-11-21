@@ -100,7 +100,11 @@ vỗ theo nhịp; khi bay nhân vật lơ lửng, một gối co cao, chân kia 
 Kỹ năng (tầm 1 m, hồi chiêu 0,1 giây, giữ phím để tung 10 lần/giây): **1 · Lam Quang Kích** (đơn mục tiêu: tự quay về mục tiêu gần
 nhất phía trước, phóng ngọn giáo ánh sáng lam, nổ vòng sáng và hạt), **2 · Vũ Cánh Phong Bạo** (diện rộng: sóng xung kích hai vòng,
 cột sáng, lốc hạt xoáy và lông vũ bay ra, trúng mọi mục tiêu trong 1 m). Hiệu ứng dùng hạt, sprite, giáo sáng và vòng nova tái sử dụng
-nên chạy đều ở 10 lần/giây. Sân có 1 hình nộm lớn và 4 bia đứng thành vòng để thử AoE. Nút **Tự động** (phím P): nhân vật tự bay/đi
+nên chạy đều ở 10 lần/giây. Sân có 1 hình nộm lớn và 4 bia đứng thành vòng để thử AoE. **3 · Thiên Lam Trảm** (hồi 1,2 giây): xoay người một vòng lấy đà, bật nhảy co gối, chém bổ từ trên xuống bằng cả thân rồi đáp đất;
+vệt trăng khuyết, nứt sàn phát sáng, bụi đá, chớp sáng, rung màn hình; trúng mục tiêu sát người phía trước (1,3 m), sát thương 3,2×.
+**4 · Kiếm Vũ Thiên Giáng** (hồi 4 giây): ném kiếm lên cao vừa bay vừa lộn vòng, kiếm khựng trên không, lật mũi rồi lao cắm xuống mục
+tiêu (cụm bia hoặc mục tiêu gần nhất trong 6 m) theo một tia sáng; 6 kiếm ảnh rơi quanh; nổ diện rộng bán kính 1,8 m (4×, kiếm ảnh 0,7×),
+nứt sàn lớn, đá văng; kiếm cắm lại một lúc rồi bay về tay. Tay không thì tung một thanh kiếm ảnh. Nút **Tự động** (phím P): nhân vật tự bay/đi
 tới chỗ kỹ năng trúng nhiều mục tiêu nhất (giữa vòng bia khi còn từ 2 bia, nếu không thì hình nộm gần nhất), tự quay mặt, tự tung kỹ
 năng và thỉnh thoảng chen một chuỗi chém; người chơi bấm di chuyển thì tay người chơi được ưu tiên.
 

@@ -82,8 +82,8 @@ canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !imp
 .sk .cdv { position: absolute; inset: 0; border-radius: inherit; background: conic-gradient(rgba(0,0,0,.6) calc(var(--cd, 0) * 1turn), transparent 0); pointer-events: none; }
 .sk.on { box-shadow: 0 0 16px rgba(95,176,255,.8); border-color: #bfe2ff; }
 .sk:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
-.sk-name { position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%); font: 500 10.5px var(--font-body); color: var(--muted); white-space: nowrap; }
-@media (pointer: coarse) { .skills { left: max(18px, env(safe-area-inset-left, 0px)); bottom: 158px; transform: none; } .sk-name { display: none; } }
+.sk-name { display: none; position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%); font: 500 10.5px var(--font-body); color: var(--muted); white-space: nowrap; }
+@media (pointer: coarse) { .skills { left: max(18px, env(safe-area-inset-left, 0px)); bottom: 158px; transform: none; display: grid; grid-template-columns: repeat(2, 54px); gap: 8px; } .sk { width: 54px; height: 54px; } .sk svg { width: 32px; height: 32px; } }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center; padding: 20px; }
 @media (max-width: 640px) {
   .keys, .bar h1 span { display: none; }
@@ -98,7 +98,7 @@ canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !imp
     <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>: đi</span>
     <span><kbd>Shift</kbd>: chạy</span>
     <span><kbd>J</kbd> / <kbd>Space</kbd> / nhấp: chém (giữ: liên hoàn)</span>
-    <span><kbd>1</kbd> <kbd>2</kbd>: kỹ năng (giữ: 10 lần/giây)</span>
+    <span><kbd>1</kbd> <kbd>2</kbd>: kỹ năng (giữ: 10 lần/giây) · <kbd>3</kbd> chém bổ · <kbd>4</kbd> tung kiếm</span>
     <span><kbd>P</kbd>: tự động</span>
     <span><kbd>Q</kbd>: đổi cách cầm</span>
     <span><kbd>F</kbd>: bay / đáp</span>
@@ -129,6 +129,14 @@ canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !imp
     <button class="sk" id="sk-aoe" type="button" title="Vũ Cánh Phong Bạo (phím 2): đánh mọi mục tiêu trong 1 m quanh nhân vật" aria-label="Vũ Cánh Phong Bạo, phím 2">
       <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="8" opacity=".7"/><path d="M20 14v12M14 20h12" stroke-linecap="round"/></svg>
       <span class="cdv"></span><kbd>2</kbd><span class="sk-name">Vũ Cánh Phong Bạo</span>
+    </button>
+    <button class="sk" id="sk-chop" type="button" title="Thiên Lam Trảm (phím 3): xoay người, bật nhảy, chém bổ từ trên xuống sát người" aria-label="Thiên Lam Trảm, phím 3">
+      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M20 5v24"/><path d="M15 9h10"/><path d="M9 33c4-3 18-3 22 0"/><path d="M12 22c2 6 14 6 16 0" opacity=".7"/></svg>
+      <span class="cdv"></span><kbd>3</kbd>
+    </button>
+    <button class="sk" id="sk-rain" type="button" title="Kiếm Vũ Thiên Giáng (phím 4): tung kiếm lên cao, kiếm cắm xuống nổ diện rộng" aria-label="Kiếm Vũ Thiên Giáng, phím 4">
+      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M20 4v22"/><path d="M15 21l5 6 5-6"/><path d="M9 8v8M31 8v8M14 4v5M26 4v5" opacity=".6"/><ellipse cx="20" cy="33" rx="13" ry="3.5"/></svg>
+      <span class="cdv"></span><kbd>4</kbd>
     </button>
   </div>
   <div id="floats"></div>
@@ -460,6 +468,7 @@ function pose(dt) {
     if (bd.drop < -0.02 && fl < 0.5) { add("thighR", 0.25 * bd.drop / -0.1 * -0.6); add("shinR", 0.5 * bd.drop / -0.1); add("thighL", 0.2 * bd.drop / -0.1); add("shinL", 0.35 * bd.drop / -0.1); } }
   if (CAST.w > 0.001) { const k = CAST.w;
     if (CAST.kind === "single") { add("spine", 0.1 * k); add("chest", 0.05 * k); } else { hipY -= 0.03 * k; add("spine", -0.06 * k); add("head", -0.1 * k); } }
+  if (atk && atk.special === "chop") { const k = leapK(u) * (1 - fl); add("thighR", -0.75 * k); add("shinR", 1.15 * k); add("thighL", -0.55 * k); add("shinL", 1.0 * k); add("footR", 0.4 * k); add("footL", 0.4 * k); }
   // FK bones (everything but the arms)
   const R = {};
   for (const n of Object.keys(rest)) { if (/arm|hand/.test(n)) continue; const j = J[n] || [0, 0, 0]; R[n] = rotChar(j[0], j[1], j[2]); applyR(n, R[n]); }
@@ -508,7 +517,7 @@ function placeSwords() {
   const mode = equip.mode, len = SWORD_LEN[mode];
   for (const s of ["R", "L"]) {
     const sw = swords[s], use = (mode === "one" && s === "R") || mode === "dual" || (mode === "two" && s === "R");
-    sw.g.visible = use; if (!use) continue;
+    sw.g.visible = use && !(s === "R" && RAIN.state !== "done"); if (!sw.g.visible) continue;
     const h = hand[s], grip = local(bones["hand" + s]).addScaledVector(h.df, 0.07);
     sw.g.position.copy(grip); sw.g.quaternion.copy(bladeQuat(h.b)); sw.g.scale.setScalar(len); sw.len = len;
   }
@@ -682,8 +691,10 @@ function floatText(txt, crit, pos, small) { if (floaters.length > 40) floaters.s
 const SKILLS = {
   single: { name: "Lam Quang Kích", range: 1, cd: 0.1, mult: 0.38 },     // azure lance into the nearest target in front
   aoe:    { name: "Vũ Cánh Phong Bạo", range: 1, cd: 0.1, mult: 0.24 },  // shockwave + feather storm around the knight
+  chop:   { name: "Thiên Lam Trảm", range: 1.3, cd: 1.2, mult: 3.2 },    // spin, leap and an overhead cleave right in front
+  rain:   { name: "Kiếm Vũ Thiên Giáng", range: 6, cd: 4, radius: 1.8, mult: 4, ghostMult: 0.7 },   // sword thrown up, plunges down
 };
-const SK = { cd: { single: 0, aoe: 0 }, hold: { single: false, aoe: false } };
+const SK = { cd: { single: 0, aoe: 0, chop: 0, rain: 0 }, hold: { single: false, aoe: false, chop: false, rain: false } };
 const CAST = { kind: "single", w: 0, pulse: 0, last: -9 };
 const AUTO = { on: false, dir: null, mag: 1, run: false, cast: null, attack: false, face: null };
 const inSkillRange = (D, kind) => Math.hypot(D.pos.x - P.pos.x, D.pos.z - P.pos.z) - D.r <= SKILLS[kind].range;
@@ -753,7 +764,41 @@ const FX = (() => {
     g.add(ring, ring2, disc, colm); g.visible = false; NV.push({ g, ring, ring2, disc, colm, on: false });
   }
   let ni = 0;
+  // crescent slash (vertical, in the character's forward plane)
+  const crescentT = tex((g, w, h) => {
+    g.shadowColor = "#7fc4ff"; g.shadowBlur = 18;
+    const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, "rgba(90,160,255,0)"); gr.addColorStop(0.55, "rgba(140,200,255,.9)"); gr.addColorStop(1, "rgba(255,255,255,1)");
+    g.fillStyle = gr; g.beginPath(); g.arc(w * 0.28, h / 2, h * 0.44, -Math.PI / 2, Math.PI / 2); g.fill();
+    g.globalCompositeOperation = "destination-out"; g.beginPath(); g.arc(w * 0.12, h / 2, h * 0.44, 0, Math.PI * 2); g.fill();
+  }, 256, 256);
+  const CR = []; for (let i = 0; i < 4; i++) { const m = addm(new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.9), new THREE.MeshBasicMaterial({ map: crescentT, side: THREE.DoubleSide, ...additive }))); m.visible = false; CR.push({ m, on: false }); }
+  let ci = 0;
+  // ground crack: glowing fissures radiating from the impact
+  const crackT = tex((g, w, h) => {
+    g.translate(w / 2, h / 2); g.strokeStyle = "rgba(160,215,255,1)"; g.shadowColor = "#5fb0ff"; g.shadowBlur = 10; g.lineCap = "round";
+    for (let k = 0; k < 11; k++) { let a = k / 11 * Math.PI * 2 + Math.random() * 0.3, x = 0, y = 0, r = 0, lw = 5;
+      g.beginPath(); g.moveTo(0, 0);
+      while (r < w * 0.46) { r += 10 + Math.random() * 16; a += (Math.random() - 0.5) * 0.6; x = Math.cos(a) * r; y = Math.sin(a) * r; g.lineWidth = lw; g.lineTo(x, y); lw = Math.max(1, lw - 0.6); }
+      g.stroke(); }
+    const r = g.createRadialGradient(0, 0, 0, 0, 0, w * 0.2); r.addColorStop(0, "rgba(220,240,255,.9)"); r.addColorStop(1, "rgba(220,240,255,0)"); g.fillStyle = r; g.fillRect(-w / 2, -h / 2, w, h);
+  }, 256, 256);
+  const CK = []; for (let i = 0; i < 6; i++) { const m = addm(new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: crackT, ...additive }))); m.visible = false; CK.push({ m, on: false }); }
+  let ki = 0;
+  const light = new THREE.PointLight(0x7fc4ff, 0, 9, 2); scene.add(light); let lightT = 9;
+  const DUST = new THREE.Color(0x9aa3b8), DUST2 = new THREE.Color(0x5a6070);
   return {
+    crescent(at, f) {
+      const e = CR[ci]; ci = (ci + 1) % CR.length; const up = V3(0, 1, 0), side = V3().crossVectors(f, up).normalize();
+      e.m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(f.clone(), up, side)); e.m.position.copy(at); e.f = f.clone();
+      Object.assign(e, { on: true, t: 0, life: 0.26 }); e.m.visible = true;
+    },
+    crack(at, size, life = 1.4) {
+      const e = CK[ki]; ki = (ki + 1) % CK.length;
+      e.m.position.set(at.x, 0.015 + ki * 0.002, at.z); e.m.rotation.y = Math.random() * 6.28; e.m.scale.set(size, 1, size); Object.assign(e, { on: true, t: 0, life }); e.m.visible = true;
+    },
+    flash(at, power) { light.position.set(at.x, at.y + 0.6, at.z); light.intensity = power; lightT = 0; },
+    debris(at, n, speed) { emit(V3(at.x, 0.1, at.z), n, { speed, up: 1, grav: 9, drag: 0.4, life: 0.8, color: DUST, color2: DUST2 }); },
+    sprite, emit,
     lance(from, to, hit) {
       const e = LN[li]; li = (li + 1) % LN.length; const d = to.clone().sub(from);
       e.len = d.length(); e.g.position.copy(from); e.g.quaternion.setFromUnitVectors(V3(0, 1, 0), d.normalize()); Object.assign(e, { on: true, t: 0, life: 0.16 }); e.g.visible = true;
@@ -762,11 +807,11 @@ const FX = (() => {
       sprite(to, { s0: 0.55, s1: 0.1, life: 0.12, color: PALE });
       emit(to, hit ? 14 : 6, { speed: 3, life: 0.35, color: AZ, color2: PALE, grav: 2 });
     },
-    nova(at, h) {
+    nova(at, h, scale = 1, life = 0.34) {
       const e = NV[ni]; ni = (ni + 1) % NV.length;
-      e.g.position.set(at.x, 0.03, at.z); e.g.rotation.y = Math.random() * 6.28; Object.assign(e, { on: true, t: 0, life: 0.34, h }); e.g.visible = true;
-      for (let k = 0; k < 22; k++) {      // swirl of motes rising from the ring
-        const a = Math.random() * Math.PI * 2, r = 0.25 + Math.random() * 0.8, p = V3(at.x + Math.cos(a) * r, 0.08 + Math.random() * 0.3, at.z + Math.sin(a) * r);
+      e.g.position.set(at.x, 0.03, at.z); e.g.rotation.y = Math.random() * 6.28; e.g.scale.setScalar(scale); Object.assign(e, { on: true, t: 0, life, h }); e.g.visible = true;
+      for (let k = 0; k < 22 * Math.min(2, scale); k++) {      // swirl of motes rising from the ring
+        const a = Math.random() * Math.PI * 2, r = (0.25 + Math.random() * 0.8) * scale, p = V3(at.x + Math.cos(a) * r, 0.08 + Math.random() * 0.3, at.z + Math.sin(a) * r);
         emit(p, 1, { speed: 0.2, vel: V3(-Math.sin(a) * 2.2 + Math.cos(a) * 0.4, 1.4 + Math.random() * 1.6, Math.cos(a) * 2.2 + Math.sin(a) * 0.4), grav: -1.5, drag: 1.2, life: 0.5, color: AZ, color2: VIO });
       }
       for (let k = 0; k < 7; k++) {       // feathers flung outward
@@ -780,6 +825,13 @@ const FX = (() => {
       sprite(at, { map: ringT, s0: 0.1, s1: crit ? 0.8 : 0.55, life: 0.16, color: crit ? GOLD : PALE });
     },
     update(dt) {
+      for (const e of CR) { if (!e.on) continue; e.t += dt; const u = e.t / e.life;
+        if (u >= 1) { e.on = false; e.m.visible = false; continue; }
+        e.m.scale.setScalar(0.7 + 0.55 * (1 - Math.pow(1 - u, 2))); e.m.material.opacity = 1 - u * u; e.m.position.addScaledVector(e.f, dt * 1.5); }
+      for (const e of CK) { if (!e.on) continue; e.t += dt; const u = e.t / e.life;
+        if (u >= 1) { e.on = false; e.m.visible = false; continue; }
+        e.m.material.opacity = u < 0.05 ? u / 0.05 : 1 - Math.pow((u - 0.05) / 0.95, 1.5); }
+      lightT += dt; light.intensity = lightT < 0.45 ? light.intensity * Math.exp(-dt * 7) : 0;
       for (let i = 0; i < N; i++) {
         const q = pt[i]; if (!q.on) continue;
         q.t += dt; if (q.t >= q.life) { q.on = false; pos[i * 3 + 1] = -50; col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = 0; continue; }
@@ -805,8 +857,142 @@ const FX = (() => {
   };
 })();
 
+// ----- Thiên Lam Trảm: spin, leap, overhead cleave (keys in the chest frame, like the combos) -----
+const CHOP_R = [ { t: 0 }, { t: 0.18, o: [-0.26, -0.30, -0.12], b: [-0.20, -0.45, -0.87] }, { t: 0.45, o: [-0.12, 0.33, -0.06], b: [0, 0.50, -0.87] },
+                 { t: 0.60, o: [-0.06, -0.28, 0.40], b: [0, -0.80, 0.60] }, { t: 0.76, o: [-0.06, -0.30, 0.38], b: [0, -0.85, 0.50] }, { t: 1 } ];
+const CHOP_G = [ { t: 0 }, { t: 0.18, o: [-0.15, -0.28, -0.05], b: [-0.30, -0.40, -0.86] }, { t: 0.45, o: [0, 0.33, 0.02], b: [0, 0.50, -0.87] },
+                 { t: 0.60, o: [0, -0.24, 0.42], b: [0, -0.80, 0.60] }, { t: 0.76, o: [0, -0.26, 0.40], b: [0, -0.85, 0.50] }, { t: 1 } ];
+function chopDef(mode) {
+  const hands = mode === "two" ? { G: CHOP_G } : mode === "dual" || mode === "none" ? { R: CHOP_R, L: CHOP_R.map(mir) }
+    : { R: CHOP_R, L: [ { t: 0 }, { t: 0.45, o: [0.10, 0.30, 0.05] }, { t: 0.6, o: [0.15, -0.25, 0.32] }, { t: 1 } ] };
+  return { name: SKILLS.chop.name, special: "chop", dur: 0.95, dmg: 0, hit: [0.52, 0.68], noBladeHit: true, heavy: true, hands,
+    body: [ { t: 0 }, { t: 0.18, sx: 0.12, drop: -0.12 }, { t: 0.45, sx: -0.30, drop: 0.02, lunge: 0.15 }, { t: 0.60, sx: 0.50, drop: -0.16, lunge: 0.45 }, { t: 0.76, sx: 0.45, drop: -0.14, lunge: 0.45 }, { t: 1, lunge: 0.45 } ] };
+}
+// ----- Kiếm Vũ Thiên Giáng: throw the sword up, it plunges onto the target with a rain of spectral blades -----
+const THROW_R = [ { t: 0 }, { t: 0.20, o: [-0.22, 0.02, -0.12], b: [0, 0.2, -0.98] }, { t: 0.30, o: [-0.12, 0.36, 0.12], b: [0, 1, 0.15] }, { t: 0.45, o: [-0.12, 0.36, 0.12] },
+                  { t: 0.62, o: [-0.10, 0.26, 0.36] }, { t: 0.80, o: [-0.12, -0.05, 0.42] }, { t: 1 } ];
+function rainDef(mode) {
+  const hands = mode === "two" ? { G: [ { t: 0 }, { t: 0.2, o: [0, 0, -0.10], b: [0, 0.3, -0.95] }, { t: 0.3, o: [0, 0.36, 0.10], b: [0, 1, 0.10] }, { t: 0.62, o: [0, 0.30, 0.30] }, { t: 0.8, o: [0, -0.10, 0.40] }, { t: 1 } ] }
+    : mode === "dual" ? { R: THROW_R } : { R: THROW_R, L: [ { t: 0 }, { t: 0.45, o: [0.30, 0.0, 0.20] }, { t: 0.8, o: [0.32, -0.10, 0.25] }, { t: 1 } ] };
+  return { name: SKILLS.rain.name, special: "rain", dur: 1.5, dmg: 0, hit: [2, 2], noBladeHit: true, hands,
+    body: [ { t: 0 }, { t: 0.2, drop: -0.06, sx: 0.1 }, { t: 0.3, drop: 0.04, sx: -0.2 }, { t: 0.62, sx: -0.1 }, { t: 0.8, sx: 0.2, drop: -0.05 }, { t: 1 } ] };
+}
+const RAIN = { state: "done", t: 0, target: V3(), from: V3(), ctrl: V3(), apex: V3(), len: 0.85, ghost: false, yaw: 0, fly: null, ghosts: [], hitDone: false };
+const leapK = u => u > 0.2 && u < 0.6 ? Math.sin(Math.PI * (u - 0.2) / 0.4) : 0;
+const spinOf = u => Math.PI * 2 * ease(clamp((u - 0.06) / 0.4, 0, 1));
+function nearestAlive(maxDist) {
+  let best = null, bd = maxDist;
+  for (const d of DUMMIES) { if (d.hp <= 0) continue; const k = Math.hypot(d.pos.x - P.pos.x, d.pos.z - P.pos.z); if (k < bd) { bd = k; best = d; } }
+  return best;
+}
+function pickRainTarget() {
+  const ring = DUMMIES.slice(1).filter(d => d.hp > 0);
+  if (ring.length >= 2 && Math.hypot(RING_C.x - P.pos.x, RING_C.z - P.pos.z) <= SKILLS.rain.range) return V3(RING_C.x, 0, RING_C.z);
+  const d = nearestAlive(SKILLS.rain.range); if (d) return V3(d.pos.x, 0, d.pos.z);
+  return V3(P.pos.x + Math.sin(P.yaw) * 2.5, 0, P.pos.z + Math.cos(P.yaw) * 2.5);
+}
+function startSpecial(kind) {
+  if (SK.cd[kind] > 0 || menuOpen || !knight || (P.atk && P.atk.def.special) || (kind === "rain" && RAIN.state !== "done")) return;
+  SK.cd[kind] = SKILLS[kind].cd;
+  const def = kind === "chop" ? chopDef(equip.mode) : rainDef(equip.mode);
+  if (kind === "chop") { const d = nearestAlive(2.5); if (d) P.yaw = Math.atan2(d.pos.x - P.pos.x, d.pos.z - P.pos.z); }
+  else { RAIN.target.copy(pickRainTarget()); P.yaw = Math.atan2(RAIN.target.x - P.pos.x, RAIN.target.z - P.pos.z); }
+  P.atk = { def, t: 0, dur: def.dur, hit: {}, lunged: 0, fired: {} }; P.cd = def.dur; P.queued = false; CAST.last = -9;
+}
+function specialEvents() {
+  if (!P.atk || !P.atk.def.special) return;
+  const u = P.atk.t / P.atk.dur, ev = P.atk.fired, f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw));
+  if (P.atk.def.special === "chop") {
+    if (u >= 0.5 && !ev.arc) { ev.arc = true; FX.crescent(V3(P.pos.x, 1.0 + P.hover, P.pos.z).addScaledVector(f, 0.55), f); }
+    if (u >= 0.6 && !ev.impact) {
+      ev.impact = true;
+      const at = V3(P.pos.x, 0, P.pos.z).addScaledVector(f, 0.95);
+      FX.nova(at, 0, 0.8, 0.3); FX.crack(at, 2.2); FX.debris(at, 26, 4.5); FX.flash(at, 5); FX.impact(V3(at.x, 0.4, at.z), true);
+      shake = Math.max(shake, 0.09); hitStop = 0.08;
+      for (const d of DUMMIES) {
+        if (d.hp <= 0) continue;
+        const v = V3(d.pos.x - P.pos.x, 0, d.pos.z - P.pos.z), dist = v.length();
+        const near = dist - d.r <= SKILLS.chop.range && v.normalize().dot(f) > 0.1, onSpot = Math.hypot(d.pos.x - at.x, d.pos.z - at.z) - d.r <= 0.9;
+        if (near || onSpot) skillHit(d, "chop", V3(d.pos.x, 1.1 * d.scale, d.pos.z));
+      }
+    }
+  } else if (u >= 0.3 && !ev.throw) {
+    ev.throw = true;
+    const side = swords.R, from = side.g.visible ? knight.localToWorld(side.g.position.clone()) : knight.localToWorld(local(bones.handR));
+    launchRain(from);
+  }
+}
+let flyReal = null, flyGhost = null;
+const ghostPool = [];
+function ghostCards() {
+  const v = SET.weapon.variants.front, aspect = v.size_1x[0] / v.size_1x[1], g = new THREE.Group();
+  const mat = new THREE.MeshBasicMaterial({ map: swordTex[0], color: 0x8cc8ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  for (const ry of [0, Math.PI / 2]) { const geo = new THREE.PlaneGeometry(aspect, 1); geo.translate((0.5 - v.grip_pivot[0]) * aspect, (v.grip_pivot[1] - 0.5), 0); const m = new THREE.Mesh(geo, mat); m.rotation.y = ry; g.add(m); }
+  g.visible = false; scene.add(g); return { g, mat };
+}
+function realCards() {   // a free-flying copy of the in-hand sword
+  const g = new THREE.Group(); swords.R.g.children.forEach(c => { const m = c.clone(); m.scale.x = 1; m.material = c.material; g.add(m); }); g.visible = false; scene.add(g); return { g };
+}
+function launchRain(from) {
+  if (!flyReal) { flyReal = realCards(); flyGhost = ghostCards(); for (let i = 0; i < 6; i++) ghostPool.push(ghostCards()); }
+  Object.assign(RAIN, { state: "rise", t: 0, len: SWORD_LEN[equip.mode] || 0.85, ghost: equip.mode === "none", yaw: P.yaw, hitDone: false });
+  RAIN.from.copy(from); RAIN.ctrl.copy(from).add(V3(0, 5, 0)); RAIN.apex.set(RAIN.target.x, 6.2, RAIN.target.z);
+  RAIN.fly = RAIN.ghost ? flyGhost : flyReal; RAIN.fly.g.scale.setScalar(RAIN.len * 1.1); RAIN.fly.g.visible = true; if (RAIN.ghost) RAIN.fly.mat.opacity = 1;
+  FX.sprite(from, { s0: 0.2, s1: 0.9, life: 0.25, color: new THREE.Color(0xbfe2ff) });
+}
+const bez = (a, c, b, u) => a.clone().multiplyScalar((1 - u) * (1 - u)).addScaledVector(c, 2 * u * (1 - u)).addScaledVector(b, u * u);
+const qYaw = y => new THREE.Quaternion().setFromAxisAngle(V3(0, 1, 0), y), qX = a => new THREE.Quaternion().setFromAxisAngle(V3(1, 0, 0), a);
+// sword local -Y is the blade, so the identity orientation points the tip down; qX(PI) points it up
+function updateRain(dt) {
+  if (RAIN.state === "done") return;
+  const R_ = RAIN, g = R_.fly.g, T = R_.target; R_.t += dt;
+  const tipLen = R_.len * 1.1 * swords.R.tipY;
+  if (R_.state === "rise") {
+    const u = Math.min(1, R_.t / 0.45), e = 1 - Math.pow(1 - u, 2);
+    g.position.copy(bez(R_.from, R_.ctrl, R_.apex, e)); g.quaternion.copy(qYaw(R_.yaw)).multiply(qX(Math.PI + u * Math.PI * 4));
+    if (Math.random() < 0.6) FX.emit(g.position, 1, { speed: 0.3, life: 0.35, grav: 0, color: new THREE.Color(0x5fb0ff) });
+    if (u >= 1) { R_.state = "hang"; R_.t = 0; FX.sprite(R_.apex, { s0: 0.3, s1: 2.2, life: 0.3, color: new THREE.Color(0x7fc4ff) }); }
+  } else if (R_.state === "hang") {
+    const u = Math.min(1, R_.t / 0.14);
+    g.position.copy(R_.apex).add(V3(0, 0.15 * Math.sin(u * Math.PI), 0)); g.quaternion.copy(qYaw(R_.yaw)).multiply(qX(Math.PI)).slerp(qYaw(R_.yaw), ease(u));   // tip up -> tip down
+    if (u >= 1) {
+      R_.state = "plunge"; R_.t = 0;
+      FX.lance(R_.apex, V3(T.x, 0.05, T.z), true);
+      ghostPool.forEach((gh, i) => { const a = i / 6 * Math.PI * 2 + Math.random() * 0.4, r = 1.15;
+        Object.assign(gh, { on: true, t: -i * 0.05, at: V3(T.x + Math.cos(a) * r, 0, T.z + Math.sin(a) * r), y0: 4.2 + i * 0.2, yaw: Math.random() * 6.28, hit: false });
+        gh.g.scale.setScalar(R_.len * 0.85); gh.mat.opacity = 0.9; });
+    }
+  } else if (R_.state === "plunge") {
+    const u = Math.min(1, R_.t / 0.17), ground = V3(T.x, tipLen - 0.25, T.z);   // grip height that leaves the tip 25 cm in the floor
+    g.position.copy(R_.apex).lerp(ground, u * u); g.quaternion.copy(qYaw(R_.yaw));
+    if (u >= 1) { R_.state = "stuck"; R_.t = 0; rainImpact(); }
+  } else if (R_.state === "stuck") {
+    if (R_.t > 0.45) { R_.state = "return"; R_.t = 0; R_.from.copy(g.position); }
+  } else if (R_.state === "return") {
+    const u = Math.min(1, R_.t / 0.32), hand = knight.localToWorld(local(bones.handR));
+    g.position.copy(bez(R_.from, R_.from.clone().lerp(hand, 0.5).add(V3(0, 2.2, 0)), hand, ease(u))); g.quaternion.copy(qYaw(P.yaw)).multiply(qX(u * Math.PI * 4));
+    if (u >= 1) { R_.state = "done"; g.visible = false; FX.sprite(hand, { s0: 0.15, s1: 0.6, life: 0.18, color: new THREE.Color(0xbfe2ff) }); }
+  }
+  for (const gh of ghostPool) {
+    if (!gh.on) continue; gh.t += dt;
+    if (gh.t < 0) { gh.g.visible = false; continue; }
+    gh.g.visible = true; gh.g.quaternion.copy(qYaw(gh.yaw));
+    const u = Math.min(1, gh.t / 0.2), y = lerp(gh.y0, tipLen * 0.78 - 0.2, u * u);
+    gh.g.position.set(gh.at.x, y, gh.at.z);
+    if (u >= 1 && !gh.hit) { gh.hit = true; FX.nova(gh.at, 0, 0.45, 0.25); FX.impact(V3(gh.at.x, 0.3, gh.at.z), false);
+      for (const d of DUMMIES) if (d.hp > 0 && Math.hypot(d.pos.x - gh.at.x, d.pos.z - gh.at.z) - d.r <= 0.7) skillHit(d, "rain", V3(d.pos.x, 1.0 * d.scale, d.pos.z), SKILLS.rain.ghostMult / SKILLS.rain.mult); }
+    if (gh.hit) { gh.mat.opacity = Math.max(0, 0.9 - (gh.t - 0.2) / 0.35); if (gh.mat.opacity <= 0) { gh.on = false; gh.g.visible = false; } }
+  }
+}
+function rainImpact() {
+  const T = RAIN.target;
+  FX.nova(T, 0, SKILLS.rain.radius, 0.45); FX.nova(T, 0, SKILLS.rain.radius * 0.6, 0.3); FX.crack(T, 3.6, 1.8); FX.debris(T, 44, 6); FX.flash(T, 9);
+  FX.impact(V3(T.x, 0.5, T.z), true); shake = Math.max(shake, 0.14);
+  for (const d of DUMMIES) if (d.hp > 0 && Math.hypot(d.pos.x - T.x, d.pos.z - T.z) - d.r <= SKILLS.rain.radius) skillHit(d, "rain", V3(d.pos.x, 1.1 * d.scale, d.pos.z), 1);
+}
+
 function castSkill(kind) {
-  if (SK.cd[kind] > 0 || menuOpen || !knight) return;
+  if (SK.cd[kind] > 0 || menuOpen || !knight || (P.atk && P.atk.def.special)) return;
   SK.cd[kind] = Math.max(SK.cd[kind], -0.05) + SKILLS[kind].cd;   // keep an exact 10/s rhythm across frames
   P.atk = null; CAST.kind = kind; CAST.last = clock; CAST.pulse = 1;
   const alive = DUMMIES.filter(d => d.hp > 0), f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw));
@@ -824,28 +1010,29 @@ function castSkill(kind) {
     for (const d of alive) if (inSkillRange(d, kind)) skillHit(d, kind, V3(d.pos.x, 1.1 * d.scale, d.pos.z));
   }
 }
-function skillHit(D, kind, at) {
-  const crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * SKILLS[kind].mult * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
-  const push = D.pos.clone().sub(P.pos).setY(0); if (push.lengthSq() > 1e-6) push.normalize(); push.multiplyScalar(kind === "aoe" ? 0.9 : 0.6);
+function skillHit(D, kind, at, extra = 1) {
+  const crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * SKILLS[kind].mult * extra * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
+  const push = D.pos.clone().sub(P.pos).setY(0); if (push.lengthSq() > 1e-6) push.normalize(); push.multiplyScalar(kind === "aoe" ? 0.9 : kind === "single" ? 0.6 : 2.6);
   D.wobV.x += push.x; D.wobV.y += push.z;
-  registerDamage(D, dmg, crit, true); FX.impact(at, crit);
+  registerDamage(D, dmg, crit, kind === "single" || kind === "aoe"); FX.impact(at, crit);
   if (crit) shake = Math.max(shake, 0.015);
 }
 function updateSkillUI() {
-  for (const k of ["single", "aoe"]) { const el = $("sk-" + k); el.style.setProperty("--cd", String(clamp(SK.cd[k] / SKILLS[k].cd, 0, 1))); el.classList.toggle("on", clock - CAST.last < 0.15 && CAST.kind === k); }
+  for (const k of ["chop", "rain"]) $("sk-" + k).classList.toggle("on", !!(P.atk && P.atk.def.special === k));
+  for (const k of ["single", "aoe", "chop", "rain"]) { const el = $("sk-" + k); el.style.setProperty("--cd", String(clamp(SK.cd[k] / SKILLS[k].cd, 0, 1))); if (k === "single" || k === "aoe") el.classList.toggle("on", clock - CAST.last < 0.15 && CAST.kind === k); }
 }
-for (const k of ["single", "aoe"]) {
+for (const k of ["single", "aoe", "chop", "rain"]) {
   const el = $("sk-" + k);
   el.addEventListener("pointerdown", e => { e.preventDefault(); SK.hold[k] = true; el.setPointerCapture(e.pointerId); });
   const up = () => { SK.hold[k] = false; }; el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); el.addEventListener("lostpointercapture", up);
-  el.addEventListener("click", e => { if (e.detail === 0) castSkill(k); });            // keyboard activation
+  el.addEventListener("click", e => { if (e.detail === 0) (k === "chop" || k === "rain" ? startSpecial : castSkill)(k); });   // keyboard activation
 }
 
 // auto play: go where the skills hit the most targets, then keep casting (with a sword combo now and then)
 function setAuto(on) { AUTO.on = on; $("btn-auto").setAttribute("aria-pressed", String(on)); }
 $("btn-auto").addEventListener("click", () => setAuto(!AUTO.on));
 function autoPlay() {
-  AUTO.dir = null; AUTO.cast = null; AUTO.attack = false;
+  AUTO.dir = null; AUTO.cast = null; AUTO.attack = false; AUTO.special = null;
   if (!AUTO.on || menuOpen || !knight) return;
   const alive = DUMMIES.filter(d => d.hp > 0); if (!alive.length) return;
   const ring = DUMMIES.slice(1).filter(d => d.hp > 0), dxz = d => Math.hypot(d.pos.x - P.pos.x, d.pos.z - P.pos.z);
@@ -857,7 +1044,9 @@ function autoPlay() {
   if (dist > 0.12) { AUTO.dir = to.normalize(); AUTO.mag = clamp(dist / 0.6, 0.35, 1); AUTO.run = dist > 3; }
   if (dist < (kind === "aoe" ? 0.4 : 0.35)) {
     if (face) { let d = Math.atan2(face.pos.x - P.pos.x, face.pos.z - P.pos.z) - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * 0.2; }
-    if (kind === "single" && clock % 4 > 2.9) AUTO.attack = true; else AUTO.cast = kind;
+    if (kind === "aoe" && SK.cd.rain <= 0 && RAIN.state === "done") AUTO.special = "rain";
+    else if (kind === "single" && SK.cd.chop <= 0) AUTO.special = "chop";
+    else if (kind === "single" && clock % 4 > 2.9) AUTO.attack = true; else AUTO.cast = kind;
   }
 }
 
@@ -917,7 +1106,7 @@ function update(dt) {
   let go = want, gmag = mag, run2 = running;
   if (!want && AUTO.dir) { dir.copy(AUTO.dir); go = true; gmag = AUTO.mag; run2 = AUTO.run; }      // the player's own input always wins
   const flyMul = lerp(1, 1.35, P.fly), casting = clock - CAST.last < 0.15;
-  const vmax = 1.7 * (1 + ST.move_speed / 100) * (run2 ? 2.1 : 1) * flyMul * (P.atk ? 0.3 : casting ? 0.6 : 1) * Math.min(1, gmag);
+  const vmax = 1.7 * (1 + ST.move_speed / 100) * (run2 ? 2.1 : 1) * flyMul * (P.atk ? (P.atk.def.special ? 0 : 0.3) : casting ? 0.6 : 1) * Math.min(1, gmag);
   P.vel.lerp(dir.multiplyScalar(go ? vmax : 0), Math.min(1, dt * (go ? lerp(8, 4, P.fly) : lerp(10, 3, P.fly))));   // flight carries more momentum
   // attack lunge: root motion along the facing direction
   if (P.atk) { const l = sampleBody(P.atk.def.body, P.atk.t / P.atk.dur).lunge, dl = l - P.atk.lunged; P.atk.lunged = l;
@@ -936,12 +1125,15 @@ function update(dt) {
   P.cd = Math.max(0, P.cd - dt);
   if ((holdAttack || keys.has(" ") || keys.has("j") || P.queued || AUTO.attack) && !menuOpen) startAttack();
   for (const k of ["single", "aoe"]) SK.cd[k] -= dt;
+  for (const k of ["chop", "rain"]) SK.cd[k] = Math.max(0, SK.cd[k] - dt);
   if (!menuOpen) {
     if (keys.has("1") || SK.hold.single || AUTO.cast === "single") castSkill("single");
     if (keys.has("2") || SK.hold.aoe || AUTO.cast === "aoe") castSkill("aoe");
+    if (keys.has("3") || SK.hold.chop || AUTO.special === "chop") startSpecial("chop");
+    if (keys.has("4") || SK.hold.rain || AUTO.special === "rain") startSpecial("rain");
   }
   CAST.w += ((clock - CAST.last < 0.2 ? 1 : 0) - CAST.w) * Math.min(1, dt * 14); CAST.pulse *= Math.exp(-dt * 22);
-  if (P.atk) { if (hitStop > 0) hitStop -= dt; else { P.atk.t += dt; if (P.atk.t >= P.atk.dur) { P.atk = null; P.lastAtkEnd = clock; } } }
+  if (P.atk) { if (hitStop > 0) hitStop -= dt; else { P.atk.t += dt; specialEvents(); if (P.atk.t >= P.atk.dur) { P.atk = null; P.lastAtkEnd = clock; } } }
   for (const D of DUMMIES) {
     D.wobV.addScaledVector(D.wob, -40 * dt).multiplyScalar(Math.max(0, 1 - 5.5 * dt)); D.wob.addScaledVector(D.wobV, dt);
     D.flash = Math.max(0, D.flash - dt * 6);
@@ -956,7 +1148,8 @@ let last = 0;
 function frame(ts) {
   const dt = Math.min(0.05, (ts - (last || ts)) / 1000); last = ts;
   update(dt);
-  knight.position.set(P.pos.x, P.hover, P.pos.z); knight.rotation.y = P.yaw; knight.updateMatrixWorld(true);
+  const chopU = P.atk && P.atk.def.special === "chop" ? P.atk.t / P.atk.dur : -1;
+  knight.position.set(P.pos.x, P.hover + (chopU >= 0 ? 0.55 * leapK(chopU) : 0), P.pos.z); knight.rotation.y = P.yaw + (chopU >= 0 ? spinOf(chopU) : 0); knight.updateMatrixWorld(true);
   pose(dt); placeSwords();
   // chest frame for the wings (same as used by the arms)
   const Dchest = new THREE.Quaternion(); bones.chest.getWorldQuaternion(Dchest); Dchest.premultiply(knight.getWorldQuaternion(new THREE.Quaternion()).invert()).multiply(rest.chest.pq.clone().multiply(rest.chest.q).invert());
@@ -971,10 +1164,10 @@ function frame(ts) {
     if (sw.g.visible) {
       const [a, b] = blade(s);
       const active = def && (mode === "two" ? true : !!def.hands[s]);
-      if (inWin && active) tryHit(s, a, b, 0);
+      if (inWin && active && !def.noBladeHit) tryHit(s, a, b, 0);
       if (def && active && atkOn > def.hit[0] - 0.08 && atkOn < def.hit[1] + 0.06) sw.trail.pts.push([a.clone().lerp(b, 0.3), b.clone(), clock]);
       if (li < 2) { hitLines[li++].geometry.setFromPoints([a, b]); }
-    } else if (mode === "none" && def && def.hands[s] && inWin) {
+    } else if (mode === "none" && def && def.hands[s] && inWin && !def.noBladeHit) {
       const a = bones["forearm" + s].getWorldPosition(V3()), b = bones["hand" + s].getWorldPosition(V3()); b.addScaledVector(b.clone().sub(a).normalize(), 0.12);
       tryHit(s, a, b, 0.12);
     }
@@ -991,6 +1184,7 @@ function frame(ts) {
     for (const m of D.mats) { m.emissive.setRGB(D.flash * 0.45, D.flash * 0.7, D.flash * 0.95); m.transparent = D.hp === 0; m.opacity = D.hp === 0 ? 0.4 : 1; }
   }
   rangeRing.position.set(P.pos.x, 0.02, P.pos.z);
+  updateRain(dt);
   FX.update(dt); updateSkillUI();
   // camera
   cam.target.lerp(V3(P.pos.x, 1.15 + P.hover * 0.8, P.pos.z), Math.min(1, dt * 6));
@@ -1014,7 +1208,7 @@ function frame(ts) {
     const recent = hits.filter(h => clock - h[0] <= 5), span = recent.length ? Math.max(1, Math.min(5, clock - recent[0][0])) : 1;
     $("m-dps").textContent = Math.round(recent.reduce((s, h) => s + h[1], 0) / span).toLocaleString("vi-VN");
     const spd = Math.hypot(P.vel.x, P.vel.z), act = P.atk ? `<b>${P.atk.def.name}</b>` : spd < 0.15 ? (P.fly > 0.5 ? "bay lơ lửng" : "đứng") : P.fly > 0.5 ? "<b>bay</b>" : P.run > 0.5 ? "<b>chạy</b>" : "<b>đi</b>";
-    const skillNow = clock - CAST.last < 0.2 ? `<b>${SKILLS[CAST.kind].name}</b>` : act;
+    const skillNow = P.atk && P.atk.def.special ? `<b>${P.atk.def.name}</b>` : clock - CAST.last < 0.2 ? `<b>${SKILLS[CAST.kind].name}</b>` : act;
     $("state").innerHTML = `${AUTO.on ? "<b>Tự động</b> · " : ""}${MODE_VI[equip.mode]} · ${skillNow} · ${spd.toFixed(1)} m/s`;
   }
   requestAnimationFrame(frame);
