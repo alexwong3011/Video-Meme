@@ -1909,7 +1909,7 @@ const CLS = {
   elf: { name: 'Lục Cung Thủ', icon: '🏹', col: '#7dff9a', glow: '#9fffc0', el: 'water', melee: false, range: 7.5, rate: 0.36, atk: 0.82, hp: 0.9, proj: 'arrow', ps: 14, crit: 0.2, desc: 'Bắn cực nhanh, chí mạng gốc 20%. Tên nước làm Ướt.' },
   holy: { name: 'Thánh Quang Tư Tế', icon: '✦', col: '#ffd85a', glow: '#fff0a0', el: 'holy', melee: false, range: 6.5, rate: 0.78, atk: 1.0, hp: 1.0, proj: 'holy', ps: 8, splash: 1.3, desc: 'Cầu thánh quang nổ lan, có kỹ năng hồi máu.' }
 };
-for (const k in CLS) CLS[k].aps = 2 / CLS[k].rate; // attacks per second = 2× the old swing rate
+for (const k in CLS) { CLS[k].aps0 = 2 / CLS[k].rate; CLS[k].aps = 0.5; } // attacks per second: every class starts at 0.5 (aps0 = the sample's old base, for the damage scale)
 const CORDER = ['thunder', 'fire', 'ice', 'elf', 'holy'];
 const ELC = { ice: '#7fe8ff', thunder: '#c8a8ff', fire: '#ff7a2a', water: '#3ab0ff', holy: '#ffd85a' };
 const ELN = { ice: 'Băng', thunder: 'Sét', fire: 'Lửa', water: 'Nước', holy: 'Thánh' };
@@ -2136,10 +2136,14 @@ const LVT_A = 2.158, LVT_B = Math.log(11) / 400;             // seconds per leve
 const lvSeconds = L => LVT_A * Math.exp(LVT_B * L);
 const lvHours = L => LVT_A * (Math.exp(LVT_B * L) - 1) / LVT_B / 3600; // cumulative play time to reach L
 // Attack speed: points (AS) raise attacks/second from the class base towards the 15/s cap.
-const APS_MAX = 15, AS_MAX = 400;
+const APS_MAX = 5, AS_MAX = 400;                               // 0.5 hits/s at the start, 5 hits/s at full attack speed
 const apsOf = (base, as) => Math.min(APS_MAX, base + (APS_MAX - base) * Math.min(1, Math.max(0, as) / AS_MAX));
 const asRef = L => Math.min(AS_MAX, 60 + 0.85 * L);           // roadmap: ~145 AS at Lv100 (half speed), 400 at Lv400 (max)
-const apsRef = L => apsOf(3.2, asRef(L));
+// the sample's old speed curve (class base up to 15 hits/s): EXP and monster HP were sized on it
+const apsOld = (base, as) => Math.min(15, base + (15 - base) * Math.min(1, Math.max(0, as) / AS_MAX));
+const apsRef = L => apsOld(3.2, asRef(L));
+// fewer, heavier hits: each hit is scaled so that damage per second at any attack-speed stat stays what it was before the change
+const hitK = (cls, as) => apsOld(CLS[cls].aps0, as) / apsOf(CLS[cls].aps, as);
 const killRef = L => 0.25 * apsRef(L);                        // reference kills per second used to size EXP
 const mobExp = lv => 10 + 3 * lv;
 const expNeed = lv => Math.round(lvSeconds(lv) * killRef(lv) * mobExp(lv));
@@ -2338,7 +2342,7 @@ function vuln(m, el) { let k = 1; if (m.frzT > 0) k *= 1.3; if (m.shockT > 0) k 
 const DMG_TEXT = 0.6; // damage numbers at 60% of their old size (min 9px)
 const dmgSize = px => Math.max(9, Math.round(px * DMG_TEXT));
 function hitMob(m, mult, el, show = true) {
-  if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * rr(0.9, 1.1) * vuln(m, el) * r.m * lvDealK(m.lv - S.lv);
+  if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * hitK(S.cls, HS.as) * rr(0.9, 1.1) * vuln(m, el) * r.m * lvDealK(m.lv - S.lv);
   m.hp -= dmg; m.flash = 1; m.aggro = true; m.tgt = null; recover(REC.hpHit, REC.mpHit); show = show && textN < 34;
   if (show) { const y = m.T.y + 0.9 * Math.max(1, m.scale);
     fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), r.ty === 'n' ? '' : DMGC[r.ty], dmgSize({ n: 17, c: 22, p: 23, d: 24, t: 26, x: 30 }[r.ty] + Math.max(0, r.L - 1) * 2), r.ty === 'n' ? null : { glow: r.ty === 'x' || r.L >= 3, life: 1.1 }, y);
@@ -2830,7 +2834,7 @@ function botMove(e, tx, tz, dt, sp) { const dx = tx - e.pos.x, dz = tz - e.pos.z
   const r = Math.hypot(e.pos.x, e.pos.z); if (r > 21) { e.pos.x *= 21 / r; e.pos.z *= 21 / r; }
   let da = Math.atan2(ux, uz) - e.face; da = Math.atan2(Math.sin(da), Math.cos(da)); e.face += da * Math.min(1, dt * 8); return true; }
 function botSay(e, txt) { e.sayEl.textContent = txt; e.sayEl.style.display = 'block'; e.sayHide = S.time + 3.5; }
-function botHitMob(m, dmg, e) { if (m.dead) return; const crit = Math.random() < 0.12; dmg *= DMG_SCALE * rr(0.9, 1.1) * (crit ? 1.8 : 1) * vuln(m, CLS[e.b.cls].el) * lvDealK(m.lv - e.b.lv);
+function botHitMob(m, dmg, e) { if (m.dead) return; const crit = Math.random() < 0.12; dmg *= DMG_SCALE * hitK(e.b.cls, asRef(e.b.lv) * 0.85) * rr(0.9, 1.1) * (crit ? 1.8 : 1) * vuln(m, CLS[e.b.cls].el) * lvDealK(m.lv - e.b.lv);
   m.hp -= dmg; m.flash = 1; m.aggro = true; if (!m.tgt || Math.random() < 0.35) m.tgt = e;
   if (textN < 22) fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), crit ? '#ffd0a0' : '#b8c4cc', dmgSize(crit ? 14 : 12), null, m.T.y + 0.9 * Math.max(1, m.scale));
   burst(m.x, mobH(m), m.z, 4, C3(m.T.color), 3, 0.3, 0.4); if (m.hp <= 0) killMob(m, e); }
@@ -3209,8 +3213,8 @@ function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; co
 
 // ---------- rankings: everyone in the world, bots and you ----------
 const itemsValue = list => list.reduce((s, g) => s + (g ? sellPrice(g) * qty(g) : 0), 0);
-function botPower(b) { const st = botStats(b); return st.atk * DMG_SCALE * st.aps * 1.3 * (1 + botWing(b) * 0.25) + st.hp * 0.05 + st.def * 2; }
-function myPower() { return HS.atk * DMG_SCALE * HS.aps * avgMult() * HS.dmgMul + HS.hp * 0.05 + HS.def * 2; }
+function botPower(b) { const st = botStats(b); return st.atk * DMG_SCALE * hitK(b.cls, asRef(b.lv) * 0.85) * st.aps * 1.3 * (1 + botWing(b) * 0.25) + st.hp * 0.05 + st.def * 2; }
+function myPower() { return HS.atk * DMG_SCALE * hitK(S.cls, HS.as) * HS.aps * avgMult() * HS.dmgMul + HS.hp * 0.05 + HS.def * 2; }
 function rankRows(k) { const where = m => MAPS[m] ? MAPS[m].name : '';
   const rows = S.bots.map(b => ({ name: b.name, cls: b.cls, lv: b.lv, exp: b.exp, gold: b.gold, traded: b.traded || 0, party: inParty(b), where: where(b.map),
     v: k === 'lv' ? b.lv : k === 'pow' ? botPower(b) : b.gold + itemsValue(b.inv) }));
