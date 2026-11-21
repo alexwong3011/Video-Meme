@@ -16,7 +16,7 @@ if [ ! -d "$TOOLS/up/node_modules/@upscalerjs" ]; then
   (cd "$TOOLS/up" && npm init -y >/dev/null && npm i --no-audit --no-fund --legacy-peer-deps @tensorflow/tfjs@4.22.0 @tensorflow/tfjs-backend-wasm@4.22.0 @upscalerjs/esrgan-thick@1.0.0)
 fi
 
-for VIEW in front back weapon body_front body_back; do
+for VIEW in front back weapon body_front body_back body_side; do
   W="$WORK/$VIEW"; mkdir -p "$W"; cd "$W"
   # 2. crops: 3x boxes for the segmentation model + the figure crop everything else works on
   python3 "$HERE/prep.py" "$VIEW"
@@ -31,7 +31,7 @@ done
 # 6. pack sprites, paper dolls, atlas, icons, JSON
 rm -rf "$HERE/assets"; python3 "$HERE/pack.py" "$HERE/assets" front="$WORK/front/p4" back="$WORK/back/p4" weapon="$WORK/weapon/p4"
 # 7. rig the assembled bodies (head, torso, arms, legs with joints) for character-test.html
-for VIEW in body_front body_back; do
+for VIEW in body_front body_back body_side; do
   python3 "$HERE/rig.py" "$VIEW" "$WORK/$VIEW/p4" "$HERE/assets/rig/$VIEW" --scales 2,1
 done
 echo "done -> $HERE/assets"

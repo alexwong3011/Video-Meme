@@ -1,0 +1,80 @@
+{
+ "crystal-bat": {
+  "name_vi": "Cánh Dơi Pha Lê",
+  "glow": "#bcd8ff",
+  "L": {
+   "file": "crystal-bat/L.png",
+   "size": [
+    634,
+    654
+   ],
+   "root": [
+    519.9,
+    215.8
+   ]
+  },
+  "R": {
+   "file": "crystal-bat/R.png",
+   "size": [
+    632,
+    655
+   ],
+   "root": [
+    113.8,
+    216.2
+   ]
+  }
+ },
+ "crystal-feather": {
+  "name_vi": "Cánh Lông Vũ Pha Lê",
+  "glow": "#e6f0ff",
+  "L": {
+   "file": "crystal-feather/L.png",
+   "size": [
+    541,
+    700
+   ],
+   "root": [
+    465.3,
+    329.0
+   ]
+  },
+  "R": {
+   "file": "crystal-feather/R.png",
+   "size": [
+    544,
+    699
+   ],
+   "root": [
+    76.2,
+    328.5
+   ]
+  }
+ },
+ "dragon": {
+  "name_vi": "Cánh Long Lam",
+  "glow": "#5f8bff",
+  "L": {
+   "file": "dragon/L.png",
+   "size": [
+    630,
+    700
+   ],
+   "root": [
+    466.2,
+    210.0
+   ]
+  },
+  "R": {
+   "file": "dragon/R.png",
+   "size": [
+    632,
+    702
+   ],
+   "root": [
+    164.3,
+    210.6
+   ]
+  }
+ }
+}

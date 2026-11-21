@@ -56,7 +56,21 @@ def full(r):
             if m["parent"].endswith("_L"): m["parent"] = m["parent"][:-2] + "_R"
             out[n[:-2] + "_R"] = m
     return out
-RIG = {"body_front": full(FRONT), "body_back": full(BACK)}
+# side view (facing screen-left). The near arm lies across the body and the near leg hides the far one: the far limbs are
+# drawn in code as darker copies of the near ones. "fill": pixels of those parts inside fill_zone are inpainted into this
+# part, so nothing gapes behind the arm or the hand when they swing away.
+SIDE = dict(
+  head=dict(z=40, parent="torso", pivot=(888, 305),
+            poly=[(808, 112), (990, 112), (990, 215), (955, 250), (935, 300), (905, 315), (860, 315), (828, 300), (808, 250)]),
+  forearm=dict(z=32, parent="upperarm", pivot=(905, 512), grip=(872, 640),
+            poly=[(862, 508), (958, 508), (952, 560), (935, 600), (930, 640), (915, 684), (826, 684), (826, 640), (850, 600), (862, 560)]),
+  upperarm=dict(z=31, parent="torso", pivot=(908, 420), poly=[(870, 438), (960, 438), (962, 508), (862, 508)]),
+  shin=dict(z=19, parent="thigh", pivot=(884, 722), poly=[(780, 718), (1015, 718), (1015, 990), (780, 990)]),
+  thigh=dict(z=18, parent="torso", pivot=(880, 566), poly=[(830, 556), (1000, 556), (1000, 722), (830, 722)],
+             fill=["forearm"], fill_zone=[(830, 556), (1000, 556), (1000, 722), (830, 722)]),
+  torso=dict(z=20, parent=None, pivot=(885, 560), fill=["upperarm", "forearm"], fill_zone=[(800, 300), (1000, 300), (1000, 572), (800, 572)]),
+)
+RIG = {"body_front": full(FRONT), "body_back": full(BACK), "body_side": SIDE}
 
 if __name__ == "__main__":
     view, pdir, out = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -94,6 +108,23 @@ if __name__ == "__main__":
             if pq["z"] > p["z"]: above |= owned[q]
         mask = owned[n] | (cv2.dilate(owned[n].astype(np.uint8), d).astype(bool) & above)
         part = canvas.copy(); part[:, :, 3] = np.where(mask, part[:, :, 3], 0)
+        if p.get("fill"):   # repaint what the listed parts cover inside the zone (inpainting from this part's own pixels)
+            zone = np.zeros((H, W), np.uint8); cv2.fillPoly(zone, [P(p["fill_zone"])], 1)
+            hole = np.zeros((H, W), bool)
+            for q in p["fill"]: hole |= owned[q]
+            hole &= zone.astype(bool) & (canvas[:, :, 3] > 128)
+            known = mask & ~hole & (canvas[:, :, 3] > 128)
+            src = np.where(known[..., None], canvas[:, :, :3], 0).astype(np.uint8)
+            inp = cv2.inpaint(src, (~known).astype(np.uint8) * 255, max(3, int(4 * s)), cv2.INPAINT_TELEA).astype(np.float32)
+            # the inpaint only carries colour: add back armour-scale detail tiled from a strip of this part, and shade it
+            # like the hollow under a raised arm, so a revealed patch reads as armour in shadow rather than a smear
+            ys_, xs_ = np.where(known); cx0 = int(np.percentile(xs_, 5)); bw = max(8, int(30 * s))
+            strip = canvas[ys_.min():ys_.max() + 1, cx0:cx0 + bw, :3].astype(np.float32)
+            detail = strip - cv2.GaussianBlur(strip, (0, 0), 2.5 * s)
+            reps = (H // max(1, strip.shape[0]) + 2, W // bw + 2, 1)
+            tiled = np.tile(detail, reps)[:H, :W]
+            fillc = np.clip(inp * 0.62 + tiled * 0.9, 0, 255).astype(np.uint8)
+            part[:, :, :3] = np.where(hole[..., None], fillc, part[:, :, :3]); part[:, :, 3] = np.where(hole, canvas[:, :, 3], part[:, :, 3])
         # drop stray specks (leftovers of leader lines) that are not attached to the part
         n_, lab_, st_, _ = cv2.connectedComponentsWithStats((part[:, :, 3] > 20).astype(np.uint8), 8)
         if n_ > 2:

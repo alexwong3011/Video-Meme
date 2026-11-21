@@ -60,7 +60,16 @@ Kéo `sprites/front/@4x/*.png` và `sprites/back/@4x/*.png` vào project (Unity:
 Đặt pivot của từng sprite = `pivot` trong JSON (Unity: Custom Pivot, lưu ý Unity tính y từ dưới lên → `1 - pivot.y`;
 Godot: `Sprite2D.offset = -pivot * size`). Vị trí con so với gốc nhân vật = `offset_1x + pivot * size_1x`.
 
-## Nhân vật hoàn chỉnh có khớp (`character-test.html`)
+## Bản 2,5D (`character-test.html`)
+
+Ba tấm nhân vật (`source/azure-wing-body-{front,back,side}.jpg`) được cắt thành rig có khớp: mặt trước, mặt sau (10 phần mỗi mặt) và
+góc nghiêng (6 phần; tay và chân phía xa vẽ lại từ phần phía gần, tối màu hơn; chỗ cánh tay và bàn tay che thân/đùi được lấp bằng hoa
+văn giáp trong bóng tối để không lộ lỗ khi tay vung ra). Đi trái/phải dùng góc nghiêng (lật gương cho bên phải) với sải chân thật.
+Ba bộ cánh (`source/wings-*.jpg` → `assets/wings/`, chạy `wings.py`): Cánh Dơi Pha Lê, Cánh Lông Vũ Pha Lê, Cánh Long Lam, mỗi cánh
+có điểm gắn (root); cánh vỗ theo nhịp bay, gập khi đáp đất, xòe khi ra đòn. Mọi thứ của bản 3D có trong bản 2,5D: cầm kiếm bằng IK
+hai đốt, bốn cách cầm và chuỗi đòn, bốn kỹ năng, 5 mục tiêu, nút tự động, bay.
+
+## Nhân vật hoàn chỉnh có khớp (rig `assets/rig/`)
 
 Từ hai tấm nhân vật đã ráp (`source/azure-wing-body-front.jpg`, `source/azure-wing-body-back.jpg`), `rig.py` cắt cơ thể thành
 10 phần có khớp: đầu, thân, cánh tay trên, cẳng tay + bàn tay, đùi, cẳng chân + giày (trái/phải theo vị trí trên ảnh).

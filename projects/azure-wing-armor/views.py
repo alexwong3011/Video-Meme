@@ -143,4 +143,16 @@ VIEWS = {
     origin=(900, 975),
     attach={"body": (900, 975)},
   ),
+  "body_side": dict(
+    source="source/azure-wing-body-side.jpg",
+    figure=(770, 110, 1040, 990),
+    seg_boxes={"top": (770, 110, 1040, 560), "bottom": (770, 500, 1040, 990)},
+    regions={"body": [("+", rect(772, 112, 1038, 985))]},
+    lines=[[(700, 222), (798, 300)], [(976, 283), (1040, 222), (1155, 222)], [(690, 717), (760, 717), (792, 690)]],
+    dots=[(798, 300, 8), (976, 283, 11), (792, 690, 7)],
+    erase=[rect(770, 981, 1040, 990)],
+    floor_y=930, floor_shadow=True,
+    origin=(890, 975),
+    attach={"body": (890, 975)},
+  ),
 }
