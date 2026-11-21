@@ -61,6 +61,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
 .menu-head h2 { margin: 0; font: 700 18px var(--font-display); letter-spacing: .04em; }
 .menu h3 { margin: 0 0 8px; font: 600 12px var(--font-display); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#rate { width: 100%; accent-color: var(--azure); }
+.rate-val { font: 600 13px var(--font-body); color: var(--azure); margin-left: 6px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
 .seg button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; padding: 6px 11px; cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--line); }
@@ -105,7 +107,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
   <div class="keys">
     <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>: đi · <kbd>Shift</kbd>: chạy</span>
     <span><kbd>J</kbd> / <kbd>Space</kbd> / nhấp: chém (giữ: liên hoàn)</span>
-    <span><kbd>1</kbd>–<kbd>4</kbd>: kỹ năng (giữ: 3 lần/giây) · <kbd>3</kbd> chém bổ · <kbd>4</kbd> tung kiếm</span>
+    <span><kbd>1</kbd>–<kbd>4</kbd>: kỹ năng (giữ phím: đánh theo tốc độ đánh) · <kbd>3</kbd> chém bổ · <kbd>4</kbd> tung kiếm</span>
     <span><kbd>Q</kbd>: cách cầm · <kbd>F</kbd>: bay/đáp · <kbd>P</kbd>: tự động · <kbd>I</kbd>: trang bị</span>
   </div>
   <div class="actions">
@@ -150,6 +152,14 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
     <div class="menu-head">
       <h2>Trang bị</h2>
       <button class="btn" type="button" id="menu-close">Đóng <kbd>I</kbd></button>
+    </div>
+    <div>
+      <h3>Tốc độ đánh <span class="rate-val" id="rate-val">1 đòn/giây</span></h3>
+      <input type="range" id="rate" min="0.5" max="10" step="0.5" value="1" aria-label="Tốc độ đánh, số đòn mỗi giây">
+      <div class="seg" role="group" aria-label="Tốc độ nhanh" id="rate-seg" style="margin-top:8px">
+        <button type="button" data-rate="0.5">0,5</button><button type="button" data-rate="1">1</button><button type="button" data-rate="2">2</button><button type="button" data-rate="3">3</button><button type="button" data-rate="5">5</button><button type="button" data-rate="10">10</button>
+      </div>
+      <p class="note">Áp dụng cho đòn chém và cả 4 kỹ năng.</p>
     </div>
     <div>
       <h3>Cách cầm Đại Kiếm Cánh Lam <kbd>Q</kbd></h3>
@@ -391,14 +401,22 @@ function sampleHand(list, u, idle, side) {
 function sampleBody(list, u) { const [a, b, f] = seg(list, u), r = {}; for (const k of ["tw", "drop", "lunge"]) r[k] = lerp(a[k] || 0, b[k] || 0, f); return r; }
 
 // ---------- specials: Thiên Lam Trảm (spin, leap, overhead cleave) and Kiếm Vũ Thiên Giáng (sword rain) ----------
-// every skill casts 3 times a second: the cooldown is one period, and the two specials play their whole move inside it
-const SKILL_RATE = 3, SKILL_T = 1 / SKILL_RATE;
+// attack speed: hits per second for the sword and all four skills (1 by default, set in the menu). Each cooldown is one period,
+// the combo strikes and the two specials play their whole move inside it.
+let SKILL_RATE = 1, SKILL_T = 1;
+const RF = () => SKILL_T * 3;          // time scale of the sword-rain flight (tuned at 3 hits a second)
 const SKILLS = {
   single: { name: "Lam Quang Kích", range: 1, cd: SKILL_T, mult: 0.38 },
   aoe:    { name: "Vũ Cánh Phong Bạo", range: 1, cd: SKILL_T, mult: 0.24 },
   chop:   { name: "Thiên Lam Trảm", range: 1.3, cd: SKILL_T, mult: 3.2 },
   rain:   { name: "Kiếm Vũ Thiên Giáng", range: 6, cd: SKILL_T, radius: 1.8, mult: 4, ghostMult: 0.7 },
 };
+function setRate(r) {
+  SKILL_RATE = clamp(+r || 1, 0.5, 10); SKILL_T = 1 / SKILL_RATE; for (const k in SKILLS) SKILLS[k].cd = SKILL_T;
+  equip.rate = SKILL_RATE; save();
+  const el = $("rate"); if (el) { el.value = String(SKILL_RATE); $("rate-val").textContent = SKILL_RATE.toLocaleString("vi-VN") + " đòn/giây"; }
+  document.querySelectorAll("#rate-seg button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.rate === SKILL_RATE)));
+}
 const CHOP_KEYS = [ { t: 0 }, { t: 0.18, o: [40, 120], b: [0.5, 0.85], so: [60, 120], sb: [0.6, 0.8] }, { t: 0.45, o: [10, -190], b: [0.05, -1] },
                     { t: 0.6, o: [10, 150], b: [0.1, 1], so: [-50, 150], sb: [-0.35, 0.94] }, { t: 0.76, o: [10, 160], b: [0.1, 1], so: [-50, 160], sb: [-0.3, 0.95] }, { t: 1 } ];
 const THROW_KEYS = [ { t: 0 }, { t: 0.2, o: [40, 60], b: [0.3, 0.95], so: [60, 70], sb: [0.6, 0.8] }, { t: 0.3, o: [10, -200], b: [0, -1] }, { t: 0.62, o: [20, -150] }, { t: 0.8, o: [30, 120] }, { t: 1 } ];
@@ -871,7 +889,7 @@ function tryHit(key, a, b, reach) {
     P.atk.hit[k] = true;
     const crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * def.dmg * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
     d.wobV += (P.x < d.x ? 1 : -1) * (crit ? 4.5 : 2.8) * (def.heavy ? 1.5 : 1);
-    hitStop = (crit ? 0.11 : 0.07) * (def.heavy ? 1.5 : 1); shake = (crit ? 9 : 5) * (def.heavy ? 1.5 : 1);
+    hitStop = Math.min((crit ? 0.11 : 0.07) * (def.heavy ? 1.5 : 1), 0.12 * SKILL_T);     // short enough to keep the attack speed shake = (crit ? 9 : 5) * (def.heavy ? 1.5 : 1);
     registerDamage(d, dmg, crit, false, "hit");
     fxHit(d.x, d.y, d.y - cy, crit ? "gold" : "az", crit ? 1.5 : 1.1, crit ? 16 : 9);
     if (def.heavy) VFX.beam(crit ? "gold" : "az", d.x, d.y, { w: 0.2, hgt: 1.6, life: 0.25 });
@@ -973,22 +991,22 @@ function specialEvents() {
 function updateRain(dt) {
   const R = RAIN; if (R.state === "done") return; R.t += dt;
   const apexH = 6 * M;
-  if (R.state === "rise") { const u = Math.min(1, R.t / 0.09), e = 1 - Math.pow(1 - u, 2);
+  if (R.state === "rise") { const u = Math.min(1, R.t / (0.09 * RF())), e = 1 - Math.pow(1 - u, 2);
     R.x = lerp(R.fx, R.tx, e); R.y = lerp(R.fy, R.ty, e); R.h = lerp(R.fh, apexH, e) + Math.sin(Math.PI * u) * 1.5 * M; R.ang = Math.PI + u * Math.PI * 4;
     if (Math.random() < 0.6) FX.emit(R.x, R.y, R.h, 1, { speed: 0.2, up: 0, grav: 0, life: 0.35 });
     if (u >= 1) { R.state = "hang"; R.t = 0; FX.sprite(R.x, R.y - R.h, { img: FX.G.az, s0: 60, s1: 300, life: 0.3 }); } }
-  else if (R.state === "hang") { const u = Math.min(1, R.t / 0.03); R.h = apexH + 0.15 * M * Math.sin(u * Math.PI); R.ang = lerp(Math.PI, 0, ease(u)) + Math.PI * 4;
+  else if (R.state === "hang") { const u = Math.min(1, R.t / (0.03 * RF())); R.h = apexH + 0.15 * M * Math.sin(u * Math.PI); R.ang = lerp(Math.PI, 0, ease(u)) + Math.PI * 4;
     if (u >= 1) { R.state = "plunge"; R.t = 0; R.ang = 0; FX.lance([R.x, R.y - apexH], [R.x, R.y], true);
-      R.ghosts = []; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + Math.random() * 0.4; R.ghosts.push({ x: R.tx + Math.cos(a) * 1.15 * M, y: R.ty + Math.sin(a) * 1.15 * M * DEP, t: -i * 0.015, h0: (4.2 + i * 0.2) * M, hit: false, a: 1 }); } } }
-  else if (R.state === "plunge") { const u = Math.min(1, R.t / 0.05); R.h = lerp(apexH, swordTip() * 0.8, u * u); if (u >= 1) { R.state = "stuck"; R.t = 0; rainImpact(); } }
-  else if (R.state === "stuck") { if (R.t > 0.06) { R.state = "return"; R.t = 0; R.fx = R.x; R.fy = R.y; R.fh = R.h; } }
-  else if (R.state === "return") { const u = Math.min(1, R.t / 0.06), e = ease(u), hw = handWorld("main");
+      R.ghosts = []; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + Math.random() * 0.4; R.ghosts.push({ x: R.tx + Math.cos(a) * 1.15 * M, y: R.ty + Math.sin(a) * 1.15 * M * DEP, t: -i * 0.015 * RF(), h0: (4.2 + i * 0.2) * M, hit: false, a: 1 }); } } }
+  else if (R.state === "plunge") { const u = Math.min(1, R.t / (0.05 * RF())); R.h = lerp(apexH, swordTip() * 0.8, u * u); if (u >= 1) { R.state = "stuck"; R.t = 0; rainImpact(); } }
+  else if (R.state === "stuck") { if (R.t > 0.06 * RF()) { R.state = "return"; R.t = 0; R.fx = R.x; R.fy = R.y; R.fh = R.h; } }
+  else if (R.state === "return") { const u = Math.min(1, R.t / (0.06 * RF())), e = ease(u), hw = handWorld("main");
     R.x = lerp(R.fx, hw[0], e); R.y = lerp(R.fy, P.y, e); R.h = lerp(R.fh, P.y - hw[1], e) + Math.sin(Math.PI * u) * 2.2 * M; R.ang = u * Math.PI * 4;
     if (u >= 1) { R.state = "done"; FX.sprite(hw[0], hw[1], { img: FX.G.pale, s0: 20, s1: 70, life: 0.18 }); } }
-  for (const g of R.ghosts) { g.t += dt; if (g.t < 0) continue; const u = Math.min(1, g.t / 0.08); g.h = lerp(g.h0, swordTip() * 0.6, u * u);
+  for (const g of R.ghosts) { g.t += dt; if (g.t < 0) continue; const u = Math.min(1, g.t / (0.08 * RF())); g.h = lerp(g.h0, swordTip() * 0.6, u * u);
     if (u >= 1 && !g.hit) { g.hit = true; VFX.beam("az", g.x, g.y, { w: 0.13, hgt: 2.2, life: 0.25 }); VFX.decal("ring", "pale", g.x, g.y, { s0: 0.1, s1: 0.55, life: 0.24, fi: 0.01 }); VFX.sparks(g.x, g.y, 4, 8, "az");
       for (const d of DUMMIES) if (d.hp > 0 && distM(g.x, g.y, d.x, d.y) - dummyR(d) <= 0.7) skillHit(d, "rain", SKILLS.rain.ghostMult / SKILLS.rain.mult); }
-    if (g.hit) g.a = Math.max(0, 0.9 - (g.t - 0.08) / 0.2); }
+    if (g.hit) g.a = Math.max(0, 0.9 - (g.t - 0.08 * RF()) / (0.2 * RF())); }
   R.ghosts = R.ghosts.filter(g => g.a > 0);
 }
 const swordTip = () => { const v = SET.weapon.variants.front; return (v.tip[1] - v.grip_pivot[1]) * v.size_1x[1] * SET.weapon.recommended_scale * Math.max(1, SWORD_K[equip.mode]) * S; };
@@ -1044,8 +1062,8 @@ function startAttack() {
   const def = list[P.combo % list.length]; P.combo++;
   let best = null, bd = 1.6; for (const d of DUMMIES) if (d.hp > 0) { const k = distM(P.x, P.y, d.x, d.y); if (k < bd) { bd = k; best = d; } }
   if (best) faceTo(best.x, best.y);
-  const dur = def.dur / Math.max(0.3, 1 + ST.attack_speed / 100);
-  P.atk = { def, t: 0, dur, hit: {}, lunged: 0, face0: P.facing }; P.cd = dur * 0.9; P.queued = false;
+  const dur = SKILL_T * 0.86;           // one strike per period of the attack speed: the move plus its hit-stop fit the period
+  P.atk = { def, t: 0, dur, hit: {}, lunged: 0, face0: P.facing }; P.cd = SKILL_T - 1 / 120; P.queued = false;
 }
 function collide() {
   const k = kS(), R0 = 30 * k;
@@ -1114,7 +1132,44 @@ const K3CLIP = {            // game state -> clip name fragment (Meshy library n
   chop: "Sword_Judgment", rain: "Charged_Ground_Slam", hit: "Hit_Reaction",
   combo: ["Attack", "Left_Slash", "Thrust_Slash", "Charged_Slash", "Triple_Combo_Attack"],
 };
-let R3 = null, scene3, cam3, root3, model3, mixer3, clips3 = {}, actions3 = {}, bones3 = {}, sword3 = null, wings3 = null, box3 = { w: 0, h: 0 };
+let R3 = null, scene3, cam3, root3, model3, mixer3, clips3 = {}, actions3 = {}, bones3 = {}, sword3 = null, sword3L = null, wings3 = null, box3 = { w: 0, h: 0 };
+// a blade orientation: local +Y along the blade, local +Z (the flat's normal) as close as possible to `side`
+function bladeQ(dir, side) { const y = dir.clone().normalize(), z = side.clone().sub(y.clone().multiplyScalar(side.dot(y))).normalize(), x = new THREE.Vector3().crossVectors(y, z);
+  return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z)); }
+
+// ---------- idle stance (procedural, on the bind pose): upright, facing forward, blades held up and down, slow breathing ----------
+const IDLE3 = { w: 0, mq: [], mp: [] };
+const wpos = b => b.getWorldPosition(new THREE.Vector3());
+function setWorldRot(b, q) { const pq = b.parent.getWorldQuaternion(new THREE.Quaternion()).invert(); b.quaternion.copy(pq.multiply(q)); b.updateMatrixWorld(true); }
+function turnBone(b, from, to) { const q = new THREE.Quaternion().setFromUnitVectors(from.clone().normalize(), to.clone().normalize()); setWorldRot(b, q.multiply(b.getWorldQuaternion(new THREE.Quaternion()))); }
+function spinBone(b, axis, ang) { if (b) setWorldRot(b, new THREE.Quaternion().setFromAxisAngle(axis, ang).multiply(b.getWorldQuaternion(new THREE.Quaternion()))); }
+function armIK3(side, target, pole) {            // two-bone IK in world space, elbow bent toward `pole`
+  const A = bones3[side + "arm"], B = bones3[side + "forearm"], C = bones3[side + "hand"]; if (!A || !B || !C) return;
+  const a = wpos(A), b = wpos(B), c = wpos(C), L1 = a.distanceTo(b), L2 = b.distanceTo(c);
+  const d = target.clone().sub(a), dist = clamp(d.length(), Math.abs(L1 - L2) + 1e-4, (L1 + L2) * 0.999); d.normalize();
+  const ca = clamp((L1 * L1 + dist * dist - L2 * L2) / (2 * L1 * dist), -1, 1), sa = Math.sqrt(1 - ca * ca);
+  const pn = pole.clone().sub(d.clone().multiplyScalar(pole.dot(d))).normalize();
+  turnBone(A, b.clone().sub(a), d.clone().multiplyScalar(ca).addScaledVector(pn, sa));
+  const b2 = wpos(B), c2 = wpos(C); turnBone(B, c2.sub(b2), target.clone().sub(b2));
+}
+const K3IDLE = {      // character space (metres; +X the knight's left, +Y up, +Z forward), relative to each shoulder joint
+  bladeUp: [-0.5, 0.72, 0.42], bladeDown: [0.4, -0.75, 0.45],
+  R: { sword: [-0.07, -0.34, 0.3], rest: [-0.15, -0.52, 0.05] }, L: { sword: [0.09, -0.4, 0.24], rest: [0.15, -0.52, 0.05] },
+};
+function idlePose(t) {
+  K3.restPose();
+  const Q = root3.quaternion, cv = a => new THREE.Vector3(...a).applyQuaternion(Q), left = cv([1, 0, 0]);
+  const br = Math.sin(t * TAU / 3.6), br2 = Math.sin(t * TAU / 3.6 - 0.6);           // one slow, even breath every 3.6 s
+  spinBone(bones3.spine01, left, -0.012 * br); spinBone(bones3.spine02, left, -0.02 * br);   // the chest rises and falls
+  spinBone(bones3.neck, left, 0.022 * br);                                                // the head stays level, eyes forward
+  if (bones3.leftshoulder) spinBone(bones3.leftshoulder, cv([0, 0, 1]), 0.015 * br2);
+  if (bones3.rightshoulder) spinBone(bones3.rightshoulder, cv([0, 0, 1]), -0.015 * br2);
+  const mode = equip.mode, sh = side => wpos(bones3[side + "arm"]), lift = cv([0, 0.012 * br2, 0]);
+  const rT = sh("right").add(cv(mode === "none" ? K3IDLE.R.rest : K3IDLE.R.sword)).add(lift);
+  let lT = sh("left").add(cv(mode === "dual" ? K3IDLE.L.sword : K3IDLE.L.rest)).add(lift);
+  if (mode === "two") lT = rT.clone().addScaledVector(cv(K3IDLE.bladeUp).normalize(), -0.13).add(cv([0.03, 0, 0]));
+  armIK3("right", rT, cv([-0.5, -0.7, -0.5])); armIK3("left", lT, cv([0.5, -0.7, -0.5]));
+}
 function k3Load() {
   if (!window.THREE || !THREE.GLTFLoader) { K3.err = "three.js"; return; }
   const loader = new THREE.GLTFLoader();
@@ -1154,6 +1209,9 @@ function k3Setup(gltf, swordTex, wtex) {
       if (o.isSkinnedMesh) hulls.push(o); }
                          if (o.isBone) bones3[o.name.toLowerCase()] = o; });
   // Meshy rigs keep bones in centimetres under a 0.01 armature: size and ground the model from its bones, not from the bind mesh
+  K3.rest = Object.values(bones3).map(b => [b, b.quaternion.clone(), b.position.clone()]);    // the file's rest pose (the A-pose it was built in)
+  const restPose = () => { for (const [b, q, p] of K3.rest) { b.quaternion.copy(q); b.position.copy(p); } root3.updateMatrixWorld(true); };
+  K3.restPose = restPose;
   const hips = bones3.hips, hip0 = hips ? hips.position.clone() : null;
   for (const c of gltf.animations) {      // in-place: the game moves the knight, so drop the hips' sideways and forward drift
     if (hip0) for (const t of c.tracks) if (/hips\.position$/i.test(t.name)) for (let i = 0; i < t.values.length; i += 3) { t.values[i] = hip0.x; t.values[i + 2] = hip0.z; }
@@ -1177,10 +1235,12 @@ function k3Setup(gltf, swordTex, wtex) {
   sword3.userData.guard = new THREE.Object3D(); sword3.userData.tip = new THREE.Object3D(); blade.add(sword3.userData.guard); blade.add(sword3.userData.tip);
   sword3.userData.guard.position.set(0, -(0.1) * L, 0); sword3.userData.tip.position.set(0, (v.grip_pivot[1] - v.tip[1]) * L, 0);
   scene3.add(sword3);
-  if (K3.handR) { mixer3.stopAllAction(); model3.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); root3.updateMatrixWorld(true);
-    const bY = new THREE.Vector3(0, -0.35, 1).normalize(), bZ = new THREE.Vector3(1, 0, 0), bX = new THREE.Vector3().crossVectors(bY, bZ).normalize(); bZ.crossVectors(bX, bY);
-    const qW = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(bX, bY, bZ));
-    K3.gripQ = K3.handR.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(qW); }
+  sword3L = sword3.clone(); sword3L.userData = { blade: sword3L.children[0] }; scene3.add(sword3L);
+  sword3L.userData.guard = sword3L.userData.blade.children[2]; sword3L.userData.tip = sword3L.userData.blade.children[3];
+  if (K3.handR) { mixer3.stopAllAction(); K3.restPose();
+    const grip = (hand, dir) => { const q = bladeQ(dir, new THREE.Vector3(1, 0, 0)); return hand.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(q); };
+    K3.gripQ = grip(K3.handR, new THREE.Vector3(0, -0.35, 1)); if (K3.handL) K3.gripQL = grip(K3.handL, new THREE.Vector3(0, -0.35, 1));
+    K3.boneList = Object.values(bones3); }
   // wings: the wing sheets as cards on the upper back
   wings3 = { group: new THREE.Group(), sets: {} }; scene3.add(wings3.group);
   for (const [name, w] of Object.entries(WINGS || {})) { const set = {};
@@ -1226,28 +1286,51 @@ function k3State(dt) {
       k3Play(key, false, a.dur, true); a.k3 = K3.curName; }
   } else if (clock - CAST.last < 0.22) {
     if (K3.castT !== CAST.last) { K3.castT = CAST.last; k3Play(CAST.kind === "aoe" ? "aoe" : "single", false, SKILL_T * 0.95, true); }
-  } else { K3.atkRef = null; k3Play(sp > 2.2 ? "run" : sp > 0.15 ? "walk" : "idle", true); if (sp > 0.15) K3.cur.timeScale = clamp(sp / (sp > 2.2 ? 4.2 : 1.7), 0.6, 1.6); }
+  } else { K3.atkRef = null;
+    if (sp > 0.15) { k3Play(sp > 2.2 ? "run" : "walk", true); K3.cur.timeScale = clamp(sp / (sp > 2.2 ? 4.2 : 1.7), 0.6, 1.6); }
+    else if (K3.cur && IDLE3.w > 0.97) { K3.cur.fadeOut(0.2); K3.cur = null; } }
+  const idle = !a && !(clock - CAST.last < 0.22) && sp <= 0.15;
+  IDLE3.w += ((idle ? 1 : 0) - IDLE3.w) * Math.min(1, dt * (idle ? 6 : 12));
   // facing: toward the target while acting, along the motion otherwise
   let want = K3.yaw;
   if ((a || clock - CAST.last < 0.3) && P.aim != null) want = P.aim; else if (sp > 0.15) want = Math.atan2(P.vx, P.vy / DEP);
   else want = { down: 0, up: Math.PI, left: -Math.PI / 2, right: Math.PI / 2 }[P.facing] ?? K3.yaw;
   let d = want - K3.yaw; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; K3.yaw += d * Math.min(1, dt * 14);
   mixer3.update(hitStop > 0 ? 0 : dt);
+  root3.rotation.y = K3.yaw; root3.updateMatrixWorld(true);
+  if (IDLE3.w > 0.002 && K3.boneList) {     // blend the clip pose toward the stance
+    const bl = K3.boneList, w = IDLE3.w;
+    if (w < 0.999) bl.forEach((b, i) => { (IDLE3.mq[i] = IDLE3.mq[i] || new THREE.Quaternion()).copy(b.quaternion); (IDLE3.mp[i] = IDLE3.mp[i] || new THREE.Vector3()).copy(b.position); });
+    idlePose(clock);
+    if (w < 0.999) bl.forEach((b, i) => { b.quaternion.copy(IDLE3.mq[i].slerp(b.quaternion, w)); b.position.lerpVectors(IDLE3.mp[i], b.position, w); });
+    root3.updateMatrixWorld(true);
+  }
 }
 function drawK3(lift, dt) {
   k3State(dt);
   root3.rotation.y = K3.yaw; root3.updateMatrixWorld(true);
-  // sword in the right hand (left hand too for dual), cards along the hand's axis
-  const mode = equip.mode; sword3.visible = mode !== "none" && RAIN.state === "done" && !!K3.handR;
-  if (sword3.visible) { K3.handR.getWorldPosition(sword3.position); K3.handR.getWorldQuaternion(sword3.quaternion); if (K3.gripQ) sword3.quaternion.multiply(K3.gripQ);
-    sword3.userData.blade.rotation.set(0, 0, Math.PI); sword3.scale.setScalar(mode === "two" ? 1.15 : 1); }
+  // swords: the clip's grip, or the stance's held angles while idle (right blade up, left blade down when dual wielding)
+  const mode = equip.mode, Qr = root3.quaternion, cv = a => new THREE.Vector3(...a).applyQuaternion(Qr);
+  const place = (sw, hand, grip, idleDir, show) => { sw.visible = show && !!hand; if (!sw.visible) return;
+    hand.getWorldPosition(sw.position); const qa = hand.getWorldQuaternion(new THREE.Quaternion()); if (grip) qa.multiply(grip);
+    sw.quaternion.copy(IDLE3.w > 0.002 ? qa.slerp(bladeQ(cv(idleDir), cv([1, 0, 0])), IDLE3.w) : qa);
+    sw.userData.blade.rotation.set(0, 0, Math.PI); sw.scale.setScalar(mode === "two" ? 1.15 : mode === "dual" ? 0.9 : 1); };
+  place(sword3, K3.handR, K3.gripQ, K3IDLE.bladeUp, mode !== "none" && RAIN.state === "done");
+  place(sword3L, K3.handL, K3.gripQL, K3IDLE.bladeDown, mode === "dual");
   // wings on the upper back
   const wn = equip.wings; wings3.group.visible = wn !== "none" && !!K3.chest;
-  if (wings3.group.visible) { const C = K3.chest.getWorldPosition(new THREE.Vector3()), Q = root3.quaternion, ph = P.flap * TAU, fl = P.fly;
-    const flare = P.atk ? Math.sin(Math.PI * clamp(P.atk.t / P.atk.dur, 0, 1)) : 0, flap = lerp(0.5 * Math.sin(ph), 0.3, flare) * fl, sweep = lerp(0.12 + 0.12 * Math.cos(ph), 0.05, flare) * fl + (1 - fl) * 0.55 * (1 - flare);
+  if (wings3.group.visible) { const ph = P.flap * TAU, fl = P.fly;
+    // the chest's frame from the skeleton: up along the spine to the neck, left across the shoulders
+    const S2 = wpos(K3.chest), N = bones3.neck ? wpos(bones3.neck) : S2.clone().add(new THREE.Vector3(0, 0.25, 0));
+    const LS = bones3.leftarm ? wpos(bones3.leftarm) : S2, RS = bones3.rightarm ? wpos(bones3.rightarm) : S2;
+    const lx = LS.clone().sub(RS).normalize(), up = N.clone().sub(S2).normalize(), fw = new THREE.Vector3().crossVectors(lx, up).normalize(); up.crossVectors(fw, lx);
+    const Q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(lx, up, fw));
+    const C = S2.clone().lerp(N, 0.75).addScaledVector(fw, -0.13);    // between the shoulder blades, just under the shoulder line
+    const flare = P.atk ? Math.sin(Math.PI * clamp(P.atk.t / P.atk.dur, 0, 1)) : 0, flap = lerp(0.5 * Math.sin(ph), 0.3, flare) * fl, sweep = lerp(0.12 + 0.12 * Math.cos(ph), 0.05, flare) * fl + (1 - fl) * 0.18 * (1 - flare);
     for (const [n, set] of Object.entries(wings3.sets)) for (const [side, p] of Object.entries(set)) { p.visible = n === wn; if (n !== wn) continue;
-      const sg = side === "L" ? 1 : -1; p.position.copy(C).add(new THREE.Vector3(0.08 * sg, 0.12, -0.16).applyQuaternion(Q));
-      p.quaternion.copy(Q).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, sg * sweep, sg * (flap + 0.12 - (1 - fl) * 0.4), "YXZ"))); } }
+      const sg = side === "L" ? 1 : -1; p.position.copy(C).addScaledVector(lx, 0.09 * sg);
+      p.quaternion.copy(Q).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, sg * sweep, sg * (flap + 0.12 + (1 - fl) * 0.22), "YXZ")));
+      p.scale.setScalar(1 - 0.15 * (1 - fl)); } }
   // camera box around the knight: M px per metre, the feet at 78% of the box height
   const bw = Math.ceil(3.4 * M), bh = Math.ceil(3.6 * M), fy = 0.78;
   if (bw !== box3.w || bh !== box3.h || R3.getPixelRatio() !== DPR) { box3.w = bw; box3.h = bh; R3.setPixelRatio(DPR); R3.setSize(bw, bh, false); }
@@ -1264,6 +1347,9 @@ function drawK3(lift, dt) {
       if (u > w[0] - 0.05 && u < w[1] + 0.05) P.trails.main.push([a, b, clock]);
       if (u >= w[0] && u <= w[1]) tryHit("main", a, b, 0); }
   } else CUR_BLADE = null;
+  if (sword3L.visible && P.atk && !P.atk.def.special) { const a2 = toScr(sword3L.userData.guard), b2 = toScr(sword3L.userData.tip); VFX.blade(a2, b2, 0.8);
+    const at = P.atk, u = at.t / at.dur, w = (K3.hitWin && K3.hitWin[at.k3]) || at.def.hit; if (u >= w[0] && u <= w[1]) tryHit("off", a2, b2, 0); }
+  else if (sword3L.visible) { VFX.blade(toScr(sword3L.userData.guard), toScr(sword3L.userData.tip), 0.8); }
   PH = K3.handR ? { main: toScr(K3.handR), off: K3.handL ? toScr(K3.handL) : toScr(K3.handR), back: K3.chest ? toScr(K3.chest) : [P.x, P.y - M] } : null;
 }
 
@@ -1455,13 +1541,16 @@ function frame(ts) {
     const spd = Math.hypot(P.vx, P.vy / DEP) / M, act = P.atk ? `<b>${P.atk.def.name}</b>` : clock - CAST.last < 0.2 ? `<b>${SKILLS[CAST.kind].name}</b>`
       : spd < 0.15 ? (P.fly > 0.5 ? "bay lơ lửng" : "đứng") : P.fly > 0.5 ? "<b>bay</b>" : P.run > 0.5 ? "<b>chạy</b>" : "<b>đi</b>";
     const VI = { down: "trước", up: "sau", left: "nghiêng trái", right: "nghiêng phải" };
-    $("state").innerHTML = `${AUTO.on ? "<b>Tự động</b> · " : ""}${MODE_VI[equip.mode]} · ${act} · mặt ${VI[P.facing]} · ${spd.toFixed(1)} m/s`;
+    $("state").innerHTML = `${AUTO.on ? "<b>Tự động</b> · " : ""}${MODE_VI[equip.mode]} · ${SKILL_RATE.toLocaleString("vi-VN")} đòn/giây · ${act} · mặt ${VI[P.facing]} · ${spd.toFixed(1)} m/s`;
   }
   requestAnimationFrame(frame);
 }
 
 // ---------- equipment menu ----------
 function buildMenu() {
+  $("rate").addEventListener("input", e => setRate(e.target.value));
+  document.querySelectorAll("#rate-seg button").forEach(b => b.addEventListener("click", () => setRate(b.dataset.rate)));
+  setRate(equip.rate || 1);
   document.querySelectorAll("#k3-seg button").forEach(b => b.addEventListener("click", () => { K3.on = b.dataset.k3 === "1"; k3Menu(); }));
   const list = [["none", "Không cánh", null]].concat(Object.entries(WINGS).map(([k, w]) => [k, w.name_vi, "assets/wings/" + w.L.file]));
   $("wing-list").innerHTML = list.map(([k, name, src]) => `<button type="button" class="wing" data-wing="${k}" aria-pressed="false">${src ? `<img src="${src}" alt="">` : '<span class="ph">—</span>'}<small>${name}</small></button>`).join("");
