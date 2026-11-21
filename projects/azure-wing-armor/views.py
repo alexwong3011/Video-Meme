@@ -155,4 +155,8 @@ VIEWS = {
     origin=(890, 975),
     attach={"body": (890, 975)},
   ),
+  # 45-degree camera turntable views (cut by turntable.py: background model + pedestal and boot-shadow removal)
+  "body_front45": dict(source="source/turntable/view01.jpg", figure=(680, 70, 1130, 970), origin=(855, 882)),
+  "body_quarter45": dict(source="source/turntable/view02.jpg", figure=(680, 70, 1130, 970), origin=(850, 865)),
+  "body_back45": dict(source="source/turntable/view04.jpg", figure=(680, 70, 1130, 970), origin=(905, 872)),
 }

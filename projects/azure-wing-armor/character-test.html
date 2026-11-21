@@ -195,11 +195,14 @@ let S = 0.3, M = MPX * 0.3, W = 0, H = 0, DPR = 1, WORLD = { w: 0, h: 0 }, cam =
 const kS = () => S / 0.3;
 const distM = (ax, ay, bx, by) => Math.hypot(ax - bx, (ay - by) / DEP) / M;
 
-// ---------- rigs: front / back (both sides cut from the sheet), side (near limbs; far limbs are darker copies) ----------
+// ---------- rigs: 45-degree camera (source/turntable): front, back, and a three-quarter view facing screen-left (mirrored for right).
+// Every view draws all four limbs; in the quarter view R is the near arm (it holds the weapon) and the near leg. ----------
 const VB = {
   front: { bones: ["torso", "head", "upperarm_L", "forearm_L", "upperarm_R", "forearm_R", "thigh_L", "shin_L", "thigh_R", "shin_R"],
            arms: { L: { u: "upperarm_L", f: "forearm_L", out: -1 }, R: { u: "upperarm_R", f: "forearm_R", out: 1 } }, main: "L", off: "R" },
   back:  { bones: ["torso", "head", "upperarm_L", "forearm_L", "upperarm_R", "forearm_R", "thigh_L", "shin_L", "thigh_R", "shin_R"],
+           arms: { L: { u: "upperarm_L", f: "forearm_L", out: -1 }, R: { u: "upperarm_R", f: "forearm_R", out: 1 } }, main: "R", off: "L" },
+  quarter: { bones: ["torso", "head", "upperarm_L", "forearm_L", "upperarm_R", "forearm_R", "thigh_L", "shin_L", "thigh_R", "shin_R"],
            arms: { L: { u: "upperarm_L", f: "forearm_L", out: -1 }, R: { u: "upperarm_R", f: "forearm_R", out: 1 } }, main: "R", off: "L" },
   side:  { bones: ["torso", "head", "upperarm", "forearm", "thigh", "shin", "upperarmF", "forearmF", "thighF", "shinF"],
            arms: { N: { u: "upperarm", f: "forearm", out: 1 }, F: { u: "upperarmF", f: "forearmF", out: 1, far: true } }, main: "N", off: "F" },
@@ -226,8 +229,8 @@ let holdAttack = false, menuOpen = false, debug = false, clock = 0, hitStop = 0,
 const equip = (() => { const d = { mode: "one", wings: "dragon", flying: true };
   try { return Object.assign(d, JSON.parse(localStorage.getItem("azure-knight-25d") || "{}")); } catch (e) { return d; } })();
 const save = () => { try { localStorage.setItem("azure-knight-25d", JSON.stringify(equip)); } catch (e) {} };
-const viewOf = f => f === "down" ? "front" : f === "up" ? "back" : "side";
-const mirOf = f => f === "right" ? -1 : 1;          // the side sheet faces screen-left
+const viewOf = f => f === "down" ? "front" : f === "up" ? "back" : "quarter";
+const mirOf = f => f === "right" ? -1 : 1;          // the quarter view faces screen-left
 
 // ---------- loading ----------
 const loadImg = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
@@ -238,9 +241,9 @@ function darken(img, a = 0.5) {      // canvas filters are missing on Safari: ba
 async function boot() {
   [SET, WINGS] = await Promise.all([fetch("assets/azure_wing_set.json").then(r => r.json()), fetch("assets/wings/wings.json").then(r => r.json())]);
   const jobs = [];
-  for (const v of ["front", "back", "side"]) {
-    RIG[v] = await (await fetch(`assets/rig/body_${v}/rig.json`)).json(); IMG[v] = {};
-    for (const [n, p] of Object.entries(RIG[v].parts)) jobs.push(loadImg(`assets/rig/body_${v}/${p.files["@2x"] || p.files["@1x"]}`).then(i => IMG[v][n] = i));
+  for (const v of ["front", "back", "quarter"]) {
+    RIG[v] = await (await fetch(`assets/rig45/body_${v}45/rig.json`)).json(); IMG[v] = {};
+    for (const [n, p] of Object.entries(RIG[v].parts)) jobs.push(loadImg(`assets/rig45/body_${v}45/${p.files["@2x"] || p.files["@1x"]}`).then(i => IMG[v][n] = i));
   }
   IMG.sword = {};
   for (const [n, v] of Object.entries(SET.weapon.variants)) jobs.push(loadImg("assets/" + (v.files["@2x"] || v.files["@1x"])).then(i => IMG.sword[n] = i));
@@ -249,7 +252,6 @@ async function boot() {
   IMG.wings = {};
   for (const [n, w] of Object.entries(WINGS)) for (const s of ["L", "R"]) jobs.push(loadImg("assets/wings/" + w[s].file).then(i => (IMG.wings[n] = IMG.wings[n] || {})[s] = i));
   await Promise.all(jobs);
-  for (const n of ["upperarm", "forearm", "thigh", "shin"]) DARK[n + "F"] = darken(IMG.side[n], 0.42);
   DARK.sword = darken(IMG.sword.front, 0.4);
   DARK.wings = {}; for (const n in IMG.wings) DARK.wings[n] = darken(IMG.wings[n].R, 0.45);
   ST = stats(); buildMenu(); applyEquip();
@@ -409,7 +411,7 @@ function pose(view, side) {
   const br = Math.sin(t * 1.7);
   p.torso.sy *= 1 + 0.008 * br * idle; p.head.y += -1.6 * br * idle; p.pelvis.y += 0.8 * br * idle;
   if (!side) {
-    const depth = view === "front" ? 1 : -1, lift = { L: Math.max(0, sn), R: Math.max(0, -sn) }, fwd = { L: -cs, R: cs };
+    const depth = view === "back" ? -1 : 1, lift = { L: Math.max(0, sn), R: Math.max(0, -sn) }, fwd = { L: -cs, R: cs };
     p.pelvis.y += -10 * amp * w * Math.abs(sn) + 3 * w; p.pelvis.x += 6 * w * sn; p.pelvis.a += -0.028 * w * sn; p.torso.a += 0.05 * w * sn;
     for (const s of ["L", "R"]) {
       const l = lift[s] * w, f = fwd[s] * w, o = s === "L" ? 1 : -1;
@@ -514,7 +516,7 @@ function buildCharacter(facing, base) {
   for (const a of want) {
     if (a === vb.main && RAIN.state !== "done") continue;                // thrown into the air
     const b = tg[a].b || [0, 1], ang = Math.atan2(-b[0], b[1]);
-    const A = vb.arms[a], variant = side ? "front" : SET.weapon.hold[view][a === "L" ? "gauntlet_left" : "gauntlet_right"];
+    const A = vb.arms[a], variant = side ? "front" : SET.weapon.hold[view === "back" ? "back" : "front"][a === "L" ? "gauntlet_left" : "gauntlet_right"];
     const z = A.far ? FARZ[A.f] + 0.5 : part(view, A.f).z + (view === "back" ? -0.5 : 0.5);
     swords.push({ arm: a, role: a === vb.main ? "main" : "off", m: mul(base, mul(T(hands[a].hand[0], hands[a].hand[1]), mul(Rm(ang), Sm(k, k)))), variant, dark: !!A.far, z });
   }
@@ -522,6 +524,7 @@ function buildCharacter(facing, base) {
 }
 
 // ---------- wings ----------
+const WROOT = { front: [25, -495], back: [0, -490], quarter: [48, -480] };
 function wingSpecs(view, side) {
   if (!WINGS || equip.wings === "none") return [];
   const n = equip.wings, fl = P.fly, ph = P.flap * Math.PI * 2, flareK = P.atk ? Math.sin(Math.PI * clamp(P.atk.t / P.atk.dur, 0, 1)) : 0;
@@ -529,9 +532,10 @@ function wingSpecs(view, side) {
   const flap = lerp(0.42 * Math.sin(ph), 0.25, flare) * fl, fold = (1 - fl) * (1 - flare);
   const WS = 0.95, out = [];
   if (!side) {
+    const o = WROOT[view];
     for (const s of ["L", "R"]) {
-      const sg = s === "L" ? 1 : -1, w = WINGS[n][s];
-      out.push({ img: IMG.wings[n][s], w, root: [sg * -28, -505], a: sg * (flap - 0.42 * fold), sx: WS * (0.82 + 0.18 * Math.cos(ph) * fl - 0.35 * fold), sy: WS * (1 - 0.15 * fold), z: view === "front" ? 1 : 90 });
+      const sg = s === "L" ? 1 : -1, w = WINGS[n][s], far = view === "quarter" && s === "L" ? 0.82 : 1;
+      out.push({ img: IMG.wings[n][s], w, root: [o[0] + sg * -28 * far, o[1]], a: sg * (flap - 0.42 * fold), sx: far * WS * (0.82 + 0.18 * Math.cos(ph) * fl - 0.35 * fold), sy: far * WS * (1 - 0.15 * fold), z: view === "back" ? 90 : 1 });
     }
   } else {
     const w = WINGS[n].R;
@@ -542,7 +546,7 @@ function wingSpecs(view, side) {
 }
 
 // ---------- drawn key poses (source/poses): the knight swinging the greatsword, cut without wings or pedestal ----------
-const PK = 1.87;                     // pose px -> rig px (pose 05 standing as tall as the rig)
+const PK = 1.7;                      // pose px -> rig px: the pose sheets and the turntable share one camera (sprites are 0.6x the sheet)
 let PH = null;                       // where the drawn pose puts the hands (world px), for skills that need it
 function poseState() {
   const a = P.atk; if (!a || !a.def.seq || !POSES || P.facing === "up") return null;
@@ -905,13 +909,31 @@ function update(dt) {
 // ---------- drawing ----------
 const tileShade = (i, j) => { const h = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return h - Math.floor(h); };
 function drawFloor() {
-  const T_ = 170 * S, th = T_ * 0.6;
-  ctx.fillStyle = "#11161f"; ctx.fillRect(cam.x - 20, cam.y - 20, W + 40, H + 40);
-  const j0 = Math.floor(cam.y / th) - 1, j1 = Math.ceil((cam.y + H) / th) + 1;
-  for (let j = j0; j <= j1; j++) { const off = (j & 1) * T_ / 2, i0 = Math.floor((cam.x - off) / T_) - 1, i1 = Math.ceil((cam.x + W - off) / T_) + 1;
-    for (let i = i0; i <= i1; i++) { const x = i * T_ + off, y = j * th, inside = x > -T_ && y > -th && x < WORLD.w && y < WORLD.h, l = inside ? 16 + tileShade(i, j) * 9 : 9;
-      ctx.fillStyle = `rgb(${l},${l + 4},${l + 11})`; ctx.fillRect(x + 1.5, y + 1.5, T_ - 3, th - 3); } }
-  ctx.strokeStyle = "rgba(95,176,255,.22)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(RC.x, RC.y, 1.9 * M, 1.9 * M * DEP, 0, 0, Math.PI * 2); ctx.stroke();
+  // large flagstones on a ground plane seen from 45 degrees: square in the world, rows compressed by DEP
+  const T_ = 0.62 * M, th = T_ * DEP, k = kS();
+  ctx.fillStyle = "#0b0f17"; ctx.fillRect(cam.x - 20, cam.y - 20, W + 40, H + 40);
+  const j0 = Math.floor(cam.y / th) - 1, j1 = Math.ceil((cam.y + H) / th) + 1, i0 = Math.floor(cam.x / T_) - 1, i1 = Math.ceil((cam.x + W) / T_) + 1;
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+    const x = i * T_, y = j * th; if (!(x > -T_ && y > -th && x < WORLD.w && y < WORLD.h)) continue;
+    const sh = tileShade(i, j), l = 19 + sh * 8;
+    ctx.fillStyle = `rgb(${l},${l + 4},${l + 11})`; ctx.fillRect(x, y, T_, th);
+    if (sh > 0.9) { ctx.strokeStyle = "rgba(0,0,0,.28)"; ctx.lineWidth = 1.2 * k; ctx.beginPath();
+      ctx.moveTo(x + T_ * (0.15 + 0.2 * sh), y + th * 0.25); ctx.lineTo(x + T_ * 0.45, y + th * 0.6); ctx.lineTo(x + T_ * 0.7, y + th * 0.52); ctx.stroke(); }
+  }
+  // seams: dark grout with a lit lip on the far side of every joint
+  ctx.fillStyle = "rgba(0,0,0,.55)";
+  for (let j = j0; j <= j1; j++) ctx.fillRect(cam.x - 20, j * th - 1.2 * k, W + 40, 2.4 * k);
+  for (let i = i0; i <= i1; i++) ctx.fillRect(i * T_ - 1.5 * k, cam.y - 20, 3 * k, H + 40);
+  ctx.fillStyle = "rgba(150,175,220,.08)";
+  for (let j = j0; j <= j1; j++) ctx.fillRect(cam.x - 20, j * th + 1.2 * k, W + 40, 1.4 * k);
+  // pools of light lying on the floor (circles in the world -> ellipses on screen)
+  const pool = (x, y, r, c) => { ctx.save(); ctx.translate(x, y); ctx.scale(1, DEP); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    g.addColorStop(0, c); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(-r, -r, 2 * r, 2 * r); ctx.restore(); };
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  pool(RC.x, RC.y, 2.6 * M, "rgba(60,120,210,.13)"); pool(WORLD.w * 0.45, WORLD.h * 0.48, 2.2 * M, "rgba(200,170,110,.08)");
+  pool(P.x, P.y, 1.4 * M, "rgba(120,160,230,.10)");
+  ctx.restore();
+  ctx.strokeStyle = "rgba(95,176,255,.28)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(RC.x, RC.y, 1.9 * M, 1.9 * M * DEP, 0, 0, Math.PI * 2); ctx.stroke();
 }
 function drawCharacter() {
   let facing = P.facing, spinLeap = 0;
@@ -921,13 +943,13 @@ function drawCharacter() {
   const ps = poseState();
   if (ps) {
     const sh = clamp(1 - lift / (2.5 * M), 0.4, 1);
-    ctx.fillStyle = `rgba(0,0,0,${0.42 * sh})`; ctx.beginPath(); ctx.ellipse(P.x, P.y, 150 * S * sh, 30 * S * sh, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(0,0,0,${0.42 * sh})`; ctx.beginPath(); ctx.ellipse(P.x, P.y, 135 * S * sh, 135 * S * sh * DEP * 0.75, 0, 0, Math.PI * 2); ctx.fill();
     drawPoseCharacter(ps, lift); drawTrails(); return;
   }
   PH = null; CUR_BLADE = null;
   // shadow stays on the floor, shrinks with height
   const sh = clamp(1 - lift / (2.5 * M), 0.4, 1);
-  ctx.fillStyle = `rgba(0,0,0,${0.42 * sh})`; ctx.beginPath(); ctx.ellipse(P.x, P.y, 150 * S * sh, 30 * S * sh, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = `rgba(0,0,0,${0.42 * sh})`; ctx.beginPath(); ctx.ellipse(P.x, P.y, 135 * S * sh, 135 * S * sh * DEP * 0.75, 0, 0, Math.PI * 2); ctx.fill();
   const lean = (facing === "left" || facing === "right") ? 0 : clamp(P.vx / (2 * M), -1, 1) * 0.06;
   const base = mul(T(P.x, P.y - lift), mul([1, 0, -lean, 1, 0, 0], Sm(mir * S, S)));
   const C = buildCharacter(facing, base); C.base = base; CH = C;
@@ -984,34 +1006,43 @@ function dummyShapes(c, white) {
   const wood = white || "#6b4a2e", straw = white || "#c9a467", strawDark = white || "#9c7b45", rope = white || "#5b4630";
   c.fillStyle = wood; c.fillRect(-7, -152, 14, 152); c.fillRect(-54, -130, 108, 11);
   c.fillStyle = straw; c.beginPath(); c.ellipse(0, -98, 37, 52, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = white || "#dcc184"; c.beginPath(); c.ellipse(0, -141, 22, 9, 0, 0, Math.PI * 2); c.fill();          // top of the straw body
   c.fillStyle = strawDark; for (let i = -2; i <= 2; i++) c.fillRect(i * 12 - 1, -143, 2, 90);
   c.fillStyle = straw; c.beginPath(); c.arc(0, -172, 22, 0, Math.PI * 2); c.fill();
+  if (!white) { c.fillStyle = "rgba(255,240,200,.35)"; c.beginPath(); c.ellipse(-4, -182, 11, 7, 0, 0, Math.PI * 2); c.fill(); }
   c.fillStyle = rope; c.fillRect(-37, -66, 74, 6); c.fillRect(-31, -134, 62, 5); c.fillRect(-15, -153, 30, 5);
   if (!white) for (const [r, col] of [[25, "#b33a3a"], [17, "#efe6d2"], [8, "#b33a3a"]]) { c.fillStyle = col; c.beginPath(); c.arc(0, -100, r, 0, Math.PI * 2); c.fill(); }
 }
 function drawDummy(d) {
   const k = dumK(d);
   ctx.save(); ctx.translate(d.x, d.y);
-  ctx.fillStyle = "rgba(0,0,0,.42)"; ctx.beginPath(); ctx.ellipse(0, 0, 62 * k, 16 * k, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.scale(k, k); ctx.rotate(d.wob * 0.12);
-  ctx.fillStyle = "#3d2b1b"; ctx.beginPath(); ctx.ellipse(0, 0, 30, 9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,.42)"; ctx.beginPath(); ctx.ellipse(6 * k, 4 * k, 62 * k, 62 * k * DEP * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.scale(k, k);
+  // stone base: a short cylinder seen from above
+  ctx.fillStyle = "#2a2f3a"; ctx.beginPath(); ctx.ellipse(0, 4, 38, 38 * DEP * 0.7, 0, 0, Math.PI); ctx.lineTo(-38, -4); ctx.ellipse(0, -4, 38, 38 * DEP * 0.7, 0, Math.PI, 0, true); ctx.fill();
+  ctx.fillStyle = "#454c5b"; ctx.beginPath(); ctx.ellipse(0, -4, 38, 38 * DEP * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.translate(0, -4); ctx.scale(1, 0.86); ctx.rotate(d.wob * 0.12);
   if (d.hp === 0) ctx.globalAlpha = 0.45;
   dummyShapes(ctx); if (d.flash > 0) { ctx.globalAlpha = d.flash * 0.75; dummyShapes(ctx, "#cfe6ff"); }
   ctx.restore();
-  const bw = (d.sc < 1 ? 90 : 130) * kS(), bh = 7 * kS(), bx = d.x - bw / 2, by = d.y - 222 * k;
+  const bw = (d.sc < 1 ? 90 : 130) * kS(), bh = 7 * kS(), bx = d.x - bw / 2, by = d.y - 200 * k;
   ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
   ctx.fillStyle = d.hp / d.max > 0.3 ? "#5fd07a" : "#ff6b6b"; ctx.fillRect(bx, by, bw * d.hp / d.max, bh);
   ctx.fillStyle = "#e4e9f3"; ctx.font = `600 ${Math.max(10, 11 * kS())}px "Be Vietnam Pro", sans-serif`; ctx.textAlign = "center";
   ctx.fillText(d.hp === 0 ? "Hạ gục!" : `${d.name} · ${Math.ceil(d.hp).toLocaleString("vi-VN")}`, d.x, by - 6 * kS());
 }
 function drawPillar(pl) {
-  const k = kS(), h = 300 * k, w = pl.r * 1.5;
-  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(pl.x, pl.y, pl.r * 1.5, pl.r * 0.45, 0, 0, Math.PI * 2); ctx.fill();
-  const g = ctx.createLinearGradient(pl.x - w / 2, 0, pl.x + w / 2, 0); g.addColorStop(0, "#2a3140"); g.addColorStop(0.35, "#4a5468"); g.addColorStop(0.7, "#343c4d"); g.addColorStop(1, "#1d222d");
-  ctx.fillStyle = "#262d3a"; ctx.fillRect(pl.x - w * 0.62, pl.y - 26 * k, w * 1.24, 26 * k);
-  ctx.fillStyle = g; ctx.fillRect(pl.x - w / 2, pl.y - h, w, h - 24 * k);
-  ctx.fillStyle = "#3a4255"; ctx.fillRect(pl.x - w * 0.66, pl.y - h - 22 * k, w * 1.32, 22 * k);
-  ctx.fillStyle = "rgba(95,176,255,.5)"; ctx.fillRect(pl.x - w * 0.66, pl.y - h - 3 * k, w * 1.32, 3 * k);
+  const k = kS(), h = 250 * k, w = pl.r * 1.5, ry = w * 0.5 * DEP * 0.85;
+  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(pl.x + 10 * k, pl.y + 4 * k, pl.r * 1.6, pl.r * 1.6 * DEP * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+  const cyl = (cx, y0, y1, rx, ry_, fill, top) => {          // y0 = top, y1 = bottom of a vertical cylinder seen from 45 degrees
+    ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(cx, y1, rx, ry_, 0, 0, Math.PI); ctx.lineTo(cx - rx, y0); ctx.ellipse(cx, y0, rx, ry_, 0, Math.PI, 0, true); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = top; ctx.beginPath(); ctx.ellipse(cx, y0, rx, ry_, 0, 0, Math.PI * 2); ctx.fill(); };
+  const g = ctx.createLinearGradient(pl.x - w / 2, 0, pl.x + w / 2, 0); g.addColorStop(0, "#232a37"); g.addColorStop(0.3, "#4a5468"); g.addColorStop(0.65, "#343c4d"); g.addColorStop(1, "#181d27");
+  const gb = ctx.createLinearGradient(pl.x - w * 0.62, 0, pl.x + w * 0.62, 0); gb.addColorStop(0, "#1d232e"); gb.addColorStop(0.35, "#353d4e"); gb.addColorStop(1, "#151a23");
+  cyl(pl.x, pl.y - 22 * k, pl.y, w * 0.62, ry * 1.24, gb, "#3b4354");
+  cyl(pl.x, pl.y - h, pl.y - 20 * k, w / 2, ry, g, "#454e61");
+  cyl(pl.x, pl.y - h - 18 * k, pl.y - h, w * 0.68, ry * 1.36, gb, "#525c71");
+  ctx.strokeStyle = "rgba(95,176,255,.55)"; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.ellipse(pl.x, pl.y - h - 18 * k, w * 0.68 - 4 * k, ry * 1.36 - 3 * k, 0, 0, Math.PI * 2); ctx.stroke();
 }
 let shX = 0, shY = 0;
 function frame(ts) {

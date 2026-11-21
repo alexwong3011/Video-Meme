@@ -60,6 +60,16 @@ Kéo `sprites/front/@4x/*.png` và `sprites/back/@4x/*.png` vào project (Unity:
 Đặt pivot của từng sprite = `pivot` trong JSON (Unity: Custom Pivot, lưu ý Unity tính y từ dưới lên → `1 - pivot.y`;
 Godot: `Sprite2D.offset = -pivot * size`). Vị trí con so với gốc nhân vật = `offset_1x + pivot * size_1x`.
 
+## Góc camera 45° (`source/turntable/` → `assets/rig45/`)
+
+`character-test.html` nhìn nhân vật từ trên xuống chéo 45°, đúng góc của các tấm turntable và tấm tư thế. Rig được dựng lại từ
+ba ảnh turntable: view01 (trước), view04 (sau) và view02 (ba phần tư, quay sang trái, lật gương khi đi sang phải). `turntable.py`
+bỏ bệ đá (điểm ảnh xám-lam xỉn trên elip bệ, mọi thứ dưới đường nối hai đế giày, bóng phản chiếu và bóng đổ cạnh giày) khỏi lớp
+tách nền, ghép với ảnh phóng to 4× rồi `rig.py` cắt thành đầu, thân, tay trên/dưới, đùi, cẳng chân (cấu hình FRONT45, BACK45,
+QUARTER45). Ở góc ba phần tư, tay gần (R) cầm vũ khí và vẽ đè lên thân. Vùng đùi bị bàn tay che được vá lại khi tay vung ra.
+Sàn là các phiến đá vuông nén theo chiều sâu (DEP = 0,6, khớp tỉ lệ elip bệ trong ảnh gốc). Bóng, vùng sáng, đế hình nộm và nắp
+cột là hình tròn nằm trên mặt sàn nên hiện thành elip. Rig ngang tầm mắt cũ vẫn giữ ở `assets/rig/` để tham khảo.
+
 ## Tư thế vẽ tay cho đòn đánh (`source/poses/pose01-05.jpg` → `assets/poses/`)
 
 `poses.py` tách 5 tư thế chém hai tay (01 vác kiếm qua đầu, 02 giơ chéo, 03 quét ngang, 04 bổ xuống, 05 thu đòn) theo màu:

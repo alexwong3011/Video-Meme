@@ -34,4 +34,17 @@ rm -rf "$HERE/assets"; python3 "$HERE/pack.py" "$HERE/assets" front="$WORK/front
 for VIEW in body_front body_back body_side; do
   python3 "$HERE/rig.py" "$VIEW" "$WORK/$VIEW/p4" "$HERE/assets/rig/$VIEW" --scales 2,1
 done
+# 8. 45-degree camera rigs from the turntable views (the angle of the pose sheets) for character-test.html
+W="$WORK/turntable"; mkdir -p "$W/cut"
+BGRM_DIR="$TOOLS/bgrm" node "$HERE/cutout.mjs" "$W/cut" "$HERE"/source/turntable/view0{1,2,4}.jpg
+for V in 01 02 04; do
+  python3 -c "import cv2; cv2.imwrite('$W/fig$V.png', cv2.imread('$HERE/source/turntable/view$V.jpg')[70:970, 680:1130])"
+  [ -f "$W/fig${V}_x4.png" ] || TOOLS="$TOOLS" node "$HERE/upscale.mjs" "$W/fig$V.png" "$W/fig${V}_x4.png" 4
+done
+python3 "$HERE/turntable.py" "$W/cut" "$W/p4" "$W"
+for N in front quarter back; do python3 "$HERE/rig.py" "body_${N}45" "$W/p4/body_${N}45" "$HERE/assets/rig45/body_${N}45" --scales 2,1; done
+# 9. drawn attack poses (needs background-removal mattes of source/poses/*.jpg in $WORK/poses)
+mkdir -p "$WORK/poses"; BGRM_DIR="$TOOLS/bgrm" node "$HERE/cutout.mjs" "$WORK/poses" "$HERE"/source/poses/pose0{1,2,3,4,5}.jpg
+for f in "$WORK"/poses/pose*.png; do mv "$f" "$WORK/poses/p$(basename "$f" .png | sed 's/pose//').png"; done
+python3 "$HERE/poses.py" "$WORK/poses" "$HERE/assets/poses"
 echo "done -> $HERE/assets"

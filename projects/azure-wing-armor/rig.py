@@ -70,7 +70,56 @@ SIDE = dict(
              fill=["forearm"], fill_zone=[(830, 556), (1000, 556), (1000, 722), (830, 722)]),
   torso=dict(z=20, parent=None, pivot=(885, 560), fill=["upperarm", "forearm"], fill_zone=[(800, 300), (1000, 300), (1000, 572), (800, 572)]),
 )
-RIG = {"body_front": full(FRONT), "body_back": full(BACK), "body_side": SIDE}
+# 45-degree camera (source/turntable, the angle of the pose sheets): every limb is drawn, screen-left = L.
+# The quarter view (turntable rotation 60deg) faces screen-left: R is the near arm/leg, drawn over the torso and the near thigh.
+FRONT45 = dict(
+  head=dict(z=40, parent="torso", pivot=(875, 300),
+            poly=[(832, 118), (995, 118), (995, 255), (962, 298), (905, 318), (868, 314), (840, 292), (832, 255)]),
+  upperarm_L=dict(z=20, parent="torso", pivot=(783, 378), poly=[(698, 352), (802, 352), (806, 420), (772, 476), (698, 476)]),
+  forearm_L=dict(z=22, parent="upperarm_L", pivot=(740, 470), grip=(726, 548),
+            poly=[(686, 466), (778, 466), (772, 520), (762, 596), (686, 596)]),
+  upperarm_R=dict(z=20, parent="torso", pivot=(1012, 405), poly=[(986, 392), (1085, 392), (1085, 506), (1000, 510), (990, 470)]),
+  forearm_R=dict(z=22, parent="upperarm_R", pivot=(1032, 503), grip=(1020, 640),
+            poly=[(984, 500), (1085, 500), (1078, 600), (1062, 694), (984, 694), (994, 600)]),
+  thigh_L=dict(z=10, parent="torso", pivot=(836, 568), poly=[(776, 548), (874, 548), (868, 604), (868, 664), (776, 664)]),
+  shin_L=dict(z=12, parent="thigh_L", pivot=(825, 666), poly=[(726, 656), (876, 656), (876, 852), (726, 852)]),
+  thigh_R=dict(z=10, parent="torso", pivot=(926, 568), poly=[(874, 548), (984, 548), (984, 712), (880, 712), (868, 604)]),
+  shin_R=dict(z=12, parent="thigh_R", pivot=(936, 712), poly=[(876, 702), (1002, 702), (1002, 932), (876, 932)]),
+  torso=dict(z=30, parent=None, pivot=(880, 560)),
+)
+BACK45 = dict(
+  head=dict(z=40, parent="torso", pivot=(905, 300),
+            poly=[(815, 98), (1000, 98), (1000, 258), (962, 298), (932, 312), (880, 312), (846, 292), (815, 258)]),
+  upperarm_L=dict(z=20, parent="torso", pivot=(772, 400), poly=[(696, 392), (802, 392), (802, 452), (792, 526), (696, 526)]),
+  forearm_L=dict(z=22, parent="upperarm_L", pivot=(737, 520), grip=(726, 600),
+            poly=[(686, 516), (796, 516), (782, 560), (772, 644), (686, 644)]),
+  upperarm_R=dict(z=20, parent="torso", pivot=(1032, 400), poly=[(996, 386), (1098, 386), (1098, 504), (1014, 504), (1000, 460)]),
+  forearm_R=dict(z=22, parent="upperarm_R", pivot=(1060, 500), grip=(1066, 560),
+            poly=[(1004, 496), (1104, 496), (1104, 604), (1008, 604)]),
+  thigh_L=dict(z=10, parent="torso", pivot=(852, 578), poly=[(778, 572), (886, 572), (892, 706), (778, 706)]),
+  shin_L=dict(z=12, parent="thigh_L", pivot=(842, 702), poly=[(736, 696), (896, 696), (896, 912), (736, 912)]),
+  thigh_R=dict(z=10, parent="torso", pivot=(962, 578), poly=[(918, 572), (1022, 572), (1022, 690), (912, 690)]),
+  shin_R=dict(z=12, parent="thigh_R", pivot=(970, 686), poly=[(902, 680), (1045, 680), (1045, 866), (902, 866)]),
+  torso=dict(z=30, parent=None, pivot=(905, 570)),
+)
+QUARTER45 = dict(
+  head=dict(z=40, parent="torso", pivot=(862, 322),
+            poly=[(826, 92), (978, 92), (978, 282), (936, 330), (862, 338), (828, 312)]),
+  upperarm_L=dict(z=20, parent="torso", pivot=(788, 402), poly=[(736, 388), (804, 388), (800, 470), (742, 478)]),
+  forearm_L=dict(z=22, parent="upperarm_L", pivot=(765, 470), grip=(755, 530),
+            poly=[(722, 464), (802, 464), (800, 520), (786, 572), (722, 572)]),
+  upperarm_R=dict(z=28, parent="torso", pivot=(978, 428), poly=[(948, 432), (1046, 432), (1046, 566), (952, 566)]),
+  forearm_R=dict(z=34, parent="upperarm_R", pivot=(1000, 560), grip=(975, 650),
+            poly=[(962, 556), (1046, 556), (1040, 640), (1012, 702), (932, 702), (932, 612), (950, 598)]),
+  thigh_L=dict(z=10, parent="torso", pivot=(840, 582), poly=[(788, 562), (880, 562), (870, 620), (862, 692), (788, 692)]),
+  shin_L=dict(z=12, parent="thigh_L", pivot=(830, 690), poly=[(740, 682), (868, 682), (860, 722), (852, 812), (740, 812)]),
+  thigh_R=dict(z=14, parent="torso", pivot=(910, 590), poly=[(880, 562), (966, 562), (966, 732), (864, 732), (866, 650)],
+               fill=["forearm_R"], fill_zone=[(880, 556), (966, 556), (966, 732), (864, 732)]),
+  shin_R=dict(z=16, parent="thigh_R", pivot=(905, 730), poly=[(854, 722), (978, 722), (978, 928), (854, 928)]),
+  torso=dict(z=30, parent=None, pivot=(870, 572), fill=["upperarm_R"], fill_zone=[(930, 420), (968, 420), (968, 572), (930, 572)]),
+)
+RIG = {"body_front": full(FRONT), "body_back": full(BACK), "body_side": SIDE,
+       "body_front45": FRONT45, "body_back45": BACK45, "body_quarter45": QUARTER45}
 
 if __name__ == "__main__":
     view, pdir, out = sys.argv[1], sys.argv[2], sys.argv[3]
