@@ -1,0 +1,291 @@
+<meta charset="utf-8">
+<title>Azure Wing Armory</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: armory bench. Big inspection stage on the left, item inspector on the right, item rail + files below. Single dark look on purpose: the sprites were lit and edge-cleaned for dark game scenes. */
+:root {
+  color-scheme: dark;
+  --bg: #10131a;
+  --panel: #171c26;
+  --panel-2: #1d2430;
+  --line: #2a3344;
+  --fg: #e3e8f2;
+  --muted: #8d98ad;
+  --azure: #5fb0ff;
+  --azure-dim: rgba(95, 176, 255, .16);
+  --silver: #cbc4e4;
+  --gold: #e8c26a;
+  --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 28px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.eyebrow { font-family: var(--font-display); font-size: 12px; letter-spacing: .32em; text-transform: uppercase; color: var(--azure); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 5vw, 52px); line-height: 1.02; margin: 6px 0 0; letter-spacing: .02em; text-wrap: balance; }
+h1 small { display: block; font-size: .42em; font-weight: 500; color: var(--silver); letter-spacing: .18em; text-transform: uppercase; margin-top: 8px; }
+.rarity { font-family: var(--font-display); font-weight: 600; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); padding: 6px 12px; border-radius: 3px; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+
+.bench { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+
+.stage-box { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; padding: 7px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--azure-dim); color: var(--fg); }
+.seg button:focus-visible, .item:focus-visible, .copy:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
+.stage { position: relative; padding: 4% 6%; transition: background-color .3s; }
+.stage[data-bg="dark"] { background: radial-gradient(ellipse at 50% 40%, #232a38 0%, #11141b 70%); }
+.stage[data-bg="check"] { background-color: #2a2f38; background-image: conic-gradient(#3a404b 25%, transparent 0 50%, #3a404b 0 75%, transparent 0); background-size: 22px 22px; }
+.stage[data-bg="light"] { background: #e9ecf2; }
+.doll { position: relative; width: 100%; max-width: 100%; margin: 0 auto; cursor: crosshair; touch-action: manipulation; }
+.doll img { position: absolute; display: block; max-width: none; user-select: none; -webkit-user-drag: none; pointer-events: none;
+  transition: transform .7s cubic-bezier(.2,.8,.2,1), filter .25s, opacity .25s; }
+.doll.has-focus img { opacity: .35; }
+.doll.has-focus img.on { opacity: 1; filter: drop-shadow(0 0 10px rgba(95,176,255,.55)); }
+.hint { font-size: 12px; color: var(--muted); padding: 8px 12px; border-top: 1px solid var(--line); }
+
+.inspector { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: grid; gap: 14px; }
+.insp-head { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: center; }
+.insp-head img { width: 96px; height: 96px; }
+.slot { font-family: var(--font-display); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--azure); }
+.insp-name { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.15; margin: 2px 0; }
+.insp-en { color: var(--muted); font-size: 13px; }
+.insp-desc { margin: 0; color: var(--silver); max-width: 60ch; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.stat { background: var(--panel-2); padding: 9px 11px; }
+.stat b { display: block; font-family: var(--font-mono); font-weight: 500; font-size: 18px; font-variant-numeric: tabular-nums; color: var(--fg); }
+.stat span { font-size: 12px; color: var(--muted); }
+.spec { width: 100%; border-collapse: collapse; font-size: 13px; }
+.spec td { padding: 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.spec td:first-child { color: var(--muted); width: 42%; }
+.spec td:last-child { font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; word-break: break-all; }
+.note { font-size: 12px; color: var(--muted); margin: 0; }
+
+.items { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .items { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 440px) { .items { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.item { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; display: grid; gap: 6px; justify-items: center; text-align: center; cursor: pointer; color: inherit; font: inherit; }
+.item img { width: 100%; max-width: 150px; aspect-ratio: 1; }
+.item[aria-pressed="true"] { border-color: var(--azure); background: var(--panel-2); }
+.item strong { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+.item span { font-size: 12px; color: var(--muted); }
+
+.lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 20px; }
+@media (max-width: 860px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px; min-width: 0; }
+.bonus { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.bonus li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.bonus b { font-family: var(--font-display); font-weight: 600; color: var(--gold); font-size: 14px; letter-spacing: .06em; }
+.files { overflow-x: auto; }
+.files table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 460px; }
+.files th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 0 10px 8px 0; border-bottom: 1px solid var(--line); }
+.files td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.files td:first-child { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap; }
+pre { margin: 12px 0 0; background: #0b0e13; border: 1px solid var(--line); border-radius: 4px; padding: 12px; overflow-x: auto; font: 12.5px/1.5 var(--font-mono); color: var(--silver); }
+.code-head { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+.copy { font: 500 12px var(--font-body); color: var(--fg); background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .doll img { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Bộ trang bị · 5 món · 7 sprite</div>
+      <h1>Bộ Giáp Cánh Lam<small>Azure Wing Armor Set</small></h1>
+    </div>
+    <span class="rarity">Huyền thoại</span>
+  </header>
+
+  <section class="bench">
+    <div class="stage-box">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Bố cục">
+          <button type="button" id="lay-ref" aria-pressed="true">Bố cục gốc</button>
+          <button type="button" id="lay-exp" aria-pressed="false">Tách rời</button>
+        </div>
+        <div class="seg" role="group" aria-label="Nền">
+          <button type="button" id="bg-dark" aria-pressed="true">Nền tối</button>
+          <button type="button" id="bg-check" aria-pressed="false">Ô kẻ</button>
+          <button type="button" id="bg-light" aria-pressed="false">Nền sáng</button>
+        </div>
+      </div>
+      <div class="stage" id="stage" data-bg="dark">
+        <div class="doll" id="doll" aria-label="Bộ giáp lắp ráp"></div>
+      </div>
+      <div class="hint">Chạm vào một mảnh giáp để xem chi tiết. Nền ô kẻ cho thấy vùng trong suốt của sprite.</div>
+    </div>
+
+    <aside class="inspector" id="inspector" aria-live="polite"></aside>
+  </section>
+
+  <section>
+    <h2>Trang bị</h2>
+    <div class="items" id="items"></div>
+  </section>
+
+  <section class="lower">
+    <div class="card">
+      <h2>Hiệu ứng bộ</h2>
+      <ul class="bonus" id="bonus"></ul>
+      <p class="note" style="margin-top:14px">Chỉ số và hiệu ứng là giá trị mẫu để cân bằng; tấm thiết kế gốc không ghi chỉ số.</p>
+    </div>
+    <div class="card">
+      <h2>Tệp để nhúng vào game</h2>
+      <div class="files">
+        <table>
+          <thead><tr><th>Đường dẫn</th><th>Dùng cho</th></tr></thead>
+          <tbody>
+            <tr><td>sprites/@4x/*.png</td><td>Sprite từng mảnh, phóng 4× bằng ESRGAN, nền trong suốt</td></tr>
+            <tr><td>sprites/@2x, @1x</td><td>Cùng sprite, thu nhỏ có premultiply alpha</td></tr>
+            <tr><td>atlas/azure_wing@2x.*</td><td>Atlas PNG + JSON Hash (Phaser, PixiJS, Cocos, Defold)</td></tr>
+            <tr><td>paperdoll/*.png</td><td>Toàn bộ giáp đã ráp đúng vị trí</td></tr>
+            <tr><td>icons/, icons/framed/</td><td>Icon túi đồ 256/128/64 px, bản có khung</td></tr>
+            <tr><td>azure_wing_set.json</td><td>Ô trang bị, pivot, offset, thứ tự vẽ, chỉ số</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-head"><h2 style="margin:0">Phaser 3</h2><button class="copy" type="button" id="copy">Sao chép</button></div>
+      <pre id="snippet">// preload
+this.load.atlas('azure', 'atlas/azure_wing@2x.png', 'atlas/azure_wing@2x.json');
+this.load.json('azureSet', 'azure_wing_set.json');
+
+// create: ráp bộ giáp quanh gốc nhân vật (x, y = giữa hai bàn chân)
+const set = this.cache.json.get('azureSet'), k = 2; // atlas @2x
+Object.entries(set.pieces)
+  .sort((a, b) => a[1].z - b[1].z)
+  .forEach(([name, p]) => {
+    const [ox, oy] = p.offset_1x, [px, py] = p.pivot, [w, h] = p.size_1x;
+    this.add.image(x + (ox + px * w) * k * s, y + (oy + py * h) * k * s, 'azure', name)
+      .setOrigin(px, py).setScale(s);   // s = tỉ lệ nhân vật
+  });</pre>
+    </div>
+  </section>
+</div>
+
+<script>
+const SLOT_VI = { head: "Đầu", chest: "Ngực", legs: "Chân", hands: "Tay", feet: "Bàn chân" };
+const STAT_VI = { defense: "Phòng thủ", magic_resist: "Kháng phép", crit_resist: "Kháng chí mạng", hp: "Máu", move_speed: "Tốc chạy %", attack: "Tấn công", attack_speed: "Tốc đánh %", evasion: "Né tránh %" };
+const PIECE_VI = { helmet: "Mũ", chestplate: "Giáp ngực", leggings: "Giáp chân", gauntlet_left: "Găng (trái ảnh)", gauntlet_right: "Găng (phải ảnh)", boot_left: "Giày (trái ảnh)", boot_right: "Giày (phải ảnh)" };
+const EXPLODE = { helmet: [0, -46], chestplate: [0, -14], leggings: [0, 22], gauntlet_left: [-52, -6], gauntlet_right: [52, -6], boot_left: [-40, 56], boot_right: [40, 56] };
+
+const doll = document.getElementById("doll"), stage = document.getElementById("stage");
+let SET, current = null, pieceEls = {}, hitCanvases = {};
+
+function press(groupIds, id) { groupIds.forEach(g => document.getElementById(g).setAttribute("aria-pressed", String(g === id))); }
+
+function layout(exploded) {
+  const B = SET.paperdoll.bounds_1x;
+  for (const [name, el] of Object.entries(pieceEls)) {
+    const [dx, dy] = exploded ? EXPLODE[name] : [0, 0];
+    const px = dx / B.w * doll.clientWidth, py = dy / B.h * doll.clientHeight;
+    el.style.transform = `translate(${px}px, ${py}px)`;
+  }
+  doll.dataset.exploded = exploded ? "1" : "";
+}
+
+function buildDoll() {
+  const B = SET.paperdoll.bounds_1x;
+  doll.style.aspectRatio = `${B.w} / ${B.h}`;
+  // a little room so the exploded layout stays on stage
+  stage.style.paddingBlock = "9% 11%";
+  Object.entries(SET.pieces).sort((a, b) => a[1].z - b[1].z).forEach(([name, p]) => {
+    const img = new Image();
+    img.src = "assets/" + p.files["@2x"]; img.alt = PIECE_VI[name]; img.decoding = "async";
+    img.style.left = ((p.offset_1x[0] - B.x) / B.w * 100) + "%";
+    img.style.top = ((p.offset_1x[1] - B.y) / B.h * 100) + "%";
+    img.style.width = (p.size_1x[0] / B.w * 100) + "%";
+    img.style.zIndex = p.z;
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+      const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0); hitCanvases[name] = g;
+    };
+    doll.appendChild(img); pieceEls[name] = img;
+  });
+}
+
+function pieceAt(clientX, clientY) {
+  const names = Object.keys(pieceEls).sort((a, b) => SET.pieces[b].z - SET.pieces[a].z);
+  for (const n of names) {
+    const r = pieceEls[n].getBoundingClientRect(), g = hitCanvases[n];
+    if (!g || clientX < r.left || clientX > r.right || clientY < r.top || clientY > r.bottom) continue;
+    const x = Math.floor((clientX - r.left) / r.width * g.canvas.width), y = Math.floor((clientY - r.top) / r.height * g.canvas.height);
+    try { if (g.getImageData(x, y, 1, 1).data[3] > 40) return n; } catch (e) { return n; }
+  }
+  return null;
+}
+
+function selectItem(itemId) {
+  current = itemId;
+  document.querySelectorAll(".item").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.item === itemId)));
+  doll.classList.toggle("has-focus", !!itemId);
+  for (const [n, el] of Object.entries(pieceEls)) el.classList.toggle("on", SET.pieces[n].item === itemId);
+  renderInspector();
+}
+
+function renderInspector() {
+  const box = document.getElementById("inspector");
+  if (!current) {
+    const n = Object.keys(SET.pieces).length;
+    box.innerHTML = `<div><div class="slot">Toàn bộ</div><div class="insp-name">${SET.name_vi}</div><div class="insp-en">${SET.name_en}</div></div>
+      <p class="insp-desc">Bộ giáp bạc tím viền lam, tách từ tấm thiết kế gốc thành ${n} sprite nền trong suốt. Ráp lại theo offset trong JSON là ra đúng dáng như bản vẽ.</p>
+      <table class="spec"><tbody>
+        <tr><td>Khung ráp (@1x)</td><td>${SET.paperdoll.bounds_1x.w} × ${SET.paperdoll.bounds_1x.h} px</td></tr>
+        <tr><td>Gốc nhân vật</td><td>giữa hai bàn chân, mặt sàn</td></tr>
+        <tr><td>Độ phân giải</td><td>@1x · @2x · @4x</td></tr>
+      </tbody></table>
+      <p class="note">Chọn một món bên dưới hoặc chạm vào mảnh giáp.</p>`;
+    return;
+  }
+  const it = SET.items[current];
+  const stats = Object.entries(it.stats).map(([k, v]) => `<div class="stat"><b>+${v}</b><span>${STAT_VI[k] || k}</span></div>`).join("");
+  const rows = it.pieces.map(n => {
+    const p = SET.pieces[n];
+    return `<tr><td>${PIECE_VI[n]}</td><td>${n}.png<br>${Math.round(p.size_1x[0] * 4)} × ${Math.round(p.size_1x[1] * 4)} px @4x<br>pivot ${p.pivot[0].toFixed(2)}, ${p.pivot[1].toFixed(2)} · z ${p.z}</td></tr>`;
+  }).join("");
+  box.innerHTML = `<div class="insp-head"><img src="assets/${it.icon.framed}" alt=""><div>
+      <div class="slot">${SLOT_VI[it.slot]} · ${it.slot}</div><div class="insp-name">${it.name_vi}</div><div class="insp-en">${it.name_en}</div></div></div>
+    <p class="insp-desc">${it.desc_vi}</p>
+    <div class="stats">${stats}</div>
+    <table class="spec"><tbody>${rows}</tbody></table>`;
+}
+
+function renderItems() {
+  document.getElementById("items").innerHTML = Object.entries(SET.items).map(([id, it]) =>
+    `<button type="button" class="item" data-item="${id}" aria-pressed="false"><img src="assets/${it.icon.framed}" alt="">
+     <strong>${it.name_vi}</strong><span>${SLOT_VI[it.slot]}</span></button>`).join("");
+  document.querySelectorAll(".item").forEach(b => b.addEventListener("click", () => selectItem(current === b.dataset.item ? null : b.dataset.item)));
+  document.getElementById("bonus").innerHTML = SET.set_bonus.map(b => `<li><b>${b.pieces} món</b><span>${b.vi}</span></li>`).join("");
+}
+
+function start() {
+  buildDoll(); renderItems(); renderInspector();
+  doll.addEventListener("click", e => { const n = pieceAt(e.clientX, e.clientY); selectItem(n ? (SET.pieces[n].item === current ? null : SET.pieces[n].item) : null); });
+  doll.addEventListener("mousemove", e => { doll.style.cursor = pieceAt(e.clientX, e.clientY) ? "pointer" : "default"; });
+  const lay = ["lay-ref", "lay-exp"], bgs = ["bg-dark", "bg-check", "bg-light"];
+  let exploded = false;
+  lay.forEach(id => document.getElementById(id).addEventListener("click", () => { exploded = id === "lay-exp"; press(lay, id); layout(exploded); }));
+  bgs.forEach(id => document.getElementById(id).addEventListener("click", () => { press(bgs, id); stage.dataset.bg = id.slice(3); }));
+  new ResizeObserver(() => layout(exploded)).observe(doll);
+}
+
+document.getElementById("copy").addEventListener("click", e => {
+  const t = document.getElementById("snippet").textContent, btn = e.currentTarget;
+  navigator.clipboard.writeText(t).then(() => { btn.textContent = "Đã sao chép"; setTimeout(() => btn.textContent = "Sao chép", 1600); })
+    .catch(() => { const r = document.createRange(); r.selectNodeContents(document.getElementById("snippet")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+});
+
+fetch("assets/azure_wing_set.json").then(r => r.json()).then(d => { SET = d; start(); })
+  .catch(() => { document.getElementById("inspector").innerHTML = '<p class="note">Không tải được assets/azure_wing_set.json. Mở trang này cùng thư mục assets/.</p>'; });
+</script>

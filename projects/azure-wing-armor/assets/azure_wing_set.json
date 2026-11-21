@@ -1,0 +1,333 @@
+{
+ "id": "azure_wing",
+ "name_vi": "Bộ Giáp Cánh Lam",
+ "name_en": "Azure Wing Armor Set",
+ "rarity": "legendary",
+ "units": "offset_1x/size_1x/socket_1x are in @1x px relative to the character origin (between the feet, on the floor), y down. At @2x/@4x multiply by 2/4.",
+ "stats_note": "Stats are example values for balancing, not from the reference sheet.",
+ "items": {
+  "helm": {
+   "slot": "head",
+   "name_vi": "Mũ Cánh Lam",
+   "name_en": "Azure Wing Helm",
+   "pieces": [
+    "helmet"
+   ],
+   "desc_vi": "Mũ giáp bạc mỏ chim ưng, hai cánh lông vũ xanh lam ôm lấy thái dương; đôi mắt lam phát sáng khi chiến đấu.",
+   "stats": {
+    "defense": 42,
+    "magic_resist": 18,
+    "crit_resist": 4
+   },
+   "icon": {
+    "plain": {
+     "256": "icons/helm_256.png",
+     "128": "icons/helm_128.png",
+     "64": "icons/helm_64.png"
+    },
+    "framed": "icons/framed/helm_256.png"
+   }
+  },
+  "cuirass": {
+   "slot": "chest",
+   "name_vi": "Giáp Ngực Cánh Lam",
+   "name_en": "Azure Wing Cuirass",
+   "pieces": [
+    "chestplate"
+   ],
+   "desc_vi": "Giáp ngực chạm hoa văn dây leo, vai nhọn như móng vuốt và bờm lông vũ lam xòe rộng hai bên.",
+   "stats": {
+    "defense": 96,
+    "hp": 420,
+    "magic_resist": 30
+   },
+   "icon": {
+    "plain": {
+     "256": "icons/cuirass_256.png",
+     "128": "icons/cuirass_128.png",
+     "64": "icons/cuirass_64.png"
+    },
+    "framed": "icons/framed/cuirass_256.png"
+   }
+  },
+  "greaves": {
+   "slot": "legs",
+   "name_vi": "Giáp Chân Cánh Lam",
+   "name_en": "Azure Wing Greaves",
+   "pieces": [
+    "leggings"
+   ],
+   "desc_vi": "Giáp đùi và ống chân xếp vảy, gân lam chạy dọc, lông vũ lam mọc ở hông.",
+   "stats": {
+    "defense": 71,
+    "hp": 260,
+    "move_speed": 2
+   },
+   "icon": {
+    "plain": {
+     "256": "icons/greaves_256.png",
+     "128": "icons/greaves_128.png",
+     "64": "icons/greaves_64.png"
+    },
+    "framed": "icons/framed/greaves_256.png"
+   }
+  },
+  "gauntlets": {
+   "slot": "hands",
+   "name_vi": "Găng Cánh Lam",
+   "name_en": "Azure Wing Gauntlets",
+   "pieces": [
+    "gauntlet_left",
+    "gauntlet_right"
+   ],
+   "desc_vi": "Cặp găng dài tới khuỷu, cổ tay gai nhọn, ngón vuốt kim loại và lông vũ lam ở cẳng tay.",
+   "stats": {
+    "defense": 33,
+    "attack": 24,
+    "attack_speed": 5
+   },
+   "icon": {
+    "plain": {
+     "256": "icons/gauntlets_256.png",
+     "128": "icons/gauntlets_128.png",
+     "64": "icons/gauntlets_64.png"
+    },
+    "framed": "icons/framed/gauntlets_256.png"
+   }
+  },
+  "sabatons": {
+   "slot": "feet",
+   "name_vi": "Giày Cánh Lam",
+   "name_en": "Azure Wing Sabatons",
+   "pieces": [
+    "boot_left",
+    "boot_right"
+   ],
+   "desc_vi": "Giày giáp cổ cao, mũi bọc vảy bạc, ống giày tỏa gai như cánh chim.",
+   "stats": {
+    "defense": 29,
+    "move_speed": 6,
+    "evasion": 3
+   },
+   "icon": {
+    "plain": {
+     "256": "icons/sabatons_256.png",
+     "128": "icons/sabatons_128.png",
+     "64": "icons/sabatons_64.png"
+    },
+    "framed": "icons/framed/sabatons_256.png"
+   }
+  }
+ },
+ "set_bonus": [
+  {
+   "pieces": 2,
+   "vi": "+8% phòng thủ",
+   "en": "+8% defense"
+  },
+  {
+   "pieces": 4,
+   "vi": "+12% tốc độ di chuyển, miễn nhiễm làm chậm 2 giây sau khi né",
+   "en": "+12% move speed; 2s slow immunity after a dodge"
+  },
+  {
+   "pieces": 5,
+   "vi": "Cánh Lam: khi máu dưới 30%, triệu hồi đôi cánh lam hấp thụ 25% sát thương trong 5 giây (hồi 60 giây)",
+   "en": "Azure Wing: below 30% HP, spread azure wings that absorb 25% damage for 5s (60s cooldown)"
+  }
+ ],
+ "pieces": {
+  "leggings": {
+   "item": "greaves",
+   "z": 10,
+   "size_1x": [
+    262.75,
+    358.0
+   ],
+   "offset_1x": [
+    -130.25,
+    -412.0
+   ],
+   "pivot": [
+    0.4957,
+    0.0084
+   ],
+   "socket_1x": [
+    0,
+    -409
+   ],
+   "files": {
+    "@4x": "sprites/@4x/leggings.png",
+    "@2x": "sprites/@2x/leggings.png",
+    "@1x": "sprites/@1x/leggings.png"
+   }
+  },
+  "chestplate": {
+   "item": "cuirass",
+   "z": 20,
+   "size_1x": [
+    331.0,
+    312.0
+   ],
+   "offset_1x": [
+    -164.5,
+    -633.0
+   ],
+   "pivot": [
+    0.497,
+    0.3718
+   ],
+   "socket_1x": [
+    0,
+    -517
+   ],
+   "files": {
+    "@4x": "sprites/@4x/chestplate.png",
+    "@2x": "sprites/@2x/chestplate.png",
+    "@1x": "sprites/@1x/chestplate.png"
+   }
+  },
+  "helmet": {
+   "item": "helm",
+   "z": 30,
+   "size_1x": [
+    169.75,
+    235.5
+   ],
+   "offset_1x": [
+    -84.5,
+    -832.25
+   ],
+   "pivot": [
+    0.4978,
+    0.9565
+   ],
+   "socket_1x": [
+    0,
+    -607
+   ],
+   "files": {
+    "@4x": "sprites/@4x/helmet.png",
+    "@2x": "sprites/@2x/helmet.png",
+    "@1x": "sprites/@1x/helmet.png"
+   }
+  },
+  "gauntlet_left": {
+   "item": "gauntlets",
+   "z": 40,
+   "size_1x": [
+    91.25,
+    328.0
+   ],
+   "offset_1x": [
+    -296.5,
+    -604.5
+   ],
+   "pivot": [
+    0.4658,
+    0.3216
+   ],
+   "socket_1x": [
+    -254,
+    -499
+   ],
+   "files": {
+    "@4x": "sprites/@4x/gauntlet_left.png",
+    "@2x": "sprites/@2x/gauntlet_left.png",
+    "@1x": "sprites/@1x/gauntlet_left.png"
+   }
+  },
+  "gauntlet_right": {
+   "item": "gauntlets",
+   "z": 40,
+   "size_1x": [
+    89.0,
+    331.75
+   ],
+   "offset_1x": [
+    191.5,
+    -605.0
+   ],
+   "pivot": [
+    0.5449,
+    0.3195
+   ],
+   "socket_1x": [
+    240,
+    -499
+   ],
+   "files": {
+    "@4x": "sprites/@4x/gauntlet_right.png",
+    "@2x": "sprites/@2x/gauntlet_right.png",
+    "@1x": "sprites/@1x/gauntlet_right.png"
+   }
+  },
+  "boot_left": {
+   "item": "sabatons",
+   "z": 15,
+   "size_1x": [
+    127.25,
+    199.25
+   ],
+   "offset_1x": [
+    -230.0,
+    -197.75
+   ],
+   "pivot": [
+    0.5108,
+    0.9774
+   ],
+   "socket_1x": [
+    -165,
+    -3
+   ],
+   "files": {
+    "@4x": "sprites/@4x/boot_left.png",
+    "@2x": "sprites/@2x/boot_left.png",
+    "@1x": "sprites/@1x/boot_left.png"
+   }
+  },
+  "boot_right": {
+   "item": "sabatons",
+   "z": 15,
+   "size_1x": [
+    128.5,
+    200.5
+   ],
+   "offset_1x": [
+    103.0,
+    -199.0
+   ],
+   "pivot": [
+    0.4825,
+    0.9776
+   ],
+   "socket_1x": [
+    165,
+    -3
+   ],
+   "files": {
+    "@4x": "sprites/@4x/boot_right.png",
+    "@2x": "sprites/@2x/boot_right.png",
+    "@1x": "sprites/@1x/boot_right.png"
+   }
+  }
+ },
+ "paperdoll": {
+  "bounds_1x": {
+   "x": -301,
+   "y": -837,
+   "w": 586,
+   "h": 843
+  },
+  "origin_in_image_1x": [
+   301,
+   837
+  ],
+  "files": {
+   "@4x": "paperdoll/azure_wing_full@4x.png",
+   "@2x": "paperdoll/azure_wing_full@2x.png"
+  }
+ },
+ "atlas": "atlas/azure_wing@2x.json"
+}

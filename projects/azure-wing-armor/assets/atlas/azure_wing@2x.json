@@ -1,0 +1,183 @@
+{
+ "frames": {
+  "leggings": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 526,
+    "h": 716
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 526,
+    "h": 716
+   },
+   "sourceSize": {
+    "w": 526,
+    "h": 716
+   },
+   "pivot": {
+    "x": 0.4957,
+    "y": 0.0084
+   }
+  },
+  "gauntlet_right": {
+   "frame": {
+    "x": 528,
+    "y": 0,
+    "w": 178,
+    "h": 664
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 178,
+    "h": 664
+   },
+   "sourceSize": {
+    "w": 178,
+    "h": 664
+   },
+   "pivot": {
+    "x": 0.5449,
+    "y": 0.3195
+   }
+  },
+  "gauntlet_left": {
+   "frame": {
+    "x": 708,
+    "y": 0,
+    "w": 182,
+    "h": 656
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 182,
+    "h": 656
+   },
+   "sourceSize": {
+    "w": 182,
+    "h": 656
+   },
+   "pivot": {
+    "x": 0.4658,
+    "y": 0.3216
+   }
+  },
+  "chestplate": {
+   "frame": {
+    "x": 892,
+    "y": 0,
+    "w": 662,
+    "h": 624
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 662,
+    "h": 624
+   },
+   "sourceSize": {
+    "w": 662,
+    "h": 624
+   },
+   "pivot": {
+    "x": 0.497,
+    "y": 0.3718
+   }
+  },
+  "helmet": {
+   "frame": {
+    "x": 1556,
+    "y": 0,
+    "w": 340,
+    "h": 471
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 340,
+    "h": 471
+   },
+   "sourceSize": {
+    "w": 340,
+    "h": 471
+   },
+   "pivot": {
+    "x": 0.4978,
+    "y": 0.9565
+   }
+  },
+  "boot_right": {
+   "frame": {
+    "x": 0,
+    "y": 718,
+    "w": 257,
+    "h": 401
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 257,
+    "h": 401
+   },
+   "sourceSize": {
+    "w": 257,
+    "h": 401
+   },
+   "pivot": {
+    "x": 0.4825,
+    "y": 0.9776
+   }
+  },
+  "boot_left": {
+   "frame": {
+    "x": 259,
+    "y": 718,
+    "w": 254,
+    "h": 398
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 254,
+    "h": 398
+   },
+   "sourceSize": {
+    "w": 254,
+    "h": 398
+   },
+   "pivot": {
+    "x": 0.5108,
+    "y": 0.9774
+   }
+  }
+ },
+ "meta": {
+  "app": "azure-wing-armor/pack.py",
+  "version": "1.0",
+  "image": "azure_wing@2x.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 2048,
+   "h": 1121
+  },
+  "scale": "2"
+ }
+}
