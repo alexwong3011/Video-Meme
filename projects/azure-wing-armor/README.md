@@ -60,6 +60,16 @@ Kéo `sprites/front/@4x/*.png` và `sprites/back/@4x/*.png` vào project (Unity:
 Đặt pivot của từng sprite = `pivot` trong JSON (Unity: Custom Pivot, lưu ý Unity tính y từ dưới lên → `1 - pivot.y`;
 Godot: `Sprite2D.offset = -pivot * size`). Vị trí con so với gốc nhân vật = `offset_1x + pivot * size_1x`.
 
+## Tư thế vẽ tay cho đòn đánh (`source/poses/pose01-05.jpg` → `assets/poses/`)
+
+`poses.py` tách 5 tư thế chém hai tay (01 vác kiếm qua đầu, 02 giơ chéo, 03 quét ngang, 04 bổ xuống, 05 thu đòn) theo màu:
+giữ giáp (tím), lông vũ (lam), kiếm (vàng, tím); bỏ cánh pha lê (sáng, nhạt), bệ (xỉn, dưới đường nối hai đế giày) và nền; lấp khe
+tối bị giáp bao quanh. Mỗi tư thế có mốc đo tay: điểm giữa hai chân, điểm gắn cánh, chuôi, chắn kiếm và mũi kiếm; xuất WebP 0,6×.
+`character-test.html` (bản 2,5D dựng từ tấm vẽ gốc) dùng chúng cho chuỗi hai tay (Bổ trời 01→04→05, Quét ngang 02→03, Chém xuyên
+02→05), chiêu 3 (xoay bằng rig rồi 01 trên không → 04 khi đáp) và đà ném của chiêu 4 (01). Giữa hai tư thế là khung nhòe: lưỡi kiếm
+quét quanh chuôi theo đúng chiều chém, va chạm tính theo lưỡi kiếm của tư thế đang hiện. Tư thế được lật để lưỡi kiếm kết thúc về
+phía mục tiêu; khi quay lưng (đi lên) vẫn dùng rig. Bản sprite 3D trước đó giữ ở `sprite-test.html`.
+
 ## Mức 3: sprite 8 hướng render từ mô hình 3D
 
 1. **Hoa văn từ 6 góc nhìn** (`source/turntable/view01-06.jpg`, camera 45°): `3d/mv_fit.py` tìm góc xoay, góc nghiêng và khoảng cách
