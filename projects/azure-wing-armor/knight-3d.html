@@ -71,6 +71,19 @@ canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !imp
 .stats b { display: block; font: 500 16px var(--font-mono); font-variant-numeric: tabular-nums; }
 .stats span { font-size: 11.5px; color: var(--muted); }
 .note { font-size: 12px; color: var(--muted); margin: 0; }
+.float.small { font-size: 15px; }
+.float.small.crit { font-size: 20px; }
+.hp.small i { width: 84px; height: 6px; }
+.hp.small span { font-size: 11px; }
+.skills { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 10px; }
+.sk { position: relative; width: 66px; height: 66px; border-radius: 12px; border: 1px solid rgba(95,176,255,.6); background: radial-gradient(circle at 50% 40%, #1d3558, #0f1828 70%); color: var(--azure); cursor: pointer; padding: 0; touch-action: none; display: grid; place-items: center; }
+.sk svg { width: 40px; height: 40px; }
+.sk kbd { position: absolute; right: 4px; bottom: 3px; }
+.sk .cdv { position: absolute; inset: 0; border-radius: inherit; background: conic-gradient(rgba(0,0,0,.6) calc(var(--cd, 0) * 1turn), transparent 0); pointer-events: none; }
+.sk.on { box-shadow: 0 0 16px rgba(95,176,255,.8); border-color: #bfe2ff; }
+.sk:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
+.sk-name { position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%); font: 500 10.5px var(--font-body); color: var(--muted); white-space: nowrap; }
+@media (pointer: coarse) { .skills { left: max(18px, env(safe-area-inset-left, 0px)); bottom: 158px; transform: none; } .sk-name { display: none; } }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center; padding: 20px; }
 @media (max-width: 640px) {
   .keys, .bar h1 span { display: none; }
@@ -85,12 +98,15 @@ canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !imp
     <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>: đi</span>
     <span><kbd>Shift</kbd>: chạy</span>
     <span><kbd>J</kbd> / <kbd>Space</kbd> / nhấp: chém (giữ: liên hoàn)</span>
+    <span><kbd>1</kbd> <kbd>2</kbd>: kỹ năng (giữ: 10 lần/giây)</span>
+    <span><kbd>P</kbd>: tự động</span>
     <span><kbd>Q</kbd>: đổi cách cầm</span>
     <span><kbd>F</kbd>: bay / đáp</span>
     <span>kéo chuột: xoay camera · lăn: zoom</span>
     <span><kbd>I</kbd>: trang bị</span>
   </div>
   <div class="actions">
+    <button class="btn" type="button" id="btn-auto" aria-pressed="false">Tự động</button>
     <button class="btn" type="button" id="btn-hitbox" aria-pressed="false">Hitbox</button>
     <button class="btn" type="button" id="btn-menu">Trang bị</button>
   </div>
@@ -104,7 +120,17 @@ canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !imp
     <div><span>Số đòn</span><b id="m-hits">0</b></div>
     <div><span>Tổng sát thương</span><b id="m-total">0</b></div>
   </div>
-  <div class="hp" id="hp"><span id="hp-text">Hình nộm</span><i><b id="hp-bar"></b></i></div>
+  <div id="hps"></div>
+  <div class="skills" id="skills">
+    <button class="sk" id="sk-single" type="button" title="Lam Quang Kích (phím 1): đánh một mục tiêu trong 1 m" aria-label="Lam Quang Kích, phím 1">
+      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 33 29 11"/><path d="M29 11l-9 2M29 11l-2 9"/><circle cx="31" cy="9" r="3.5" fill="currentColor" stroke="none" opacity=".6"/></svg>
+      <span class="cdv"></span><kbd>1</kbd><span class="sk-name">Lam Quang Kích</span>
+    </button>
+    <button class="sk" id="sk-aoe" type="button" title="Vũ Cánh Phong Bạo (phím 2): đánh mọi mục tiêu trong 1 m quanh nhân vật" aria-label="Vũ Cánh Phong Bạo, phím 2">
+      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="8" opacity=".7"/><path d="M20 14v12M14 20h12" stroke-linecap="round"/></svg>
+      <span class="cdv"></span><kbd>2</kbd><span class="sk-name">Vũ Cánh Phong Bạo</span>
+    </button>
+  </div>
   <div id="floats"></div>
   <div class="touch" id="touch" hidden>
     <div class="stick" id="stick"><i id="knob"></i></div>
@@ -198,17 +224,18 @@ for (const [x, z] of [[-6, -5], [6, -5], [-6, 6], [6, 6], [0, -8]]) {
   grp.add(shaft, base, cap, glow); grp.position.set(x, 0, z); scene.add(grp); PILLARS.push({ x, z, r: 0.75 });
 }
 
-// training dummy
-const D = { pos: new THREE.Vector3(0, 0, -2.2), hp: 20000, max: 20000, wob: new THREE.Vector2(), wobV: new THREE.Vector2(), flash: 0, lastHit: -99, downAt: -1, r: 0.32 };
-const dummy = new THREE.Group(); dummy.position.copy(D.pos); scene.add(dummy);
-const dummyBody = new THREE.Group(); dummy.add(dummyBody);
-const dMats = [];
-(() => {
+// training dummies: one in front of the start, four standing in a ring for the area skill
+const DUMMIES = [], RING_C = new THREE.Vector3(3.2, 0, -3.4);
+function makeDummy(x, z, max, scale, name) {
+  const D = { id: DUMMIES.length, name, scale, pos: new THREE.Vector3(x, 0, z), hp: max, max, wob: new THREE.Vector2(), wobV: new THREE.Vector2(), flash: 0, lastHit: -99, downAt: -1, r: 0.32 * scale };
+  const group = new THREE.Group(); group.position.copy(D.pos); group.scale.setScalar(scale); scene.add(group);
+  if (scale < 1) group.rotation.y = Math.atan2(RING_C.x - x, RING_C.z - z);      // ring targets face the middle
+  const body = new THREE.Group(); group.add(body);
   const wood = new THREE.MeshStandardMaterial({ color: 0x6b4a2e, roughness: 0.8 }), straw = new THREE.MeshStandardMaterial({ color: 0xc9a467, roughness: 0.9 });
   const red = new THREE.MeshStandardMaterial({ color: 0xb33a3a, roughness: 0.6 }), cream = new THREE.MeshStandardMaterial({ color: 0xefe6d2, roughness: 0.6 });
-  dMats.push(wood, straw, red, cream); for (const m of dMats) m.envMapIntensity = 0.15;
-  const add = (geo, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; dummyBody.add(m); return m; };
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.12, 20), wood); base.position.y = 0.06; base.castShadow = true; dummy.add(base);
+  const mats = [wood, straw, red, cream]; for (const m of mats) m.envMapIntensity = 0.15;
+  const add = (geo, mat, px, py, pz) => { const m = new THREE.Mesh(geo, mat); m.position.set(px, py, pz); m.castShadow = true; body.add(m); return m; };
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.12, 20), wood); base.position.y = 0.06; base.castShadow = true; group.add(base);
   add(new THREE.CylinderGeometry(0.06, 0.06, 1.9, 10), wood, 0, 0.95, 0);
   add(new THREE.BoxGeometry(1.1, 0.1, 0.1), wood, 0, 1.45, 0);
   add(new THREE.CylinderGeometry(0.3, 0.27, 0.95, 18), straw, 0, 1.15, 0);
@@ -216,7 +243,17 @@ const dMats = [];
   add(new THREE.CircleGeometry(0.22, 24), red, 0, 1.2, 0.31);
   add(new THREE.CircleGeometry(0.14, 24), cream, 0, 1.2, 0.312);
   add(new THREE.CircleGeometry(0.06, 20), red, 0, 1.2, 0.314);
-})();
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(D.r, D.r, 1.9 * scale, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0x5fd07a, wireframe: true }));
+  ring.position.set(x, 0.95 * scale, z); ring.visible = false; scene.add(ring);
+  const el = document.createElement("div"); el.className = "hp" + (scale < 1 ? " small" : ""); el.innerHTML = "<span></span><i><b></b></i>";
+  document.getElementById("hps").appendChild(el);
+  Object.assign(D, { group, body, mats, ring, hpEl: el, txtEl: el.querySelector("span"), barEl: el.querySelector("b") });
+  DUMMIES.push(D); return D;
+}
+makeDummy(0, -2.2, 20000, 1, "Hình nộm");
+for (const [dx, dz] of [[0, 1.05], [1.05, 0], [0, -1.05], [-1.05, 0]]) makeDummy(RING_C.x + dx, RING_C.z + dz, 8000, 0.85, "Bia");
+const rangeRing = new THREE.Mesh(new THREE.RingGeometry(0.97, 1.03, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xe8c26a, transparent: true, opacity: 0.8 }));
+rangeRing.visible = false; scene.add(rangeRing);
 
 // ---------- state ----------
 const MODE_VI = { one: "Một tay", dual: "Song kiếm", two: "Hai tay", none: "Tay không" };
@@ -421,6 +458,8 @@ function pose(dt) {
   let atk = null, u = 0;
   if (P.atk) { atk = P.atk.def; u = P.atk.t / P.atk.dur; const bd = sampleBody(atk.body, u); add("spine", bd.sx * 0.6, bd.sy * 0.65); add("chest", bd.sx * 0.4, bd.sy * 0.35); add("hips", 0, bd.sy * 0.25); add("head", -bd.sx * 0.5, -bd.sy * 0.3); hipY += bd.drop * (1 - fl * 0.5);
     if (bd.drop < -0.02 && fl < 0.5) { add("thighR", 0.25 * bd.drop / -0.1 * -0.6); add("shinR", 0.5 * bd.drop / -0.1); add("thighL", 0.2 * bd.drop / -0.1); add("shinL", 0.35 * bd.drop / -0.1); } }
+  if (CAST.w > 0.001) { const k = CAST.w;
+    if (CAST.kind === "single") { add("spine", 0.1 * k); add("chest", 0.05 * k); } else { hipY -= 0.03 * k; add("spine", -0.06 * k); add("head", -0.1 * k); } }
   // FK bones (everything but the arms)
   const R = {};
   for (const n of Object.keys(rest)) { if (/arm|hand/.test(n)) continue; const j = J[n] || [0, 0, 0]; R[n] = rotChar(j[0], j[1], j[2]); applyR(n, R[n]); }
@@ -445,6 +484,12 @@ function pose(dt) {
       const quiet = !(atk && atk.hands[s]);
       tgt[s] = { o: [h.o[0], h.o[1] + (quiet ? 0.015 * Math.sin(t * 1.7 + (s === "R" ? 0 : 1)) : 0), h.o[2] + (quiet ? swingArm(s) : 0)], b: h.b };
     }
+  }
+  if (CAST.w > 0.001) {
+    const cp = castPose(mode, CAST.kind, CAST.pulse), k = CAST.w;
+    for (const s of ["R", "L"]) { const c = cp[s]; if (!c) continue;
+      tgt[s].o = tgt[s].o.map((x, i) => lerp(x, c.o[i], k));
+      if (c.b) tgt[s].b = tgt[s].b ? tgt[s].b.map((x, i) => lerp(x, c.b[i], k)) : c.b; }
   }
   for (const s of ["R", "L"]) {
     const r = REST[s], sgn = s === "R" ? -1 : 1;
@@ -528,6 +573,7 @@ function updateWings(Dchest, C) {
   const on = equip.wings; wings.group.visible = on; if (!on) return;
   const ph = P.flap * Math.PI * 2, mv = clamp(Math.hypot(P.vel.x, P.vel.z) / 3, 0, 1);
   let flare = P.atk ? Math.sin(Math.PI * clamp(P.atk.t / P.atk.dur, 0, 1)) : 0;
+  flare = Math.max(flare, CAST.w * (CAST.kind === "aoe" ? 1 : 0.45));
   const theta = lerp(0.15 + 0.62 * Math.sin(ph), 0.35, flare), thetaF = lerp(0.15 + 0.72 * Math.sin(ph - 0.6), 0.35, flare);
   const fold = lerp(Math.max(0, Math.cos(ph)) * 0.32 + 0.1 * mv, 0, flare) * (0.3 + 0.7 * P.fly) + (1 - P.fly) * 0.45;
   const sc = 0.95;
@@ -571,6 +617,7 @@ window.addEventListener("keydown", e => {
   if (key === "h" && !e.repeat) { setDebug(!debug); return; }
   if (key === "f" && !e.repeat && SET) { equip.wings = !equip.wings; changed(); return; }
   if (key === "q" && !e.repeat && SET) { const order = ["one", "dual", "two", "none"]; equip.mode = order[(order.indexOf(equip.mode) + 1) % 4]; changed(); return; }
+  if (key === "p" && !e.repeat && SET) { setAuto(!AUTO.on); return; }
   if ((key === "j" || key === " ") && !e.repeat) P.queued = true;
   keys.add(key);
 });
@@ -600,15 +647,13 @@ window.addEventListener("blur", () => { keys.clear(); holdAttack = false; });
   atk.addEventListener("pointerup", () => holdAttack = false); atk.addEventListener("pointercancel", () => holdAttack = false);
   if (matchMedia("(pointer: coarse)").matches) $("touch").hidden = false;
 })();
-function setDebug(on) { debug = on; $("btn-hitbox").setAttribute("aria-pressed", String(on)); hitLines.forEach(l => l.visible = on); dummyRing.visible = on; }
+function setDebug(on) { debug = on; $("btn-hitbox").setAttribute("aria-pressed", String(on)); hitLines.forEach(l => l.visible = on); DUMMIES.forEach(d => d.ring.visible = on); rangeRing.visible = on; }
 $("btn-hitbox").addEventListener("click", () => setDebug(!debug));
 $("btn-menu").addEventListener("click", () => toggleMenu());
 $("menu-close").addEventListener("click", () => toggleMenu(false));
 
 // ---------- effects ----------
 const hitLines = [0, 1].map(() => { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V3(), V3()]), new THREE.LineBasicMaterial({ color: 0xff6b6b, depthTest: false })); l.visible = false; scene.add(l); return l; });
-const dummyRing = new THREE.Mesh(new THREE.CylinderGeometry(D.r, D.r, 1.9, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0x5fd07a, wireframe: true }));
-dummyRing.position.set(D.pos.x, 0.95, D.pos.z); dummyRing.visible = false; scene.add(dummyRing);
 const TRAIL_N = 14;
 function makeTrail() {
   const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(TRAIL_N * 6), 3)); geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(TRAIL_N * 8), 4));
@@ -631,7 +676,190 @@ const sparkGeo = new THREE.BufferGeometry(); sparkGeo.setAttribute("position", n
 const sparkPts = new THREE.Points(sparkGeo, new THREE.PointsMaterial({ color: 0xffd27a, size: 0.05, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
 sparkPts.frustumCulled = false; scene.add(sparkPts);
 const floaters = [];
-function floatText(txt, crit, pos) { const el = document.createElement("div"); el.className = "float" + (crit ? " crit" : ""); el.textContent = txt; $("floats").appendChild(el); floaters.push({ el, pos: pos.clone(), t: 0 }); }
+function floatText(txt, crit, pos, small) { if (floaters.length > 40) floaters.shift().el.remove(); const el = document.createElement("div"); el.className = "float" + (crit ? " crit" : "") + (small ? " small" : ""); el.textContent = txt; $("floats").appendChild(el); floaters.push({ el, pos: pos.clone(), t: 0 }); }
+
+// ---------- skills: range 1 m, cooldown 0.1 s (10 casts a second while held) ----------
+const SKILLS = {
+  single: { name: "Lam Quang Kích", range: 1, cd: 0.1, mult: 0.38 },     // azure lance into the nearest target in front
+  aoe:    { name: "Vũ Cánh Phong Bạo", range: 1, cd: 0.1, mult: 0.24 },  // shockwave + feather storm around the knight
+};
+const SK = { cd: { single: 0, aoe: 0 }, hold: { single: false, aoe: false } };
+const CAST = { kind: "single", w: 0, pulse: 0, last: -9 };
+const AUTO = { on: false, dir: null, mag: 1, run: false, cast: null, attack: false, face: null };
+const inSkillRange = (D, kind) => Math.hypot(D.pos.x - P.pos.x, D.pos.z - P.pos.z) - D.r <= SKILLS[kind].range;
+// arm pose while casting (chest frame, metres): lance thrust forward, or blade raised to call the storm
+function castPose(mode, kind, pulse) {
+  const rec = 0.06 * pulse;
+  if (mode === "two") {
+    const G = kind === "single" ? { o: [0, -0.02, 0.42 - rec], b: [0, 0.08, 1] } : { o: [0, 0.30 + rec * 0.5, 0.10], b: [0, 1, 0.12] };
+    const b = V3(...G.b).normalize();
+    return { R: { o: [G.o[0] + b.x * 0.04, G.o[1] + b.y * 0.04, G.o[2] + b.z * 0.04], b: G.b }, L: { o: [G.o[0] - b.x * 0.05, G.o[1] - b.y * 0.05, G.o[2] - b.z * 0.05] } };
+  }
+  if (kind === "single") return { R: { o: [-0.10, 0.04, 0.42 - rec], b: [0.05, 0.08, 1] },
+    L: mode === "dual" ? { o: [0.10, 0.02, 0.40 - rec * 0.5], b: [-0.05, 0.08, 1] } : { o: [0.18, -0.04, 0.34] } };
+  return { R: { o: [-0.17, 0.30 + rec * 0.5, 0.06], b: [-0.08, 1, 0.12] },
+    L: mode === "dual" ? { o: [0.17, 0.30 + rec * 0.5, 0.06], b: [0.08, 1, 0.12] } : { o: [0.34, -0.04, 0.12] } };
+}
+
+// pooled effects: glow particles, sprites (flashes, rings, feathers), light lances and ground novas
+const FX = (() => {
+  const tex = (draw, w = 128, h = 128) => { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t; };
+  const glow = tex((g, w, h) => { const r = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.25, "rgba(255,255,255,.65)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, w, h); });
+  const ringT = tex((g, w, h) => { const r = g.createRadialGradient(w / 2, h / 2, w * 0.26, w / 2, h / 2, w / 2); r.addColorStop(0, "rgba(255,255,255,0)"); r.addColorStop(0.55, "rgba(255,255,255,1)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, w, h); });
+  const feather = tex((g, w, h) => { g.translate(w / 2, h / 2); const gr = g.createLinearGradient(0, -h / 2, 0, h / 2); gr.addColorStop(0, "rgba(200,230,255,1)"); gr.addColorStop(1, "rgba(60,120,255,.25)");
+    g.fillStyle = gr; g.beginPath(); g.moveTo(0, -h * 0.46); g.bezierCurveTo(w * 0.24, -h * 0.2, w * 0.17, h * 0.25, 0, h * 0.46); g.bezierCurveTo(-w * 0.17, h * 0.25, -w * 0.24, -h * 0.2, 0, -h * 0.46); g.fill();
+    g.strokeStyle = "rgba(255,255,255,.9)"; g.lineWidth = 2; g.beginPath(); g.moveTo(0, -h * 0.42); g.lineTo(0, h * 0.46); g.stroke(); });
+  const column = tex((g, w, h) => { const gr = g.createLinearGradient(0, h, 0, 0); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.45, "rgba(255,255,255,.3)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = gr; g.fillRect(0, 0, w, h); for (let i = 0; i < 16; i++) { g.fillStyle = `rgba(255,255,255,${0.25 + Math.random() * 0.4})`; g.fillRect(Math.random() * w, 0, 1.5, h); } });
+  const AZ = new THREE.Color(0x5fb0ff), PALE = new THREE.Color(0xd6ecff), VIO = new THREE.Color(0x8a6cff), GOLD = new THREE.Color(0xffd27a);
+  const addm = o => { scene.add(o); return o; };
+  const additive = { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false };
+  // particles
+  const N = 1200, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), pt = [];
+  for (let i = 0; i < N; i++) { pt.push({ on: false, p: V3(), v: V3(), t: 0, life: 1, c: new THREE.Color(), g: 0, drag: 0 }); pos[i * 3 + 1] = -50; }
+  const pg = new THREE.BufferGeometry(); pg.setAttribute("position", new THREE.BufferAttribute(pos, 3)); pg.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  const points = addm(new THREE.Points(pg, new THREE.PointsMaterial({ size: 0.11, map: glow, vertexColors: true, ...additive }))); points.frustumCulled = false;
+  let pi = 0;
+  function emit(at, n, o = {}) {
+    for (let k = 0; k < n; k++) {
+      const q = pt[pi]; pi = (pi + 1) % N;
+      q.on = true; q.t = 0; q.life = (o.life || 0.4) * (0.6 + Math.random() * 0.8); q.g = o.grav ?? 4; q.drag = o.drag ?? 2;
+      const d = V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(); if (o.up) d.y = Math.abs(d.y) * o.up;
+      q.p.copy(at); q.v.copy(d).multiplyScalar((o.speed ?? 2) * (0.4 + Math.random() * 0.9)); if (o.vel) q.v.add(o.vel);
+      q.c.copy(o.color || AZ).lerp(o.color2 || PALE, Math.random());
+    }
+  }
+  // sprites
+  const SP = []; for (let i = 0; i < 100; i++) { const s = addm(new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, ...additive }))); s.visible = false; SP.push({ s, on: false }); }
+  let si = 0;
+  function sprite(at, o) {
+    const e = SP[si]; si = (si + 1) % SP.length;
+    Object.assign(e, { on: true, t: 0, life: o.life || 0.2, s0: o.s0 ?? 0.2, s1: o.s1 ?? 0.6, a0: o.a0 ?? 1, vel: o.vel ? o.vel.clone() : null, spin: o.spin || 0, grav: o.grav || 0 });
+    e.s.material.map = o.map || glow; e.s.material.color.copy(o.color || AZ); e.s.material.rotation = o.rot || 0; e.s.position.copy(at); e.s.visible = true;
+  }
+  // lances: white core + azure sheath
+  const LG = new THREE.CylinderGeometry(1, 1, 1, 10, 1, true); LG.translate(0, 0.5, 0);
+  const LN = []; for (let i = 0; i < 12; i++) {
+    const core = new THREE.Mesh(LG, new THREE.MeshBasicMaterial({ color: 0xeaf6ff, ...additive })), aura = new THREE.Mesh(LG, new THREE.MeshBasicMaterial({ color: 0x3f8dff, opacity: 0.55, ...additive }));
+    const g = addm(new THREE.Group()); g.add(core, aura); g.visible = false; LN.push({ g, core, aura, on: false });
+  }
+  let li = 0;
+  // ground nova: two expanding rings, a glow disc and a rising light column
+  const ringGeo = new THREE.RingGeometry(0.86, 1, 64).rotateX(-Math.PI / 2), discGeo = new THREE.CircleGeometry(1, 48).rotateX(-Math.PI / 2);
+  const colGeo = new THREE.CylinderGeometry(1, 1, 1.8, 40, 1, true); colGeo.translate(0, 0.9, 0);
+  const NV = []; for (let i = 0; i < 8; i++) {
+    const mk = (geo, map, color, op) => new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map, color, opacity: op, side: THREE.DoubleSide, ...additive }));
+    const g = addm(new THREE.Group()), ring = mk(ringGeo, null, 0x8cc8ff, 1), ring2 = mk(ringGeo, null, 0x9b7bff, 0.8), disc = mk(discGeo, glow, 0x3d7dff, 0.8), colm = mk(colGeo, column, 0x5fb0ff, 0.7);
+    g.add(ring, ring2, disc, colm); g.visible = false; NV.push({ g, ring, ring2, disc, colm, on: false });
+  }
+  let ni = 0;
+  return {
+    lance(from, to, hit) {
+      const e = LN[li]; li = (li + 1) % LN.length; const d = to.clone().sub(from);
+      e.len = d.length(); e.g.position.copy(from); e.g.quaternion.setFromUnitVectors(V3(0, 1, 0), d.normalize()); Object.assign(e, { on: true, t: 0, life: 0.16 }); e.g.visible = true;
+      sprite(from, { s0: 0.12, s1: 0.4, life: 0.1, color: PALE });
+      sprite(to, { map: ringT, s0: 0.1, s1: hit ? 0.95 : 0.5, life: 0.2, color: AZ });
+      sprite(to, { s0: 0.55, s1: 0.1, life: 0.12, color: PALE });
+      emit(to, hit ? 14 : 6, { speed: 3, life: 0.35, color: AZ, color2: PALE, grav: 2 });
+    },
+    nova(at, h) {
+      const e = NV[ni]; ni = (ni + 1) % NV.length;
+      e.g.position.set(at.x, 0.03, at.z); e.g.rotation.y = Math.random() * 6.28; Object.assign(e, { on: true, t: 0, life: 0.34, h }); e.g.visible = true;
+      for (let k = 0; k < 22; k++) {      // swirl of motes rising from the ring
+        const a = Math.random() * Math.PI * 2, r = 0.25 + Math.random() * 0.8, p = V3(at.x + Math.cos(a) * r, 0.08 + Math.random() * 0.3, at.z + Math.sin(a) * r);
+        emit(p, 1, { speed: 0.2, vel: V3(-Math.sin(a) * 2.2 + Math.cos(a) * 0.4, 1.4 + Math.random() * 1.6, Math.cos(a) * 2.2 + Math.sin(a) * 0.4), grav: -1.5, drag: 1.2, life: 0.5, color: AZ, color2: VIO });
+      }
+      for (let k = 0; k < 7; k++) {       // feathers flung outward
+        const a = Math.random() * Math.PI * 2, out = V3(Math.cos(a), 0, Math.sin(a));
+        sprite(V3(at.x + out.x * 0.3, 0.6 + h + Math.random() * 0.6, at.z + out.z * 0.3), { map: feather, s0: 0.22, s1: 0.14, life: 0.45, color: PALE,
+          vel: out.multiplyScalar(2 + Math.random() * 1.2).add(V3(0, 1 + Math.random(), 0)), grav: 3, spin: (Math.random() - 0.5) * 14, rot: Math.random() * 6.28 });
+      }
+    },
+    impact(at, crit) {
+      emit(at, crit ? 16 : 7, { speed: 2.6, life: 0.3, color: crit ? GOLD : AZ, color2: PALE });
+      sprite(at, { map: ringT, s0: 0.1, s1: crit ? 0.8 : 0.55, life: 0.16, color: crit ? GOLD : PALE });
+    },
+    update(dt) {
+      for (let i = 0; i < N; i++) {
+        const q = pt[i]; if (!q.on) continue;
+        q.t += dt; if (q.t >= q.life) { q.on = false; pos[i * 3 + 1] = -50; col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = 0; continue; }
+        q.v.y -= q.g * dt; q.v.multiplyScalar(Math.max(0, 1 - q.drag * dt)); q.p.addScaledVector(q.v, dt);
+        const a = 1 - q.t / q.life; pos[i * 3] = q.p.x; pos[i * 3 + 1] = q.p.y; pos[i * 3 + 2] = q.p.z; col[i * 3] = q.c.r * a; col[i * 3 + 1] = q.c.g * a; col[i * 3 + 2] = q.c.b * a;
+      }
+      pg.attributes.position.needsUpdate = true; pg.attributes.color.needsUpdate = true;
+      for (const e of SP) { if (!e.on) continue; e.t += dt; const u = e.t / e.life;
+        if (u >= 1) { e.on = false; e.s.visible = false; continue; }
+        const sc = lerp(e.s0, e.s1, 1 - Math.pow(1 - u, 2)); e.s.scale.set(sc, sc, 1); e.s.material.opacity = e.a0 * (1 - u);
+        if (e.vel) { e.vel.y -= e.grav * dt; e.s.position.addScaledVector(e.vel, dt); } e.s.material.rotation += e.spin * dt; }
+      for (const e of LN) { if (!e.on) continue; e.t += dt; const u = e.t / e.life;
+        if (u >= 1) { e.on = false; e.g.visible = false; continue; }
+        const w = 1 - u; e.core.scale.set(0.018 * w + 0.004, e.len, 0.018 * w + 0.004); e.aura.scale.set(0.07 * w + 0.01, e.len, 0.07 * w + 0.01);
+        e.core.material.opacity = 1 - u * 0.6; e.aura.material.opacity = 0.55 * w; }
+      for (const e of NV) { if (!e.on) continue; e.t += dt; const u = e.t / e.life;
+        if (u >= 1) { e.on = false; e.g.visible = false; continue; }
+        const k = 1 - Math.pow(1 - u, 3);
+        e.ring.scale.setScalar(0.15 + 0.95 * k); e.ring2.scale.setScalar(0.1 + 0.75 * k); e.ring.material.opacity = 1 - u; e.ring2.material.opacity = 0.8 * (1 - u);
+        e.disc.scale.setScalar(0.4 + 0.65 * k); e.disc.material.opacity = 0.7 * (1 - u);
+        e.colm.scale.set(0.35 + 0.65 * k, (1 + e.h * 0.6) * (0.6 + 0.6 * k), 0.35 + 0.65 * k); e.colm.material.opacity = 0.6 * (1 - u) * Math.min(1, u / 0.1); }
+    },
+  };
+})();
+
+function castSkill(kind) {
+  if (SK.cd[kind] > 0 || menuOpen || !knight) return;
+  SK.cd[kind] = Math.max(SK.cd[kind], -0.05) + SKILLS[kind].cd;   // keep an exact 10/s rhythm across frames
+  P.atk = null; CAST.kind = kind; CAST.last = clock; CAST.pulse = 1;
+  const alive = DUMMIES.filter(d => d.hp > 0), f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw));
+  if (kind === "single") {
+    let tgt = null, best = Infinity;
+    for (const d of alive) { if (!inSkillRange(d, kind)) continue;
+      const v = V3(d.pos.x - P.pos.x, 0, d.pos.z - P.pos.z), dist = v.length(), score = dist - v.normalize().dot(f) * 0.6; if (score < best) { best = score; tgt = d; } }
+    if (tgt) { P.yaw = Math.atan2(tgt.pos.x - P.pos.x, tgt.pos.z - P.pos.z); f.set(Math.sin(P.yaw), 0, Math.cos(P.yaw)); }
+    const from = V3(P.pos.x, 1.22 + P.hover, P.pos.z).addScaledVector(f, 0.4);
+    const to = tgt ? V3(tgt.pos.x, 1.15 * tgt.scale, tgt.pos.z).addScaledVector(f, -tgt.r * 0.6) : from.clone().addScaledVector(f, 1.0);
+    FX.lance(from, to, !!tgt);
+    if (tgt) skillHit(tgt, kind, to);
+  } else {
+    FX.nova(P.pos, P.hover);
+    for (const d of alive) if (inSkillRange(d, kind)) skillHit(d, kind, V3(d.pos.x, 1.1 * d.scale, d.pos.z));
+  }
+}
+function skillHit(D, kind, at) {
+  const crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * SKILLS[kind].mult * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
+  const push = D.pos.clone().sub(P.pos).setY(0); if (push.lengthSq() > 1e-6) push.normalize(); push.multiplyScalar(kind === "aoe" ? 0.9 : 0.6);
+  D.wobV.x += push.x; D.wobV.y += push.z;
+  registerDamage(D, dmg, crit, true); FX.impact(at, crit);
+  if (crit) shake = Math.max(shake, 0.015);
+}
+function updateSkillUI() {
+  for (const k of ["single", "aoe"]) { const el = $("sk-" + k); el.style.setProperty("--cd", String(clamp(SK.cd[k] / SKILLS[k].cd, 0, 1))); el.classList.toggle("on", clock - CAST.last < 0.15 && CAST.kind === k); }
+}
+for (const k of ["single", "aoe"]) {
+  const el = $("sk-" + k);
+  el.addEventListener("pointerdown", e => { e.preventDefault(); SK.hold[k] = true; el.setPointerCapture(e.pointerId); });
+  const up = () => { SK.hold[k] = false; }; el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); el.addEventListener("lostpointercapture", up);
+  el.addEventListener("click", e => { if (e.detail === 0) castSkill(k); });            // keyboard activation
+}
+
+// auto play: go where the skills hit the most targets, then keep casting (with a sword combo now and then)
+function setAuto(on) { AUTO.on = on; $("btn-auto").setAttribute("aria-pressed", String(on)); }
+$("btn-auto").addEventListener("click", () => setAuto(!AUTO.on));
+function autoPlay() {
+  AUTO.dir = null; AUTO.cast = null; AUTO.attack = false;
+  if (!AUTO.on || menuOpen || !knight) return;
+  const alive = DUMMIES.filter(d => d.hp > 0); if (!alive.length) return;
+  const ring = DUMMIES.slice(1).filter(d => d.hp > 0), dxz = d => Math.hypot(d.pos.x - P.pos.x, d.pos.z - P.pos.z);
+  let goal, kind, face = null;
+  if (ring.length >= 2) { goal = V3(RING_C.x, 0, RING_C.z); kind = "aoe"; }
+  else { face = alive.reduce((a, b) => dxz(a) < dxz(b) ? a : b); const v = V3(P.pos.x - face.pos.x, 0, P.pos.z - face.pos.z), L = v.length() || 1;
+         goal = V3(face.pos.x + v.x / L * 0.8, 0, face.pos.z + v.z / L * 0.8); kind = "single"; }
+  const to = goal.clone().sub(V3(P.pos.x, 0, P.pos.z)), dist = to.length();
+  if (dist > 0.12) { AUTO.dir = to.normalize(); AUTO.mag = clamp(dist / 0.6, 0.35, 1); AUTO.run = dist > 3; }
+  if (dist < (kind === "aoe" ? 0.4 : 0.35)) {
+    if (face) { let d = Math.atan2(face.pos.x - P.pos.x, face.pos.z - P.pos.z) - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * 0.2; }
+    if (kind === "single" && clock % 4 > 2.9) AUTO.attack = true; else AUTO.cast = kind;
+  }
+}
 
 // ---------- simulation ----------
 function startAttack() {
@@ -642,31 +870,37 @@ function startAttack() {
   const dur = def.dur / Math.max(0.3, 1 + ST.attack_speed / 100);
   P.atk = { def, t: 0, dur, hit: {}, lunged: 0 }; P.cd = dur * 0.9; P.queued = false;
 }
-function segDistToAxis(a, b) {
+function segDistToAxis(a, b, D) {
   let best = Infinity;
-  for (let i = 0; i <= 12; i++) { const p = a.clone().lerp(b, i / 12); if (p.y < 0.1 || p.y > 2.2) continue; best = Math.min(best, Math.hypot(p.x - D.pos.x, p.z - D.pos.z)); }
+  for (let i = 0; i <= 12; i++) { const p = a.clone().lerp(b, i / 12); if (p.y < 0.1 || p.y > 2.2 * D.scale) continue; best = Math.min(best, Math.hypot(p.x - D.pos.x, p.z - D.pos.z)); }
   return best;
 }
-function tryHit(key, a, b, reach) {
-  if (D.hp <= 0 || P.atk.hit[key]) return;
-  if (segDistToAxis(a, b) > D.r + reach) return;
-  P.atk.hit[key] = true;
-  const def = P.atk.def, crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * def.dmg * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
-  D.hp = Math.max(0, D.hp - dmg); D.flash = 1; D.lastHit = clock; if (D.hp === 0) D.downAt = clock;
-  const push = D.pos.clone().sub(P.pos).setY(0).normalize().multiplyScalar((crit ? 2.2 : 1.4) * (def.heavy ? 1.5 : 1)); D.wobV.x += push.x; D.wobV.y += push.z;
-  hitStop = (crit ? 0.11 : 0.07) * (def.heavy ? 1.5 : 1); shake = (crit ? 0.06 : 0.035) * (def.heavy ? 1.6 : 1);
+function registerDamage(D, dmg, crit, small) {
+  D.hp = Math.max(0, D.hp - dmg); D.flash = Math.max(D.flash, small ? 0.55 : 1); D.lastHit = clock; if (D.hp === 0) D.downAt = clock;
   hits.push([clock, dmg]); totalDmg += dmg;
   $("m-last").textContent = dmg.toLocaleString("vi-VN") + (crit ? " ✦" : ""); $("m-hits").textContent = hits.length.toLocaleString("vi-VN"); $("m-total").textContent = totalDmg.toLocaleString("vi-VN");
-  const at = a.clone().lerp(b, 0.6); at.y = clamp(at.y, 0.5, 1.9); at.x = lerp(at.x, D.pos.x, 0.6); at.z = lerp(at.z, D.pos.z, 0.6);
-  floatText(dmg.toLocaleString("vi-VN"), crit, V3(D.pos.x + (Math.random() - 0.5) * 0.4, 1.9, D.pos.z));
-  for (let i = 0; i < (crit ? 34 : 20); i++) {
-    const v = V3(Math.random() - 0.5, Math.random() * 0.9, Math.random() - 0.5).normalize().multiplyScalar(2 + Math.random() * 3);
-    sparks.push({ p: at.clone(), v, t: 0, life: 0.3 + Math.random() * 0.35 });
+  floatText(dmg.toLocaleString("vi-VN"), crit, V3(D.pos.x + (Math.random() - 0.5) * 0.5, (1.75 + Math.random() * 0.35) * D.scale, D.pos.z), small);
+}
+function tryHit(key, a, b, reach) {
+  const def = P.atk.def;
+  for (const D of DUMMIES) {
+    const k = key + D.id;
+    if (D.hp <= 0 || P.atk.hit[k] || segDistToAxis(a, b, D) > D.r + reach) continue;
+    P.atk.hit[k] = true;
+    const crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * def.dmg * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
+    const push = D.pos.clone().sub(P.pos).setY(0).normalize().multiplyScalar((crit ? 2.2 : 1.4) * (def.heavy ? 1.5 : 1)); D.wobV.x += push.x; D.wobV.y += push.z;
+    hitStop = (crit ? 0.11 : 0.07) * (def.heavy ? 1.5 : 1); shake = (crit ? 0.06 : 0.035) * (def.heavy ? 1.6 : 1);
+    registerDamage(D, dmg, crit, false);
+    const at = a.clone().lerp(b, 0.6); at.y = clamp(at.y, 0.5, 1.9); at.x = lerp(at.x, D.pos.x, 0.6); at.z = lerp(at.z, D.pos.z, 0.6);
+    for (let i = 0; i < (crit ? 34 : 20); i++) {
+      const v = V3(Math.random() - 0.5, Math.random() * 0.9, Math.random() - 0.5).normalize().multiplyScalar(2 + Math.random() * 3);
+      sparks.push({ p: at.clone(), v, t: 0, life: 0.3 + Math.random() * 0.35 });
+    }
+    if (sparks.length > SPARK_N) sparks.splice(0, sparks.length - SPARK_N);
   }
-  if (sparks.length > SPARK_N) sparks.splice(0, sparks.length - SPARK_N);
 }
 function collide(p) {
-  for (const o of [...PILLARS, { x: D.pos.x, z: D.pos.z, r: 0.5 }]) {
+  for (const o of [...PILLARS, ...DUMMIES.map(d => ({ x: d.pos.x, z: d.pos.z, r: d.scale < 1 ? 0.25 : 0.4 }))]) {
     const dx = p.x - o.x, dz = p.z - o.z, d = Math.hypot(dx, dz), m = o.r + 0.35;
     if (d < m && d > 1e-4) { p.x = o.x + dx / d * m; p.z = o.z + dz / d * m; }
   }
@@ -674,15 +908,17 @@ function collide(p) {
 }
 const _fwd = V3(), _right = V3();
 function update(dt) {
-  clock += dt;
+  clock += dt; autoPlay();
   let mx = 0, mz = 0;
   if (!menuOpen) { for (const k of keys) if (MOVE[k]) { mx += MOVE[k][0]; mz += MOVE[k][1]; } if (stick.on) { mx += stick.x; mz += stick.y; } }
   const mag = Math.hypot(mx, mz), want = mag > 0.15, running = want && (keys.has("shift") || (stick.on && mag > 0.92));
   _fwd.set(-Math.sin(cam.yaw), 0, -Math.cos(cam.yaw)); _right.set(-_fwd.z, 0, _fwd.x);
   const dir = V3().addScaledVector(_right, mx).addScaledVector(_fwd, mz); if (want) dir.normalize();
-  const flyMul = lerp(1, 1.35, P.fly);
-  const vmax = 1.7 * (1 + ST.move_speed / 100) * (running ? 2.1 : 1) * flyMul * (P.atk ? 0.3 : 1) * Math.min(1, mag);
-  P.vel.lerp(dir.multiplyScalar(want ? vmax : 0), Math.min(1, dt * (want ? lerp(8, 4, P.fly) : lerp(10, 3, P.fly))));   // flight carries more momentum
+  let go = want, gmag = mag, run2 = running;
+  if (!want && AUTO.dir) { dir.copy(AUTO.dir); go = true; gmag = AUTO.mag; run2 = AUTO.run; }      // the player's own input always wins
+  const flyMul = lerp(1, 1.35, P.fly), casting = clock - CAST.last < 0.15;
+  const vmax = 1.7 * (1 + ST.move_speed / 100) * (run2 ? 2.1 : 1) * flyMul * (P.atk ? 0.3 : casting ? 0.6 : 1) * Math.min(1, gmag);
+  P.vel.lerp(dir.multiplyScalar(go ? vmax : 0), Math.min(1, dt * (go ? lerp(8, 4, P.fly) : lerp(10, 3, P.fly))));   // flight carries more momentum
   // attack lunge: root motion along the facing direction
   if (P.atk) { const l = sampleBody(P.atk.def.body, P.atk.t / P.atk.dur).lunge, dl = l - P.atk.lunged; P.atk.lunged = l;
     P.pos.x += Math.sin(P.yaw) * dl; P.pos.z += Math.cos(P.yaw) * dl; }
@@ -690,7 +926,7 @@ function update(dt) {
   const sp = Math.hypot(P.vel.x, P.vel.z);
   if (sp > 0.15 && !P.atk) { const want = Math.atan2(P.vel.x, P.vel.z); let d = want - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * Math.min(1, dt * 12); }
   P.walk += (clamp(sp / 1.2, 0, 1) - P.walk) * Math.min(1, dt * 8);
-  P.run += ((running && sp > 2.2 ? 1 : 0) - P.run) * Math.min(1, dt * 5);
+  P.run += ((run2 && sp > 2.2 ? 1 : 0) - P.run) * Math.min(1, dt * 5);
   P.phase += dt * Math.PI * 2 * sp / (1.35 + 0.9 * P.run);
   // flight: take off / land smoothly; wing beat drives the hover bob
   P.fly += ((equip.wings ? 1 : 0) - P.fly) * Math.min(1, dt * 2.2);
@@ -698,12 +934,20 @@ function update(dt) {
   P.hover = P.fly * (0.55 + 0.07 * Math.sin(P.flap * Math.PI * 2 - 0.9));
   // attacks: hold to keep the combo going, tap to queue the next hit
   P.cd = Math.max(0, P.cd - dt);
-  if ((holdAttack || keys.has(" ") || keys.has("j") || P.queued) && !menuOpen) startAttack();
+  if ((holdAttack || keys.has(" ") || keys.has("j") || P.queued || AUTO.attack) && !menuOpen) startAttack();
+  for (const k of ["single", "aoe"]) SK.cd[k] -= dt;
+  if (!menuOpen) {
+    if (keys.has("1") || SK.hold.single || AUTO.cast === "single") castSkill("single");
+    if (keys.has("2") || SK.hold.aoe || AUTO.cast === "aoe") castSkill("aoe");
+  }
+  CAST.w += ((clock - CAST.last < 0.2 ? 1 : 0) - CAST.w) * Math.min(1, dt * 14); CAST.pulse *= Math.exp(-dt * 22);
   if (P.atk) { if (hitStop > 0) hitStop -= dt; else { P.atk.t += dt; if (P.atk.t >= P.atk.dur) { P.atk = null; P.lastAtkEnd = clock; } } }
-  D.wobV.addScaledVector(D.wob, -40 * dt).multiplyScalar(Math.max(0, 1 - 5.5 * dt)); D.wob.addScaledVector(D.wobV, dt);
-  D.flash = Math.max(0, D.flash - dt * 6);
-  if (D.hp === 0 && clock - D.downAt > 1.4) D.hp = D.max;
-  if (D.hp > 0 && D.hp < D.max && clock - D.lastHit > 4) D.hp = Math.min(D.max, D.hp + D.max * dt * 0.8);
+  for (const D of DUMMIES) {
+    D.wobV.addScaledVector(D.wob, -40 * dt).multiplyScalar(Math.max(0, 1 - 5.5 * dt)); D.wob.addScaledVector(D.wobV, dt);
+    D.flash = Math.max(0, D.flash - dt * 6);
+    if (D.hp === 0 && clock - D.downAt > 1.4) D.hp = D.max;
+    if (D.hp > 0 && D.hp < D.max && clock - D.lastHit > 4) D.hp = Math.min(D.max, D.hp + D.max * dt * 0.8);
+  }
   hits = hits.filter(h => clock - h[0] < 60); shake = Math.max(0, shake - dt * 0.4);
 }
 
@@ -742,8 +986,12 @@ function frame(ts) {
   for (let i = 0; i < SPARK_N; i++) { const s = sparks[i]; sparkPos[i * 3] = s ? s.p.x : 0; sparkPos[i * 3 + 1] = s ? s.p.y : -10; sparkPos[i * 3 + 2] = s ? s.p.z : 0; }
   sparkGeo.attributes.position.needsUpdate = true;
   // dummy
-  dummyBody.rotation.set(D.wob.y * 0.12, 0, -D.wob.x * 0.12);
-  for (const m of dMats) { m.emissive.setScalar(D.flash * 0.8); m.transparent = D.hp === 0; m.opacity = D.hp === 0 ? 0.4 : 1; }
+  for (const D of DUMMIES) {
+    D.body.rotation.set(D.wob.y * 0.12, 0, -D.wob.x * 0.12);
+    for (const m of D.mats) { m.emissive.setRGB(D.flash * 0.45, D.flash * 0.7, D.flash * 0.95); m.transparent = D.hp === 0; m.opacity = D.hp === 0 ? 0.4 : 1; }
+  }
+  rangeRing.position.set(P.pos.x, 0.02, P.pos.z);
+  FX.update(dt); updateSkillUI();
   // camera
   cam.target.lerp(V3(P.pos.x, 1.15 + P.hover * 0.8, P.pos.z), Math.min(1, dt * 6));
   const cp = Math.cos(cam.pitch), dist = cam.dist * (equip.wings ? 1.15 : 1);
@@ -754,17 +1002,20 @@ function frame(ts) {
   renderer.render(scene, camera);
   // HTML overlays
   const proj = v => { const p = v.clone().project(camera); return [(p.x + 1) / 2 * stage.clientWidth, (1 - p.y) / 2 * stage.clientHeight, p.z < 1]; };
-  const [hx, hy, hv] = proj(V3(D.pos.x, 2.25, D.pos.z)), hp = $("hp");
-  hp.style.transform = `translate(${hx}px, ${hy}px) translate(-50%, -100%)`; hp.style.visibility = hv ? "visible" : "hidden";
-  $("hp-bar").style.width = (D.hp / D.max * 100) + "%"; $("hp-bar").style.background = D.hp / D.max > 0.3 ? "#5fd07a" : "#ff6b6b";
-  $("hp-text").textContent = D.hp === 0 ? "Hạ gục!" : `Hình nộm · ${Math.ceil(D.hp).toLocaleString("vi-VN")}`;
+  for (const D of DUMMIES) {
+    const [hx, hy, hv] = proj(V3(D.pos.x, 2.25 * D.scale, D.pos.z));
+    D.hpEl.style.transform = `translate(${hx}px, ${hy}px) translate(-50%, -100%)`; D.hpEl.style.visibility = hv ? "visible" : "hidden";
+    D.barEl.style.width = (D.hp / D.max * 100) + "%"; D.barEl.style.background = D.hp / D.max > 0.3 ? "#5fd07a" : "#ff6b6b";
+    const txt = D.hp === 0 ? "Hạ gục!" : `${D.name} · ${Math.ceil(D.hp).toLocaleString("vi-VN")}`; if (D.txtEl.textContent !== txt) D.txtEl.textContent = txt;
+  }
   for (const f of floaters) { f.t += dt; f.pos.y += dt * 0.8; const [x, y] = proj(f.pos); f.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) scale(${f.t < 0.08 ? 1.3 : 1})`; f.el.style.opacity = String(1 - Math.max(0, f.t - 0.5) / 0.4); }
   for (let i = floaters.length - 1; i >= 0; i--) if (floaters[i].t > 0.9) { floaters[i].el.remove(); floaters.splice(i, 1); }
   if (Math.floor(clock * 5) !== Math.floor((clock - dt) * 5)) {
     const recent = hits.filter(h => clock - h[0] <= 5), span = recent.length ? Math.max(1, Math.min(5, clock - recent[0][0])) : 1;
     $("m-dps").textContent = Math.round(recent.reduce((s, h) => s + h[1], 0) / span).toLocaleString("vi-VN");
     const spd = Math.hypot(P.vel.x, P.vel.z), act = P.atk ? `<b>${P.atk.def.name}</b>` : spd < 0.15 ? (P.fly > 0.5 ? "bay lơ lửng" : "đứng") : P.fly > 0.5 ? "<b>bay</b>" : P.run > 0.5 ? "<b>chạy</b>" : "<b>đi</b>";
-    $("state").innerHTML = `${MODE_VI[equip.mode]} · ${act} · ${spd.toFixed(1)} m/s`;
+    const skillNow = clock - CAST.last < 0.2 ? `<b>${SKILLS[CAST.kind].name}</b>` : act;
+    $("state").innerHTML = `${AUTO.on ? "<b>Tự động</b> · " : ""}${MODE_VI[equip.mode]} · ${skillNow} · ${spd.toFixed(1)} m/s`;
   }
   requestAnimationFrame(frame);
 }

@@ -97,6 +97,13 @@ trên chuôi; quét đại kiếm → bổ trời), **tay không** (đấm thẳ
 vặn thân, hạ trọng tâm và lao người tới. Cánh (phím F): cánh màng dựng bằng code (khung kim loại, màng tím than, vân lam phát sáng),
 vỗ theo nhịp; khi bay nhân vật lơ lửng, một gối co cao, chân kia buông ra sau, chúi người theo hướng bay; cánh xòe khi ra đòn.
 
+Kỹ năng (tầm 1 m, hồi chiêu 0,1 giây, giữ phím để tung 10 lần/giây): **1 · Lam Quang Kích** (đơn mục tiêu: tự quay về mục tiêu gần
+nhất phía trước, phóng ngọn giáo ánh sáng lam, nổ vòng sáng và hạt), **2 · Vũ Cánh Phong Bạo** (diện rộng: sóng xung kích hai vòng,
+cột sáng, lốc hạt xoáy và lông vũ bay ra, trúng mọi mục tiêu trong 1 m). Hiệu ứng dùng hạt, sprite, giáo sáng và vòng nova tái sử dụng
+nên chạy đều ở 10 lần/giây. Sân có 1 hình nộm lớn và 4 bia đứng thành vòng để thử AoE. Nút **Tự động** (phím P): nhân vật tự bay/đi
+tới chỗ kỹ năng trúng nhiều mục tiêu nhất (giữa vòng bia khi còn từ 2 bia, nếu không thì hình nộm gần nhất), tự quay mặt, tự tung kỹ
+năng và thỉnh thoảng chen một chuỗi chém; người chơi bấm di chuyển thì tay người chơi được ưu tiên.
+
 `knight-3d.html` (three.js 0.147): đi theo hướng camera, Shift chạy, xoay người theo hướng đi, hoạt ảnh đi/chạy/thở/chém
 tính theo khung xương mỗi khung hình, đại kiếm gắn vào lòng bàn tay (tay phải hoặc trái), vệt chém, tia lửa, khựng hình,
 camera kéo để xoay, lăn để zoom. Kiếm là các tấm ảnh bắt chéo nhau (chưa có mô hình 3D của kiếm).
