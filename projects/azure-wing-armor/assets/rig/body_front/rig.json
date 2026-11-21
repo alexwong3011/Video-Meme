@@ -1,0 +1,257 @@
+{
+ "view": "body_front",
+ "origin": [
+  900,
+  975
+ ],
+ "parts": {
+  "head": {
+   "z": 40,
+   "parent": "torso",
+   "size": [
+    136.25,
+    183.25
+   ],
+   "origin": [
+    832.0,
+    133.0
+   ],
+   "pivot": [
+    68.0,
+    173.0
+   ],
+   "joint": [
+    900,
+    306
+   ],
+   "files": {
+    "@2x": "@2x/head.png",
+    "@1x": "@1x/head.png"
+   }
+  },
+  "upperarm_L": {
+   "z": 20,
+   "parent": "torso",
+   "size": [
+    100.25,
+    87.25
+   ],
+   "origin": [
+    723.0,
+    390.0
+   ],
+   "pivot": [
+    63.0,
+    18.0
+   ],
+   "joint": [
+    786,
+    408
+   ],
+   "files": {
+    "@2x": "@2x/upperarm_L.png",
+    "@1x": "@1x/upperarm_L.png"
+   }
+  },
+  "upperarm_R": {
+   "z": 20,
+   "parent": "torso",
+   "size": [
+    100.25,
+    87.25
+   ],
+   "origin": [
+    977.0,
+    390.0
+   ],
+   "pivot": [
+    37.0,
+    18.0
+   ],
+   "joint": [
+    1014,
+    408
+   ],
+   "files": {
+    "@2x": "@2x/upperarm_R.png",
+    "@1x": "@1x/upperarm_R.png"
+   }
+  },
+  "forearm_L": {
+   "z": 22,
+   "parent": "upperarm_L",
+   "size": [
+    98.75,
+    214.25
+   ],
+   "origin": [
+    692.5,
+    461.0
+   ],
+   "pivot": [
+    71.5,
+    11.0
+   ],
+   "joint": [
+    764,
+    472
+   ],
+   "files": {
+    "@2x": "@2x/forearm_L.png",
+    "@1x": "@1x/forearm_L.png"
+   },
+   "grip": [
+    731,
+    628
+   ]
+  },
+  "forearm_R": {
+   "z": 22,
+   "parent": "upperarm_R",
+   "size": [
+    108.75,
+    207.75
+   ],
+   "origin": [
+    1000.25,
+    468.0
+   ],
+   "pivot": [
+    35.75,
+    4.0
+   ],
+   "joint": [
+    1036,
+    472
+   ],
+   "files": {
+    "@2x": "@2x/forearm_R.png",
+    "@1x": "@1x/forearm_R.png"
+   },
+   "grip": [
+    1069,
+    628
+   ]
+  },
+  "thigh_L": {
+   "z": 10,
+   "parent": "torso",
+   "size": [
+    140.5,
+    168.25
+   ],
+   "origin": [
+    762.75,
+    543.0
+   ],
+   "pivot": [
+    87.25,
+    31.0
+   ],
+   "joint": [
+    850,
+    574
+   ],
+   "files": {
+    "@2x": "@2x/thigh_L.png",
+    "@1x": "@1x/thigh_L.png"
+   }
+  },
+  "thigh_R": {
+   "z": 10,
+   "parent": "torso",
+   "size": [
+    140.25,
+    168.25
+   ],
+   "origin": [
+    897.0,
+    543.0
+   ],
+   "pivot": [
+    53.0,
+    31.0
+   ],
+   "joint": [
+    950,
+    574
+   ],
+   "files": {
+    "@2x": "@2x/thigh_R.png",
+    "@1x": "@1x/thigh_R.png"
+   }
+  },
+  "shin_L": {
+   "z": 12,
+   "parent": "thigh_L",
+   "size": [
+    128.75,
+    271.25
+   ],
+   "origin": [
+    742.0,
+    706.25
+   ],
+   "pivot": [
+    90.0,
+    5.75
+   ],
+   "joint": [
+    832,
+    712
+   ],
+   "files": {
+    "@2x": "@2x/shin_L.png",
+    "@1x": "@1x/shin_L.png"
+   }
+  },
+  "shin_R": {
+   "z": 12,
+   "parent": "thigh_R",
+   "size": [
+    126.5,
+    271.25
+   ],
+   "origin": [
+    919.5,
+    706.25
+   ],
+   "pivot": [
+    48.5,
+    5.75
+   ],
+   "joint": [
+    968,
+    712
+   ],
+   "files": {
+    "@2x": "@2x/shin_R.png",
+    "@1x": "@1x/shin_R.png"
+   }
+  },
+  "torso": {
+   "z": 30,
+   "parent": null,
+   "size": [
+    343.75,
+    469.5
+   ],
+   "origin": [
+    722.75,
+    133.0
+   ],
+   "pivot": [
+    177.25,
+    427.0
+   ],
+   "joint": [
+    900,
+    560
+   ],
+   "files": {
+    "@2x": "@2x/torso.png",
+    "@1x": "@1x/torso.png"
+   }
+  }
+ }
+}

@@ -1,0 +1,588 @@
+<meta charset="utf-8">
+<title>Kỵ Sĩ Cánh Lam</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one-screen character test. Thin top bar, a scrolling arena canvas fills the rest; HUD, touch controls and the equipment panel float above it. Single dark look on purpose (game scene). */
+:root {
+  color-scheme: dark;
+  --bg: #0b0e14;
+  --panel: rgba(17, 22, 32, .94);
+  --panel-solid: #151b26;
+  --line: #2b3546;
+  --fg: #e4e9f3;
+  --muted: #8e99ae;
+  --azure: #5fb0ff;
+  --azure-dim: rgba(95, 176, 255, .16);
+  --gold: #e8c26a;
+  --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden;
+}
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.bar h1 { margin: 0; font: 700 20px/1.1 var(--font-display); letter-spacing: .03em; }
+.bar h1 span { color: var(--azure); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; margin-left: 10px; }
+.keys { color: var(--muted); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+kbd { font: 500 11px var(--font-mono); background: var(--panel-solid); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--fg); }
+.btn { font: 600 13px var(--font-body); color: var(--fg); background: var(--panel-solid); border: 1px solid var(--line); border-radius: 5px; padding: 7px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--azure); }
+.btn[aria-pressed="true"] { background: var(--azure-dim); border-color: var(--azure); }
+.btn:focus-visible, .slot:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
+.actions { display: flex; gap: 8px; }
+.stage { position: relative; flex: 1; min-height: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #0f131b; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+.meter { position: absolute; right: 12px; top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; pointer-events: none; display: grid; gap: 2px; min-width: 150px; }
+.meter div { display: flex; justify-content: space-between; gap: 14px; font-size: 12px; color: var(--muted); }
+.meter b { font: 500 13px var(--font-mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.meter .dps b { color: var(--azure); font-size: 18px; }
+.state { position: absolute; left: 12px; top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.state b { color: var(--fg); font-weight: 600; }
+.touch { position: absolute; inset: auto 0 0 0; height: 0; }
+.stick { position: absolute; left: max(18px, env(safe-area-inset-left, 0px)); bottom: 18px; width: 124px; height: 124px; border-radius: 50%; background: rgba(95,176,255,.08); border: 1px solid rgba(95,176,255,.35); touch-action: none; }
+.stick i { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(95,176,255,.35); border: 1px solid var(--azure); }
+.atk { position: absolute; right: 18px; bottom: 26px; width: 88px; height: 88px; border-radius: 50%; border: 1px solid var(--gold); background: rgba(232,194,106,.16); color: var(--gold); font: 700 14px var(--font-display); letter-spacing: .08em; touch-action: none; }
+.menu { position: absolute; inset: 12px; margin: auto; max-width: 720px; height: fit-content; max-height: calc(100% - 24px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 14px; backdrop-filter: blur(6px); }
+.menu-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.menu-head h2 { margin: 0; font: 700 18px var(--font-display); letter-spacing: .04em; }
+.menu h3 { margin: 0 0 8px; font: 600 12px var(--font-display); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.menu-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 640px) { .menu-grid { grid-template-columns: minmax(0, 1fr); } }
+.slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.slot { position: relative; display: grid; justify-items: center; gap: 4px; padding: 8px 6px; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 6px; color: inherit; font: inherit; text-align: center; }
+button.slot { cursor: pointer; }
+button.slot:hover { border-color: var(--azure); }
+.slot img { width: 60px; height: 60px; }
+.slot .ph { width: 60px; height: 60px; border: 1px dashed var(--line); border-radius: 6px; display: grid; place-items: center; color: var(--muted); font-size: 11px; }
+.slot small { font-size: 11.5px; color: var(--muted); line-height: 1.25; }
+.slot em { font-style: normal; font-size: 10.5px; color: var(--azure); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.seg button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; padding: 6px 11px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--azure-dim); color: var(--fg); }
+.seg button:disabled { opacity: .45; cursor: not-allowed; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.stats div { background: var(--panel-solid); padding: 7px 9px; }
+.stats b { display: block; font: 500 16px var(--font-mono); font-variant-numeric: tabular-nums; }
+.stats span { font-size: 11.5px; color: var(--muted); }
+.note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+@media (max-width: 640px) {
+  .keys, .bar h1 span { display: none; }
+  .meter { top: auto; bottom: 124px; min-width: 132px; padding: 6px 10px; }
+  .meter .dps b { font-size: 15px; }
+}
+</style>
+
+<div class="bar">
+  <h1>Kỵ Sĩ Cánh Lam<span>character test</span></h1>
+  <div class="keys">
+    <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / mũi tên: đi</span>
+    <span><kbd>Shift</kbd>: chạy</span>
+    <span><kbd>J</kbd> / <kbd>Space</kbd> / nhấp: chém</span>
+    <span><kbd>I</kbd>: trang bị</span>
+    <span><kbd>H</kbd>: hitbox</span>
+  </div>
+  <div class="actions">
+    <button class="btn" type="button" id="btn-hitbox" aria-pressed="false">Hitbox</button>
+    <button class="btn" type="button" id="btn-menu">Trang bị</button>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <canvas id="game" tabindex="0" aria-label="Kỵ sĩ Cánh Lam trong sân tập, có hình nộm để chém thử"></canvas>
+  <div class="state" id="state"></div>
+  <div class="meter">
+    <div class="dps"><span>DPS (5 giây)</span><b id="m-dps">0</b></div>
+    <div><span>Đòn cuối</span><b id="m-last">–</b></div>
+    <div><span>Số đòn</span><b id="m-hits">0</b></div>
+    <div><span>Tổng sát thương</span><b id="m-total">0</b></div>
+  </div>
+  <div class="touch" id="touch" hidden>
+    <div class="stick" id="stick"><i id="knob"></i></div>
+    <button class="atk" type="button" id="atk">CHÉM</button>
+  </div>
+  <section class="menu" id="menu" hidden aria-label="Trang bị">
+    <div class="menu-head">
+      <h2>Trang bị</h2>
+      <button class="btn" type="button" id="menu-close">Đóng <kbd>I</kbd></button>
+    </div>
+    <div class="menu-grid">
+      <div>
+        <h3>Đang mặc</h3>
+        <div class="slots" id="slots"></div>
+        <p class="note">Bộ giáp Cánh Lam là một khối liền trên hình nhân vật nên luôn mặc. Muốn tháo từng món cần thêm hình cơ thể trần làm lớp dưới.</p>
+      </div>
+      <div>
+        <h3>Vũ khí</h3>
+        <div class="seg" role="group" aria-label="Tay cầm kiếm" id="hand-seg">
+          <button type="button" data-hand="right">Tay phải</button>
+          <button type="button" data-hand="left">Tay trái</button>
+        </div>
+        <h3 style="margin-top:14px">Chỉ số</h3>
+        <div class="stats" id="stats"></div>
+      </div>
+    </div>
+  </section>
+  <div class="loading" id="loading">Đang tải nhân vật…</div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const canvas = $("game"), ctx = canvas.getContext("2d"), stage = $("stage");
+const BONES = ["torso", "head", "upperarm_L", "forearm_L", "upperarm_R", "forearm_R", "thigh_L", "shin_L", "thigh_R", "shin_R"];
+const PARENT = { torso: "pelvis", head: "torso", upperarm_L: "torso", forearm_L: "upperarm_L", upperarm_R: "torso", forearm_R: "upperarm_R",
+                 thigh_L: "pelvis", shin_L: "thigh_L", thigh_R: "pelvis", shin_R: "thigh_R" };
+const OUT = { L: 1, R: -1 };      // + rotation swings a screen-left limb outward, - a screen-right one
+let SET, RIG = {}, IMG = {}, W = 0, H = 0, DPR = 1, S = 0.3, WORLD = { w: 0, h: 0 }, cam = { x: 0, y: 0 }, debug = false, menuOpen = false;
+let last = 0, clock = 0, hitStop = 0, shake = 0;
+const keys = new Set(), stick = { x: 0, y: 0, on: false };
+let holdAttack = false;
+const P = { x: 0, y: 0, vx: 0, vy: 0, view: "front", lat: 0, phase: 0, walk: 0, run: 0, atk: null, cd: 0, trail: [] };
+const D = { x: 0, y: 0, hp: 1, max: 20000, wob: 0, wobV: 0, flash: 0, lastHit: -99, downAt: -1 };
+const PILLARS = [];
+let floaters = [], sparks = [], dust = [], hits = [], totalDmg = 0;
+const equip = (() => { const d = { sword: true, hand: "right" }; try { return Object.assign(d, JSON.parse(localStorage.getItem("azure-knight") || "{}")); } catch (e) { return d; } })();
+const save = () => { try { localStorage.setItem("azure-knight", JSON.stringify(equip)); } catch (e) {} };
+
+// ---------- 2D affine matrices [a b c d e f] (same order as canvas setTransform) ----------
+const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3],
+                       m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
+const T = (x, y) => [1, 0, 0, 1, x, y], Rm = a => [Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a), 0, 0], Sm = (x, y) => [x, 0, 0, y, 0, 0];
+const ap = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+const ease = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u);
+const lerp = (a, b, u) => a + (b - a) * u;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// ---------- stats ----------
+function stats() {
+  const s = { attack: 20, crit_rate: 5, attack_speed: 0, move_speed: 0, defense: 0, hp: 800, magic_resist: 0, evasion: 0 };
+  const ids = ["helm", "cuirass", "greaves", "gauntlets", "sabatons"].concat(equip.sword ? ["greatsword"] : []);
+  for (const id of ids) for (const [k, v] of Object.entries(SET.items[id].stats)) s[k] = (s[k] || 0) + v;
+  s.defense = Math.round(s.defense * 1.08); s.move_speed += 12;   // set bonus 2 + 4 pieces
+  return s;
+}
+let ST;
+
+// ---------- loading ----------
+const loadImg = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+async function boot() {
+  SET = await (await fetch("assets/azure_wing_set.json")).json();
+  const jobs = [];
+  for (const v of ["front", "back"]) {
+    RIG[v] = await (await fetch(`assets/rig/body_${v}/rig.json`)).json();
+    IMG[v] = {};
+    for (const [n, p] of Object.entries(RIG[v].parts)) {
+      const f = p.files["@2x"] || p.files["@1x"];
+      jobs.push(loadImg(`assets/rig/body_${v}/${f}`).then(i => IMG[v][n] = i));
+    }
+  }
+  IMG.sword = {};
+  for (const [n, v] of Object.entries(SET.weapon.variants)) jobs.push(loadImg("assets/" + (v.files["@2x"] || v.files["@1x"])).then(i => IMG.sword[n] = i));
+  IMG.icons = {};
+  for (const id of Object.keys(SET.items)) jobs.push(loadImg("assets/" + SET.items[id].icon.framed).then(i => IMG.icons[id] = i));
+  await Promise.all(jobs);
+  ST = stats();
+  $("loading").hidden = true;
+  resize(true);
+  if (matchMedia("(pointer: coarse)").matches) $("touch").hidden = false;
+  requestAnimationFrame(frame);
+}
+
+// ---------- world ----------
+function resize(first) {
+  const r = stage.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = r.width; H = r.height; canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+  S = clamp(H * 0.42 / 850, 0.17, 0.6);
+  WORLD.w = Math.max(W * 1.9, 2200 * S / 0.3); WORLD.h = Math.max(H * 1.7, 1300 * S / 0.3);
+  const k = S / 0.3;
+  D.x = WORLD.w * 0.55; D.y = WORLD.h * 0.5;
+  PILLARS.length = 0;
+  for (const [fx, fy] of [[0.22, 0.3], [0.8, 0.28], [0.25, 0.8], [0.82, 0.78], [0.5, 0.18]]) PILLARS.push({ x: WORLD.w * fx, y: WORLD.h * fy, r: 46 * k });
+  if (first) { P.x = WORLD.w * 0.38; P.y = WORLD.h * 0.58; D.hp = D.max; cam.x = P.x - W / 2; cam.y = P.y - H * 0.55; }
+}
+const tileShade = (i, j) => { const h = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return h - Math.floor(h); };
+function drawFloor() {
+  const T_ = 170 * S, th = T_ * 0.6;
+  ctx.fillStyle = "#11161f"; ctx.fillRect(cam.x, cam.y, W, H);
+  const j0 = Math.floor(cam.y / th) - 1, j1 = Math.ceil((cam.y + H) / th) + 1;
+  for (let j = j0; j <= j1; j++) {
+    const off = (j & 1) * T_ / 2, i0 = Math.floor((cam.x - off) / T_) - 1, i1 = Math.ceil((cam.x + W - off) / T_) + 1;
+    for (let i = i0; i <= i1; i++) {
+      const x = i * T_ + off, y = j * th, inside = x > -T_ && y > -th && x < WORLD.w && y < WORLD.h;
+      const l = inside ? 16 + tileShade(i, j) * 9 : 9;
+      ctx.fillStyle = `rgb(${l},${l + 4},${l + 11})`; ctx.fillRect(x + 1.5, y + 1.5, T_ - 3, th - 3);
+    }
+  }
+  ctx.strokeStyle = "rgba(95,176,255,.18)"; ctx.lineWidth = 3; ctx.strokeRect(0, 0, WORLD.w, WORLD.h);
+}
+
+// ---------- input ----------
+const MOVE = { w: [0, -1], arrowup: [0, -1], s: [0, 1], arrowdown: [0, 1], a: [-1, 0], arrowleft: [-1, 0], d: [1, 0], arrowright: [1, 0] };
+window.addEventListener("keydown", e => {
+  const key = e.key.toLowerCase();
+  if (key in MOVE || key === " ") e.preventDefault();
+  if (key === "i" || key === "tab") { e.preventDefault(); if (!e.repeat) toggleMenu(); return; }
+  if (key === "escape" && menuOpen) { toggleMenu(false); return; }
+  if (key === "h" && !e.repeat) { setDebug(!debug); return; }
+  keys.add(key);
+});
+window.addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
+window.addEventListener("blur", () => { keys.clear(); holdAttack = false; });
+canvas.addEventListener("pointerdown", e => { if (e.pointerType === "mouse") { holdAttack = true; canvas.focus(); } });
+window.addEventListener("pointerup", e => { if (e.pointerType === "mouse") holdAttack = false; });
+(() => {
+  const el = $("stick"), knob = $("knob");
+  const move = e => {
+    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let dx = e.clientX - cx, dy = e.clientY - cy; const d = Math.hypot(dx, dy), m = r.width / 2;
+    if (d > m) { dx *= m / d; dy *= m / d; }
+    stick.x = dx / m; stick.y = dy / m; knob.style.transform = `translate(${dx}px, ${dy}px)`;
+  };
+  el.addEventListener("pointerdown", e => { stick.on = true; el.setPointerCapture(e.pointerId); move(e); });
+  el.addEventListener("pointermove", e => { if (stick.on) move(e); });
+  const end = () => { stick.on = false; stick.x = stick.y = 0; knob.style.transform = ""; };
+  el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+  const atk = $("atk");
+  atk.addEventListener("pointerdown", e => { e.preventDefault(); holdAttack = true; atk.setPointerCapture(e.pointerId); });
+  atk.addEventListener("pointerup", () => holdAttack = false); atk.addEventListener("pointercancel", () => holdAttack = false);
+})();
+function setDebug(on) { debug = on; $("btn-hitbox").setAttribute("aria-pressed", String(on)); }
+$("btn-hitbox").addEventListener("click", () => setDebug(!debug));
+$("btn-menu").addEventListener("click", () => toggleMenu());
+$("menu-close").addEventListener("click", () => toggleMenu(false));
+
+// ---------- which screen-side arm holds the sword ----------
+// front view: the character's right hand is on the screen-left; seen from the back it is on the screen-right
+const swordArm = view => equip.hand === "right" ? (view === "front" ? "L" : "R") : (view === "front" ? "R" : "L");
+const swordVariant = view => { const arm = swordArm(view); return SET.weapon.hold[view === "front" ? "front" : "back"][arm === "L" ? "gauntlet_left" : "gauntlet_right"]; };
+
+// ---------- animation: build a pose from locomotion + attack ----------
+function pose() {
+  const p = {}; for (const b of ["pelvis", ...BONES]) p[b] = { a: 0, x: 0, y: 0, sx: 1, sy: 1 };
+  p.wrist = 0;
+  const w = P.walk, r = P.run, ph = P.phase, sn = Math.sin(ph), cs = Math.cos(ph), t = clock;
+  const lift = { L: Math.max(0, sn), R: Math.max(0, -sn) }, fwd = { L: -cs, R: cs };
+  const depth = P.view === "front" ? 1 : -1;            // a forward foot is nearer the camera in the front view
+  const amp = 1 + 0.6 * r;
+  // idle breathing (fades out while walking)
+  const idle = 1 - w, br = Math.sin(t * 1.7);
+  p.torso.sy *= 1 + 0.008 * br * idle; p.head.y += -1.6 * br * idle; p.pelvis.y += 0.8 * br * idle;
+  p.upperarm_L.a += 0.018 * Math.sin(t * 1.7 + 0.6) * idle; p.upperarm_R.a -= 0.018 * Math.sin(t * 1.7 + 0.9) * idle;
+  if (P.lat === 0) {
+    // walking toward / away from the camera
+    p.pelvis.y += -10 * amp * w * Math.abs(sn) + 3 * w;
+    p.pelvis.x += 6 * w * sn;
+    p.pelvis.a += -0.028 * w * sn;
+    p.torso.a += 0.05 * w * sn;
+    for (const s of ["L", "R"]) {
+      const o = OUT[s], l = lift[s] * w, f = fwd[s] * w;
+      p["thigh_" + s].sy *= 1 - (0.14 + 0.08 * r) * l; p["thigh_" + s].a += 0.025 * o * l;
+      p["shin_" + s].y += -12 * amp * l + 5 * f * depth; p["shin_" + s].sy *= 1 - 0.05 * l;
+      const sc = 1 + 0.03 * f * depth; p["shin_" + s].sx *= sc; p["shin_" + s].sy *= sc;
+      const af = fwd[s === "L" ? "R" : "L"] * w;          // arms swing against the opposite leg
+      p["upperarm_" + s].a += 0.05 * o * af * amp; p["upperarm_" + s].sy *= 1 - 0.04 * Math.max(0, af);
+      p["forearm_" + s].a += -0.2 * o * Math.max(0, af) * amp; p["forearm_" + s].sy *= 1 - 0.1 * Math.max(0, af) * amp;
+      p["forearm_" + s].y += -4 * Math.max(0, af) * amp;
+    }
+  } else {
+    // side-stepping: the leading leg opens toward the move, the other closes behind it
+    const d = P.lat;
+    p.pelvis.y += -8 * amp * w * Math.abs(sn) + 2 * w;
+    p.torso.a += 0.025 * d * w;
+    for (const s of ["L", "R"]) {
+      const l = lift[s] * w;
+      p["thigh_" + s].a += -d * 0.16 * amp * l; p["thigh_" + s].sy *= 1 - 0.08 * l;
+      p["shin_" + s].y += -9 * amp * l; p["shin_" + s].a += d * 0.06 * l;
+      p["upperarm_" + s].a += -d * 0.05 * w * sn * (s === "L" ? 1 : -1);
+    }
+  }
+  p.head.y += 0.35 * p.pelvis.y; p.head.a += -0.5 * p.torso.a;
+  // attack layered on top
+  if (P.atk) {
+    const u = P.atk.t / P.atk.dur, s = P.atk.arm, o = OUT[s], other = s === "L" ? "R" : "L";
+    if (P.atk.sword) {
+      const k3 = (a, b, c) => u < 0.32 ? lerp(0, a, ease(u / 0.32)) : u < 0.52 ? lerp(a, b, Math.pow((u - 0.32) / 0.2, 1.5)) : lerp(b, c, ease((u - 0.52) / 0.48));
+      p["upperarm_" + s].a += k3(2.25 * o, -0.6 * o, 0);
+      p["forearm_" + s].a += k3(0.75 * o, -0.35 * o, 0);
+      p.wrist = k3(0.95 * o, -0.55 * o, 0);
+      p.torso.a += k3(-0.08 * o, 0.1 * o, 0);
+      p.pelvis.y += k3(-4, 7, 0);
+      p["upperarm_" + other].a += k3(-0.12 * o, 0.18 * o, 0);
+      p.head.a += k3(-0.05 * o, 0.06 * o, 0);
+    } else {
+      const ext = u < 0.35 ? ease(u / 0.35) : 1 - ease((u - 0.35) / 0.65);
+      p["upperarm_" + s].a += -0.5 * o * ext; p["forearm_" + s].a += -0.9 * o * ext;
+      const g = 1 + 0.22 * ext * (P.view === "front" ? 1 : -0.4); p["forearm_" + s].sx *= g; p["forearm_" + s].sy *= g;
+      p.torso.a += -0.07 * o * ext;
+    }
+  }
+  return p;
+}
+
+// world matrices of every bone, in reference-sheet px under `base`
+function solve(view, p, base) {
+  const R_ = RIG[view], parts = R_.parts, O = R_.origin, pel = parts.torso.joint, M = {};
+  const jnt = n => n === "pelvis" ? pel : parts[n].joint;
+  M.pelvis = mul(base, mul(T(pel[0] - O[0] + p.pelvis.x, pel[1] - O[1] + p.pelvis.y), mul(Rm(p.pelvis.a), Sm(p.pelvis.sx, p.pelvis.sy))));
+  for (const b of BONES) {
+    const par = PARENT[b], j = jnt(b), pj = jnt(par), q = p[b];
+    M[b] = mul(M[par], mul(T(j[0] - pj[0] + q.x, j[1] - pj[1] + q.y), mul(Rm(q.a), Sm(q.sx, q.sy))));
+  }
+  return M;
+}
+
+// sword matrix: hangs from the grip of the sword arm's forearm
+function swordMatrix(view, M, p) {
+  const arm = swordArm(view), fa = RIG[view].parts["forearm_" + arm], v = SET.weapon.variants[swordVariant(view)];
+  const k = SET.weapon.recommended_scale;
+  return { m: mul(M["forearm_" + arm], mul(T(fa.grip[0] - fa.joint[0], fa.grip[1] - fa.joint[1]), mul(Rm(p.wrist), Sm(k, k)))), v };
+}
+
+// ---------- simulation ----------
+function startAttack() {
+  if (P.atk || P.cd > 0 || menuOpen) return;
+  const sword = equip.sword, arm = sword ? swordArm(P.view) : (P.turn = (P.turn || 0) + 1) % 2 ? "L" : "R";
+  const dur = (sword ? 0.72 : 0.42) / Math.max(0.3, 1 + ST.attack_speed / 100);
+  P.atk = { t: 0, dur, arm, sword, hit: false }; P.cd = dur * 0.92; P.trail = [];
+}
+function segDist(px, py, ax, ay, bx, by) {
+  const vx = bx - ax, vy = by - ay, u = clamp(((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy || 1), 0, 1);
+  return Math.hypot(px - ax - u * vx, py - ay - u * vy);
+}
+const dummyCircle = () => { const k = S / 0.3; return [D.x, D.y - 105 * k, 46 * k]; };
+function tryHit(seg) {
+  if (D.hp <= 0 || P.atk.hit) return;
+  const [cx, cy, cr] = dummyCircle();
+  if (segDist(cx, cy, ...seg) > cr) return;
+  P.atk.hit = true;
+  const crit = Math.random() < ST.crit_rate / 100, dmg = Math.round(ST.attack * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1));
+  D.hp = Math.max(0, D.hp - dmg); D.flash = 1; D.lastHit = clock; D.wobV += (P.x < D.x ? 1 : -1) * (crit ? 4.5 : 2.8);
+  if (D.hp === 0) D.downAt = clock;
+  hitStop = crit ? 0.11 : 0.07; shake = crit ? 9 : 5;
+  hits.push([clock, dmg]); totalDmg += dmg;
+  $("m-last").textContent = dmg.toLocaleString("vi-VN") + (crit ? " ✦" : "");
+  $("m-hits").textContent = hits.length.toLocaleString("vi-VN"); $("m-total").textContent = totalDmg.toLocaleString("vi-VN");
+  const k = S / 0.3;
+  floaters.push({ x: cx + (Math.random() - 0.5) * 30 * k, y: cy - 50 * k, txt: dmg.toLocaleString("vi-VN"), crit, t: 0 });
+  for (let i = 0; i < (crit ? 26 : 14); i++) {
+    const a = Math.random() * Math.PI * 2, v = (70 + Math.random() * 190) * k;
+    sparks.push({ x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 50 * k, t: 0, life: 0.3 + Math.random() * 0.35, gold: crit || Math.random() < 0.35 });
+  }
+}
+function collide(nx, ny) {
+  const k = S / 0.3, R0 = 30 * k;
+  for (const o of [...PILLARS.map(p => [p.x, p.y, p.r]), [D.x, D.y, 34 * k]]) {
+    const dx = nx - o[0], dy = (ny - o[1]) * 1.8, d = Math.hypot(dx, dy), m = o[2] + R0;
+    if (d < m && d > 0) { nx = o[0] + dx / d * m; ny = o[1] + dy / d * m / 1.8; }
+  }
+  return [clamp(nx, 40 * k, WORLD.w - 40 * k), clamp(ny, 60 * k, WORLD.h - 10 * k)];
+}
+function update(dt) {
+  clock += dt;
+  let mx = 0, my = 0;
+  if (!menuOpen) {
+    for (const key of keys) if (MOVE[key]) { mx += MOVE[key][0]; my += MOVE[key][1]; }
+    if (stick.on) { mx += stick.x; my += stick.y; }
+  }
+  const mag = Math.hypot(mx, my), want = mag > 0.15;
+  const running = want && (keys.has("shift") || (stick.on && mag > 0.92));
+  const k = S / 0.3, vmax = 250 * k * (1 + ST.move_speed / 100) * (running ? 1.75 : 1) * (P.atk ? 0.45 : 1) * Math.min(1, mag);
+  const tx = want ? mx / mag * vmax : 0, ty = want ? my / mag * vmax * 0.78 : 0;   // depth axis a bit slower: reads as perspective
+  const acc = want ? 9 : 11;                                 // ease into and out of motion
+  P.vx += (tx - P.vx) * Math.min(1, dt * acc); P.vy += (ty - P.vy) * Math.min(1, dt * acc);
+  [P.x, P.y] = collide(P.x + P.vx * dt, P.y + P.vy * dt);
+  if (want && !P.atk) {
+    if (Math.abs(my) >= Math.abs(mx) * 0.7) { P.view = my < 0 ? "back" : "front"; P.lat = 0; }
+    else P.lat = mx < 0 ? -1 : 1;
+  }
+  if (!want && Math.hypot(P.vx, P.vy) < 20 * k) P.lat = 0;
+  const speed = Math.hypot(P.vx, P.vy), walkSpeed = 250 * k;
+  P.walk += (clamp(speed / (walkSpeed * 0.6), 0, 1) - P.walk) * Math.min(1, dt * 8);
+  P.run += ((running && speed > walkSpeed * 1.2 ? 1 : 0) - P.run) * Math.min(1, dt * 5);
+  const prev = Math.sin(P.phase);
+  P.phase += dt * Math.PI * 2 * speed / (390 * S * (1 + 0.35 * P.run));
+  const now = Math.sin(P.phase);
+  if (P.walk > 0.4 && Math.sign(prev) !== Math.sign(now)) {          // a foot lands: puff of dust
+    const side = now > 0 ? 1 : -1;
+    for (let i = 0; i < 5; i++) dust.push({ x: P.x + side * 55 * S + (Math.random() - 0.5) * 30 * S, y: P.y - 4 * S, vx: (Math.random() - 0.5) * 60 * k, vy: -Math.random() * 25 * k, t: 0, life: 0.5 + Math.random() * 0.3, r: (8 + Math.random() * 10) * k * (0.6 + 0.6 * P.run) });
+  }
+  // attack (hit-stop freezes the swing for a few frames on contact)
+  P.cd = Math.max(0, P.cd - dt);
+  if ((holdAttack || keys.has(" ") || keys.has("j")) && !menuOpen) startAttack();
+  if (P.atk) { if (hitStop > 0) hitStop -= dt; else { P.atk.t += dt; if (P.atk.t >= P.atk.dur) P.atk = null; } }
+  // dummy
+  D.wobV += (-38 * D.wob - 5.5 * D.wobV) * dt; D.wob += D.wobV * dt; D.flash = Math.max(0, D.flash - dt * 6);
+  if (D.hp === 0 && clock - D.downAt > 1.4) D.hp = D.max;
+  if (D.hp > 0 && D.hp < D.max && clock - D.lastHit > 4) D.hp = Math.min(D.max, D.hp + D.max * dt * 0.8);
+  // effects
+  for (const f of floaters) f.t += dt; floaters = floaters.filter(f => f.t < 0.9);
+  for (const s of sparks) { s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 480 * k * dt; } sparks = sparks.filter(s => s.t < s.life);
+  for (const d of dust) { d.t += dt; d.x += d.vx * dt; d.y += d.vy * dt; } dust = dust.filter(d => d.t < d.life);
+  hits = hits.filter(h => clock - h[0] < 60);
+  shake = Math.max(0, shake - dt * 40);
+  // camera follows with a little lag and leads in the move direction
+  const lx = P.vx * 0.25, ly = P.vy * 0.25;
+  cam.x += (clamp(P.x + lx - W / 2, -60, WORLD.w - W + 60) - cam.x) * Math.min(1, dt * 5);
+  cam.y += (clamp(P.y + ly - H * 0.58, -60, WORLD.h - H + 60) - cam.y) * Math.min(1, dt * 5);
+}
+
+// ---------- drawing ----------
+function drawCharacter() {
+  const view = P.view, p = pose(), k = S / 0.3;
+  // shadow follows the bob
+  ctx.fillStyle = "rgba(0,0,0,.42)"; ctx.beginPath(); ctx.ellipse(P.x, P.y, (150 - p.pelvis.y * 1.5) * S, 30 * S, 0, 0, Math.PI * 2); ctx.fill();
+  const lean = P.lat * clamp(Math.abs(P.vx) / (250 * k), 0, 1);
+  let base = mul(T(P.x, P.y), [1 - 0.07 * Math.abs(lean), 0, -0.07 * lean, 1, 0, 0]);
+  base = mul(base, Sm(S, S));
+  const M = solve(view, p, base), parts = RIG[view].parts;
+  const order = BONES.map(b => ({ b, z: parts[b].z }));
+  let sw = null;
+  if (equip.sword) { sw = swordMatrix(view, M, p); order.push({ b: "sword", z: parts["forearm_" + swordArm(view)].z - 0.5 }); }
+  order.sort((a, b) => a.z - b.z);
+  const root = ctx.getTransform();
+  for (const { b } of order) {
+    if (b === "sword") {
+      const v = sw.v, img = IMG.sword[swordVariant(view)], w = v.size_1x[0], h = v.size_1x[1];
+      ctx.setTransform(root.multiply(new DOMMatrix(sw.m)));
+      ctx.drawImage(img, -v.grip_pivot[0] * w, -v.grip_pivot[1] * h, w, h);
+      continue;
+    }
+    const pt = parts[b], img = IMG[view][b]; if (!img) continue;
+    ctx.setTransform(root.multiply(new DOMMatrix(M[b])));
+    ctx.drawImage(img, -pt.pivot[0], -pt.pivot[1], pt.size[0], pt.size[1]);
+  }
+  ctx.setTransform(root);
+  // sword trail: ribbon through recent blade positions while slashing
+  if (sw) {
+    const v = sw.v, w = v.size_1x[0], h = v.size_1x[1];
+    const tip = ap(sw.m, (v.tip[0] - v.grip_pivot[0]) * w, (v.tip[1] - v.grip_pivot[1]) * h);
+    const mid = ap(sw.m, (v.tip[0] - v.grip_pivot[0]) * w * 0.3, ((v.tip[1] - v.grip_pivot[1]) * 0.3 + 0.12) * h);
+    if (P.atk && P.atk.sword) {
+      const u = P.atk.t / P.atk.dur;
+      if (u > 0.3 && u < 0.6) { P.trail.push([mid, tip, clock]); tryHit([mid[0], mid[1], tip[0], tip[1]]); }
+    }
+    P.dbgSeg = [mid, tip];
+  }
+  P.trail = P.trail.filter(s => clock - s[2] < 0.13);
+  if (P.trail.length > 1) {
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    for (let i = 1; i < P.trail.length; i++) {
+      const [m0, t0] = P.trail[i - 1], [m1, t1] = P.trail[i], a = i / P.trail.length;
+      const g = ctx.createLinearGradient(m1[0], m1[1], t1[0], t1[1]);
+      g.addColorStop(0, `rgba(95,176,255,0)`); g.addColorStop(0.6, `rgba(120,190,255,${0.32 * a})`); g.addColorStop(1, `rgba(255,226,150,${0.75 * a})`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(m0[0], m0[1]); ctx.lineTo(t0[0], t0[1]); ctx.lineTo(t1[0], t1[1]); ctx.lineTo(m1[0], m1[1]); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+function dummyShapes(c, white) {
+  const wood = white || "#6b4a2e", straw = white || "#c9a467", strawDark = white || "#9c7b45", rope = white || "#5b4630";
+  c.fillStyle = wood; c.fillRect(-7, -152, 14, 152); c.fillRect(-54, -130, 108, 11);
+  c.fillStyle = straw; c.beginPath(); c.ellipse(0, -98, 37, 52, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = strawDark; for (let i = -2; i <= 2; i++) c.fillRect(i * 12 - 1, -143, 2, 90);
+  c.fillStyle = straw; c.beginPath(); c.arc(0, -172, 22, 0, Math.PI * 2); c.fill();
+  c.fillStyle = rope; c.fillRect(-37, -66, 74, 6); c.fillRect(-31, -134, 62, 5); c.fillRect(-15, -153, 30, 5);
+  if (!white) for (const [r, col] of [[25, "#b33a3a"], [17, "#efe6d2"], [8, "#b33a3a"]]) { c.fillStyle = col; c.beginPath(); c.arc(0, -100, r, 0, Math.PI * 2); c.fill(); }
+}
+function drawDummy() {
+  const k = S / 0.3 * 1.05;
+  ctx.save(); ctx.translate(D.x, D.y);
+  ctx.fillStyle = "rgba(0,0,0,.42)"; ctx.beginPath(); ctx.ellipse(0, 0, 62 * k, 16 * k, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(95,176,255,.22)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, 0, 96 * k, 27 * k, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.scale(k, k); ctx.rotate(D.wob * 0.12);
+  ctx.fillStyle = "#3d2b1b"; ctx.beginPath(); ctx.ellipse(0, 0, 30, 9, 0, 0, Math.PI * 2); ctx.fill();
+  if (D.hp === 0) ctx.globalAlpha = 0.45;
+  dummyShapes(ctx); if (D.flash > 0) { ctx.globalAlpha = D.flash * 0.75; dummyShapes(ctx, "#ffffff"); }
+  ctx.restore();
+  const bw = 130 * k, bh = 8 * k, bx = D.x - bw / 2, by = D.y - 222 * k;
+  ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+  ctx.fillStyle = D.hp / D.max > 0.3 ? "#5fd07a" : "#ff6b6b"; ctx.fillRect(bx, by, bw * D.hp / D.max, bh);
+  ctx.fillStyle = "#e4e9f3"; ctx.font = `600 ${Math.max(11, 12 * k)}px "Be Vietnam Pro", sans-serif`; ctx.textAlign = "center";
+  ctx.fillText(D.hp === 0 ? "Hạ gục!" : `Hình nộm · ${Math.ceil(D.hp).toLocaleString("vi-VN")}`, D.x, by - 6 * k);
+}
+function drawPillar(pl) {
+  const k = S / 0.3, h = 300 * k, w = pl.r * 1.5;
+  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(pl.x, pl.y, pl.r * 1.5, pl.r * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createLinearGradient(pl.x - w / 2, 0, pl.x + w / 2, 0);
+  g.addColorStop(0, "#2a3140"); g.addColorStop(0.35, "#4a5468"); g.addColorStop(0.7, "#343c4d"); g.addColorStop(1, "#1d222d");
+  ctx.fillStyle = "#262d3a"; ctx.fillRect(pl.x - w * 0.62, pl.y - 26 * k, w * 1.24, 26 * k);
+  ctx.fillStyle = g; ctx.fillRect(pl.x - w / 2, pl.y - h, w, h - 24 * k);
+  ctx.fillStyle = "rgba(0,0,0,.18)"; for (let i = 1; i < 4; i++) ctx.fillRect(pl.x - w / 2 + i * w / 4 - 1, pl.y - h, 2, h - 24 * k);
+  ctx.fillStyle = "#3a4255"; ctx.fillRect(pl.x - w * 0.66, pl.y - h - 22 * k, w * 1.32, 22 * k);
+  ctx.fillStyle = "rgba(95,176,255,.5)"; ctx.fillRect(pl.x - w * 0.66, pl.y - h - 3 * k, w * 1.32, 3 * k);
+}
+function drawEffects() {
+  for (const d of dust) {   // low, flat puffs where a foot lands
+    const a = 1 - d.t / d.life, r = d.r * (1 + d.t * 1.8);
+    ctx.fillStyle = `rgba(150,160,180,${0.09 * a})`; ctx.beginPath(); ctx.ellipse(d.x, d.y, r, r * 0.42, 0, 0, Math.PI * 2); ctx.fill();
+  }
+}
+function drawTop() {
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  for (const s of sparks) { const a = 1 - s.t / s.life; ctx.fillStyle = s.gold ? `rgba(255,214,120,${a})` : `rgba(110,185,255,${a})`; ctx.beginPath(); ctx.arc(s.x, s.y, 2.8 * (S / 0.3) * a + 0.6, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  ctx.textAlign = "center";
+  for (const f of floaters) {
+    const a = 1 - Math.max(0, f.t - 0.5) / 0.4, y = f.y - f.t * 70 * (S / 0.3), sz = (f.crit ? 28 : 20) * Math.max(0.8, S / 0.3) * (f.t < 0.08 ? 1.3 : 1);
+    ctx.globalAlpha = a; ctx.font = `700 ${sz}px "Chakra Petch", sans-serif`; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(0,0,0,.7)";
+    ctx.strokeText(f.txt, f.x, y); ctx.fillStyle = f.crit ? "#ffd27a" : "#ffffff"; ctx.fillText(f.txt, f.x, y);
+  }
+  ctx.globalAlpha = 1;
+  if (debug) {
+    const [cx, cy, cr] = dummyCircle();
+    ctx.strokeStyle = "rgba(95,208,122,.9)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, cr, 0, Math.PI * 2); ctx.stroke();
+    if (P.dbgSeg) { ctx.strokeStyle = P.atk ? "rgba(255,107,107,.95)" : "rgba(255,107,107,.45)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(...P.dbgSeg[0]); ctx.lineTo(...P.dbgSeg[1]); ctx.stroke(); }
+    const k = S / 0.3; ctx.strokeStyle = "rgba(232,194,106,.8)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(P.x, P.y, 30 * k, 30 * k / 1.8, 0, 0, Math.PI * 2); ctx.stroke();
+    for (const pl of PILLARS) { ctx.beginPath(); ctx.ellipse(pl.x, pl.y, pl.r, pl.r / 1.8, 0, 0, Math.PI * 2); ctx.stroke(); }
+  }
+}
+function frame(ts) {
+  const dt = Math.min(0.05, (ts - (last || ts)) / 1000); last = ts;
+  update(dt);
+  const sx = shake ? (Math.random() - 0.5) * shake : 0, sy = shake ? (Math.random() - 0.5) * shake : 0;
+  ctx.setTransform(DPR, 0, 0, DPR, (-cam.x + sx) * DPR, (-cam.y + sy) * DPR);
+  drawFloor(); drawEffects();
+  const things = [...PILLARS.map(p => ({ y: p.y, draw: () => drawPillar(p) })), { y: D.y, draw: drawDummy }, { y: P.y, draw: drawCharacter }];
+  things.sort((a, b) => a.y - b.y).forEach(t => t.draw());
+  drawTop();
+  if (Math.floor(clock * 5) !== Math.floor((clock - dt) * 5)) {
+    const recent = hits.filter(h => clock - h[0] <= 5), span = recent.length ? Math.max(1, Math.min(5, clock - recent[0][0])) : 1;
+    $("m-dps").textContent = Math.round(recent.reduce((s, h) => s + h[1], 0) / span).toLocaleString("vi-VN");
+    const sp = Math.hypot(P.vx, P.vy) / (S / 0.3);
+    $("state").innerHTML = `Mặt <b>${P.view === "front" ? "trước" : "sau"}</b> · ${P.atk ? "<b>chém</b>" : sp < 20 ? "đứng" : P.run > 0.5 ? "<b>chạy</b>" : "<b>đi</b>"}${P.lat ? " ngang" : ""} · ${Math.round(sp)} px/s`;
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---------- equipment menu ----------
+function renderMenu() {
+  const armor = [["helm", "Đầu"], ["cuirass", "Ngực"], ["greaves", "Chân"], ["gauntlets", "Tay"], ["sabatons", "Bàn chân"]];
+  $("slots").innerHTML = armor.map(([id]) => `<div class="slot"><img src="${IMG.icons[id].src}" alt=""><small>${SET.items[id].name_vi}</small><em>đang mặc</em></div>`).join("") +
+    (equip.sword ? `<button type="button" class="slot" id="sw-off" title="Tháo kiếm"><img src="${IMG.icons.greatsword.src}" alt=""><small>${SET.items.greatsword.name_vi}</small><em>bấm để tháo</em></button>`
+                 : `<button type="button" class="slot" id="sw-on" title="Cầm kiếm"><span class="ph">Vũ khí</span><small>Trống</small><em>bấm để cầm kiếm</em></button>`);
+  const b = $("sw-off") || $("sw-on"); b.addEventListener("click", () => { equip.sword = !equip.sword; changed(); });
+  document.querySelectorAll("#hand-seg button").forEach(x => { x.setAttribute("aria-pressed", String(x.dataset.hand === equip.hand)); x.disabled = !equip.sword; });
+  const rows = [["attack", "Tấn công"], ["crit_rate", "Chí mạng %"], ["attack_speed", "Tốc đánh %"], ["move_speed", "Tốc chạy %"], ["defense", "Phòng thủ"], ["hp", "Máu"]];
+  $("stats").innerHTML = rows.map(([k_, l]) => `<div><b>${ST[k_]}</b><span>${l}</span></div>`).join("");
+}
+function changed() { ST = stats(); save(); if (menuOpen) renderMenu(); }
+document.querySelectorAll("#hand-seg button").forEach(b => b.addEventListener("click", () => { equip.hand = b.dataset.hand; changed(); }));
+function toggleMenu(force) {
+  menuOpen = force === undefined ? !menuOpen : force; $("menu").hidden = !menuOpen; keys.clear(); holdAttack = false;
+  if (menuOpen) renderMenu(); else canvas.focus();
+}
+new ResizeObserver(() => { if (SET) resize(false); }).observe(stage);
+boot().catch(err => { $("loading").textContent = "Không tải được dữ liệu nhân vật (assets/rig, assets/azure_wing_set.json)."; console.error(err); });
+</script>

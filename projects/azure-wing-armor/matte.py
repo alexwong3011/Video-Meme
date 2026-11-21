@@ -36,6 +36,16 @@ num2=cv2.GaussianBlur(fig*w[...,None],(0,0),80); den2=cv2.GaussianBlur(w,(0,0),8
 bg2=num2/np.maximum(den2,1e-4)[...,None]
 t=np.clip(den/0.3,0,1)[...,None]
 bg=bg*t+bg2*(1-t)
+# second pass: also exclude anything that clearly differs from that first estimate (parts the model missed)
+D0=np.sqrt(((fig-bg)**2).sum(2))
+miss=cv2.dilate((D0>14).astype(np.uint8),np.ones((15,15),np.uint8))
+w2=w*(1-miss)
+num=cv2.GaussianBlur(fig*w2[...,None],(0,0),sig); den=cv2.GaussianBlur(w2,(0,0),sig)
+bg1=num/np.maximum(den,1e-4)[...,None]
+num2=cv2.GaussianBlur(fig*w2[...,None],(0,0),80); den2=cv2.GaussianBlur(w2,(0,0),80)
+bg2=num2/np.maximum(den2,1e-4)[...,None]
+t=np.clip(den/0.3,0,1)[...,None]
+bg=bg1*t+bg2*(1-t)
 np.save('bg.npy',bg)
 D=np.sqrt(((fig-bg)**2).sum(2))
 np.save('D.npy',D)

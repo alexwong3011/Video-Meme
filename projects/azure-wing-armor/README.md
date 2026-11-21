@@ -60,6 +60,26 @@ Kéo `sprites/front/@4x/*.png` và `sprites/back/@4x/*.png` vào project (Unity:
 Đặt pivot của từng sprite = `pivot` trong JSON (Unity: Custom Pivot, lưu ý Unity tính y từ dưới lên → `1 - pivot.y`;
 Godot: `Sprite2D.offset = -pivot * size`). Vị trí con so với gốc nhân vật = `offset_1x + pivot * size_1x`.
 
+## Nhân vật hoàn chỉnh có khớp (`character-test.html`)
+
+Từ hai tấm nhân vật đã ráp (`source/azure-wing-body-front.jpg`, `source/azure-wing-body-back.jpg`), `rig.py` cắt cơ thể thành
+10 phần có khớp: đầu, thân, cánh tay trên, cẳng tay + bàn tay, đùi, cẳng chân + giày (trái/phải theo vị trí trên ảnh).
+Phần nằm dưới giữ thêm vài px của phần phía trên để khớp không hở khi cử động.
+
+| Đường dẫn | Mô tả |
+|---|---|
+| `assets/rig/body_front/@2x/*.png`, `@1x/` | 10 phần mặt trước |
+| `assets/rig/body_back/@2x/*.png`, `@1x/` | 10 phần mặt sau |
+| `assets/rig/<mặt>/rig.json` | Mỗi phần: `parent`, `z`, `joint` (khớp, px ảnh gốc), `pivot` (khớp trong sprite), `size`, `origin`; cẳng tay có `grip` (lòng bàn tay) |
+
+Cách ráp: hông là gốc; thân, đùi con của hông; đầu và cánh tay trên con của thân; cẳng tay con của cánh tay trên; cẳng chân con
+của đùi. Ma trận của một phần = ma trận cha × dịch(`joint` − `joint` cha) × xoay × co giãn; vẽ sprite tại −`pivot`.
+Gốc nhân vật (giữa hai bàn chân trên sàn) là `origin` trong `rig.json`.
+
+`character-test.html` dùng rig này: đi 8 hướng có gia tốc, giữ Shift để chạy, đi lên dùng mặt sau, đi ngang thì bước chéo chân;
+hông nhún và dồn trọng tâm, gối nhấc, tay đánh ngược chân, thở khi đứng; vung kiếm 3 nhịp (lấy đà, chém, thu) với vệt sáng,
+khựng hình khi trúng; va chạm kiếm tính theo đoạn thẳng của lưỡi kiếm. Có camera bám theo, cột đá, bụi chân và hình nộm.
+
 ## Tạo lại
 
 ```bash
