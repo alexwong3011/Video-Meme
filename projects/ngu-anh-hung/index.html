@@ -1943,7 +1943,7 @@ const CLS = {
   elf: { name: 'Lục Cung Thủ', icon: '🏹', col: '#7dff9a', glow: '#9fffc0', el: 'water', melee: false, range: 7.5, rate: 0.36, atk: 0.82, hp: 0.9, proj: 'arrow', ps: 14, crit: 0.2, desc: 'Bắn cực nhanh, chí mạng gốc 20%. Tên nước làm Ướt.' },
   holy: { name: 'Thánh Quang Tư Tế', icon: '✦', col: '#ffd85a', glow: '#fff0a0', el: 'holy', melee: false, range: 6.5, rate: 0.78, atk: 1.0, hp: 1.0, proj: 'holy', ps: 8, splash: 1.3, desc: 'Cầu thánh quang nổ lan, có kỹ năng hồi máu.' }
 };
-for (const k in CLS) { CLS[k].aps0 = 2 / CLS[k].rate; CLS[k].aps = 0.5; } // attacks per second: every class starts at 0.5 (aps0 = the sample's old base, for the damage scale)
+for (const k in CLS) { CLS[k].aps0 = 2 / CLS[k].rate; CLS[k].aps = 0.25; } // attacks per second: every class starts at 0.25 (0.5, then halved) (aps0 = the sample's old base, for the damage scale)
 const CORDER = ['thunder', 'fire', 'ice', 'elf', 'holy'];
 const ELC = { ice: '#7fe8ff', thunder: '#c8a8ff', fire: '#ff7a2a', water: '#3ab0ff', holy: '#ffd85a' };
 const ELN = { ice: 'Băng', thunder: 'Sét', fire: 'Lửa', water: 'Nước', holy: 'Thánh' };
@@ -2170,7 +2170,7 @@ const LVT_A = 2.158, LVT_B = Math.log(11) / 400;             // seconds per leve
 const lvSeconds = L => LVT_A * Math.exp(LVT_B * L);
 const lvHours = L => LVT_A * (Math.exp(LVT_B * L) - 1) / LVT_B / 3600; // cumulative play time to reach L
 // Attack speed: points (AS) raise attacks/second from the class base towards the 15/s cap.
-const APS_MAX = 5, AS_MAX = 400;                               // 0.5 hits/s at the start, 5 hits/s at full attack speed
+const APS_MAX = 2.5, AS_MAX = 400;                             // 0.25 hits/s at the start, 2.5 hits/s at full attack speed (halved from 0.5-5)
 const apsOf = (base, as) => Math.min(APS_MAX, base + (APS_MAX - base) * Math.min(1, Math.max(0, as) / AS_MAX));
 const asRef = L => Math.min(AS_MAX, 60 + 0.85 * L);           // roadmap: ~145 AS at Lv100 (half speed), 400 at Lv400 (max)
 // the sample's old speed curve (class base up to 15 hits/s): EXP and monster HP were sized on it
@@ -2205,7 +2205,7 @@ const MOUNTS = [
   { id: 'kylan', n: 'Thần Thú Kỳ Lân', price: 6000000, lv: 380, model: 'unicorn', spd: 0.9, defP: 0.18, hpP: 0.15, as: 25, d: '+90% tốc chạy · +18% phòng thủ · +15% máu · +25 tốc đánh · sừng thần và bờm cầu vồng' }
 ];
 const plusMult = p => 1 + p * 0.1 + p * p * 0.006;
-const upRate = p => p < 6 ? 1 : [0.9, 0.8, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3][p - 6];
+const upRate = p => 0.8;     // 80% success for every step +1..+15 (player request)
 const upCost = p => ({ stones: 1 + Math.floor(p / 3), gold: Math.round(80 * Math.pow(p + 1, 1.6)) });
 const tier = p => p >= 13 ? 3 : p >= 10 ? 2 : p >= 7 ? 1 : 0;
 const TIER_COL = [0x7fe9ff, 0x6fb8ff, 0xffc75a, 0xd28bff];
@@ -2239,7 +2239,7 @@ function heroStats() {
   st.atk = Math.round(st.atk * (1 + b.atkP)); st.hp = Math.round(st.hp * (1 + b.hpP)); st.def = Math.round(st.def * (1 + b.defP)); st.crit += b.crit;
   const ch = { dmg: 0, hp: 0, mp: 0, soul: 0 }; for (const g of S.inv) if (g.slot === 'charm') ch[g.charm] += qty(g); for (const k in ch) ch[k] = Math.min(CHARM_CAP, ch[k]); st.charms = ch; st.hp = Math.round(st.hp * (1 + ch.hp * 0.01)); st.mp = Math.round(st.mp * (1 + ch.mp * 0.01));
   st.dmgMul = WINGM[S.wing] * (1 + b.dmgP) * (1 + ch.dmg * 0.01) * (1 + ch.soul * 0.01); st.dr = ch.soul * 0.003; st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
-  st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * 0.6 * (1 + (Mt ? Mt.spd : 0)); return st;
+  st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * 0.6 * 0.7 * (1 + (Mt ? Mt.spd : 0)); return st;   // move speed -30% (player feedback)
 }
 const curPet = () => S && S.pet ? PETS.find(p => p.id === S.pet) : null;
 const curMount = () => S && S.mount ? MOUNTS.find(p => p.id === S.mount) : null;
@@ -2740,7 +2740,7 @@ function updateMobs(dt, t) {
     if (m.burnT > 0) { m.burnT -= dt; dot(m, m.burnD * dt); if (Math.random() < dt * 10) emit(m.x + rr(-0.2, 0.2), mobH(m), m.z + rr(-0.2, 0.2), 0, 0.8, 0, C3('#ff7a1a'), 0.25, 0.5, 0.3, 0.98); if (m.dead) continue; }
     if (m.shockT > 0 && Math.random() < dt * 6) emit(m.x + rr(-0.3, 0.3), mobH(m) + rr(-0.2, 0.2), m.z + rr(-0.3, 0.3), rr(-0.5, 0.5), rr(-0.5, 0.5), rr(-0.5, 0.5), C3('#d8c0ff'), 0.2, 0.15, 0, 1);
     if (m.wetT > 0 && Math.random() < dt * 3) emit(m.x + rr(-0.2, 0.2), mobH(m), m.z, 0, -1.2, 0, C3('#7fd0ff'), 0.15, 0.5, -2, 1);
-    const stopped = m.frzT > 0 || m.stunT > 0; const spd = (m.T.speed || 1.2) * (m.slowT > 0 ? 1 - (m.slow || 0) : 1);
+    const stopped = m.frzT > 0 || m.stunT > 0; const spd = (m.T.speed || 1.2) * 0.7 * (m.slowT > 0 ? 1 - (m.slow || 0) : 1);   // monsters slowed with the heroes, so a chase stays fair
     if (m.tgt && (!m.tgt.alive || m.tgt.dead > 0)) m.tgt = null;
     const dP = Math.hypot(S.pos.x - m.x, S.pos.z - m.z);
     if (!m.aggro && !S.dead && dP < (m.boss ? 7 : 4.5) + Math.min(4, Math.max(0, m.lv - S.lv) * 0.02) && m.lv >= S.lv - 25) { m.aggro = true; m.tgt = null; }
