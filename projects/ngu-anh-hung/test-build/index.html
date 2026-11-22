@@ -121,7 +121,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .eqrow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
 .eqslot{display:flex;flex-direction:column;align-items:center;gap:3px}
 .eqslot span{font:600 10px var(--ui);color:var(--muted)}
-#bagGrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}
+#bagGrid,#stackGrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}#stackGrid{margin-bottom:10px}
 .tile{position:relative;aspect-ratio:1;width:100%;max-width:62px;border-radius:8px;display:grid;place-items:center;padding:0;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.08),rgba(0,0,0,.35));border:1px solid rgba(255,255,255,.12);color:var(--r0);cursor:pointer}
 .tile svg{width:60%;height:60%}
 .ipop{position:fixed;inset:0;z-index:80;background:rgba(0,6,12,.55);display:flex;align-items:center;justify-content:center;padding:12px}
@@ -175,7 +175,7 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 .skrow .ic{width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;font-size:17px}
 .skrow.lk{opacity:.5}
 .el{display:inline-block;font-size:10px;font-weight:800;border-radius:5px;padding:0 5px;margin-left:4px}
-@media (max-width:680px){.grid2{grid-template-columns:1fr}#bagGrid{grid-template-columns:repeat(6,minmax(0,1fr))}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:680px){.grid2{grid-template-columns:1fr}#bagGrid,#stackGrid{grid-template-columns:repeat(6,minmax(0,1fr))}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 /* overlays */
 .ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(0,30,34,.5),rgba(0,6,8,.88));z-index:6;overflow:auto;padding:16px max(12px,env(safe-area-inset-right,0px)) 16px max(12px,env(safe-area-inset-left,0px))}
@@ -2638,13 +2638,15 @@ function lootOk(it) { const F = S.lootF || (S.lootF = lootDefaults());
   if (it.kind === 'gold') return F.gold; if (it.kind === 'mat') return it.k === 'e' ? F.e : it.k === 'f' ? F.f : F.stone;
   const g = it.gear; if (g.charm) return F.charm; if (g.set) return F.set; return F['g' + g.r]; }
 function removeLoot(l) { scene.remove(l.g); l.el.remove(); }
-const BAG_MAX = 120, CHARM_CAP = 100;
+const BAG_MAX = 300, CHARM_CAP = 100;      /* 300 bag slots; stacking items (charms) never take a slot */
 // stackable items (charms; not personal equipment) share one slot and carry a count n
 const stackKey = g => g.slot === 'charm' ? 'charm:' + g.charm : null;
 const qty = g => g.n || 1;
 function stackInto(list, g) { const k = stackKey(g); if (!k) return false; const s = list.find(q => q !== g && stackKey(q) === k); if (!s) return false; s.n = qty(s) + qty(g); return true; }
 function takeOne(list, g) { if (qty(g) > 1) { g.n--; return Object.assign({}, g, { id: uid(), n: 1 }); } const i = list.indexOf(g); if (i >= 0) list.splice(i, 1); return g; }
-function addItem(g) { bagDirty = true; if (stackInto(S.inv, g)) return; if (S.inv.length >= BAG_MAX) { const p = sellPrice(g); S.gold += p; log(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, '#6fe7ff'); return; } S.inv.push(g); }
+const bagUsed = () => S.inv.reduce((n, g) => n + (stackKey(g) ? 0 : 1), 0);
+const bagFull = () => bagUsed() >= BAG_MAX;
+function addItem(g) { bagDirty = true; if (stackInto(S.inv, g)) return; if (!stackKey(g) && bagFull()) { const p = sellPrice(g); S.gold += p; log(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, '#6fe7ff'); return; } S.inv.push(g); }
 function updateLoot(dt, t) {
   for (let i = loots.length - 1; i >= 0; i--) { const l = loots[i]; l.t += dt;
     if (!l.gem.userData.sprite) l.gem.rotation.y = t * 2; l.gem.position.y = (l.gem.userData.sprite ? 0.12 : 0.45) + Math.sin(t * 3 + i) * 0.06 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
@@ -3202,7 +3204,7 @@ function updateHud() {
   $('hLv').textContent = S.lv; $('hIcon').textContent = C.icon; $('hName').textContent = C.name; $('hName').style.color = C.col;
   $('hpBar').style.transform = `scaleX(${Math.max(0, S.hp) / HS.hp})`; $('hpTxt').textContent = `${Math.max(0, Math.ceil(S.hp))} / ${HS.hp}`;
   $('mpBar').style.transform = `scaleX(${S.mp / HS.mp})`; $('mpTxt').textContent = `${Math.floor(S.mp)} / ${HS.mp}`;
-  $('hGold').textContent = S.gold.toLocaleString('vi-VN'); $('hBag').textContent = S.inv.length;
+  $('hGold').textContent = S.gold.toLocaleString('vi-VN'); $('hBag').textContent = bagUsed();
   $('bBag').classList.toggle('dot', upgradeHint());
   const need = expNeed(S.lv); $('expBar').style.transform = `scaleX(${S.lv >= MAXLV ? 1 : S.exp / need})`; $('expTxt').textContent = S.lv >= MAXLV ? 'CẤP TỐI ĐA' : `EXP ${(S.exp / need * 100).toFixed(1)}%`;
   $('bAuto').setAttribute('aria-pressed', String(S.auto)); $('bParty').classList.toggle('on', !!S.party);
@@ -3334,9 +3336,11 @@ function renderGear() {
     ${setInfo()}
     <div class="msg" role="status"></div>
   </div><div class="col">
-    <div class="sect" style="display:flex;justify-content:space-between;align-items:center">Túi đồ ${S.inv.length}/${BAG_MAX}<span><button class="pb" id="bBest">Mặc đồ tốt nhất</button></span></div>
+    <div class="sect" style="display:flex;justify-content:space-between;align-items:center">Túi đồ ${bagUsed()}/${BAG_MAX} ô<span><button class="pb" id="bBest">Mặc đồ tốt nhất</button></span></div>
+    ${S.inv.some(g => stackKey(g)) ? `<div class="sect" style="margin:2px 0 4px">Vật phẩm xếp chồng · ${S.inv.filter(g => stackKey(g)).reduce((n, g) => n + qty(g), 0)} món (không chiếm ô)</div><div id="stackGrid" class="bagrid">${S.inv.filter(g => stackKey(g)).map(g => tileHtml(g)).join('')}</div>` : ''}
     ${sellBar()}
-    <div id="bagGrid">${S.inv.map(g => tileHtml(g)).join('')}${'<div class="tile empty"></div>'.repeat(Math.max(0, BAG_MAX - S.inv.length))}</div>
+    <div id="bagGrid" class="bagrid">${S.inv.filter(g => !stackKey(g)).map(g => tileHtml(g)).join('')}${'<div class="tile empty"></div>'.repeat(Math.max(0, Math.min(BAG_MAX - bagUsed(), 12 - bagUsed() % 6)))}</div>
+    <p class="muted" style="margin:6px 0 0">Còn ${BAG_MAX - bagUsed()} ô trống.</p>
   </div></div>`;
   bagBody.insertAdjacentHTML('beforeend', '<div class="ipop hide" id="ipop"><div class="ipop-card" role="dialog" aria-modal="true" aria-label="Chi tiết món đồ"><button class="x ipop-x" id="ipopX" aria-label="Đóng">×</button><div id="detail"></div><div class="msg" role="status"></div></div></div>');
   $('ipop').onclick = e => { if (e.target.id === 'ipop') { selId = null; renderBag(); } }; $('ipopX').onclick = () => { selId = null; renderBag(); };
@@ -3368,7 +3372,7 @@ function renderDetail() {
   if (canUp) $('aUp').onclick = () => enhance(g);
   if (!equipped) $('aSell').onclick = () => { S.inv = S.inv.filter(x => x !== g); S.gold += sellPrice(g); selId = null; afterChange(); flash('Đã bán ' + g.name + '.'); };
 }
-function equipToggle(g, equipped, to) { if (equipped) { if (S.inv.length >= BAG_MAX) { flash('Túi đầy, không tháo được.', 'bad'); return; } const k = EQ_KEYS.find(s => S.eq[s] === g); if (k) delete S.eq[k]; S.inv.push(g); } else { const k = to || g.slot; const old = S.eq[k]; S.inv = S.inv.filter(x => x !== g); if (old) S.inv.push(old); S.eq[k] = g; } afterChange(); }
+function equipToggle(g, equipped, to) { if (equipped) { if (bagFull()) { flash('Túi đầy, không tháo được.', 'bad'); return; } const k = EQ_KEYS.find(s => S.eq[s] === g); if (k) delete S.eq[k]; S.inv.push(g); } else { const k = to || g.slot; const old = S.eq[k]; S.inv = S.inv.filter(x => x !== g); if (old) S.inv.push(old); S.eq[k] = g; } afterChange(); }
 function enhance(g) { const cost = upCost(g.plus); if (S.mats.e < cost.stones || S.gold < cost.gold) return; S.mats.e -= cost.stones; S.gold -= cost.gold; const ok = Math.random() < upRate(g.plus);
   if (ok) g.plus++; else if (g.plus >= 9) g.plus--; afterChange();
   flash(ok ? `Thành công! ${g.name} +${g.plus}` : g.plus >= 8 ? `Thất bại. ${g.name} còn +${g.plus}.` : 'Thất bại. Đồ giữ nguyên cấp.', ok ? 'ok' : 'bad');
@@ -3398,7 +3402,7 @@ function renderWing() {
       return `<div class="row">${wingThumb(t)}<div class="t"><b style="color:${RARITY[Math.min(3, t - 1)].css}">${n}</b>${worn ? ' · <b style="color:var(--cyan)">Đang mặc</b>' : ''} · có ${own(t)}<br>${WCOST[i]} lông vũ · ×${WINGM[t]} sát thương · +${WDEF[t]} phòng thủ · +${WHP[t]} máu</div>
         <button class="pb pri" data-wc="${t}"${can && S.mats.f >= WCOST[i] ? '' : ' disabled'}>${can ? 'Chế tạo' : 'Khóa'}</button></div>`; }).join('')}<div class="msg" role="status"></div>`;
   bagBody.querySelectorAll('[data-wc]').forEach(b => b.onclick = () => { const t = +b.dataset.wc; if (t > (S.wingMax || 0) + 1 || S.mats.f < WCOST[t - 1]) return;
-    if (S.inv.length >= BAG_MAX) { flash('Túi đầy.', 'bad'); return; }
+    if (bagFull()) { flash('Túi đầy.', 'bad'); return; }
     S.mats.f -= WCOST[t - 1]; S.inv.push(makeWing(t, S.lv)); S.wingMax = Math.max(S.wingMax || 0, t); fxBeam(S.pos.x, S.pos.z, '#ffd85a', 1.4, 1); burst(S.pos.x, 1.2, S.pos.z, 40, C3('#fff0b0'), 4, 0.4, 0.9);
     banner(WNAME[t].toUpperCase() + '!', 'gold'); afterChange(); flash(WNAME[t] + ' đã vào túi đồ.', 'ok'); });
 }
@@ -3472,7 +3476,7 @@ function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; co
       <div class="sect" style="margin:10px 0 6px">${b.name} bán</div>${b.inv.length ? b.inv.map((g, i) => `<div class="row">${tileHtml(g, 'tabindex="-1"')}<div class="t">${itemLine(g)}</div><button class="pb pri" data-buy="${i}"${S.gold < buyPrice(g) ? ' disabled' : ''}>Mua ${fmt(buyPrice(g))}</button></div>`).join('') : '<p class="muted">Họ chưa có gì để bán.</p>'}
       <div class="sect" style="margin:12px 0 6px">Bạn bán cho ${b.name}</div>${mine.length ? mine.map(g => `<div class="row">${tileHtml(g, 'tabindex="-1"')}<div class="t">${itemLine(g)}</div><button class="pb" data-sell="${g.id}"${b.gold < offerPrice(g, b) ? ' disabled' : ''}>Bán ${fmt(offerPrice(g, b))}</button></div>`).join('') : '<p class="muted">Túi đồ trống.</p>'}<div class="msg" role="status"></div>`;
     const say = t => { const e = ents.get(b.id); if (e) botSay(e, t); };
-    B.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => { const g = b.inv[+x.dataset.buy]; const p = buyPrice(g); if (!g || S.gold < p || (S.inv.length >= BAG_MAX && !S.inv.some(q => stackKey(q) && stackKey(q) === stackKey(g)))) { log(S.inv.length >= BAG_MAX ? 'Túi đầy.' : 'Không đủ vàng.', '#ff9a9a'); return; }
+    B.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => { const g = b.inv[+x.dataset.buy]; const p = buyPrice(g); if (!g || S.gold < p || (!stackKey(g) && bagFull())) { log(bagFull() ? 'Túi đầy.' : 'Không đủ vàng.', '#ff9a9a'); return; }
       S.gold -= p; b.gold += p; S.traded = (S.traded || 0) + p; b.traded = (b.traded || 0) + p; const got = takeOne(b.inv, g); delete got.pm; addItem(got); log(`Đã mua [${g.name}] của ${b.name} giá ${fmt(p)} vàng.`, '#7dff9a'); say('Cảm ơn nhé!'); afterChange(); renderWorldPanel(); });
     B.querySelectorAll('[data-sell]').forEach(x => x.onclick = () => { const g = S.inv.find(q => q.id === x.dataset.sell); if (!g) return; const p = offerPrice(g, b); if (b.gold < p) return;
       const sold = takeOne(S.inv, g); S.gold += p; b.gold -= p; S.traded = (S.traded || 0) + p; b.traded = (b.traded || 0) + p; if (!stackInto(b.inv, sold)) { b.inv.push(sold); if (b.inv.length > 12) b.inv.shift(); } log(`Đã bán [${g.name}] cho ${b.name} được ${fmt(p)} vàng.`, '#ffd86a'); say('Món này ngon!'); afterChange(); renderWorldPanel(); }); }
