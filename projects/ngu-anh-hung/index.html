@@ -2684,7 +2684,9 @@ const skDmgK = () => (SKD[S.cls] || 1) / Math.pow(1 + S.lv / 60, SKP[S.cls] || 2
 const skRate = () => SK_RATE0 * (HS ? HS.aps : 0.25) / CLS[S.cls].aps;
 const skOpen = () => SKILLS[S.cls].filter(k => S.lv >= k.lv).length || 1;
 // potions: each restores half the max HP or mana; a short shared wait per kind; auto play drinks under 25%
-const POT = { heal: 0.5, cd: 1.5, auto: 0.25, drop: { hp: 0.05, mp: 0.04 } };
+const POT = { heal: 0.5, cd: 1.5, auto: 0.25, drop: { hp: 0.05, mp: 0.04 }, max: 99999 };     // potions stack up to 99,999 of each
+const MAT_MAX = { hpp: 99999, mpp: 99999 };
+function addMat(k, n) { S.mats[k] = (S.mats[k] || 0) + n; if (MAT_MAX[k] && S.mats[k] > MAT_MAX[k]) S.mats[k] = MAT_MAX[k]; }
 const potPrice = () => 40 + S.lv * 4;
 function usePot(k, quiet) { const key = k === 'hp' ? 'hpp' : 'mpp'; S.potCd = S.potCd || { hp: 0, mp: 0 };
   if (!S || S.dead || !HS || (S.mats[key] || 0) <= 0 || S.potCd[k] > 0) { if (!quiet && S && (S.mats[key] || 0) <= 0) log(`Hết ${MATS[key].name}. Mua thêm ở thương nhân Hermes trong thành.`, '#ff9a9a'); return false; }
@@ -2958,7 +2960,7 @@ function updateLoot(dt, t) {
     if ((!S.dead && ready && ld < 0.9 && (!S.autoLoot || lootOk(l.it))) || l.t > 40) {
       if (l.t <= 40) { bagDirty = true; const it = l.it;
         if (it.kind === 'gold') { S.gold += it.amount; }
-        else if (it.kind === 'mat') { S.mats[it.k] += it.amount; log(`Nhặt được [${l.name}]`, MATS[it.k].col); }
+        else if (it.kind === 'mat') { addMat(it.k, it.amount); log(`Nhặt được [${l.name}]`, MATS[it.k].col); }
         else { addItem(it.gear); if (it.gear.charm) recalc(); log(`Nhặt được [${l.name}] · ${RARITY[it.gear.r].n.toUpperCase()}${it.gear.set ? ' · ' + SETS[it.gear.set].n : ''}`, it.gear.charm ? CHARMS[it.gear.charm].col : RARITY[it.gear.r].css); }
         burst(l.x, 0.5, l.z, 6, l.col, 2, 0.25, 0.5); }
       removeLoot(l); loots.splice(i, 1); } }
@@ -3864,8 +3866,8 @@ function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; co
     $('lGood').onclick = () => setAll(k => ['g2', 'g3', 'set', 'charm', 'stone', 'f'].includes(k)); }
   else if (wMode === 'shop') { $('wTitle').textContent = 'Hermes · Thương Nhân';
     const pp = potPrice(), goods = [['hpp', 1, pp], ['hpp', 10, pp * 9], ['mpp', 1, pp], ['mpp', 10, pp * 9], ['e', 1, 300 + S.lv * 6], ['e', 10, 2800 + S.lv * 55], ['f', 1, 2500 + S.lv * 25], ['c', 1, 6000 + S.lv * 40]];
-    B.innerHTML = `<p class="muted" style="margin-top:0">Bình thuốc và nguyên liệu bán sẵn. Muốn bán đồ, hãy giao dịch với người chơi khác ở chợ Agora (giá tốt hơn bán thường).</p>${goods.map(([k, n, p], i) => `<div class="row">${mIcon(k)}<div class="t"><b style="color:${MATS[k].col}">${MATS[k].name} ×${n}</b><br>${MATS[k].desc}</div><button class="pb pri" data-g="${i}"${S.gold < p ? ' disabled' : ''}>Mua ${fmt(p)}</button></div>`).join('')}`;
-    B.querySelectorAll('[data-g]').forEach(x => x.onclick = () => { const [k, n, p] = goods[+x.dataset.g]; if (S.gold < p) return; S.gold -= p; S.mats[k] += n; log(`Đã mua ${MATS[k].name} ×${n}.`, MATS[k].col); afterChange(); renderWorldPanel(); }); }
+    B.innerHTML = `<p class="muted" style="margin-top:0">Bình thuốc và nguyên liệu bán sẵn. Muốn bán đồ, hãy giao dịch với người chơi khác ở chợ Agora (giá tốt hơn bán thường).</p>${goods.map(([k, n, p], i) => `<div class="row">${mIcon(k)}<div class="t"><b style="color:${MATS[k].col}">${MATS[k].name} ×${n}</b><br>${MATS[k].desc}${MAT_MAX[k] ? ` · đang có ${fmt(S.mats[k] || 0)} / ${fmt(MAT_MAX[k])}` : ''}</div><button class="pb pri" data-g="${i}"${S.gold < p || (MAT_MAX[k] && (S.mats[k] || 0) + n > MAT_MAX[k]) ? ' disabled' : ''}>Mua ${fmt(p)}</button></div>`).join('')}`;
+    B.querySelectorAll('[data-g]').forEach(x => x.onclick = () => { const [k, n, p] = goods[+x.dataset.g]; if (S.gold < p || (MAT_MAX[k] && (S.mats[k] || 0) + n > MAT_MAX[k])) return; S.gold -= p; addMat(k, n); log(`Đã mua ${MATS[k].name} ×${n}.`, MATS[k].col); afterChange(); renderWorldPanel(); }); }
   else if (wMode === 'market') { $('wTitle').textContent = 'Chợ Agora'; const list = S.bots.filter(b => b.map === S.map && b.inv.length);
     B.innerHTML = `<p class="muted" style="margin-top:0">Người chơi đang ở thành và đồ họ rao bán. Chạm "Giao dịch" để mua hoặc bán đồ cho họ bằng vàng.</p>${list.length ? list.map(b => `<div class="row"><div class="t">${botTag(b)}<br>${b.inv.slice(0, 3).map(g => g.slot === 'charm' ? `<span style="color:${CHARMS[g.charm].col}">✦ ${g.name}</span>` : `<span style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</span>`).join(' · ')}${b.inv.length > 3 ? ' …' : ''}</div><button class="pb pri" data-tr="${b.id}">Giao dịch</button></div>`).join('') : '<p class="muted">Chợ đang vắng, quay lại sau nhé.</p>'}`;
     B.querySelectorAll('[data-tr]').forEach(b => b.onclick = () => openWorld('trade', b.dataset.tr)); }
