@@ -2662,7 +2662,8 @@ const curMount = () => S && S.mount ? MOUNTS.find(p => p.id === S.mount) : null;
 // skills of every class: 0.5 casts/s at the start, growing with attack speed like the basic attack (to 5/s);
 // the unlocked skills take turns (each waits for the others), a cast never blocks the basic attack, and its mana cost shrinks as the rate grows
 const SK_RATE0 = 0.5, SK_ROT = cls => true;          // every class, the fire knight included
-const SKD = { fire: 1, thunder: 1, ice: 1, elf: 1, holy: 1 };          // skill damage factor per class, tuned so a pack of monsters dies in about 5-6 s
+const SKD = { fire: 1, thunder: 1, ice: 0.9, elf: 1.3, holy: 1.1 };
+const skDmgK = () => (SKD[S.cls] || 1) / (1 + S.lv / 60);      /* gear grows faster than monster health: the skill share shrinks with level so a pack still takes ~5-6 s */          // skill damage factor per class, tuned so a pack of monsters dies in about 5-6 s
 const skRate = () => SK_RATE0 * (HS ? HS.aps : 0.25) / CLS[S.cls].aps;
 const skOpen = () => SKILLS[S.cls].filter(k => S.lv >= k.lv).length || 1;
 function skCd(sk) { return SK_ROT(S.cls) ? skOpen() / skRate() : Math.max(0.1, sk.cdk / (HS ? HS.aps : 3)); }
@@ -2997,7 +2998,7 @@ function castSkill(j, pref) {
   const col = ELC[sk.el]; // skill names are no longer shown when casting
   const nP = Math.round(40 * Math.min(1, skCd(sk) / 0.8));
   for (let i = 0; i < nP; i++) { const a = rr(0, 6.28), s = rr(3, 7); emit(S.pos.x, heroG.position.y + 0.7, S.pos.z, Math.cos(a) * s, rr(0, 2), Math.sin(a) * s, C3(col), 0.4, 0.6, 0, 0.9); }
-  const D = sk.mult * (SKD[S.cls] || 1), px = S.pos.x, pz = S.pos.z;
+  const D = sk.mult * skDmgK(), px = S.pos.x, pz = S.pos.z;
   switch (sk.id) {
     case 'bolts': { const list = []; for (let n = 0; n < 5; n++) { const pool = mobsNear(tg.x, tg.z, 2.2); const m = pool.length ? pick(pool) : tg; list.push({ x: m.x + rr(-0.3, 0.3), z: m.z + rr(-0.3, 0.3) }); } sks.push({ type: 'boltseq', list, t: 0, n: 0, D }); break; }
     case 'storm': fxRing(tg.x, tg.z, 0, 2.6, col, 0.8); sks.push({ type: 'storm', sk: 'storm', x: tg.x, z: tg.z, R: 2.6, t: 0, dur: 2, tick: 0.1, D, col }); break;
