@@ -3,6 +3,7 @@
 ## Link và quy tắc xuất bản
 - Dev: https://claude.ai/artifact/PBAE7ke18xyxBVu2Sente7 ← `index.html` (+ `assets/**`)
 - Test: https://claude.ai/artifact/JytjwNgSMK18nigbrBf9Zc ← `test-build/index.html` (bản sao của index.html, chỉ đổi `<title>` thành "Ngũ Anh Hùng Test")
+- Bảng phát triển: https://claude.ai/artifact/AQze3RX5putBzaumknY4ye ← `dashboard/index.html`. Dữ liệu nằm trong kho db của trang (comps, tasks, spend, meta/meshy); nạp ban đầu bằng `dashboard/seed.py`. **Khi xong hoặc mở việc mới, cập nhật bảng bằng ArtifactData** (đọc trước, ghi kèm if_version).
 - **Mỗi lần cập nhật dev thì xuất bản luôn test** (chủ dự án yêu cầu). Asset mới: publish dev với `files` = đường dẫn tương đối; test lấy file server-side `{artifact: <dev url>, path}`.
 - Capabilities (giữ nguyên khi publish, không truyền lại): db rules `[{path:"",read:"view",write:"owner"},{path:"data/users/{self}",write:"interact"}]` + `user`.
 - Nhánh git: `claude/sharp-goodall-ay56hb`. Commit kèm 2 dòng attribution của phiên. Không mở PR nếu chưa được yêu cầu.

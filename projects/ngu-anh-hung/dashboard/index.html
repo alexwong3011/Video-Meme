@@ -1,0 +1,327 @@
+<title>Bảng Phát Triển Ngũ Anh Hùng</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a forge ledger. Header with the realm's summary, a row of tabs, then per tab a two-column sheet:
+   what exists now on the left, the next update to write on the right, and the tab's work list beneath. */
+:root {
+  --bg: #f3f1ec; --panel: #ffffff; --panel2: #f8f6f1; --ink: #1d2430; --mute: #5f6876; --line: #ddd8cc;
+  --gold: #a87814; --gold-soft: #f3e6c4; --teal: #13707a; --teal-soft: #d6eef0;
+  --ok: #2f7d43; --ok-soft: #dcefe0; --warn: #a26205; --warn-soft: #f7e7c8; --todo: #6b7280; --todo-soft: #e8e9ec; --pause: #7a4fb0; --pause-soft: #ece2f8; --bad: #b3261e;
+  --display: "Playfair Display", Georgia, "Times New Roman", serif; --ui: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f141b; --panel: #161d27; --panel2: #1b2430; --ink: #e8e3d6; --mute: #9aa3b0; --line: #2a3542;
+  --gold: #e2b450; --gold-soft: #3a2f16; --teal: #5cc8d2; --teal-soft: #15343a;
+  --ok: #6fcf86; --ok-soft: #173322; --warn: #f0b44c; --warn-soft: #3a2b10; --todo: #a3aab5; --todo-soft: #262d37; --pause: #c09cf2; --pause-soft: #2c2340; --bad: #ff8a80; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f141b; --panel: #161d27; --panel2: #1b2430; --ink: #e8e3d6; --mute: #9aa3b0; --line: #2a3542;
+  --gold: #e2b450; --gold-soft: #3a2f16; --teal: #5cc8d2; --teal-soft: #15343a;
+  --ok: #6fcf86; --ok-soft: #173322; --warn: #f0b44c; --warn-soft: #3a2b10; --todo: #a3aab5; --todo-soft: #262d37; --pause: #c09cf2; --pause-soft: #2c2340; --bad: #ff8a80; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 400 14px/1.55 var(--ui); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px }
+header.top { display: grid; gap: 12px }
+.brand { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px }
+.brand h1 { margin: 0; font: 700 clamp(22px, 4vw, 30px)/1.15 var(--display); letter-spacing: .01em; color: var(--ink); text-wrap: balance }
+.brand .sub { color: var(--mute); font-size: 13px }
+.links { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12.5px }
+.links a { color: var(--teal); text-decoration: none; border: 1px solid var(--line); background: var(--panel); padding: 4px 10px; border-radius: 999px }
+.links a:hover { border-color: var(--teal) }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0 }
+.kpi .l { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute) }
+.kpi .v { font: 600 22px/1.2 var(--ui); font-variant-numeric: tabular-nums }
+.kpi .s { font-size: 12px; color: var(--mute) }
+.bar { height: 6px; border-radius: 4px; background: var(--todo-soft); overflow: hidden; display: flex }
+.bar i { display: block; height: 100% }
+nav.tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: thin }
+nav.tabs button { flex: none; border: 0; background: none; color: var(--mute); font: 600 13px var(--ui); padding: 10px 12px 9px; border-bottom: 2px solid transparent; cursor: pointer; display: flex; gap: 6px; align-items: center; white-space: nowrap }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--gold) }
+nav.tabs button:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px }
+nav.tabs .n { font: 500 11px var(--mono); color: var(--mute); background: var(--panel2); border: 1px solid var(--line); padding: 0 6px; border-radius: 999px }
+.note { font-size: 12.5px; color: var(--mute) }
+.note.warn { color: var(--warn) }
+section.view { display: grid; gap: 22px }
+h2 { margin: 0; font: 700 19px/1.3 var(--display) }
+.sect-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px }
+.sheet { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden }
+.sheet .hd, .row { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+.sheet .hd > div { padding: 8px 12px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); background: var(--panel2); border-bottom: 1px solid var(--line) }
+.sheet .hd > div + div, .row > .next { border-left: 1px solid var(--line) }
+.row + .row { border-top: 1px solid var(--line) }
+.row > div { padding: 10px 12px; min-width: 0; display: grid; gap: 6px; align-content: start }
+.row .name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-weight: 600 }
+.row .now { color: var(--mute); font-size: 13px; white-space: pre-wrap }
+.row.st-done { box-shadow: inset 3px 0 0 var(--ok) } .row.st-partial { box-shadow: inset 3px 0 0 var(--warn) } .row.st-todo { box-shadow: inset 3px 0 0 var(--todo) } .row.st-paused { box-shadow: inset 3px 0 0 var(--pause) }
+textarea, input[type=text], input[type=number], input[type=date], select { font: inherit; color: var(--ink); background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; width: 100%; min-width: 0 }
+textarea { resize: vertical; min-height: 64px; max-height: 280px; line-height: 1.5; field-sizing: content }
+textarea:focus, input:focus, select:focus { outline: 2px solid var(--teal); outline-offset: 0; border-color: transparent }
+textarea[readonly], input[readonly] { background: transparent }
+.next .lbl { font-size: 11px; color: var(--mute) }
+.pill { display: inline-flex; align-items: center; gap: 5px; font: 600 11.5px var(--ui); padding: 2px 9px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50% ; background: currentColor }
+.p-done { color: var(--ok); background: var(--ok-soft) } .p-partial, .p-doing { color: var(--warn); background: var(--warn-soft) } .p-todo { color: var(--todo); background: var(--todo-soft) } .p-paused { color: var(--pause); background: var(--pause-soft) }
+select.pillsel { width: auto; padding: 2px 8px; font: 600 11.5px var(--ui); border-radius: 999px; border-color: transparent; cursor: pointer }
+.tasks { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow-x: auto }
+table { border-collapse: collapse; width: 100%; min-width: 720px }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top }
+th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); background: var(--panel2); font-weight: 600 }
+tr:last-child td { border-bottom: 0 }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12.5px }
+td .t { font-weight: 600 }
+td.tc { min-width: 230px }
+td .sm { font-size: 12.5px; color: var(--mute); white-space: pre-wrap }
+tr.done td .t { text-decoration: line-through; color: var(--mute) }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--ok); cursor: pointer }
+.tabtag { font: 500 11px var(--mono); color: var(--teal); background: var(--teal-soft); padding: 1px 7px; border-radius: 5px; white-space: nowrap }
+button.btn { font: 600 12.5px var(--ui); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px; cursor: pointer }
+button.btn:hover { border-color: var(--gold) }
+button.btn.pri { background: var(--gold); border-color: var(--gold); color: var(--bg) }
+button.btn:focus-visible, button.x:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px }
+button.x { border: 0; background: none; color: var(--mute); cursor: pointer; font-size: 15px; padding: 2px 6px; border-radius: 5px }
+button.x:hover { color: var(--bad) }
+form.add { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); align-items: end; padding: 12px; border: 1px dashed var(--line); border-radius: 10px; background: var(--panel2) }
+form.add label { display: grid; gap: 3px; font-size: 11.5px; color: var(--mute) }
+form.add .wide { grid-column: 1 / -1 }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0 }
+.prog { display: grid; gap: 8px }
+.prog .r { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 64px; gap: 10px; align-items: center; font-size: 13px }
+.prog .r b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.prog .r span { font: 500 12px var(--mono); color: var(--mute); text-align: right }
+.legend { display: flex; flex-wrap: wrap; gap: 8px }
+.list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none }
+.list li { display: flex; gap: 8px; align-items: baseline; font-size: 13px }
+.list li .pill { flex: none }
+.meter { display: grid; gap: 6px }
+.meter .big { font: 600 32px/1 var(--ui); font-variant-numeric: tabular-nums }
+.meter .big small { font-size: 14px; color: var(--mute); font-weight: 500 }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+.empty { padding: 18px; color: var(--mute); text-align: center; font-size: 13px }
+.saving { font-size: 11px; color: var(--mute) }
+@media (max-width: 640px) {
+  .sheet .hd { display: none }
+  .row { grid-template-columns: minmax(0, 1fr) }
+  .row > .next { border-left: 0; border-top: 1px dashed var(--line); background: var(--panel2) }
+  .prog .r { grid-template-columns: minmax(0, 110px) minmax(0, 1fr) 54px }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Ngũ Anh Hùng</h1><span class="sub">Bảng phát triển · ARPG 3D trên trình duyệt · cấp tối đa 400</span></div>
+    <div class="links">
+      <a href="https://claude.ai/artifact/PBAE7ke18xyxBVu2Sente7" target="_blank" rel="noopener">Bản dev ↗</a>
+      <a href="https://claude.ai/artifact/JytjwNgSMK18nigbrBf9Zc" target="_blank" rel="noopener">Bản test ↗</a>
+      <a href="https://github.com/alexwong3011/Video-Meme/tree/claude/sharp-goodall-ay56hb/projects/ngu-anh-hung" target="_blank" rel="noopener">Mã nguồn ↗</a>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <p class="note" id="status">Đang tải dữ liệu dự án…</p>
+  </header>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Cấu phần"></nav>
+  <main id="view"></main>
+</div>
+
+<script>
+const TABS = [
+  { id: 'overview', n: 'Tổng quan' },
+  { id: 'nhanvat', n: 'Nhân vật & Lớp' },
+  { id: 'kynang', n: 'Kỹ năng & Hiệu ứng' },
+  { id: 'trangbi', n: 'Trang bị & Vật phẩm' },
+  { id: 'thegioi', n: 'Thế giới & Boss' },
+  { id: 'hethong', n: 'Hệ thống chơi' },
+  { id: 'kythuat', n: 'Kỹ thuật & Quy trình' },
+  { id: 'congviec', n: 'Công việc' },
+  { id: 'tainguyen', n: 'Tài nguyên' }
+];
+const COMP_TABS = TABS.filter(t => !['overview', 'congviec', 'tainguyen'].includes(t.id));
+const CST = { done: 'Hoàn thành', partial: 'Đang dở', todo: 'Chưa làm', paused: 'Tạm treo' };
+const TST = { todo: 'Chưa làm', doing: 'Đang làm', done: 'Xong', paused: 'Tạm treo' };
+const S = { comps: new Map(), tasks: new Map(), spend: new Map(), meta: null, loaded: { comps: false, tasks: false, spend: false, meta: false } };
+let db = null, canWrite = true, tab = 'overview';
+const drafts = new Map(), timers = new Map(), writing = new Map();
+
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = v => (v === '' || v === null || v === undefined || isNaN(+v)) ? null : +v;
+const fmt = v => v === null || v === undefined ? '–' : (+v).toLocaleString('vi-VN');
+const byOrder = (a, b) => (a.order ?? 999) - (b.order ?? 999) || String(a.name || a.title || '').localeCompare(String(b.name || b.title || ''), 'vi');
+const list = (m, f) => [...m.values()].filter(f || (() => true)).sort(byOrder);
+const tabName = id => (TABS.find(t => t.id === id) || { n: id }).n;
+
+// ---- writes: one at a time per document, coalesced while typing ----
+function patch(col, id, data, delay = 0) {
+  if (!db || !canWrite) return;
+  const key = col + '/' + id; const prev = timers.get(key); if (prev) clearTimeout(prev.t);
+  const merged = Object.assign({}, prev ? prev.data : {}, data);
+  const run = async () => {
+    timers.delete(key);
+    while (writing.get(key)) await writing.get(key);
+    const p = db.collection(col).doc(id).update(merged).catch(e => { flag(e); }).finally(() => { writing.delete(key); for (const f in merged) drafts.delete(key + '#' + f); });
+    writing.set(key, p); await p; };
+  if (delay) timers.set(key, { t: setTimeout(run, delay), data: merged }); else run();
+}
+function flag(e) { const c = e && e.code;
+  if (c === 'invalid_argument') { canWrite = false; note('Bạn chỉ có quyền xem: thay đổi không được lưu.', true); render(); }
+  else if (c === 'quota_exceeded') note('Kho dữ liệu đã đầy, hãy xóa bớt công việc cũ rồi thử lại.', true);
+  else note('Chưa lưu được thay đổi, kiểm tra kết nối rồi thử lại.', true); }
+function note(t, warn) { const el = $('#status'); el.textContent = t; el.className = 'note' + (warn ? ' warn' : ''); el.hidden = !t; }
+const val = (col, id, f, v) => { const d = drafts.get(col + '/' + id + '#' + f); return d !== undefined ? d : v; };
+
+// ---- rendering ----
+function render() { renderKpis(); renderTabs(); renderView(); }
+function counts(f) { const c = { done: 0, partial: 0, todo: 0, paused: 0 }; for (const x of list(S.comps, f)) c[x.status] = (c[x.status] || 0) + 1; return c; }
+function bar(c) { const tot = Object.values(c).reduce((a, b) => a + b, 0) || 1;
+  return `<div class="bar" role="img" aria-label="${c.done} hoàn thành, ${c.partial} đang dở, ${c.todo} chưa làm, ${c.paused} tạm treo">${['done', 'partial', 'paused', 'todo'].map(k => `<i style="width:${c[k] / tot * 100}%;background:var(--${k === 'done' ? 'ok' : k === 'partial' ? 'warn' : k === 'paused' ? 'pause' : 'todo'})"></i>`).join('')}</div>`; }
+function renderKpis() {
+  const c = counts(), tot = Object.values(c).reduce((a, b) => a + b, 0);
+  const T = list(S.tasks), open = T.filter(t => t.state !== 'done'), doing = T.filter(t => t.state === 'doing');
+  const used = list(S.spend).reduce((a, x) => a + (+x.credits || 0), 0), M = S.meta || {};
+  const need = open.reduce((a, t) => a + (num(t.est) || 0), 0);
+  $('#kpis').innerHTML = `
+    <div class="kpi"><span class="l">Cấu phần hoàn thành</span><span class="v">${c.done}<small class="s"> / ${tot}</small></span>${bar(c)}</div>
+    <div class="kpi"><span class="l">Công việc còn mở</span><span class="v">${open.length}</span><span class="s">${doing.length} đang làm · ${T.filter(t => t.state === 'paused').length} tạm treo · ${T.length - open.length} đã xong</span></div>
+    <div class="kpi"><span class="l">Credit Meshy còn lại</span><span class="v">${fmt(num(M.balance))}</span><span class="s">${M.resetAt ? 'Nạp lại ' + esc(M.resetAt) : ''}</span></div>
+    <div class="kpi"><span class="l">Credit đã dùng / cần thêm</span><span class="v">${fmt(used)} <small class="s">/ ${fmt(need)}</small></span><span class="s">Đã dùng theo sổ chi · cần cho việc còn mở</span></div>`; }
+function renderTabs() {
+  $('#tabs').innerHTML = TABS.map(t => { let n = '';
+    if (COMP_TABS.some(c => c.id === t.id)) n = list(S.tasks, x => x.tab === t.id && x.state !== 'done').length;
+    if (t.id === 'congviec') n = list(S.tasks, x => x.state !== 'done').length;
+    return `<button role="tab" id="tab-${t.id}" aria-selected="${t.id === tab}" aria-controls="view" data-tab="${t.id}">${t.n}${n ? `<span class="n" title="Công việc còn mở">${n}</span>` : ''}</button>`; }).join(''); }
+function pillSel(col, id, field, cur, map) {
+  return canWrite ? `<select class="pillsel p-${esc(cur)}" aria-label="Trạng thái" data-col="${col}" data-id="${esc(id)}" data-f="${field}">${Object.entries(map).map(([k, v]) => `<option value="${k}"${k === cur ? ' selected' : ''}>${v}</option>`).join('')}</select>`
+    : `<span class="pill p-${esc(cur)}">${esc(map[cur] || cur)}</span>`; }
+function ta(col, id, field, v, ph, label) {
+  return `<textarea aria-label="${esc(label)}" data-col="${col}" data-id="${esc(id)}" data-f="${field}" placeholder="${esc(ph)}"${canWrite ? '' : ' readonly'}>${esc(val(col, id, field, v))}</textarea>`; }
+function compSheet(tid) {
+  const L = list(S.comps, x => x.tab === tid);
+  if (!L.length) return `<div class="sheet"><div class="empty">Chưa có cấu phần nào trong mục này. Thêm cấu phần đầu tiên bằng biểu mẫu bên dưới.</div></div>`;
+  return `<div class="sheet"><div class="hd"><div>Cấu phần · hiện trạng</div><div>Hướng update cần làm</div></div>${L.map(x => `
+    <div class="row st-${esc(x.status)}" data-row="${esc(x.id)}">
+      <div><div class="name">${esc(x.name)} ${pillSel('comps', x.id, 'status', x.status, CST)}${canWrite ? `<button class="x" data-del="comps" data-id="${esc(x.id)}" aria-label="Xóa cấu phần ${esc(x.name)}" title="Xóa">×</button>` : ''}</div><div class="now">${esc(x.now)}</div></div>
+      <div class="next">${ta('comps', x.id, 'next', x.next, 'Ghi hướng update, ý tưởng hoặc lỗi cần sửa…', 'Hướng update cho ' + x.name)}</div>
+    </div>`).join('')}</div>`; }
+function taskTable(f, showTab) {
+  const L = list(S.tasks, f).sort((a, b) => ({ doing: 0, todo: 1, paused: 2, done: 3 }[a.state] - { doing: 0, todo: 1, paused: 2, done: 3 }[b.state]) || byOrder(a, b));
+  if (!L.length) return `<div class="tasks"><div class="empty">Chưa có công việc. Thêm việc mới bằng biểu mẫu bên dưới.</div></div>`;
+  return `<div class="tasks"><table><thead><tr><th style="width:34px"><span class="sr">Xong</span></th><th>Công việc</th>${showTab ? '<th>Mục</th>' : ''}<th>Trạng thái</th><th>Tài nguyên cần</th><th class="num">Credit ước tính</th><th class="num">Credit đã dùng</th><th style="width:30px"></th></tr></thead><tbody>${L.map(t => `
+    <tr class="${t.state === 'done' ? 'done' : ''}">
+      <td><input type="checkbox" aria-label="Đánh dấu xong: ${esc(t.title)}" data-done="${esc(t.id)}"${t.state === 'done' ? ' checked' : ''}${canWrite ? '' : ' disabled'}></td>
+      <td class="tc"><div class="t">${esc(t.title)}</div>${t.note ? `<div class="sm">${esc(t.note)}</div>` : ''}</td>
+      ${showTab ? `<td><span class="tabtag">${esc(tabName(t.tab))}</span></td>` : ''}
+      <td>${pillSel('tasks', t.id, 'state', t.state, TST)}</td>
+      <td><div class="sm">${esc(t.need || '–')}</div></td>
+      <td class="num">${canWrite ? `<input type="number" min="0" aria-label="Credit ước tính" data-col="tasks" data-id="${esc(t.id)}" data-f="est" data-num value="${esc(val('tasks', t.id, 'est', t.est ?? ''))}" style="width:90px;text-align:right">` : fmt(num(t.est))}</td>
+      <td class="num">${canWrite ? `<input type="number" min="0" aria-label="Credit đã dùng" data-col="tasks" data-id="${esc(t.id)}" data-f="used" data-num value="${esc(val('tasks', t.id, 'used', t.used ?? ''))}" style="width:90px;text-align:right">` : fmt(num(t.used))}</td>
+      <td>${canWrite ? `<button class="x" data-del="tasks" data-id="${esc(t.id)}" aria-label="Xóa công việc ${esc(t.title)}" title="Xóa">×</button>` : ''}</td>
+    </tr>`).join('')}</tbody></table></div>`; }
+function addTaskForm(tid) { if (!canWrite) return '';
+  return `<form class="add" data-add="task">
+    <label class="wide">Công việc mới<input type="text" name="title" required placeholder="Ví dụ: Hiệu ứng riêng cho Vạn Băng Trụ"></label>
+    ${tid ? `<input type="hidden" name="tab" value="${tid}">` : `<label>Mục<select name="tab">${COMP_TABS.map(t => `<option value="${t.id}">${t.n}</option>`).join('')}</select></label>`}
+    <label>Trạng thái<select name="state">${Object.entries(TST).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+    <label>Tài nguyên cần<input type="text" name="need" placeholder="Meshy, ảnh concept, thời gian…"></label>
+    <label>Credit ước tính<input type="number" name="est" min="0" placeholder="0"></label>
+    <div><button class="btn pri" type="submit">Thêm công việc</button></div></form>`; }
+function addCompForm(tid) { if (!canWrite) return '';
+  return `<form class="add" data-add="comp"><input type="hidden" name="tab" value="${tid}">
+    <label>Cấu phần mới<input type="text" name="name" required placeholder="Tên cấu phần"></label>
+    <label>Trạng thái<select name="status">${Object.entries(CST).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+    <label class="wide">Hiện trạng<input type="text" name="now" placeholder="Đang có gì, chạy tới đâu"></label>
+    <div><button class="btn" type="submit">Thêm cấu phần</button></div></form>`; }
+function renderView() {
+  const v = $('#view'); const focus = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.f ? { col: document.activeElement.dataset.col, id: document.activeElement.dataset.id, f: document.activeElement.dataset.f, s: document.activeElement.selectionStart, e: document.activeElement.selectionEnd } : null;
+  const keep = [...v.querySelectorAll('form[data-add]')].map(f => [f.dataset.add, Object.fromEntries(new FormData(f))]);
+  let h = '';
+  if (tab === 'overview') h = overview();
+  else if (tab === 'congviec') h = `<section class="view"><div class="sect-head"><h2>Tất cả công việc</h2><span class="note">Đánh dấu ô vuông khi xong. Việc đang làm nằm trên cùng.</span></div>${taskTable(() => true, true)}${addTaskForm(null)}</section>`;
+  else if (tab === 'tainguyen') h = resources();
+  else h = `<section class="view"><div class="sect-head"><h2>${esc(tabName(tab))}</h2><div class="legend">${Object.entries(CST).map(([k, n]) => `<span class="pill p-${k}">${n}</span>`).join('')}</div></div>${compSheet(tab)}${addCompForm(tab)}
+    <div class="sect-head"><h2>Công việc của mục</h2></div>${taskTable(x => x.tab === tab, false)}${addTaskForm(tab)}</section>`;
+  v.innerHTML = h;
+  for (const [k, vals] of keep) { const f = v.querySelector(`form[data-add="${k}"]`); if (f) for (const [n, x] of Object.entries(vals)) if (f.elements[n] && f.elements[n].type !== 'hidden') f.elements[n].value = x; }
+  if (focus) { const el = v.querySelector(`[data-col="${focus.col}"][data-id="${CSS.escape(focus.id)}"][data-f="${focus.f}"]`); if (el) { el.focus(); try { el.setSelectionRange(focus.s, focus.e); } catch (e) {} } }
+}
+function overview() {
+  const doing = list(S.tasks, t => t.state === 'doing'), todo = list(S.tasks, t => t.state === 'todo'), paused = list(S.tasks, t => t.state === 'paused');
+  const recent = list(S.tasks, t => t.state === 'done').slice(-6).reverse(), M = S.meta || {};
+  const li = t => `<li><span class="pill p-${t.state}">${TST[t.state]}</span><span><b>${esc(t.title)}</b> <span class="tabtag">${esc(tabName(t.tab))}</span>${num(t.est) ? ` <span class="note">· ${fmt(num(t.est))} credit</span>` : ''}</span></li>`;
+  return `<section class="view"><div class="grid2">
+    <div class="card"><h2>Tiến độ theo mục</h2><div class="prog">${COMP_TABS.map(t => { const c = counts(x => x.tab === t.id), tot = Object.values(c).reduce((a, b) => a + b, 0);
+      return `<div class="r"><b title="${t.n}">${t.n}</b>${bar(c)}<span>${c.done}/${tot}</span></div>`; }).join('')}</div>
+      <div class="legend">${Object.entries(CST).map(([k, n]) => `<span class="pill p-${k}">${n}</span>`).join('')}</div></div>
+    <div class="card"><h2>Tài nguyên Meshy</h2><div class="meter"><div class="big">${fmt(num(M.balance))} <small>credit còn lại</small></div>
+      <div class="note">${M.resetAt ? 'Nạp lại hằng tháng: ' + esc(M.resetAt) + '. ' : ''}${esc(M.note || '')}</div></div>
+      <ul class="list">${list(S.spend).slice(-4).reverse().map(x => `<li><span class="tabtag">${esc(x.date || '')}</span><span>${esc(x.what)} · <b>${fmt(num(x.credits))}</b> credit</span></li>`).join('') || '<li class="note">Chưa có khoản chi nào.</li>'}</ul></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h2>Đang làm và sắp làm</h2><ul class="list">${[...doing, ...todo].map(li).join('') || '<li class="note">Không có việc đang mở.</li>'}</ul></div>
+    <div class="card"><h2>Tạm treo</h2><ul class="list">${paused.map(li).join('') || '<li class="note">Không có việc tạm treo.</li>'}</ul>
+      <h2 style="margin-top:6px">Mới xong</h2><ul class="list">${recent.map(li).join('') || '<li class="note">Chưa có việc xong.</li>'}</ul></div>
+  </div></section>`; }
+function resources() {
+  const M = S.meta || {}, L = list(S.spend), used = L.reduce((a, x) => a + (+x.credits || 0), 0);
+  const need = list(S.tasks, t => t.state !== 'done').reduce((a, t) => a + (num(t.est) || 0), 0);
+  return `<section class="view"><div class="grid2">
+    <div class="card"><h2>Số dư Meshy</h2>
+      <label class="note">Credit còn lại${canWrite ? `<input type="number" min="0" data-col="meta" data-id="meshy" data-f="balance" data-num value="${esc(val('meta', 'meshy', 'balance', M.balance ?? ''))}">` : ` <b>${fmt(num(M.balance))}</b>`}</label>
+      <label class="note">Ngày nạp lại${canWrite ? `<input type="text" data-col="meta" data-id="meshy" data-f="resetAt" value="${esc(val('meta', 'meshy', 'resetAt', M.resetAt ?? ''))}">` : ` <b>${esc(M.resetAt || '–')}</b>`}</label>
+      <label class="note">Ghi chú${ta('meta', 'meshy', 'note', M.note, 'Gói, hạn mức, lưu ý chi phí…', 'Ghi chú tài nguyên')}</label></div>
+    <div class="card"><h2>Cân đối</h2>
+      <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
+        <div class="kpi"><span class="l">Đã dùng</span><span class="v">${fmt(used)}</span></div>
+        <div class="kpi"><span class="l">Cần cho việc mở</span><span class="v">${fmt(need)}</span></div>
+        <div class="kpi"><span class="l">Còn thiếu</span><span class="v" style="color:${need > (num(M.balance) || 0) ? 'var(--bad)' : 'var(--ok)'}">${fmt(Math.max(0, need - (num(M.balance) || 0)))}</span></div></div>
+      <p class="note">Phí tham khảo: ảnh concept 9 credit, ảnh tấm giáp/vũ khí 12 credit, dựng 3D từ 1 ảnh 30 credit, bộ đồ 3D đủ quy trình khoảng 100 credit, gắn xương 5 credit, mỗi động tác 3 credit.</p></div>
+  </div>
+  <div class="sect-head"><h2>Sổ chi tài nguyên</h2></div>
+  <div class="tasks"><table><thead><tr><th>Ngày</th><th>Hạng mục</th><th class="num">Credit</th><th>Ghi chú</th><th style="width:30px"></th></tr></thead><tbody>${L.map(x => `<tr><td><span class="tabtag">${esc(x.date || '')}</span></td><td class="t">${esc(x.what)}</td><td class="num">${fmt(num(x.credits))}</td><td><div class="sm">${esc(x.note || '')}</div></td><td>${canWrite ? `<button class="x" data-del="spend" data-id="${esc(x.id)}" aria-label="Xóa khoản chi" title="Xóa">×</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Chưa có khoản chi.</td></tr>'}</tbody></table></div>
+  ${canWrite ? `<form class="add" data-add="spend"><label>Ngày<input type="date" name="date"></label><label class="wide">Hạng mục<input type="text" name="what" required placeholder="Ví dụ: Vũ khí riêng 4 lớp"></label><label>Credit<input type="number" name="credits" min="0" required></label><label>Ghi chú<input type="text" name="note"></label><div><button class="btn pri" type="submit">Ghi khoản chi</button></div></form>` : ''}</section>`; }
+
+// ---- events ----
+document.addEventListener('click', e => {
+  const tb = e.target.closest('[data-tab]'); if (tb) { setTab(tb.dataset.tab); return; }
+  const d = e.target.closest('[data-del]'); if (d && db && canWrite) {
+    if (d.dataset.arm !== '1') { d.dataset.arm = '1'; d.textContent = 'Xóa?'; d.style.color = 'var(--bad)'; setTimeout(() => { if (d.isConnected) { d.dataset.arm = ''; d.textContent = '×'; d.style.color = ''; } }, 3000); return; }
+    db.collection(d.dataset.del).doc(d.dataset.id).delete().catch(flag); } });
+document.addEventListener('change', e => { const el = e.target;
+  if (el.dataset.done) { patch('tasks', el.dataset.done, { state: el.checked ? 'done' : 'todo' }); return; }
+  if (el.matches('select[data-f]')) { patch(el.dataset.col, el.dataset.id, { [el.dataset.f]: el.value }); return; } });
+document.addEventListener('input', e => { const el = e.target; if (!el.dataset.f || el.tagName === 'SELECT' || !el.dataset.col) return;
+  const v = el.hasAttribute('data-num') ? num(el.value) : el.value; drafts.set(el.dataset.col + '/' + el.dataset.id + '#' + el.dataset.f, el.value);
+  if (el.dataset.col === 'meta') metaPatch({ [el.dataset.f]: v }); else patch(el.dataset.col, el.dataset.id, { [el.dataset.f]: v }, 700); });
+let metaT = null, metaData = {};
+function metaPatch(d) { Object.assign(metaData, d); clearTimeout(metaT); metaT = setTimeout(async () => { const data = metaData; metaData = {};
+  try { await db.doc('meta/meshy').set(Object.assign({}, S.meta || {}, data)); for (const f in data) drafts.delete('meta/meshy#' + f); } catch (e) { flag(e); } }, 700); }
+document.addEventListener('submit', async e => { const f = e.target.closest('form[data-add]'); if (!f) return; e.preventDefault(); if (!db || !canWrite) return;
+  const fd = Object.fromEntries(new FormData(f)); const kind = f.dataset.add;
+  try {
+    if (kind === 'task') await db.collection('tasks').add({ tab: fd.tab, title: fd.title.trim(), state: fd.state, need: fd.need || '', est: num(fd.est), used: null, note: '', order: Date.now() / 1e10 + 100 });
+    else if (kind === 'comp') await db.collection('comps').add({ tab: fd.tab, name: fd.name.trim(), status: fd.status, now: fd.now || '', next: '', order: Date.now() / 1e10 + 100 });
+    else if (kind === 'spend') await db.collection('spend').add({ date: fd.date || new Date().toISOString().slice(0, 10), what: fd.what.trim(), credits: num(fd.credits) || 0, note: fd.note || '', order: Date.now() / 1e10 + 100 });
+    f.reset();
+  } catch (err) { flag(err); } });
+function setTab(t) { if (!TABS.some(x => x.id === t)) t = 'overview'; tab = t; if (location.hash.slice(1) !== t) history.replaceState(null, '', t === 'overview' ? location.pathname + location.search : '#' + t); render(); }
+window.addEventListener('hashchange', () => setTab(location.hash.slice(1)));
+document.addEventListener('keydown', e => { const b = e.target.closest && e.target.closest('[role=tab]'); if (!b || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  const i = TABS.findIndex(t => t.id === b.dataset.tab), j = (i + (e.key === 'ArrowRight' ? 1 : -1) + TABS.length) % TABS.length; setTab(TABS[j].id); $('#tab-' + TABS[j].id).focus(); });
+
+// ---- data ----
+tab = TABS.some(x => x.id === location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
+render();
+(async () => {
+  db = window.claude ? await window.claude.use('db') : null;
+  if (!db) { note('Không mở được kho dữ liệu của trang. Hãy mở trang khi đã đăng nhập claude.ai.', true); return; }
+  try { const u = await window.claude.use('user'); const w = u && u.can ? await u.can('data.write') : null; if (w === false) { canWrite = false; } } catch (e) {}
+  const timer = setTimeout(() => note('Dữ liệu chưa tải được, có thể đang hiển thị bản cũ.', true), 10000);
+  const done = () => { if (Object.values(S.loaded).every(Boolean)) { clearTimeout(timer); note(canWrite ? '' : 'Bạn đang xem ở chế độ chỉ đọc.', false); } };
+  const sub = (col, key) => db.collection(col).onSnapshot(q => { const m = new Map(); q.docs.forEach(d => m.set(d.id, Object.assign({ id: d.id }, d.data()))); S[key] = m; if (!q.metadata.fromCache) S.loaded[key] = true; done(); render(); },
+    e => { clearTimeout(timer); note('Mất kết nối dữ liệu (' + e.code + '). Tải lại trang để thử lại.', true); });
+  sub('comps', 'comps'); sub('tasks', 'tasks'); sub('spend', 'spend');
+  db.doc('meta/meshy').onSnapshot(d => { S.meta = d.exists ? d.data() : null; if (!d.metadata.fromCache) S.loaded.meta = true; done(); render(); }, () => {});
+})();
+</script>
