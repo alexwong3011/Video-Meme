@@ -1178,7 +1178,7 @@ function knIK(A, B, C, target, pole) {          // two-bone IK in world space, m
   const b2 = knW(B), c2 = knW(C); knTurn(B, c2.sub(b2), target.clone().sub(b2));
 }
 const KN_FING = ['index', 'middle', 'ring', 'pinky'];
-function knFist(sd) { const B = KN.bones, b = n => knW(B[sd + 'hand' + n]), H = knW(B[sd + 'hand']);
+function knFist(sd, B = KN.bones) { const b = n => knW(B[sd + 'hand' + n]), H = knW(B[sd + 'hand']);
   const k1 = KN_FING.reduce((v, f) => v.add(b(f + '1')), new THREE.Vector3()).multiplyScalar(0.25), k2 = KN_FING.reduce((v, f) => v.add(b(f + '2')), new THREE.Vector3()).multiplyScalar(0.25);
   return { G: k1.clone().lerp(k2, 0.55).lerp(H, 0.15), axis: b('index1').sub(b('pinky1')).normalize(), flat: b('middle1').sub(H).normalize() }; }
 function knCurl(sd, amt) { if (!KN.fingers) return; const B = KN.bones;
@@ -1273,11 +1273,14 @@ function knAttachVariant(gltf, key, armour) {
   const map = order.map(bb => { const kb = KN.bones[bb.name.toLowerCase()];
     return { bb, kb, off: kb.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(bb.getWorldQuaternion(new THREE.Quaternion())) }; });
   const hb = BB.hips, hk = KN.bones.hips;
-  KN.vars[key] = { model, map, parts, hip: hb && hk ? { hb, hk, b0: knW(hb), k0: knW(hk) } : null, proto: vproto, off: Object.fromEntries(map.map(m => [m.bb.name.toLowerCase(), m.off])) };
+  KN.vars[key] = { model, map, parts, bones: BB, hip: hb && hk ? { hb, hk, b0: knW(hb), k0: knW(hk) } : null, proto: vproto, off: Object.fromEntries(map.map(m => [m.bb.name.toLowerCase(), m.off])) };
   if (vproto) for (const [id, e] of [...ents]) if (e.C.kn && !e.dead && botKit(e.b).look === key) { const p = e.pos.clone(); despawnBot(id); spawnBot(e.b, p.x, p.z); }   /* bots in this set put it on */
   if (key === 'base') { KN.base = KN.vars.base; KN.parts.base = parts; }
 }
 const VARIANT_SETS = { dung: { file: 'assets/meshy/knight_dung.gltf.json', glow: 0xff6a20, glowK: 0.45 }, olym: { file: 'assets/meshy/knight_olym.gltf.json', glow: 0x8fd0ff, glowK: 0.08 }, song: { file: 'assets/meshy/knight_song.gltf.json' } };     // armour sets with their own 3D model
+// the bones of the body whose gloves are drawn (bare hands: the bare body; a set with its own model: that model; else the knight)
+function knHandBones() { const g = S.eq.gloves, v = !g ? (KN.vars.base ? 'base' : 'knight') : KN.vars[g.set] ? g.set : 'knight';
+  const VB = v !== 'knight' && KN.vars[v] && KN.vars[v].bones; return VB && VB.righthand && VB.lefthand ? VB : KN.bones; }
 function knBodySlots() {        // per slot: the worn set's own model if it has one, else the Cánh Lam knight; the bare body where nothing is worn
   const show = {}; for (const k in KN.vars) show[k] = false;
   for (const sl of BODY_SLOTS) { const g = S.eq[sl], v = !g ? (KN.vars.base ? 'base' : 'knight') : KN.vars[g.set] ? g.set : 'knight';
@@ -1311,9 +1314,10 @@ function knSetup(gltf, swTex) {
     model.position.y -= lo - 0.03 * KN.h / KN_REF; a.stop(); root.updateMatrixWorld(true); }
   KN.handR = B.righthand; KN.handL = B.lefthand; KN.chest = B.spine02 || B.spine01 || B.spine;
   // greatsword: two crossed cards from the weapon sheet, the grip in the right fist
-  const v = KN_SWORD, L = v.L, card = (t, ry) => { const g = new THREE.PlaneGeometry(v.aspect * L, L); g.translate((0.5 - v.gp[0]) * v.aspect * L, (v.gp[1] - 0.5) * L, 0);
+  // (the back card's art is the front mirrored left to right, so its grip sits at 1 − gp.x)
+  const v = KN_SWORD, L = v.L, card = (t, ry, bk) => { const g = new THREE.PlaneGeometry(v.aspect * L, L); g.translate((0.5 - (bk ? 1 - v.gp[0] : v.gp[0])) * v.aspect * L, (v.gp[1] - 0.5) * L, 0);
     const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.3, roughness: 0.55, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.12 })); m.rotation.y = ry; return m; };
-  const sword = new THREE.Group(), blade = new THREE.Group(); [card(swTex[0], 0), card(swTex[1], Math.PI / 2)].forEach(c => blade.add(c)); sword.add(blade);
+  const sword = new THREE.Group(), blade = new THREE.Group(); [card(swTex[0], 0), card(swTex[1], Math.PI / 2, true)].forEach(c => blade.add(c)); sword.add(blade);
   blade.rotation.z = Math.PI; KN.guard = new THREE.Object3D(); KN.guard.position.set(0, -0.12 * L, 0); blade.add(KN.guard); KN.tip = new THREE.Object3D(); KN.tip.position.set(0, (v.gp[1] - v.tip[1]) * L * 0.85, 0); blade.add(KN.tip);
   sword.visible = false; KN.root.add(sword); KN.sword = sword; KN.swordMats = blade.children.filter(c => c.isMesh).map(c => c.material);
   KN.restPose(); KN.boneList = Object.values(B); knFingerSetup();
@@ -1384,9 +1388,9 @@ function knIdlePose(t, F) {
 }
 // the greatsword in each hand follows the set of the weapon held there (sets without their own sword use the Cánh Lam one)
 function knMakeSword(set) { const A = SET_ART[set].sword, L = A.L || KN_SWORD.L, tl = new THREE.TextureLoader(), tx = f => { const t = tl.load(`${SET_ART[set].dir}/${f}.png`); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
-  const card = (t, ry) => { const g = new THREE.PlaneGeometry(A.aspect * L, L); g.translate((0.5 - A.gp[0]) * A.aspect * L, (A.gp[1] - 0.5) * L, 0);
+  const card = (t, ry, bk) => { const g = new THREE.PlaneGeometry(A.aspect * L, L); g.translate((0.5 - (bk ? 1 - A.gp[0] : A.gp[0])) * A.aspect * L, (A.gp[1] - 0.5) * L, 0);
     const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.3, roughness: 0.55, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.12 })); m.rotation.y = ry; KN.swordMats.push(m.material); return m; };
-  const g = new THREE.Group(), blade = new THREE.Group(); blade.add(card(tx('weapon_front'), 0), card(tx('weapon_back'), Math.PI / 2)); g.add(blade); blade.rotation.z = Math.PI;
+  const g = new THREE.Group(), blade = new THREE.Group(); blade.add(card(tx('weapon_front'), 0), card(tx('weapon_back'), Math.PI / 2, true)); g.add(blade); blade.rotation.z = Math.PI;
   const guard = new THREE.Object3D(); guard.position.set(0, -0.12 * L, 0); blade.add(guard); const tip = new THREE.Object3D(); tip.position.set(0, (A.gp[1] - A.tip[1]) * L * 0.85, 0); blade.add(tip);
   g.visible = false; KN.root.add(g); return { g, guard, tip }; }
 function knHands() { const want = g => g && SET_ART[g.set] && SET_ART[g.set].sword ? g.set : 'azure';
@@ -1441,18 +1445,21 @@ function knTick(dt, t, moving) {
   // fists round the grip, the greatsword through the right fist
   // (the sword lives under the knight's root, so it hides and moves with the hero; its pose is worked out in world space)
   const G = new THREE.Vector3(), Qs = new THREE.Quaternion();
-  if (KN.fingers) { knCurl('right', 1); knCurl('left', KN.dual || KN.shOn ? 1 : 0.4); const f = knFist('right'); G.copy(f.G); Qs.copy(knBladeQ(f.axis, f.flat)); }
-  else { KN.handR.getWorldPosition(G); KN.handR.getWorldQuaternion(Qs); }
+  if (KN.fingers) { knCurl('right', 1); knCurl('left', KN.dual || KN.shOn ? 1 : 0.4); }
+  // the visible hands may belong to another body (the bare body, or a set's own model) with its own arm length:
+  // copy the pose to those bodies first, then grip the weapon in the hand that is actually drawn
+  knBodySlots(); const HB = knHandBones();
+  if (KN.fingers) { const f = knFist('right', HB); G.copy(f.G); Qs.copy(knBladeQ(f.axis, f.flat)); }
+  else { HB.righthand.getWorldPosition(G); HB.righthand.getWorldQuaternion(Qs); }
   const rq = KN.root.getWorldQuaternion(new THREE.Quaternion()).invert(), rs = KN.root.getWorldScale(new THREE.Vector3()).x;
   KN.sword.position.copy(KN.root.worldToLocal(G)); KN.sword.quaternion.copy(rq.clone().multiply(Qs)); KN.sword.scale.setScalar(F / rs); KN.sword.visible = true;
   KN.sword2.visible = !!(KN.dual && KN.fingers);          // dual wield: a second greatsword through the left fist, a little smaller
-  if (KN.sword2.visible) { const f2 = knFist('left'); KN.sword2.position.copy(KN.root.worldToLocal(f2.G.clone())); KN.sword2.quaternion.copy(rq.clone().multiply(knBladeQ(f2.axis, f2.flat))); KN.sword2.scale.setScalar(F / rs * 0.9); }
+  if (KN.sword2.visible) { const f2 = knFist('left', HB); KN.sword2.position.copy(KN.root.worldToLocal(f2.G.clone())); KN.sword2.quaternion.copy(rq.clone().multiply(knBladeQ(f2.axis, f2.flat))); KN.sword2.scale.setScalar(F / rs * 0.9); }
   // the shield strapped on the left forearm (its art follows the shield worn, its rim glows with the shield's + level)
   const sg = KN.shOn ? S.eq.shield : null, ssrc = shieldSrc(sg);
   if (KN.shSrc !== ssrc) { if (KN.shG) KN.root.remove(KN.shG); KN.shG = ssrc ? makeShield(ssrc) : null; if (KN.shG) KN.root.add(KN.shG); KN.shSrc = ssrc; }
-  if (KN.shG && B.leftforearm && B.lefthand) { shieldGlow(KN.shG, sg.plus || 0);
-    shieldPlace(KN.shG, knW(B.leftforearm), knW(B.lefthand), knW(KN.chest || B.spine02 || B.hips), new THREE.Vector3(0, 0, 1).applyQuaternion(KN.root.getWorldQuaternion(new THREE.Quaternion())), F); }
-  knBodySlots();
+  if (KN.shG && HB.leftforearm && HB.lefthand) { shieldGlow(KN.shG, sg.plus || 0);
+    shieldPlace(KN.shG, knW(HB.leftforearm), knW(HB.lefthand), knW(KN.chest || B.spine02 || B.hips), new THREE.Vector3(0, 0, 1).applyQuaternion(KN.root.getWorldQuaternion(new THREE.Quaternion())), F); }
   // wings from between the shoulder blades
   if (KN.chest && B.neck && B.leftarm && B.rightarm) { const S2 = knW(KN.chest), N = knW(B.neck), lx = knW(B.leftarm).sub(knW(B.rightarm)).normalize(), up = N.clone().sub(S2).normalize(), fw = new THREE.Vector3().crossVectors(lx, up).normalize();
     const C = S2.lerp(N, 0.75).addScaledVector(fw, -0.13 * F); wings.position.copy(heroBody.worldToLocal(C)); }
@@ -3513,9 +3520,9 @@ function botDress(model, body, look, T3) {
     if (KB.leftforearm && KB.lefthand) { const sh = makeShield(look.shield); shieldGlow(sh, look.splus || 0); body.add(sh); T3.shield = { g: sh, el: KB.leftforearm, wr: KB.lefthand, ch: KB.spine02 || KB.spine01 || KB.hips, model }; } }
   if (set && SET_ART[set] && SET_ART[set].sword) { const old = model.getObjectByName('knsword');
     if (old) { const A = SET_ART[set].sword, Ln = A.L || KN_SWORD.L, tl = new THREE.TextureLoader(), tx = f => { const t = tl.load(`${SET_ART[set].dir}/${f}.png`); t.colorSpace = THREE.SRGBColorSpace; return t; };
-      const card = (t, ry) => { const g = new THREE.PlaneGeometry(A.aspect * Ln, Ln); g.translate((0.5 - A.gp[0]) * A.aspect * Ln, (A.gp[1] - 0.5) * Ln, 0);
+      const card = (t, ry, bk) => { const g = new THREE.PlaneGeometry(A.aspect * Ln, Ln); g.translate((0.5 - (bk ? 1 - A.gp[0] : A.gp[0])) * A.aspect * Ln, (A.gp[1] - 0.5) * Ln, 0);
         const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.3, roughness: 0.55, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.12 })); m.rotation.y = ry; return m; };
-      const g = new THREE.Group(), blade = new THREE.Group(); blade.add(card(tx('weapon_front'), 0), card(tx('weapon_back'), Math.PI / 2)); g.add(blade); blade.rotation.z = Math.PI;
+      const g = new THREE.Group(), blade = new THREE.Group(); blade.add(card(tx('weapon_front'), 0), card(tx('weapon_back'), Math.PI / 2, true)); g.add(blade); blade.rotation.z = Math.PI;
       const tip = new THREE.Object3D(); tip.position.set(0, (A.gp[1] - A.tip[1]) * Ln * 0.85, 0); blade.add(tip);
       g.position.copy(old.position); g.quaternion.copy(old.quaternion); g.scale.copy(old.scale); old.parent.add(g); old.parent.remove(old); T3.tip = tip; } }
 }
