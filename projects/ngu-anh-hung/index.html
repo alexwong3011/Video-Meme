@@ -2611,7 +2611,8 @@ const hardK = lv => 1 + clamp((lv - 100) / 300, 0, 1);
 const MOB_HP_K = 8;          // every monster has 8x the sample's health (player request)
 const mobHp = lv => Math.round(60 * (1 + 0.3 * (lv - 1)) * (1 + lv / 180) * hardK(lv) * MOB_HP_K);
 // aggression: monsters notice the hero from further, chase faster, strike more often and a little harder; bosses x2 attack and x2 speed
-const MOB_FURY = { aggro: 1.25, chase: 1.12, rate: 0.8, atk: 1.1 }, BOSS_K = { atk: 2, speed: 2 };
+const MOB_FURY = { aggro: 1.25, chase: 1.12, rate: 0.8, atk: 1.1 }, BOSS_K = { atk: 2, speed: 2, hp: 0.5 };      // bosses: half health (player request)
+const EXP_K = 2;          // the hero earns twice the experience (player request; bots keep their pace)
 const mobAtk = lv => Math.round((16 + 2.4 * lv + lv * lv / 400) * hardK(lv));
 // level suppression: fighting monsters above your level hurts both ways
 const lvDealK = gap => gap > 0 ? 1 / (1 + gap * 0.012) : 1;   // your damage to a higher-level monster
@@ -2823,7 +2824,7 @@ function addMob(k, lv, x, z, zone, mini = false) {
   const shadow = blob(B3 ? B3.r * 1.5 : (T.model === 'fish' ? 1.6 : 1.3) * scale); scene.add(shadow); scene.add(v.group);
   const el = document.createElement('div'); el.className = 'lbl'; el.style.display = 'none';
   el.innerHTML = `<div class="nm" style="color:${T.color}">${mini ? '★ ' : ''}${T.name} · Lv ${lv}</div><div class="hp${boss || mini ? ' b' : ''}"><i></i></div>`; labelsEl.appendChild(el);
-  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 60 : mini ? 15 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 4 * BOSS_K.atk : mini ? 2.5 : 1) * MOB_FURY.atk,
+  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 60 * BOSS_K.hp : mini ? 15 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 4 * BOSS_K.atk : mini ? 2.5 : 1) * MOB_FURY.atk,
     hp: 0, face: rr(0, 6.28), state: 'idle', wait: rr(0, 3), flash: 0, dead: 0, respawn: 0, aggro: false, atkCd: 0, phase: rr(0, 6.28), spawnT: 0.6 };
   m.hp = m.maxHp; mobs.push(m); return m;
 }
@@ -2877,7 +2878,7 @@ function killMob(m, killer) {
     const g = makeGear(Math.random() < 0.3 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, lvl, r >= 1 && Math.random() < (B ? 0.75 : 0.45) ? set : null); if (r >= 1 && Math.random() < 0.4) g.plus = ri(1, r + 1); dropLoot(m.x, m.z, { kind: 'gear', gear: g }); }
   updateHud();
 }
-function gainExp(n) {
+function gainExp(n) { n = Math.round(n * EXP_K);
   if (S.lv >= MAXLV) return; S.exp += n;
   while (S.lv < MAXLV && S.exp >= expNeed(S.lv)) { S.exp -= expNeed(S.lv); S.lv++; recalc(); levelFx();
     const sk = SKILLS[S.cls].find(s => s.lv === S.lv); if (sk) { banner('MỞ KỸ NĂNG: ' + sk.name.toUpperCase(), 'gold'); log('Mở khóa kỹ năng ' + sk.name + '!', ELC[sk.el]); }
