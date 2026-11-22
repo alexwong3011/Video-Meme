@@ -7,7 +7,7 @@ const ROOT = path.resolve(__dirname, '..'), THREE_DIR = process.env.THREE_DIR ||
 const args = process.argv.slice(2), snip = fs.readFileSync(args[0], 'utf8'), OUT = args[1] && !args[1].startsWith('--') ? args[1] : '/tmp/ngah-shots';
 const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d), CLS = opt('--class', 'fire'), PAGE = opt('--page', 'index.html');
 // the hook: put after "const CAM_ZOOM" (late in the module, every name it lists exists by then)
-const HOOK = "window.__T = { get S() { return S; }, get HS() { return HS; }, get BOSS3D() { return BOSS3D; }, get MT() { return MT; }, get MAPS() { return MAPS; }, get mobs() { return mobs; }, get castSkill() { return castSkill; }, get attack() { return attack; }, KN, ents, travel, recalc, applyGearVisuals, openBag, makeGear, makeCharm, makeWing, addItem, dropLoot, newBots, botKit, camera, heroG, FX3 };\n";
+const HOOK = "window.__T = { get S() { return S; }, get HS() { return HS; }, get BOSS3D() { return BOSS3D; }, get MT() { return MT; }, get MAPS() { return MAPS; }, get mobs() { return mobs; }, get castSkill() { return castSkill; }, get attack() { return attack; }, get ROSTER() { return ROSTER; }, get CUR() { return CUR; }, KN, ents, travel, recalc, applyGearVisuals, openBag, makeGear, makeCharm, makeWing, addItem, dropLoot, newBots, botKit, camera, heroG, FX3 };\n";
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -20,7 +20,7 @@ const HOOK = "window.__T = { get S() { return S; }, get HS() { return HS; }, get
       return r.fulfill({ path: path.join(ROOT, p) }); }
     return r.abort(); });
   await pg.goto('http://game.local/'); await pg.waitForTimeout(3000);
-  await pg.evaluate(c => { document.getElementById('newBtn').click(); document.querySelector(`#classList button[data-c="${c}"]`).click(); document.getElementById('classGo').click(); }, CLS);
+  await pg.evaluate(c => { (document.querySelector('[data-newslot]') || document.getElementById('newBtn')).click(); document.querySelector(`#classList button[data-c="${c}"]`).click(); document.getElementById('classGo').click(); }, CLS);
   for (let i = 0; i < 90; i++) { if (await pg.evaluate(c => window.__T && (c !== 'fire' || __T.KN.on), CLS)) break; await pg.waitForTimeout(1000); }
   const shot = async (name, clip) => pg.screenshot({ path: path.join(OUT, name + '.png'), ...(clip ? { clip } : {}) });
   await (new Function('pg', 'shot', 'return (async () => {' + snip + '})()'))(pg, shot);

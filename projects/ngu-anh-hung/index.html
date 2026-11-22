@@ -187,6 +187,24 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 .btn{margin-top:10px;font:700 20px var(--display);letter-spacing:.06em;color:#ffe9a8;background:linear-gradient(#9a6a28,#5a3610 60%,#2a1806);border:2px solid #f2d27a;border-radius:10px;padding:8px 24px;box-shadow:0 0 0 2px #0b0907,0 0 18px rgba(255,190,80,.35);cursor:pointer;text-shadow:0 2px 0 #000}
 .btn.alt{background:linear-gradient(#2a6a7a,#123a44 60%,#081a20);border-color:#8fe8f0;color:#dffaff}
 .btn:disabled{opacity:.45;filter:grayscale(.6);cursor:not-allowed}
+.slots{display:grid;gap:7px;margin:12px 0 6px;text-align:left}
+.slot{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:11px;border:1.5px solid rgba(242,210,122,.22);background:rgba(0,0,0,.3);color:#d8ccb0;font:500 12px/1.4 var(--ui);width:100%}
+.slot.last{border-color:var(--c,#c9a24a);box-shadow:0 0 0 1px rgba(242,210,122,.25),0 0 18px -6px var(--c,#c9a24a)}
+.slot .si{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:radial-gradient(circle,rgba(255,255,255,.16),rgba(0,0,0,.35) 70%);border:1.5px solid var(--c,#4a5a5e);color:var(--c,#9aa)}
+.slot .sd{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.slot .sd b{font:700 16px var(--display);color:var(--c,#f2d27a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .sd .small{color:#9fb2b2;font-size:11px}
+.slot .sb{flex:none;display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.slot .sb .btn{margin:0;padding:7px 14px;font-size:13px}
+.slot .sb .pb{margin:0;padding:3px 8px;font-size:11px}
+.slot .sb .pb.arm{color:#ff8a8a;border-color:#ff8a8a}
+.slot.empty{cursor:pointer;border-style:dashed;color:#9fb2b2;text-align:left}
+.slot.empty:hover,.slot.empty:focus-visible{border-color:#c9a24a;color:#f2d27a}
+.slot.empty .si{color:#c9a24a;border-color:rgba(242,210,122,.4)}
+.slot.empty .sd b{color:#cdbf9f}
+.hname-in{display:flex;flex-direction:column;gap:4px;align-items:center;margin:8px auto 2px;font:600 12px var(--ui);color:#9fb2b2;max-width:280px}
+.hname-in input{width:100%;padding:8px 10px;border-radius:9px;border:1.5px solid rgba(242,210,122,.35);background:rgba(0,0,0,.35);color:#f2d27a;font:700 16px var(--display);text-align:center}
+.hname-in input:focus{outline:none;border-color:#f2d27a}
 .classes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px;margin-top:10px;text-align:left}
 .classes button{display:flex;flex-direction:column;gap:3px;padding:9px 10px;border-radius:10px;border:1.5px solid rgba(242,210,122,.22);background:rgba(0,0,0,.28);color:#bfb49a;cursor:pointer;font:500 11px/1.4 var(--ui);text-align:left}
 .classes button b{font:700 15px var(--display);letter-spacing:.03em}
@@ -335,8 +353,7 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
     <h1>Ngũ Anh Hùng</h1>
     <p>Chọn một trong <b>5 lớp anh hùng</b>, cày quái qua <b>5 vùng đất</b> tới <b>cấp 400</b>, hạ <b>boss</b> để lấy đồ hiếm. Ghép lông vũ thành <b>cánh</b>, khảm <b>linh thạch</b> để mở 5 tầng sát thương (tối đa ×180), mặc đủ <b>bộ đồ</b> để nhận hiệu ứng.</p>
     <p id="bestTxt" class="small"></p>
-    <button class="btn alt hide" id="contBtn">TIẾP TỤC</button>
-    <button class="btn" id="newBtn">CHƠI MỚI</button>
+    <div class="slots" id="slotList" aria-label="Nhân vật của bạn"></div>
     <p id="cloudTxt" class="small"></p>
     <p id="loadTxt" class="small">Đang tải mô hình nhân vật...</p>
   </div>
@@ -347,6 +364,7 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
     <div class="sub">CHỌN LỚP NHÂN VẬT</div>
     <h1 style="font-size:34px">Anh hùng của bạn</h1>
     <p id="classNote">Mỗi lớp có giáp, vũ khí, đòn thường và 3 kỹ năng riêng (mở ở cấp 1, 10 và 25).</p>
+    <label class="hname-in" for="heroName">Tên nhân vật<input id="heroName" maxlength="16" autocomplete="off" placeholder="Đặt tên cho anh hùng"></label>
     <div class="classes" id="classList"></div>
     <button class="btn" id="classGo" disabled>BẮT ĐẦU</button>
     <br><button class="pb" id="classBack" style="margin-top:8px">◀ Quay lại</button>
@@ -359,7 +377,7 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
     <p id="menuInfo"></p>
     <button class="btn" id="mResume">TIẾP TỤC</button><br>
     <button class="pb" id="mSave" style="margin-top:10px">Lưu game</button>
-    <button class="pb" id="mHome" style="margin-top:10px">Về màn hình chính</button>
+    <button class="pb" id="mHome" style="margin-top:10px">Đổi nhân vật</button>
     <p id="mMsg" class="small" style="min-height:18px"></p>
   </div>
 </div>
@@ -3486,7 +3504,7 @@ function pulseHud() { }
 function upgradeHint() { return SK.some(k => S.mats[k] > 0 && canStone(k)) || ((S.wingMax || 0) < WMAX && S.mats.f >= WCOST[S.wingMax || 0]) || FORGE.some(([f]) => S.mats[f] >= 3); }
 function updateHud() {
   if (!S || !HS) return; const C = CLS[S.cls];
-  $('hLv').textContent = S.lv; $('hIcon').textContent = C.icon; $('hName').textContent = C.name; $('hName').style.color = C.col;
+  $('hLv').textContent = S.lv; $('hIcon').textContent = C.icon; $('hName').textContent = S.name || C.name; $('hName').style.color = C.col;
   $('hpBar').style.transform = `scaleX(${Math.max(0, S.hp) / HS.hp})`; $('hpTxt').textContent = `${Math.max(0, Math.ceil(S.hp))} / ${HS.hp}`;
   $('mpBar').style.transform = `scaleX(${S.mp / HS.mp})`; $('mpTxt').textContent = `${Math.floor(S.mp)} / ${HS.mp}`;
   $('hGold').textContent = S.gold.toLocaleString('vi-VN'); $('hBag').textContent = bagUsed();
@@ -3513,7 +3531,7 @@ function updateLabels() {
   for (const l of loots) place(l.el, l.x, 1.05, l.z);
   for (const e of ents.values()) { if (e.dead) { e.el.style.display = 'none'; continue; } place(e.el, e.pos.x, e.C.g.position.y + HERO_H * LOOK.size + 0.4, e.pos.z); e.bar.style.transform = `scaleX(${e.hp / e.maxHp})`; e.el.querySelector('.hp').style.visibility = e.hp < e.maxHp || inParty(e.b) ? 'visible' : 'hidden'; }
   for (const e of npcEnts) place(e.el, e.pos.x, HERO_H * LOOK.size + 0.3, e.pos.z);
-  heroLabel.textContent = CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H * LOOK.size + 0.5, S.pos.z);
+  heroLabel.textContent = S.name || CLS[S.cls].name; heroLabel.style.display = S.dead ? 'none' : ''; if (!S.dead) place(heroLabel, S.pos.x, heroG.position.y + HERO_H * LOOK.size + 0.5, S.pos.z);
 }
 
 // ---------- input ----------
@@ -3813,14 +3831,20 @@ function rankRows(k) { const where = m => MAPS[m] ? MAPS[m].name : '';
   return rows.sort((a, b) => b.v - a.v || (k === 'lv' ? b.exp / expNeed(b.lv) - a.exp / expNeed(a.lv) : 0)); }
 
 // ---------- save (browser + cloud) ----------
-const SKEY = 'nguanhhung-save-v2', OLDKEY = 'nguanhhung-save-v1';
+const SKEY = 'nguanhhung-save-v2', OLDKEY = 'nguanhhung-save-v1', RKEY = 'nguanhhung-roster-v3', NSLOT = 5;
 const Store = { db: null, uid: null, writing: false, pending: null };
 let SAVE = null, OLD = null, running = false, best = 0;
-function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(EQ_KEYS.map(s => [s, S.eq[s] || null])), wingMax: S.wingMax || 0, map: S.map, auto: S.auto, autoLoot: S.autoLoot, lootF: S.lootF, bossHunt: !!S.bossHunt, traded: S.traded || 0, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog, sellKeep: S.sellKeep || null }; }
+// the account: five character slots (each its own level, gear, gold, pets...) and ONE world shared by all of them (the bots and their progress)
+let ROSTER = null, CUR = -1;
+const emptyRoster = () => ({ v: 3, ts: 0, last: -1, world: { bots: null }, slots: Array(NSLOT).fill(null) });
+const rosterHead = R => ({ v: 3, ts: R.ts, last: R.last, world: R.world, meta: R.slots.map(c => c ? { name: c.name || '', cls: c.cls, lv: c.lv, ts: c.ts } : null) });
+const plain = o => JSON.parse(JSON.stringify(o));
+const escH = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(EQ_KEYS.map(s => [s, S.eq[s] || null])), wingMax: S.wingMax || 0, map: S.map, auto: S.auto, autoLoot: S.autoLoot, lootF: S.lootF, bossHunt: !!S.bossHunt, traded: S.traded || 0, name: S.name || '', born: S.born || Date.now(), party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog, sellKeep: S.sellKeep || null }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: Math.min(MAXLV, d.lv || 1), exp: d.lv > MAXLV ? 0 : d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
   S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of EQ_KEYS) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s]; S.wingMax = d.wingMax || 0; S.sellKeep = d.sellKeep || null;
   if (S.wing > 0 && !S.eq.wings && !S.inv.some(g => g.slot === 'wings')) { S.eq.wings = makeWing(S.wing, S.lv); S.wingMax = Math.max(S.wingMax, S.wing); }   /* older saves: the wing level becomes a wing item */
-  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.lootF = Object.assign(lootDefaults(), d.lootF || {}); S.bossHunt = !!d.bossHunt; S.traded = d.traded || 0; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
+  S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.lootF = Object.assign(lootDefaults(), d.lootF || {}); S.bossHunt = !!d.bossHunt; S.traded = d.traded || 0; S.bots = ROSTER && Array.isArray(ROSTER.world.bots) ? ROSTER.world.bots : Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null; S.name = d.name || ''; S.born = d.born || 0;
   { const inv = []; for (const g of S.inv) if (!stackInto(inv, g)) inv.push(g); S.inv = inv; } // older saves: merge loose charms into stacks S.lvLog = d.lvLog || [];
   for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
   }
@@ -3828,23 +3852,52 @@ async function initStore() { try { if (window.claude && typeof window.claude.use
 async function readSave() { let b = null; try { const l = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (l && l.v === 2) b = l; } catch (e) { }
   if (Store.db) { try { const s = await Promise.race([Store.db.doc(`data/users/${Store.uid}/save`).get(), new Promise((_, r) => setTimeout(() => r('timeout'), 9000))]); if (s && s.exists) { const d = s.data(); if (d && d.v === 2 && (!b || d.ts > b.ts)) b = JSON.parse(JSON.stringify(d)); } } catch (e) { } }
   return b; }
-async function refreshSave() { SAVE = await readSave(); if (!SAVE) { try { OLD = JSON.parse(localStorage.getItem(OLDKEY) || 'null'); } catch (e) { } } updateStartUI(); }
+async function readRoster() {
+  let R = null; try { const l = JSON.parse(localStorage.getItem(RKEY) || 'null'); if (l && l.v === 3 && Array.isArray(l.slots)) R = l; } catch (e) { }
+  if (Store.db) { try { const T = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r('timeout'), ms))]);
+      const h = await T(Store.db.doc(`data/users/${Store.uid}/roster`).get(), 9000);
+      if (h && h.exists) { const H = h.data(); if (H && H.v === 3 && (!R || H.ts > R.ts)) { const C = emptyRoster(); C.ts = H.ts; C.last = H.last ?? -1; C.world = H.world || { bots: null };
+          const docs = await T(Promise.all((H.meta || []).map((m, i) => m ? Store.db.doc(`data/users/${Store.uid}/char${i}`).get() : null)), 12000);
+          docs.forEach((d, i) => { if (d && d.exists) C.slots[i] = plain(d.data()); }); R = plain(C); } } } catch (e) { } }
+  if (!R) {        // first run of the roster: the old single save becomes the character in slot 1, its bots become the world
+    R = emptyRoster(); const old = await readSave(); if (old) { const c = plain(old); R.world.bots = Array.isArray(c.bots) ? c.bots : null; delete c.bots; c.name = c.name || 'Anh Hùng'; R.slots[0] = c; R.last = 0; R.ts = c.ts || Date.now(); } }
+  while (R.slots.length < NSLOT) R.slots.push(null); return R; }
+async function refreshSave() { ROSTER = await readRoster(); updateStartUI(); }
+function writeRosterLocal() { try { localStorage.setItem(RKEY, JSON.stringify(ROSTER)); return true; } catch (e) { return false; } }
+async function writeRosterCloud(slots) { if (!Store.db) return false; Store.pend = new Set([...(Store.pend || []), ...slots]); if (Store.writing) return true; Store.writing = true; let ok = true;
+  try { while (Store.pend.size || Store.head) { const L = [...Store.pend]; Store.pend.clear(); Store.head = false;
+      for (const i of L) { const ref = Store.db.doc(`data/users/${Store.uid}/char${i}`); try { if (ROSTER.slots[i]) await ref.set(plain(ROSTER.slots[i])); else await ref.delete(); } catch (e) { ok = false; } }
+      try { await Store.db.doc(`data/users/${Store.uid}/roster`).set(plain(rosterHead(ROSTER))); } catch (e) { ok = false; } } } finally { Store.writing = false; } return ok; }
 let saveCD = 0;
-async function saveGame(quiet) { if (!S || !running) return false; const d = snapshot(); SAVE = d; let local = false; try { localStorage.setItem(SKEY, JSON.stringify(d)); local = true; } catch (e) { }
-  let cloud = false; if (Store.db) { Store.pending = d; if (!Store.writing) { Store.writing = true; while (Store.pending) { const x = Store.pending; Store.pending = null; try { await Store.db.doc(`data/users/${Store.uid}/save`).set(JSON.parse(JSON.stringify(x))); cloud = true; } catch (e) { cloud = false; } } Store.writing = false; } else cloud = true; }
-  return { local, cloud, any: local || cloud }; }
-function updateStartUI() { const c = $('contBtn'); if (SAVE) { c.classList.remove('hide'); c.textContent = `TIẾP TỤC · ${CLS[SAVE.cls].name} Lv ${SAVE.lv}`; } else if (OLD) { c.classList.remove('hide'); c.textContent = `TIẾP TỤC BẢN CŨ · Lv ${OLD.lv || 1}`; } else c.classList.add('hide');
-  $('cloudTxt').textContent = Store.db ? 'Tiến trình được lưu lên tài khoản của bạn — mở trên máy khác vẫn chơi tiếp được.' : 'Tiến trình được lưu trên trình duyệt này.'; }
+async function saveGame(quiet) { if (!S || !running || CUR < 0 || !ROSTER) return false; const d = snapshot(); SAVE = d;
+  ROSTER.slots[CUR] = plain(d); ROSTER.world.bots = S.bots; ROSTER.last = CUR; ROSTER.ts = d.ts;
+  const local = writeRosterLocal(), cloud = await writeRosterCloud([CUR]); return { local, cloud, any: local || cloud }; }
+// the character select: five slots, each a saved hero or an empty place to make one (level 1); the world and its bots carry on whoever plays
+const fmtPlay = sec => { const h = Math.floor((sec || 0) / 3600), m = Math.floor((sec || 0) / 60) % 60; return h ? `${h} giờ ${m} phút` : `${m} phút`; };
+let newSlot = -1;
+function updateStartUI() { const L = $('slotList');
+  if (!ROSTER) L.innerHTML = '<p class="small">Đang tải hồ sơ nhân vật...</p>';
+  else { L.innerHTML = ROSTER.slots.map((c, i) => c && CLS[c.cls] ? `<div class="slot${ROSTER.last === i ? ' last' : ''}" style="--c:${CLS[c.cls].col}">
+      <div class="si" aria-hidden="true">${CLS[c.cls].icon}</div>
+      <div class="sd"><b>${escH(c.name || 'Anh Hùng')}</b><span>${CLS[c.cls].name} · Cấp ${c.lv} / ${MAXLV}</span><span class="small">${MAPS[c.map] ? MAPS[c.map].name + ' · ' : ''}Đã chơi ${fmtPlay(c.playT)}</span></div>
+      <div class="sb"><button class="btn" data-play="${i}">VÀO GAME</button><button class="pb" data-delslot="${i}" aria-label="Xóa nhân vật ${escH(c.name || '')}">Xóa</button></div></div>`
+    : `<button class="slot empty" data-newslot="${i}"><div class="si" aria-hidden="true">+</div><div class="sd"><b>Ô trống ${i + 1}</b><span>Tạo nhân vật mới, bắt đầu từ cấp 1</span></div></button>`).join('');
+    L.querySelectorAll('[data-play]').forEach(b => b.onclick = () => playSlot(+b.dataset.play));
+    L.querySelectorAll('[data-newslot]').forEach(b => b.onclick = () => { newSlot = +b.dataset.newslot; migrate = null; openClass(); });
+    L.querySelectorAll('[data-delslot]').forEach(b => b.onclick = () => { if (!b.classList.contains('arm')) { b.classList.add('arm'); b.textContent = 'Xóa hẳn?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('arm'); b.textContent = 'Xóa'; } }, 3500); return; }
+      deleteSlot(+b.dataset.delslot); }); }
+  $('cloudTxt').textContent = (Store.db ? 'Mỗi nhân vật lưu riêng cấp, trang bị, vàng, thú... trên tài khoản của bạn.' : 'Mỗi nhân vật lưu riêng trên trình duyệt này.') + ' Thế giới và các người chơi khác vẫn tiếp diễn dù bạn chơi nhân vật nào.'; }
+function playSlot(i) { const c = ROSTER && ROSTER.slots[i]; if (!c) return; CUR = i; applySave(c); startRun(); }
+async function deleteSlot(i) { if (!ROSTER || !ROSTER.slots[i]) return; ROSTER.slots[i] = null; if (ROSTER.last === i) ROSTER.last = -1; ROSTER.ts = Date.now(); writeRosterLocal(); updateStartUI(); await writeRosterCloud([i]); }
 
 // ---------- start / class select / menu ----------
 let pickCls = null, migrate = null;
-function openClass(note) { $('startOv').classList.add('hide'); $('classOv').classList.remove('hide'); $('classNote').textContent = note || 'Mỗi lớp có giáp, vũ khí, đòn thường và 3 kỹ năng riêng (mở ở cấp 1, 10 và 25).'; pickCls = null; renderClasses(); }
+function openClass(note) { $('startOv').classList.add('hide'); $('classOv').classList.remove('hide'); $('heroName').value = ''; $('classNote').textContent = note || 'Mỗi lớp có giáp, vũ khí, đòn thường và 3 kỹ năng riêng (mở ở cấp 1, 10 và 25).'; pickCls = null; renderClasses(); }
 function renderClasses() { $('classList').innerHTML = CORDER.map(k => { const C = CLS[k]; return `<button data-c="${k}" aria-pressed="${pickCls === k}" style="--c:${C.col}"><b style="color:${C.col}">${C.icon} ${C.name}</b>${C.desc}<span style="color:#93c6cf">${C.melee ? 'Cận chiến' : 'Tầm xa'} · Kỹ năng: ${SKILLS[k].map(s => s.name).join(', ')}</span></button>`; }).join('');
   $('classList').querySelectorAll('button').forEach(b => b.onclick = () => { pickCls = b.dataset.c; renderClasses(); }); $('classGo').disabled = !pickCls; }
-$('newBtn').onclick = () => { migrate = null; openClass(); };
 $('classBack').onclick = () => { $('classOv').classList.add('hide'); $('startOv').classList.remove('hide'); };
-$('contBtn').onclick = () => { if (SAVE) { applySave(SAVE); startRun(); } else if (OLD) { migrate = OLD; openClass('Bản lưu cũ chưa có lớp nhân vật. Chọn một lớp — cấp độ, vàng, đá cường hóa và trang bị (trừ cánh cũ) được giữ lại.'); } };
-$('classGo').onclick = () => { if (!pickCls) return; S = newState(pickCls);
+$('classGo').onclick = () => { if (!pickCls || newSlot < 0 || !ROSTER) return; S = newState(pickCls); CUR = newSlot;
+  S.name = ($('heroName').value || '').trim().slice(0, 16) || `Anh Hùng ${newSlot + 1}`; S.born = Date.now(); S.bots = Array.isArray(ROSTER.world.bots) ? ROSTER.world.bots : null;
   if (migrate) { const o = migrate; Object.assign(S, { lv: o.lv || 1, exp: o.exp || 0, gold: o.gold || 0 }); S.mats.e += o.stones || 0; const conv = g => g && g.slot !== 'wings' ? Object.assign({ set: null }, g) : null;
     S.inv = (o.inv || []).map(conv).filter(Boolean); if (o.eq) for (const s of SLOT_ORDER) if (o.eq[s]) S.eq[s] = conv(o.eq[s]); const oldW = [...(o.inv || []), ...Object.values(o.eq || {})].filter(g => g && g.slot === 'wings').length; S.mats.f += oldW * 3; }
   $('classOv').classList.add('hide'); startRun(true); };
@@ -3855,11 +3908,11 @@ function startRun(fresh) {
   saveGame();
 }
 function openMenu() { $('menuOv').classList.remove('hide'); paused = true; const h = Math.floor(S.playT / 3600), mi = Math.floor(S.playT / 60) % 60; const L = S.lvLog.filter(e => e[0] >= S.playT - 600); const pace = L.length > 1 ? (L[L.length - 1][1] - L[0][1]) / Math.max(60, L[L.length - 1][0] - L[0][0]) * 3600 : 0;
-  $('menuInfo').innerHTML = `${CLS[S.cls].name} · Cấp <b>${S.lv}</b> / ${MAXLV} · ${MAPS[S.map].name}<br>Đã chơi ${h} giờ ${mi} phút${pace ? ` · tốc độ gần đây ≈ <b>${Math.round(pace)}</b> cấp/giờ` : ''}`; $('mMsg').textContent = ''; $('mResume').focus(); }
+  $('menuInfo').innerHTML = `<b>${escH(S.name || '')}</b> · ${CLS[S.cls].name} · Cấp <b>${S.lv}</b> / ${MAXLV} · ${MAPS[S.map].name}<br>Đã chơi ${h} giờ ${mi} phút${pace ? ` · tốc độ gần đây ≈ <b>${Math.round(pace)}</b> cấp/giờ` : ''}`; $('mMsg').textContent = ''; $('mResume').focus(); }
 let paused = false;
 $('mResume').onclick = () => { $('menuOv').classList.add('hide'); paused = false; };
 $('mSave').onclick = async () => { $('mMsg').textContent = 'Đang lưu...'; const r = await saveGame(); $('mMsg').textContent = r && r.any ? `Đã lưu lúc ${new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}${Store.db ? (r.cloud ? ' (đám mây + máy này)' : ' (chỉ máy này)') : ''}.` : 'Không lưu được trên trình duyệt này.'; };
-$('mHome').onclick = async () => { await saveGame(); running = false; paused = false; $('menuOv').classList.add('hide'); $('hud').classList.add('hide'); closeBag(); closeMap(); $('startOv').classList.remove('hide'); updateStartUI(); };
+$('mHome').onclick = async () => { await saveGame(); running = false; paused = false; CUR = -1; $('menuOv').classList.add('hide'); $('hud').classList.add('hide'); closeBag(); closeMap(); $('startOv').classList.remove('hide'); updateStartUI(); };
 document.addEventListener('visibilitychange', () => { if (document.hidden && running) saveGame(); });
 
 // ---------- camera, post-processing, loop ----------
