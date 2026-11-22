@@ -2669,7 +2669,9 @@ const atkDmgK = () => (BAK[S.cls] || 1) / Math.pow(1 + S.lv / 40, BAP[S.cls] || 
 const skDmgK = () => (SKD[S.cls] || 1) / Math.pow(1 + S.lv / 60, SKP[S.cls] || 2);      /* gear grows faster than monster health: the skill share shrinks with level so a pack still takes ~5-6 s */          // skill damage factor per class, tuned so a pack of monsters dies in about 5-6 s
 const skRate = () => SK_RATE0 * (HS ? HS.aps : 0.25) / CLS[S.cls].aps;
 const skOpen = () => SKILLS[S.cls].filter(k => S.lv >= k.lv).length || 1;
-function skCd(sk) { return SK_ROT(S.cls) ? skOpen() / skRate() : Math.max(0.1, sk.cdk / (HS ? HS.aps : 3)); }
+function skCd(sk) { return SK_ROT(S.cls) ? 0 : Math.max(0.1, sk.cdk / (HS ? HS.aps : 3)); }     /* no per-skill cooldown: only the shared 0.5/s casting rhythm (S.skG) */
+// auto play takes the unlocked skills in turn, so the damage rhythm stays what the pack pacing was tuned on
+function autoCast(tg) { const n = 3; for (let k = 0; k < n; k++) { const j = ((S.skRR || 0) + k) % n; if (castSkill(j, tg)) { S.skRR = (j + 1) % n; return true; } } return false; }
 function skMp(sk) { return Math.ceil((HS ? HS.mp : 100) * sk.mpP * (SK_ROT(S.cls) ? 0.6 * SK_RATE0 / skRate() : 1)); }
 // recovery from hitting / killing monsters, capped per second so it never becomes god mode
 function recover(hpF, mpF) { const R = S.rec; if (S.time - R.t >= 1) { R.t = S.time; R.hp = R.mp = 0; }
@@ -3146,7 +3148,7 @@ function updateHero(dt, t) {
   let mag = Math.hypot(mx, mz); const keys = mag > 0.12; const Cl = CLS[S.cls];
   if (keys) { S.moveTo = null; S.tapMob = null; S.nav = null; }
   const fol = !keys && !S.moveTo ? followLeaderDir() : null;
-  if (fol) { if (fol[0] || fol[1]) { [mx, mz] = fol; mag = 1; } else if (S.auto && !isTown()) { const m = nearestMob(Cl.range + 0.4); if (m) { S.face = Math.atan2(m.x - S.pos.x, m.z - S.pos.z); for (let j = 2; j >= 0; j--) if (castSkill(j, m)) break; attack(m); } } }
+  if (fol) { if (fol[0] || fol[1]) { [mx, mz] = fol; mag = 1; } else if (S.auto && !isTown()) { const m = nearestMob(Cl.range + 0.4); if (m) { S.face = Math.atan2(m.x - S.pos.x, m.z - S.pos.z); autoCast(m); attack(m); } } }
   if (S.tapMob && (S.tapMob.dead || !mobs.includes(S.tapMob))) S.tapMob = null;
   if (!keys && S.moveTo) { // touch / click: walk to the touched point
     const d = Math.hypot(S.moveTo.x - S.pos.x, S.moveTo.z - S.pos.z);
@@ -3164,7 +3166,7 @@ function updateHero(dt, t) {
       if (d > want || !sees) { [mx, mz] = navDir(target.x, target.z); mag = 1;
         if (S.nav && S.nav.fail && target !== S.tapMob) { target.noReach = S.time + 6; S.nav = null; } }
       else if (!isLoot) { S.face = Math.atan2(dx, dz); const crowd = mobsNear(target.x, target.z, 2.6).filter(o => o.lv <= S.lv + 4 || o.aggro).length;
-        if (S.auto && (crowd >= 2 || target.boss || S.mp > HS.mp * 0.35)) { for (let j = 2; j >= 0; j--) if (castSkill(j, target)) break; } attack(target); } }
+        if (S.auto && (crowd >= 2 || target.boss || S.mp > HS.mp * 0.35)) { autoCast(target); } attack(target); } }
   }
   if (mag > 0.12 && S.castT <= 0) { const sp = Math.min(mag, 1) * HS.spd; const nx = S.pos.x + mx / Math.max(mag, 1) * sp * dt, nz = S.pos.z + mz / Math.max(mag, 1) * sp * dt;
     if (!collides(nx, S.pos.z, 0.5)) S.pos.x = nx; if (!collides(S.pos.x, nz, 0.5)) S.pos.z = nz; const r = Math.hypot(S.pos.x, S.pos.z); if (r > 21) { S.pos.x *= 21 / r; S.pos.z *= 21 / r; }
@@ -3531,7 +3533,7 @@ function updateHud() {
   SKILLS[S.cls].forEach((sk, j) => { const b = $('sk' + j); const lock = S.lv < sk.lv; b.classList.toggle('lock', lock); b.classList.toggle('nomp', !lock && S.mp < skMp(sk));
     b.style.setProperty('--c2', ELC[sk.el] + '99'); b.style.setProperty('--c3', ELC[sk.el] + '55');
     b.querySelector('.ic').textContent = ELI[sk.el]; b.querySelector('small').textContent = lock ? 'Lv ' + sk.lv : sk.name.split(' ').slice(0, 2).join(' ');
-    b.querySelector('.cd').style.transform = `scaleY(${lock ? 0 : Math.min(1, S.skCd[j] / skCd(sk))})`; b.querySelector('.cdt').textContent = !lock && S.skCd[j] >= 1 ? Math.ceil(S.skCd[j]) : '';
+    const rot = SK_ROT(S.cls), cdF = rot ? (S.skG || 0) * skRate() : S.skCd[j] / skCd(sk); b.querySelector('.cd').style.transform = `scaleY(${lock ? 0 : Math.min(1, cdF || 0)})`; b.querySelector('.cdt').textContent = !rot && !lock && S.skCd[j] >= 1 ? Math.ceil(S.skCd[j]) : '';
     b.setAttribute('aria-label', sk.name + (lock ? ' (mở ở cấp ' + sk.lv + ')' : '')); });
   const boss = S.boss && !S.boss.dead ? S.boss : null, b2 = S.boss2 && !S.boss2.dead ? S.boss2 : null;
   $('bossbar').classList.toggle('hide', !boss); $('bossbar2').classList.toggle('hide', !b2);
