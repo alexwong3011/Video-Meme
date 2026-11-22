@@ -1,0 +1,337 @@
+<title>Lộ Trình Phát Hành ASTROPOLIS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a launch checklist read top to bottom: decisions to settle, a 9-week timeline, one block per phase with its tasks, then store deadlines, fees and sources. */
+:root{
+  --bg:#f2f4f8; --surface:#ffffff; --ink:#14203a; --muted:#56627a; --line:#d6dce8;
+  --lapis:#1f4f9e; --lapissoft:#e2eaf8; --gold:#a5731a; --goldsoft:#f5e7c8;
+  --good:#1d7a4b; --goodsoft:#dcf1e5; --warn:#9a5b00; --warnsoft:#fbecd2; --bad:#b0302a;
+  --f-body:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1320; --surface:#131c2b; --ink:#e6ebf4; --muted:#98a4ba; --line:#28344a;
+  --lapis:#86aaf0; --lapissoft:#1a2944; --gold:#e3b660; --goldsoft:#382c14;
+  --good:#5cc392; --goodsoft:#123324; --warn:#e8a64c; --warnsoft:#3a2a10; --bad:#f07a70; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1320; --surface:#131c2b; --ink:#e6ebf4; --muted:#98a4ba; --line:#28344a;
+  --lapis:#86aaf0; --lapissoft:#1a2944; --gold:#e3b660; --goldsoft:#382c14;
+  --good:#5cc392; --goodsoft:#123324; --warn:#e8a64c; --warnsoft:#3a2a10; --bad:#f07a70; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body)}
+.wrap{max-width:1060px;margin:0 auto;padding-block:26px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{margin:0;line-height:1.2;text-wrap:balance}
+h1{font-size:clamp(26px,4.6vw,38px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:21px;font-weight:800}
+h3{font-size:15.5px;font-weight:700}
+p{margin:0;max-width:70ch}
+a{color:var(--lapis)}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.eyebrow{font:700 11.5px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+header{display:flex;flex-direction:column;gap:12px;padding-bottom:20px;border-bottom:2px solid var(--gold)}
+.hrow{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.prog{display:flex;flex-direction:column;gap:6px;min-width:220px;flex:0 1 320px}
+.prog b{font:700 22px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--lapis)}
+.bar{height:8px;border-radius:99px;background:var(--lapissoft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--lapis);border-radius:99px;transition:width .4s}
+#status{font-size:13px;padding:8px 12px;border-radius:8px;background:var(--lapissoft);color:var(--lapis)}
+#status.warn{background:var(--warnsoft);color:var(--warn)}
+section{display:flex;flex-direction:column;gap:14px}
+.shead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+/* decisions */
+.dec{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.dcard.picked{border-color:var(--good)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:5px 14px;cursor:pointer;font-size:13.5px;font-weight:600}
+.opt:hover{border-color:var(--lapis)}
+.opt[aria-pressed="true"]{background:var(--good);border-color:var(--good);color:var(--surface)}
+.opt:disabled{cursor:default;opacity:.7}
+/* timeline */
+.tl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.tlg{display:grid;grid-template-columns:190px repeat(9,minmax(46px,1fr));min-width:640px}
+.tlg > div{padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}
+.tlg .wk{font:700 11px var(--f-mono);color:var(--muted);text-align:center;background:var(--bg)}
+.tlg .nm{font-weight:600;display:flex;flex-direction:column;gap:2px}
+.tlg .nm span{font:500 11.5px var(--f-mono);color:var(--muted)}
+.tlg .cell{padding:8px 3px;display:flex;align-items:center}
+.tlg .seg{height:18px;width:100%;background:var(--lapissoft);position:relative;overflow:hidden}
+.tlg .seg.s{border-radius:9px 0 0 9px}.tlg .seg.e{border-radius:0 9px 9px 0}.tlg .seg.s.e{border-radius:9px}
+.tlg .seg i{position:absolute;inset:0 auto 0 0;background:var(--lapis);opacity:.85}
+/* phases */
+.phase{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.phead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.phead .t{display:flex;flex-direction:column;gap:2px}
+.count{font:700 13px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.task{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.task:first-of-type{border-top:0}
+.task.st-done .ttl{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}
+.task .body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ttl{font-weight:700}
+.det{font-size:13.5px;color:var(--muted);max-width:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-block;padding:1px 9px;border-radius:999px;font:600 11.5px var(--f-body);background:var(--bg);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.who-claude{background:var(--lapissoft);border-color:transparent;color:var(--lapis)}
+.chip.who-ban{background:var(--goldsoft);border-color:transparent;color:var(--gold)}
+.chip.who-ca{background:var(--goodsoft);border-color:transparent;color:var(--good)}
+.chip.cost{font-family:var(--f-mono)}
+.stsel{appearance:none;border:0;border-radius:999px;padding:3px 26px 3px 11px;font:700 12px var(--f-body);cursor:pointer;background-repeat:no-repeat;background-position:right 9px center;background-size:8px;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(-45deg,transparent 50%,currentColor 50%);background-size:4px 4px,4px 4px;background-position:right 13px center,right 9px center}
+.stsel.p-todo{background-color:var(--bg);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.stsel.p-doing{background-color:var(--warnsoft);color:var(--warn)}
+.stsel.p-done{background-color:var(--goodsoft);color:var(--good)}
+.chk{width:20px;height:20px;margin:2px 0 0;accent-color:var(--good);cursor:pointer}
+textarea.note{width:100%;box-sizing:border-box;min-height:34px;resize:vertical;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:6px 10px;font-size:13.5px}
+.row2{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1.5px solid var(--lapis);background:transparent;color:var(--lapis);border-radius:999px;padding:4px 13px;font-weight:700;font-size:12.5px;cursor:pointer}
+.btn:hover{background:var(--lapissoft)}
+.btn.solid{background:var(--lapis);color:var(--surface)}
+.btn:disabled{opacity:.6;cursor:default}
+.del{border:0;background:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline}
+.empty{padding:14px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:13.5px}
+form.add{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding-top:12px;border-top:1px dashed var(--line)}
+form.add label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);flex:1 1 140px;min-width:0}
+form.add label.wide{flex:3 1 260px}
+form.add input,form.add select{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:6px 9px;font-size:13.5px;color:var(--ink)}
+/* reference */
+.ref{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;font-size:13.5px}
+.kv b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.dl{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;font-size:13.5px}
+.dl li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px}
+.dl time{font:700 12px var(--f-mono);color:var(--gold)}
+.src{columns:2 300px;column-gap:28px;font-size:13px;margin:0;padding-left:18px}
+.src li{break-inside:avoid;margin-bottom:6px}
+@media (max-width:520px){.dl li{grid-template-columns:1fr;gap:2px}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Kế hoạch phát hành · App Store và Google Play</span>
+    <div class="hrow">
+      <div style="display:flex;flex-direction:column;gap:8px;min-width:0;flex:1 1 420px">
+        <h1>Lộ trình đưa ASTROPOLIS lên cửa hàng</h1>
+        <p class="muted">Bọc game three.js hiện tại thành app gốc bằng Capacitor, chuyển lưu game sang backend riêng, thêm mua trong app, rồi qua thử nghiệm và duyệt của hai cửa hàng. Đánh dấu tiến độ, ghi chú, hoặc bấm "Giao cho Claude" ở việc muốn bắt đầu.</p>
+      </div>
+      <div class="prog" aria-live="polite"><span class="small muted">Tiến độ</span><b id="pnum">–</b><div class="bar"><i id="pbar" style="width:0"></i></div></div>
+    </div>
+    <div id="status" hidden></div>
+  </header>
+
+  <section>
+    <div class="shead"><h2>Quyết định cần chốt</h2><span class="small muted">Chọn một phương án; các việc phía dưới sẽ đi theo lựa chọn này.</span></div>
+    <div class="dec" id="dec"><div class="empty">Đang tải các quyết định…</div></div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>Lịch 9 tuần</h2><span class="small muted">Ước tính khi làm toàn thời gian. Phần tô đậm là tỉ lệ việc đã xong của giai đoạn.</span></div>
+    <div class="tl"><div class="tlg" id="tl"></div></div>
+  </section>
+
+  <div id="phases" style="display:flex;flex-direction:column;gap:16px"></div>
+
+  <section>
+    <div class="shead"><h2>Tham khảo nhanh</h2></div>
+    <div class="ref">
+      <div class="box">
+        <h3>Mốc bắt buộc của cửa hàng</h3>
+        <ul class="dl">
+          <li><time>31/01/2026</time><span>Apple: mọi app phải trả lời bảng xếp hạng tuổi mới (13+, 16+, 18+) mới được gửi bản cập nhật.</span></li>
+          <li><time>28/04/2026</time><span>Apple: bản tải lên phải build bằng Xcode 26 với SDK iOS 26.</span></li>
+          <li><time>31/08/2026</time><span>Google Play: app mới và bản cập nhật phải nhắm Android 16 (API 36).</span></li>
+          <li><time>Từ 13/11/2023</time><span>Google Play: tài khoản cá nhân mới phải thử kín với ít nhất 12 người trong 14 ngày liên tục trước khi phát hành. Tài khoản công ty có D-U-N-S được miễn.</span></li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Chi phí cố định</h3>
+        <div class="kv">
+          <span>Apple Developer</span><b>$99/năm</b>
+          <span>Google Play Console</span><b>$25 một lần</b>
+          <span>Mã D-U-N-S (nếu đứng tên công ty)</span><b>Miễn phí</b>
+          <span>Phí thẩm định Quyết định phát hành G1</span><b>5.000.000 đ</b>
+          <span>Phí cửa hàng trên doanh thu (dưới $1 triệu/năm)</span><b>15%</b>
+          <span>Firebase hoặc Supabase ở quy mô nhỏ</span><b>Gói miễn phí</b>
+        </div>
+        <p class="small muted">Chưa tính máy thử, máy Mac, phí luật sư và quảng cáo.</p>
+      </div>
+      <div class="box">
+        <h3>Những điều dễ bị từ chối</h3>
+        <ul class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+          <li>App chỉ tải trang web từ xa: phải chạy offline từ file trong app (Apple 4.2).</li>
+          <li>Có đăng nhập nhưng không có nút xoá tài khoản trong app.</li>
+          <li>Dùng tên hoặc thương hiệu game khác trong tên, icon, từ khoá (Apple 4.1(c)). Không dùng chữ "MU".</li>
+          <li>Bán vật phẩm số mà không qua thanh toán của cửa hàng.</li>
+          <li>Quảng cáo bot là người chơi thật.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>Nguồn</h2></div>
+    <ul class="src">
+      <li><a href="https://www.developer.apple.com/news/upcoming-requirements/">Apple: yêu cầu SDK tối thiểu</a></li>
+      <li><a href="https://developer.apple.com/help/app-review/guideline-reference/4-1-prevent-copycat-rejection">Apple: điều 4.1 Copycats</a></li>
+      <li><a href="https://ptkd.com/journal/app-store-age-ratings-2025-update">Xếp hạng tuổi App Store 2026</a></li>
+      <li><a href="https://elysiancrest.com/insights/mobile-app-development/app-store-compliance-deadlines-2026">Hạn chót App Store và Google Play 2026</a></li>
+      <li><a href="https://www.testerscommunity.com/blog/google-play-closed-testing-requirements-2026">Quy định thử kín Google Play 2026</a></li>
+      <li><a href="https://ontest.app/blog/google-play-12-testers-14-days-requirement-explained">Giải thích quy tắc 12 người, 14 ngày</a></li>
+      <li><a href="https://raxxo.shop/blogs/lab/shipping-a-three-js-game-to-the-ios-app-store">Đưa game three.js lên App Store bằng Capacitor</a></li>
+      <li><a href="https://scribe.disroot.org/post/7369014">Kinh nghiệm đưa PWA lên App Store</a></li>
+      <li><a href="https://thuvienphapluat.vn/van-ban/Cong-nghe-thong-tin/Nghi-dinh-147-2024-ND-CP-quan-ly-cung-cap-su-dung-dich-vu-Internet-thong-tin-tren-mang-480755.aspx">Nghị định 147/2024/NĐ-CP</a></li>
+      <li><a href="https://dichvucong.gov.vn/p/home/dvc-chi-tiet-thu-tuc-hanh-chinh.html?ma_thu_tuc=2.001677">Thủ tục Quyết định phát hành G1</a></li>
+      <li><a href="https://abei.gov.vn/thu-tuc-hanh-chinh-ttdt/thu-tuc-cap-quyet-dinh-phat-hanh-tro-choi-dien-tu-g1-tren-mang/118664">Phí thẩm định G1</a></li>
+      <li><a href="https://luatvietan.vn/giay-phep-game-online-g1.html">Giấy phép G1: điều kiện và thủ tục</a></li>
+      <li><a href="https://help.meshy.ai/en/articles/9992001-can-i-use-my-generated-assets-for-commercial-projects">Meshy: dùng mô hình cho mục đích thương mại</a></li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const PHASES = [
+  { id: 'tech',  n: 'Kỹ thuật',              s: 1, e: 4, d: 'Đóng gói app, backend, đăng nhập, tối ưu cho điện thoại' },
+  { id: 'pay',   n: 'Nạp tiền',              s: 4, e: 5, d: 'Gói vật phẩm, mua trong app, kiểm tra hoá đơn' },
+  { id: 'legal', n: 'Tài khoản và pháp lý',  s: 1, e: 6, d: 'Làm song song từ tuần đầu vì có bước phải chờ' },
+  { id: 'store', n: 'Hồ sơ cửa hàng',        s: 4, e: 6, d: 'Hình ảnh, mô tả, biểu mẫu quyền riêng tư và độ tuổi' },
+  { id: 'test',  n: 'Thử nghiệm',            s: 6, e: 8, d: 'TestFlight, thử kín Google Play, soft launch' },
+  { id: 'launch',n: 'Phát hành và vận hành', s: 9, e: 9, d: 'Gửi duyệt, ra mắt, cập nhật định kỳ' } ];
+const ST = { todo: 'Chưa làm', doing: 'Đang làm', done: 'Xong' };
+const WHO = { claude: 'Claude làm', ban: 'Bạn làm', ca: 'Cả hai' };
+const CM_WHY = { writers_only: 'Chỉ người có quyền sửa trang mới gửi được cho Claude.', no_session: 'Chưa có phiên Claude nào đang nhận yêu cầu từ trang này. Mở lại phiên làm việc rồi thử lại.', off: 'Trang chưa gửi được cho Claude ở chế độ xem này.' };
+const S = { tasks: new Map(), decisions: new Map(), loaded: { tasks: false, decisions: false } };
+let db = null, cm = null, canWrite = true;
+const timers = new Map(), writing = new Map(), drafts = new Map(), sent = new Map();
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const byOrder = (a, b) => (a.order ?? 999) - (b.order ?? 999);
+const list = (m, f) => [...m.values()].filter(f || (() => true)).sort(byOrder);
+const val = (col, id, f, v) => drafts.has(col + '/' + id + '#' + f) ? drafts.get(col + '/' + id + '#' + f) : v;
+
+function note(t, warn) { const el = $('#status'); el.textContent = t || ''; el.className = warn ? 'warn' : ''; el.hidden = !t; }
+function flag(e) { const c = e && e.code;
+  if (c === 'invalid_argument' || c === 'permission_denied') { canWrite = false; note('Bạn chỉ có quyền xem: thay đổi không được lưu.', true); render(); }
+  else if (c === 'quota_exceeded') note('Kho dữ liệu đã đầy, hãy xoá bớt việc cũ rồi thử lại.', true);
+  else note('Chưa lưu được thay đổi, kiểm tra kết nối rồi thử lại.', true); }
+function patch(col, id, data, delay = 0) {
+  if (!db || !canWrite) return;
+  const key = col + '/' + id, prev = timers.get(key); if (prev) clearTimeout(prev.t);
+  const merged = Object.assign({}, prev ? prev.data : {}, data);
+  const run = async () => { timers.delete(key);
+    while (writing.get(key)) await writing.get(key);
+    const p = db.collection(col).doc(id).update(merged).catch(flag).finally(() => { writing.delete(key); for (const f in merged) drafts.delete(key + '#' + f); });
+    writing.set(key, p); await p; };
+  if (delay) timers.set(key, { t: setTimeout(run, delay), data: merged }); else run();
+}
+
+// ---- rendering ----
+function phaseStats(pid) { const t = list(S.tasks, x => x.phase === pid); const d = t.filter(x => x.state === 'done').length; return { n: t.length, d, k: t.length ? d / t.length : 0 }; }
+function renderHeader() {
+  const all = [...S.tasks.values()], d = all.filter(x => x.state === 'done').length;
+  $('#pnum').textContent = S.loaded.tasks ? `${d}/${all.length} việc xong` : '–';
+  $('#pbar').style.width = all.length ? (100 * d / all.length).toFixed(1) + '%' : '0';
+}
+function renderDecisions() {
+  const el = $('#dec'), ds = list(S.decisions);
+  if (!S.loaded.decisions) { el.innerHTML = '<div class="empty">Đang tải các quyết định…</div>'; return; }
+  if (!ds.length) { el.innerHTML = '<div class="empty">Chưa có quyết định nào. Claude sẽ thêm các câu hỏi cần chốt vào đây.</div>'; return; }
+  el.innerHTML = ds.map(x => `<div class="dcard${x.pick ? ' picked' : ''}">
+      <h3>${esc(x.q)}</h3>
+      <div class="opts" role="group" aria-label="${esc(x.q)}">${(x.options || []).map(o => `<button type="button" class="opt" data-dec="${esc(x.id)}" data-opt="${esc(o)}" aria-pressed="${x.pick === o}"${canWrite ? '' : ' disabled'}>${esc(o)}</button>`).join('')}</div>
+      ${x.hint ? `<p class="small muted">${esc(x.hint)}</p>` : ''}
+    </div>`).join('');
+}
+function renderTimeline() {
+  let h = '<div class="wk" style="text-align:left">Giai đoạn</div>' + Array.from({ length: 9 }, (_, i) => `<div class="wk">T${i + 1}</div>`).join('');
+  for (const p of PHASES) { const st = phaseStats(p.id), span = p.e - p.s + 1, fill = st.k * span;
+    h += `<div class="nm">${esc(p.n)}<span>${st.d}/${st.n} xong</span></div>`;
+    for (let w = 1; w <= 9; w++) {
+      if (w < p.s || w > p.e) { h += '<div class="cell"></div>'; continue; }
+      const i = w - p.s, f = Math.max(0, Math.min(1, fill - i));
+      h += `<div class="cell"><div class="seg${w === p.s ? ' s' : ''}${w === p.e ? ' e' : ''}"><i style="width:${(f * 100).toFixed(0)}%"></i></div></div>`; } }
+  $('#tl').innerHTML = h;
+}
+function goBtn(x) { if (x.state === 'done' || x.who === 'ban') return ''; const st = sent.get(x.id);
+  return `<button class="btn" type="button" data-go="${esc(x.id)}"${st === 'sending' ? ' disabled' : ''}>${st === 'sending' ? 'Đang gửi…' : st === 'sent' ? 'Gửi lại cho Claude' : 'Giao cho Claude'}</button>${st === 'sent' ? '<span class="small muted">Đã gửi</span>' : ''}`; }
+function taskHtml(x) {
+  const st = x.state || 'todo';
+  return `<div class="task st-${esc(st)}" data-row="${esc(x.id)}">
+    <input type="checkbox" class="chk" aria-label="Đã xong: ${esc(x.title)}" data-done="${esc(x.id)}"${st === 'done' ? ' checked' : ''}${canWrite ? '' : ' disabled'}>
+    <div class="body">
+      <div class="row2"><span class="ttl">${esc(x.title)}</span>
+        ${canWrite ? `<select class="stsel p-${esc(st)}" aria-label="Trạng thái" data-st="${esc(x.id)}">${Object.entries(ST).map(([k, v]) => `<option value="${k}"${k === st ? ' selected' : ''}>${v}</option>`).join('')}</select>` : `<span class="stsel p-${esc(st)}">${ST[st] || st}</span>`}</div>
+      ${x.detail ? `<p class="det">${esc(x.detail)}</p>` : ''}
+      <div class="chips">${x.who ? `<span class="chip who-${esc(x.who)}">${esc(WHO[x.who] || x.who)}</span>` : ''}${x.time ? `<span class="chip">${esc(x.time)}</span>` : ''}${x.cost ? `<span class="chip cost">${esc(x.cost)}</span>` : ''}</div>
+      <textarea class="note" rows="1" aria-label="Ghi chú cho ${esc(x.title)}" data-col="tasks" data-id="${esc(x.id)}" data-f="note" placeholder="Ghi chú của bạn"${canWrite ? '' : ' readonly'}>${esc(val('tasks', x.id, 'note', x.note))}</textarea>
+      <div class="row2">${goBtn(x)}${canWrite && x.custom ? `<button class="del" type="button" data-del="${esc(x.id)}">Xoá việc này</button>` : ''}</div>
+    </div></div>`;
+}
+function addForm(pid) { if (!canWrite || !db) return '';
+  return `<form class="add" data-add="${pid}">
+    <label class="wide">Thêm việc<input type="text" name="title" required placeholder="Ví dụ: Thử trên Samsung A15"></label>
+    <label>Ai làm<select name="who">${Object.entries(WHO).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+    <label>Thời gian<input type="text" name="time" placeholder="2 ngày"></label>
+    <div><button class="btn solid" type="submit">Thêm</button></div></form>`; }
+function renderPhases() {
+  const v = $('#phases'), a = document.activeElement;
+  const focus = a && a.dataset && a.dataset.f ? { id: a.dataset.id, f: a.dataset.f, s: a.selectionStart, e: a.selectionEnd } : null;
+  const keep = [...v.querySelectorAll('form[data-add]')].map(f => [f.dataset.add, Object.fromEntries(new FormData(f))]);
+  v.innerHTML = PHASES.map(p => { const st = phaseStats(p.id), ts = list(S.tasks, x => x.phase === p.id);
+    const body = !S.loaded.tasks ? '<div class="empty">Đang tải các việc…</div>' : ts.length ? ts.map(taskHtml).join('') : '<div class="empty">Chưa có việc nào trong giai đoạn này. Thêm việc ở ô bên dưới.</div>';
+    return `<section class="phase" id="ph-${p.id}"><div class="phead"><div class="t"><h2>${esc(p.n)}</h2><span class="small muted">Tuần ${p.s === p.e ? p.s : p.s + '–' + p.e} · ${esc(p.d)}</span></div><span class="count">${st.d}/${st.n} xong</span></div>
+      <div>${body}</div>${addForm(p.id)}</section>`; }).join('');
+  for (const [k, vals] of keep) { const f = v.querySelector(`form[data-add="${k}"]`); if (f) for (const [n, x] of Object.entries(vals)) if (f.elements[n]) f.elements[n].value = x; }
+  if (focus) { const el = v.querySelector(`[data-id="${CSS.escape(focus.id)}"][data-f="${focus.f}"]`); if (el) { el.focus(); try { el.setSelectionRange(focus.s, focus.e); } catch (e) {} } }
+}
+function render() { renderHeader(); renderDecisions(); renderTimeline(); renderPhases(); }
+
+// ---- events ----
+function setState(id, st) { const x = S.tasks.get(id); if (x) { x.state = st; render(); } patch('tasks', id, { state: st }); }
+document.addEventListener('change', e => { const el = e.target;
+  if (el.dataset.done) setState(el.dataset.done, el.checked ? 'done' : 'todo');
+  else if (el.dataset.st) setState(el.dataset.st, el.value); });
+document.addEventListener('input', e => { const el = e.target; if (el.dataset.col !== 'tasks' || !el.dataset.f) return;
+  drafts.set('tasks/' + el.dataset.id + '#' + el.dataset.f, el.value); patch('tasks', el.dataset.id, { [el.dataset.f]: el.value }, 700); });
+document.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.dec) { const x = S.decisions.get(b.dataset.dec); if (!x || !canWrite) return; const pick = x.pick === b.dataset.opt ? null : b.dataset.opt; x.pick = pick; render(); patch('decisions', x.id, { pick }); }
+  else if (b.dataset.go) startWork(b);
+  else if (b.dataset.del) { if (b.dataset.confirm) { db.collection('tasks').doc(b.dataset.del).delete().catch(flag); } else { b.dataset.confirm = '1'; b.textContent = 'Bấm lần nữa để xoá'; } } });
+document.addEventListener('submit', async e => { const f = e.target.closest('form[data-add]'); if (!f) return; e.preventDefault(); if (!db || !canWrite) return;
+  const fd = Object.fromEntries(new FormData(f)); if (!fd.title || !fd.title.trim()) return;
+  const ts = list(S.tasks, x => x.phase === f.dataset.add); const order = (ts.length ? ts[ts.length - 1].order || 0 : 0) + 1;
+  try { await db.collection('tasks').add({ phase: f.dataset.add, order, title: fd.title.trim(), detail: '', who: fd.who, time: fd.time || '', cost: '', state: 'todo', note: '', custom: true }); f.reset(); }
+  catch (err) { flag(err); } });
+function goText(x) {
+  const p = PHASES.find(q => q.id === x.phase), dec = list(S.decisions).filter(d => d.pick).map(d => d.q + ' → ' + d.pick);
+  const L = ['[Kế hoạch phát hành] ' + x.title, 'Giai đoạn: ' + (p ? p.n : x.phase), 'Mô tả: ' + (x.detail || '–'), 'Ai làm: ' + (WHO[x.who] || x.who || '–'), 'Thời gian ước tính: ' + (x.time || '–'), 'Ghi chú: ' + (val('tasks', x.id, 'note', x.note) || '–')];
+  if (dec.length) L.push('Quyết định đã chốt: ' + dec.join('; '));
+  L.push('Hãy trình bày kế hoạch công việc chi tiết để tôi xác nhận trước khi làm.');
+  let t = L.join('\n'); while (new TextEncoder().encode(t).length > 3900) t = t.slice(0, -50); return t; }
+async function startWork(btn) { const x = S.tasks.get(btn.dataset.go); if (!x) return;
+  if (!cm) { note('Trang này chưa gửi được bình luận cho Claude.', true); return; }
+  let state = 'off'; try { state = await cm.canSendToClaude(); } catch (e) {}
+  if (state !== 'available') { note(CM_WHY[state] || CM_WHY.off, true); return; }
+  sent.set(x.id, 'sending'); render();
+  try { const row = document.querySelector(`[data-row="${CSS.escape(x.id)}"]`) || btn; const anchor = await cm.anchorFor(row); await cm.sendToClaude({ anchor, text: goText(x) }); sent.set(x.id, 'sent'); note('Đã gửi "' + x.title + '" cho Claude.', false); }
+  catch (e) { sent.delete(x.id); note(e && e.code === 'consent_required' ? 'Chưa gửi: hãy cho phép trang bình luận thay bạn rồi bấm lại.' : e && e.code === 'claude_unavailable' ? CM_WHY.no_session : 'Chưa gửi được cho Claude (' + ((e && e.code) || 'lỗi') + ').', true); }
+  render(); }
+
+// ---- data ----
+render();
+(async () => {
+  db = window.claude ? await window.claude.use('db') : null;
+  if (!db) { note('Không mở được kho dữ liệu của trang. Hãy mở trang khi đã đăng nhập claude.ai.', true); S.loaded.tasks = S.loaded.decisions = true; render(); return; }
+  const timer = setTimeout(() => note('Dữ liệu chưa tải được, có thể đang hiển thị bản cũ.', true), 10000);
+  const done = () => { if (S.loaded.tasks && S.loaded.decisions) { clearTimeout(timer); if (canWrite) note('', false); } };
+  const sub = col => db.collection(col).onSnapshot(q => { const m = new Map(); q.docs.forEach(d => m.set(d.id, Object.assign({ id: d.id }, d.data()))); S[col] = m; if (!q.metadata.fromCache) S.loaded[col] = true; done(); render(); },
+    e => { clearTimeout(timer); note('Mất kết nối dữ liệu (' + (e && e.code) + '). Tải lại trang để thử lại.', true); });
+  sub('tasks'); sub('decisions');
+  try { const u = await window.claude.use('user'); const w = u && u.can ? await u.can('data.write') : null; if (w === false) { canWrite = false; note('Bạn đang xem ở chế độ chỉ đọc.', false); render(); } } catch (e) {}
+  try { cm = await window.claude.use('comments'); } catch (e) { cm = null; }
+})();
+</script>

@@ -9,3 +9,4 @@ Hai bản có kho lưu tiến trình riêng, chơi bản này không ảnh hư�
 Chốt bản test mới: chép `index.html` sang `test-build/index.html` (đổi `<title>` thành "ASTROPOLIS: Anihilation Test") rồi xuất bản lại đúng file đó.
 
 - Market research (22/11/2026): https://claude.ai/artifact/WjFtGqegFnh3oE8xmFB9r4 — source `research/market.html`
+- Release plan board (22/11/2026): https://claude.ai/artifact/LUMStt3eGxsGy3humXUDMi — source `release/index.html`, data in its db (tasks, decisions)
