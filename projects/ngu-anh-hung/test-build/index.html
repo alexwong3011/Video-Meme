@@ -276,98 +276,85 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 .pot.empty img{filter:grayscale(1) brightness(.5)}
 #pothp{right:172px;bottom:6px}#potmp{right:160px;bottom:62px}
 @media (max-width:380px){.orb.sm{width:40px;height:40px}.tr{gap:7px}.lcol .orb{width:48px;height:48px}}
-/* ===== UI theme "Giấy cói & Lapis" (option B): papyrus panels, lapis bands, gold relief, cartouche buttons ===== */
-:root{--pap:#d9c59b;--pink:#2b1f12;--pmut:#5a4630;--lap:#1d3a6e;--lap2:#132a52;--lapL:#3f6bb0;--gd:#e2b85a;--gdH:#f6dc94;--gdD:#6b4a14;--cin:#a8321f;--ter:#b5562e;
-  --ring:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,0 0 0 4px #4a3210;--paper:url('assets/ui/parchment.jpg')}
-/* panels and overlays: papyrus, ink text, gold double rim */
-.pnl,.ipop-card,.ocard{--ink:#2b1f12;--muted:#5a4630;--gold:#8a5a12;--cyan:#1d4f9e;--line:rgba(107,74,20,.38);--r0:#5e584b;--r1:#1d5fb0;--r2:#93600f;--r3:#b3261e;
-  color:#2b1f12;background:linear-gradient(rgba(240,227,195,.55),rgba(240,227,195,.55)),#d9c59b var(--paper) center/cover!important;border:0!important;box-shadow:var(--ring),0 16px 40px rgba(0,0,0,.6)!important}
-.pnl{border-radius:14px;overflow:hidden}
-.pnl header{position:relative;margin:0;padding:18px 54px 10px 14px;background:linear-gradient(#24477f,#132a52);box-shadow:0 2px 0 #e2b85a,0 4px 0 #6b4a14;--ink:#f6e6bd;--muted:#e6d3a6;--gold:#f6dc94;color:#f6e6bd}
-.pnl header::before{content:"";position:absolute;left:0;right:0;top:4px;height:10px;background:url('assets/ui/meander.svg') repeat-x;opacity:.6;pointer-events:none}
-.pnl h2{color:#f6dc94!important;letter-spacing:.12em;text-transform:uppercase;font-size:21px;text-shadow:0 1px 2px #000}
-.pnl header .cur,.pnl header .cur b{color:#f6e6bd}
-.pnl .x,.ipop-x{position:absolute;right:10px;top:10px;width:38px;height:38px;border-radius:50%!important;border:0!important;color:#fff2d6!important;font:700 18px/1 var(--ui)!important;background:radial-gradient(circle at 40% 35%,#e5683e,#a8321f 60%,#5c160c)!important;box-shadow:var(--ring),0 3px 6px rgba(0,0,0,.5)!important;cursor:pointer}
-.body{border-top:0!important}
-.pnl::after{content:"";position:absolute;left:0;right:0;bottom:0;height:16px;background:url('assets/ui/wave.svg') repeat-x 0 3px,linear-gradient(#24477f,#132a52);box-shadow:0 -2px 0 #e2b85a;pointer-events:none}
-.pnl .body{padding-bottom:26px}
-/* tabs: cartouches; the open one in lapis */
+/* ===== UI theme "Lăng mộ Ai Cập" (option A, dark): pieces cut straight from the owner's fresco — the falcon band, the cartouche band, the red sun disc — on a darkened tomb wall ===== */
+:root{--wall:url('assets/ui/egy_wall.jpg');--band:url('assets/ui/egy_band.jpg');--hiero:url('assets/ui/egy_hiero.jpg');--sun:url('assets/ui/egy_sun.png');
+  --egold:#e8c16a;--egoldD:#8a6420;--elap:#1d3a6e;--elapL:#3f6bb0;--ecream:#f1e3c0;--emut:#c9b48a;--ering:0 0 0 1.5px #3a2508,0 0 0 3px #c99a3a,0 0 0 4px #2a1a06}
+/* panels: the dark tomb wall, falcon band on top, cartouche band at the foot, gold rim */
+.pnl,.ipop-card,.ocard{--ink:#f1e3c0;--muted:#c9b48a;--gold:#e8c16a;--line:rgba(232,193,106,.35);color:#f1e3c0;
+  background:#1c140c var(--wall) center/cover!important;border:0!important;box-shadow:var(--ering),0 16px 40px rgba(0,0,0,.7)!important}
+.pnl{border-radius:12px;overflow:hidden}
+.pnl header{position:relative;margin:0;padding:calc(min(860px,100vw - 16px) * .278 - 4px) 52px 8px 14px;background:var(--band) top center/100% auto no-repeat;box-shadow:inset 0 -1px 0 rgba(232,193,106,.4)}
+@media (min-width:700px){.pnl header{padding-top:120px;background-size:auto 112px;background-repeat:repeat-x}}
+.pnl h2{color:#e8c16a!important;letter-spacing:.16em;text-transform:uppercase;font-size:22px;text-shadow:0 2px 3px #000,0 0 12px rgba(232,193,106,.25)}
+.pnl header .cur{color:#c9b48a}.pnl header .cur b{color:#f1e3c0}
+.pnl .x,.ipop-x{position:absolute;right:10px;width:40px;height:40px;border-radius:50%!important;border:0!important;color:#fff2d6!important;font:700 18px/1 var(--ui)!important;cursor:pointer;
+  background:var(--sun) center/cover!important;box-shadow:var(--ering),0 3px 8px rgba(0,0,0,.6)!important;text-shadow:0 1px 2px #000}
+.pnl .x{top:auto;bottom:10px}
+.ipop-x{top:10px}
+.body{border-top:0!important;padding-bottom:calc(min(860px,100vw - 16px) * .228 * .45 + 8px)!important}
+.pnl::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(min(860px,100vw - 16px) * .228 * .45);background:var(--hiero) center 55%/100% auto no-repeat;box-shadow:0 -1px 0 rgba(232,193,106,.45);pointer-events:none;z-index:60}
+@media (min-width:700px){.pnl::after{height:56px;background-size:auto 112px;background-repeat:repeat-x}.body{padding-bottom:64px!important}}
+/* tabs and buttons: dark bronze cartouches; gold for the main action, lapis for the open tab */
 .tabs{gap:5px!important;padding:8px 10px 2px!important;border:0!important}
-.tabs button{border-radius:999px!important;border:0!important;color:#2b1f12!important;background:linear-gradient(#efe0bb,#d7bf8c)!important;box-shadow:0 0 0 1.5px #8a6420,inset 0 1px 0 rgba(255,255,255,.6)}
-.tabs button[aria-selected="true"]{color:#f6dc94!important;background:linear-gradient(#2a4c86,#14305c)!important;box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a}
-.tabs button.dot::after{color:#a8321f}
-/* buttons */
-.pb{border-radius:999px!important;border:0!important;color:#2b1f12!important;background:linear-gradient(#efe0bb,#d3b984)!important;box-shadow:0 0 0 1.5px #8a6420,inset 0 1px 0 rgba(255,255,255,.55)}
-.pb.pri{color:#2b1f12!important;background:linear-gradient(#f6dc94,#c99a3a 60%,#9a6a18)!important;box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,inset 0 1px 0 rgba(255,255,255,.6)}
-.pb:disabled{opacity:.5}
-.sellbar .pb{color:#fff6e2!important;background:var(--rc)!important;filter:saturate(.85) brightness(.8);box-shadow:0 0 0 1.5px #4a3210}
-.btn{color:#2b1f12!important;text-shadow:none!important;border:0!important;border-radius:999px!important;background:linear-gradient(#f6dc94,#c99a3a 60%,#9a6a18)!important;box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,0 0 0 4px #4a3210,0 4px 10px rgba(0,0,0,.35)!important}
+.tabs button{border-radius:999px!important;border:0!important;color:#e8d6aa!important;background:linear-gradient(#3a2a16,#1e150b)!important;box-shadow:0 0 0 1.5px #8a6420,inset 0 1px 0 rgba(255,230,170,.15)}
+.tabs button[aria-selected="true"]{color:#f6dc94!important;background:linear-gradient(#2a4c86,#14305c)!important;box-shadow:0 0 0 1.5px #3a2508,0 0 0 3px #c99a3a}
+.pb{border-radius:999px!important;border:0!important;color:#f1e3c0!important;background:linear-gradient(#3a2a16,#1e150b)!important;box-shadow:0 0 0 1.5px #8a6420,inset 0 1px 0 rgba(255,230,170,.15)}
+.pb.pri{color:#2b1f12!important;background:linear-gradient(#f6dc94,#c99a3a 60%,#8a5e14)!important;box-shadow:0 0 0 1.5px #3a2508,0 0 0 3px #c99a3a,inset 0 1px 0 rgba(255,255,255,.5)}
+.pb:disabled{opacity:.45}
+.sellbar .pb{color:var(--rc)!important;box-shadow:0 0 0 1.5px var(--rc)!important}
+.btn{color:#2b1f12!important;text-shadow:none!important;border:0!important;border-radius:999px!important;background:linear-gradient(#f6dc94,#c99a3a 60%,#8a5e14)!important;box-shadow:0 0 0 1.5px #3a2508,0 0 0 3px #c99a3a,0 0 0 4px #2a1a06,0 4px 12px rgba(0,0,0,.5)!important}
 .btn.alt{background:linear-gradient(#2a4c86,#14305c)!important;color:#f6dc94!important}
-/* boxes, rows, stats: inscribed tablets on the papyrus */
-.box,.row,.upb,.stats div,.maps button,.bchips button,.slot,.classes button{background:rgba(110,78,30,.10)!important;border:0!important;box-shadow:inset 0 0 0 1px rgba(90,60,20,.32),inset 0 2px 5px rgba(90,60,20,.16)!important;color:#2b1f12!important}
-.stats span,.sect,.muted,.small,.eqslot span{color:#5a4630!important}
-.sect{color:#7a2a18!important;letter-spacing:.16em}
-.stats b{color:#2b1f12}
-.maps button b,.slot .sd b,.dhead h3,.blore h3{text-shadow:none!important}
-.maps button.here,.slot.last{box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,inset 0 2px 5px rgba(90,60,20,.16)!important}
-.classes button[aria-pressed="true"]{box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a!important;background:rgba(29,58,110,.14)!important}
-.hname-in input{background:rgba(255,248,230,.6)!important;color:#2b1f12!important;border:1.5px solid #8a6420!important}
-/* item tiles: carved hollows, a mineral ring by rarity */
-.tile{background:radial-gradient(circle at 50% 40%,#efe2c2,#c8b07e 85%)!important;border:0!important;box-shadow:inset 0 3px 6px rgba(70,45,12,.55),inset 0 -1px 0 rgba(255,255,255,.5),0 1px 0 rgba(255,255,255,.45)!important;color:#5e584b}
-.tile.r1{background:radial-gradient(circle at 50% 40%,#e7eef6,#b2c3d6 85%)!important;box-shadow:inset 0 0 0 2.5px #2f6fc0,inset 0 4px 8px rgba(47,111,192,.45)!important;color:#1d5fb0}
-.tile.r2{background:radial-gradient(circle at 50% 40%,#f6e6bd,#d8b46a 85%)!important;box-shadow:inset 0 0 0 2.5px #b07a1c,inset 0 4px 8px rgba(176,122,28,.5)!important;color:#93600f}
-.tile.r3{background:radial-gradient(circle at 50% 40%,#f6ddd2,#d79a86 85%)!important;box-shadow:inset 0 0 0 2.5px #b3261e,inset 0 4px 8px rgba(179,38,30,.45)!important;color:#b3261e}
-.tile.empty{opacity:.55}
-.tile.sel{outline:2.5px solid #1d3a6e;outline-offset:2px}
-.tile img.art{filter:drop-shadow(0 1px 1px rgba(40,25,5,.6))!important}
-.tile .pl{background:#2b1f12!important;color:#f6dc94!important;box-shadow:0 0 0 1px #e2b85a}
-.doll{background:radial-gradient(ellipse at 50% 55%,rgba(110,78,30,.18),transparent 72%)!important}
-.dollwrap{border-radius:12px;padding:8px 4px;box-shadow:inset 0 0 0 1.5px rgba(107,74,20,.5),inset 0 0 0 4px rgba(226,184,90,.3)}
-.rtag{color:#fff6e2!important;box-shadow:0 0 0 1.5px #4a3210!important;border-radius:999px!important;padding:4px 10px 3px!important}
-.stl li{border-bottom:1px dotted rgba(90,60,20,.35);padding-bottom:3px}
-/* light inline colours from the game code, darkened so they read on papyrus */
-:is(.pnl,.ipop-card,.ocard) [style*="color:#dfe7ea"]{color:#5e584b!important}
-:is(.pnl,.ipop-card,.ocard) [style*="color:#38a2ff"],:is(.pnl,.ipop-card,.ocard) [style*="color:#4aa8ff"],:is(.pnl,.ipop-card,.ocard) [style*="color:#5ab0ff"],:is(.pnl,.ipop-card,.ocard) [style*="color:#7fb8ff"]{color:#1d5fb0!important}
-:is(.pnl,.ipop-card,.ocard) [style*="color:#d9a03a"],:is(.pnl,.ipop-card,.ocard) [style*="color:#ffd27a"],:is(.pnl,.ipop-card,.ocard) [style*="color:#ffd23a"],:is(.pnl,.ipop-card,.ocard) [style*="color:#ffe08a"],:is(.pnl,.ipop-card,.ocard) [style*="color:#ffd85a"],:is(.pnl,.ipop-card,.ocard) [style*="color:var(--gold)"]{color:#93600f!important}
-:is(.pnl,.ipop-card,.ocard) [style*="color:#ff4f4f"],:is(.pnl,.ipop-card,.ocard) [style*="color:#ff9a9a"],:is(.pnl,.ipop-card,.ocard) [style*="color:#ff8a8a"],:is(.pnl,.ipop-card,.ocard) [style*="color:#ffa060"],:is(.pnl,.ipop-card,.ocard) [style*="color:#ff7a5a"]{color:#b3261e!important}
-:is(.pnl,.ipop-card,.ocard) [style*="color:#7dff9a"],:is(.pnl,.ipop-card,.ocard) [style*="color:#7dffb0"],:is(.pnl,.ipop-card,.ocard) [style*="color:#9affb0"],:is(.pnl,.ipop-card,.ocard) [style*="color:#4cff6a"]{color:#2f7d43!important}
-:is(.pnl,.ipop-card,.ocard) [style*="color:#9fe8ff"],:is(.pnl,.ipop-card,.ocard) [style*="color:#6fe7ff"],:is(.pnl,.ipop-card,.ocard) [style*="color:#93c6cf"],:is(.pnl,.ipop-card,.ocard) [style*="color:#c8d8ff"],:is(.pnl,.ipop-card,.ocard) [style*="color:var(--cyan)"]{color:#1d4f9e!important}
-:is(.pnl,.ipop-card,.ocard) [style*="color:#c06aff"],:is(.pnl,.ipop-card,.ocard) [style*="color:#c0a8ff"],:is(.pnl,.ipop-card,.ocard) [style*="color:#ff9ad8"],:is(.pnl,.ipop-card,.ocard) [style*="color:#b98cff"]{color:#6a2f9e!important}
-:is(.pnl,.ipop-card,.ocard) [style*="color:"]:not(.rtag):not(.pb){text-shadow:none!important}
-/* start, character select and menu: a papyrus sheet under a lapis band with the winged crest */
-.ocard{position:relative;padding-top:92px!important;overflow:hidden}
-.ocard::before{content:"";position:absolute;left:0;right:0;top:0;height:78px;background:url('assets/ui/crest.svg') center 6px/200px auto no-repeat,url('assets/ui/meander.svg') repeat-x 0 4px,linear-gradient(#24477f,#132a52);box-shadow:0 2px 0 #e2b85a,0 4px 0 #6b4a14}
-.ocard .sub{color:#7a2a18!important}
-.ocard h1{background:none!important;-webkit-background-clip:initial!important;background-clip:initial!important;color:#1d3a6e!important;filter:none!important;text-shadow:0 1px 0 rgba(255,255,255,.4)}
-.ocard p,.ocard{color:#2b1f12}
-.ocard b{color:#7a2a18!important}
-.slot .si{background:radial-gradient(circle at 40% 35%,#3a67ad,#16305c 70%)!important;box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a!important;border:0!important}
-.slot.empty .si{background:rgba(110,78,30,.15)!important;color:#6b4a14!important}
-.slot .sd .small{color:#5a4630!important}
-/* HUD: lapis medallions with gold rims, carved bars, cartouche purse */
-.orb{background:radial-gradient(circle at 38% 30%,#3a67ad,#16305c 60%,#0b1a36)!important;box-shadow:0 0 0 2px #6b4a14,0 0 0 4px #e2b85a,0 0 0 5px #4a3210,0 4px 10px rgba(0,0,0,.55),inset 0 2px 3px rgba(255,255,255,.2),inset 0 -4px 8px rgba(0,0,0,.55)!important;color:#f6dc94!important}
+/* boxes, rows, stats: recessed panels cut into the wall */
+.box,.row,.upb,.stats div,.maps button,.bchips button,.slot,.classes button{background:rgba(0,0,0,.42)!important;border:0!important;box-shadow:inset 0 0 0 1px rgba(232,193,106,.28),inset 0 3px 8px rgba(0,0,0,.5)!important;color:#f1e3c0!important}
+.sect{color:#e8c16a!important;letter-spacing:.18em}
+.stats span,.muted,.eqslot span{color:#c9b48a!important}
+.maps button.here,.slot.last{box-shadow:0 0 0 1.5px #3a2508,0 0 0 3px #c99a3a,inset 0 3px 8px rgba(0,0,0,.5)!important}
+.classes button[aria-pressed="true"]{box-shadow:0 0 0 1.5px #3a2508,0 0 0 3px #c99a3a!important;background:rgba(29,58,110,.35)!important}
+.hname-in input{background:rgba(0,0,0,.45)!important;color:#f6dc94!important;border:1.5px solid #8a6420!important}
+/* item tiles: dark hollows, rarity in pigment ring and glow (the game's own colours read well on the dark wall) */
+.tile{background:radial-gradient(circle at 50% 40%,rgba(255,240,200,.08),rgba(0,0,0,.55))!important;border:0!important;box-shadow:inset 0 0 0 1px rgba(232,193,106,.25),inset 0 3px 8px rgba(0,0,0,.6)!important}
+.tile.r1{background:radial-gradient(circle at 50% 40%,rgba(56,162,255,.45),rgba(8,24,60,.9))!important;box-shadow:inset 0 0 0 2px #38a2ff,inset 0 0 12px rgba(56,162,255,.35)!important}
+.tile.r2{background:radial-gradient(circle at 50% 40%,rgba(217,160,58,.5),rgba(50,30,6,.92))!important;box-shadow:inset 0 0 0 2px #d9a03a,inset 0 0 12px rgba(217,160,58,.35)!important}
+.tile.r3{background:radial-gradient(circle at 50% 40%,rgba(255,79,79,.5),rgba(60,6,8,.92))!important;box-shadow:inset 0 0 0 2px #ff4f4f,inset 0 0 14px rgba(255,79,79,.4)!important}
+.tile.sel{outline:2.5px solid #e8c16a;outline-offset:2px}
+.tile .pl{background:#1a1208!important;color:#f6dc94!important;box-shadow:0 0 0 1px #c99a3a}
+.dollwrap{border-radius:12px;padding:8px 4px;background:rgba(0,0,0,.3);box-shadow:inset 0 0 0 1.5px rgba(232,193,106,.35)}
+.rtag{border-radius:999px!important;padding:4px 10px 3px!important}
+.stl li{border-bottom:1px dotted rgba(232,193,106,.25);padding-bottom:3px}
+/* start, character select, menu: the fresco itself — falcon band, hoopoe, scales of Maat and falcons — fading into the tomb wall */
+.ocard{position:relative;overflow:hidden;padding-top:calc(min(560px,100vw - 32px) * .5)!important;background:url('assets/ui/egy_head.jpg') top center/100% auto no-repeat,#1c140c var(--wall) center/cover!important}
+.ocard::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(min(560px,100vw - 32px) * .228 * .5);background:var(--hiero) center 55%/100% auto no-repeat;box-shadow:0 -1px 0 rgba(232,193,106,.45);pointer-events:none}
+.ocard{padding-bottom:calc(min(560px,100vw - 32px) * .228 * .5 + 14px)!important}
+.ocard .sub{color:#c9b48a!important}
+.ocard h1{background:linear-gradient(#fff7d0,#f2c656 55%,#a8700f)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;filter:drop-shadow(0 2px 0 #000) drop-shadow(0 0 10px rgba(255,190,80,.35))!important}
+.ocard p{color:#e8dcc0}.ocard b{color:#e8c16a!important}
+.slot .si{background:radial-gradient(circle at 40% 35%,#3a67ad,#16305c 70%)!important;box-shadow:0 0 0 1.5px #3a2508,0 0 0 3px #c99a3a!important;border:0!important}
+.slot.empty .si{background:rgba(0,0,0,.4)!important;color:#c99a3a!important}
+.slot .sd .small{color:#c9b48a!important}
+/* HUD: lapis medallions with gold rims; the attack button is the red sun disc */
+.orb{background:radial-gradient(circle at 38% 30%,#3a67ad,#16305c 60%,#0b1a36)!important;box-shadow:0 0 0 2px #3a2508,0 0 0 4px #c99a3a,0 0 0 5px #2a1a06,0 4px 10px rgba(0,0,0,.55),inset 0 2px 3px rgba(255,255,255,.2),inset 0 -4px 8px rgba(0,0,0,.55)!important;color:#f6dc94!important}
 .orb.tog[aria-pressed="true"]{background:radial-gradient(circle at 38% 30%,#e9b54e,#9a6418 62%,#4a2c06)!important;color:#2b1f12!important;filter:none}
 .orb.tog[aria-pressed="true"] small{color:#2b1f12!important;text-shadow:none}
 .orb.tog[aria-pressed="false"]{filter:grayscale(.4) brightness(.85)}
-.orb .cnt{background:radial-gradient(circle at 40% 35%,#e5683e,#a8321f 60%,#5c160c)!important;box-shadow:0 0 0 1.5px #e2b85a!important;color:#fff2d6!important}
-.card{background:linear-gradient(#1d3a6e,#112650)!important;border:0!important;box-shadow:var(--ring),0 4px 12px rgba(0,0,0,.5)!important}
+.orb .cnt{background:var(--sun) center/cover!important;box-shadow:0 0 0 1.5px #c99a3a!important;color:#fff2d6!important}
+.card{background:linear-gradient(#1d3a6e,#112650)!important;border:0!important;box-shadow:var(--ering),0 4px 12px rgba(0,0,0,.5)!important}
 .hname{font-family:var(--display)!important;font-size:17px!important;font-weight:700}
-.lv{background:radial-gradient(circle at 38% 30%,#3a67ad,#16305c 60%,#0b1a36)!important;box-shadow:0 0 0 2px #6b4a14,0 0 0 4px #e2b85a,0 0 0 5px #4a3210,inset 0 -4px 8px rgba(0,0,0,.55)!important}
+.lv{background:radial-gradient(circle at 38% 30%,#3a67ad,#16305c 60%,#0b1a36)!important;box-shadow:0 0 0 2px #3a2508,0 0 0 4px #c99a3a,0 0 0 5px #2a1a06,inset 0 -4px 8px rgba(0,0,0,.55)!important}
 .lv b{font-family:var(--display)!important;color:#f6dc94!important}
-.bar{background:#1a120a!important;border:0!important;box-shadow:inset 0 2px 3px rgba(0,0,0,.8),0 0 0 1px #8a6420,0 0 0 2px rgba(226,184,90,.35)!important;border-radius:7px!important}
+.bar{background:#120c06!important;border:0!important;box-shadow:inset 0 2px 3px rgba(0,0,0,.8),0 0 0 1px #8a6420!important;border-radius:7px!important}
 .bar.hpb i,.bar:not(.mpb) i{background:linear-gradient(#e0623a,#a8321f 60%,#7a1f12)!important}
 .bar.mpb i{background:linear-gradient(#6f9ee0,#2d5a9e 60%,#1a3a70)!important}
-.gold{background:linear-gradient(#e2b85a,#a87522)!important;border:0!important;box-shadow:var(--ring),0 3px 8px rgba(0,0,0,.45)!important;color:#2b1f12!important}
+.gold{background:linear-gradient(#e2b85a,#a87522)!important;border:0!important;box-shadow:var(--ering),0 3px 8px rgba(0,0,0,.45)!important;color:#2b1f12!important}
 .gold b{color:#2b1f12!important}
-#bossbar,#bossbar2{background:linear-gradient(#1d3a6e,#112650)!important;border:0!important;border-radius:10px!important;box-shadow:var(--ring),0 4px 10px rgba(0,0,0,.5)!important}
+#bossbar,#bossbar2{background:linear-gradient(#1d3a6e,#112650)!important;border:0!important;border-radius:10px!important;box-shadow:var(--ering),0 4px 10px rgba(0,0,0,.5)!important}
 #bossbar b,#bossbar2 b{color:#f6dc94!important;letter-spacing:.14em}
 #bossbar i,#bossbar2 i{background:linear-gradient(#e0623a,#a8321f)!important}
-.sk,.actions .pot{background:radial-gradient(circle at 38% 30%,#3a67ad,#16305c 60%,#0b1a36)!important;border:0!important;box-shadow:0 0 0 2px #6b4a14,0 0 0 4px #e2b85a,0 0 0 5px #4a3210,0 4px 10px rgba(0,0,0,.55),inset 0 -4px 8px rgba(0,0,0,.55)!important}
-.actions .pot{background:radial-gradient(circle at 40% 35%,#4a3a28,#1c140c 70%)!important}
-.pot b{background:#f6dc94!important;color:#2b1f12!important;border:0!important;box-shadow:0 0 0 1.5px #6b4a14}
-#bAtk{background:radial-gradient(circle at 40% 35%,#e5683e,#a8321f 55%,#4e120a)!important;box-shadow:0 0 0 2px #6b4a14,0 0 0 4px #e2b85a,0 0 0 5px #4a3210,0 0 18px rgba(226,140,60,.45),inset 0 -6px 12px rgba(0,0,0,.45)!important;overflow:visible!important}
-#bAtk::before{content:"";position:absolute;left:-40px;right:-40px;top:-20px;height:60px;background:url('assets/ui/crest.svg') center/170px auto no-repeat;z-index:-1;pointer-events:none;opacity:.95}
-.exp{background:linear-gradient(#1d3a6e,#112650)!important;box-shadow:0 -1px 0 #e2b85a}
+.sk{background:radial-gradient(circle at 38% 30%,#3a67ad,#16305c 60%,#0b1a36)!important;border:0!important;box-shadow:0 0 0 2px #3a2508,0 0 0 4px #c99a3a,0 0 0 5px #2a1a06,0 4px 10px rgba(0,0,0,.55),inset 0 -4px 8px rgba(0,0,0,.55)!important}
+.actions .pot{background:radial-gradient(circle at 40% 35%,#3a2a18,#120c06 70%)!important;border:0!important;box-shadow:0 0 0 2px #3a2508,0 0 0 4px #c99a3a,0 4px 10px rgba(0,0,0,.55)!important}
+.pot b{background:#f6dc94!important;color:#2b1f12!important;border:0!important;box-shadow:0 0 0 1.5px #3a2508}
+#bAtk{background:var(--sun) center/cover!important;box-shadow:0 0 0 2px #3a2508,0 0 0 4px #c99a3a,0 0 0 6px #2a1a06,0 0 22px rgba(200,80,40,.5),inset 0 0 0 1px rgba(255,200,150,.25)!important}
+#bAtk .big,#bAtk small{filter:drop-shadow(0 1px 2px #000) drop-shadow(0 0 4px #000)}
+.exp{background:#120c06!important;box-shadow:0 -1px 0 #c99a3a}
 .exp i{background:linear-gradient(#f6dc94,#c08a2c)!important}
 </style>
 <meta name="description" content="ARPG cày cuốc dưới đáy biển: 5 lớp nhân vật, 3 bãi quái, boss, cánh, linh thạch, bộ đồ.">
