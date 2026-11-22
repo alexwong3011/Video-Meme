@@ -364,6 +364,29 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 #bAtk .big,#bAtk small{filter:drop-shadow(0 1px 2px #000) drop-shadow(0 0 4px #000)}
 .exp{background:#120c06!important;box-shadow:0 -1px 0 #c99a3a}
 .exp i{background:linear-gradient(#f6dc94,#c08a2c)!important}
+
+/* HUD see-through (player request): controls and bars keep ~30% of their fill so the battlefield shows through; rims a little bolder; icons, text and HP/MP fills stay solid */
+:root{--hudRing:0 0 0 1.5px rgba(20,12,2,.85),0 0 0 4px #d8a945,0 0 0 5px rgba(20,12,2,.7),0 3px 8px rgba(0,0,0,.35)}
+.orb{background:radial-gradient(circle at 38% 30%,rgba(58,103,173,.32),rgba(22,48,92,.3) 60%,rgba(11,26,54,.3))!important;box-shadow:var(--hudRing)!important}
+.orb.tog[aria-pressed="true"]{background:radial-gradient(circle at 38% 30%,rgba(233,181,78,.42),rgba(154,100,24,.34) 62%,rgba(74,44,6,.3))!important;color:#fff2d0!important}
+.orb.tog[aria-pressed="true"] small{color:#fff2d0!important;text-shadow:0 1px 2px #000,0 0 4px #000!important}
+.orb .ico,.sk .ic,#bAtk .big,.pot img{filter:drop-shadow(0 1px 2px #000) drop-shadow(0 0 3px rgba(0,0,0,.8))!important}
+.orb small,.sk small,#bAtk small{text-shadow:0 1px 2px #000,0 0 4px #000,0 0 6px rgba(0,0,0,.8)!important}
+.sk{background:radial-gradient(circle at 38% 30%,rgba(58,103,173,.32),rgba(22,48,92,.3) 60%,rgba(11,26,54,.3))!important;box-shadow:var(--hudRing)!important}
+.actions .pot{background:radial-gradient(circle at 40% 35%,rgba(58,42,24,.32),rgba(18,12,6,.3) 70%)!important;box-shadow:var(--hudRing)!important}
+#bAtk{position:absolute;background:radial-gradient(circle at 40% 35%,rgba(229,104,62,.22),rgba(120,30,16,.28) 70%)!important;box-shadow:var(--hudRing),0 0 14px rgba(200,80,40,.3)!important}
+#bAtk::before{content:"";position:absolute;inset:0;border-radius:50%;background:var(--sun) center/cover;opacity:.3;pointer-events:none}
+.card{background:linear-gradient(rgba(29,58,110,.3),rgba(17,38,80,.3))!important;box-shadow:var(--hudRing)!important}
+.lv{background:radial-gradient(circle at 38% 30%,rgba(58,103,173,.32),rgba(22,48,92,.3) 60%,rgba(11,26,54,.3))!important;box-shadow:var(--hudRing)!important}
+.hname,.lv b,.lv span{text-shadow:0 1px 2px #000,0 0 5px rgba(0,0,0,.85)!important}
+.bar{background:rgba(18,12,6,.3)!important;box-shadow:inset 0 1px 2px rgba(0,0,0,.5),0 0 0 1.5px rgba(216,169,69,.85)!important}
+.bar span{text-shadow:0 1px 2px #000,0 0 3px #000!important}
+.gold{background:linear-gradient(rgba(226,184,90,.3),rgba(168,117,34,.3))!important;box-shadow:var(--hudRing)!important;color:#fff2d0!important}
+.gold b{color:#fff2d0!important;text-shadow:0 1px 2px #000,0 0 4px #000}
+.exp{background:rgba(18,12,6,.3)!important;box-shadow:0 -1.5px 0 #d8a945}
+.pot b{box-shadow:0 0 0 1.5px rgba(20,12,2,.85)}
+#bossbar,#bossbar2{border-width:1.5px!important}
+.sk .cd{border-radius:50%;background:rgba(0,0,0,.42)!important}
 </style>
 <meta name="description" content="ARPG cày cuốc dưới đáy biển: 5 lớp nhân vật, 3 bãi quái, boss, cánh, linh thạch, bộ đồ.">
 
