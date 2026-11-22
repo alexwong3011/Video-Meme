@@ -195,6 +195,14 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 .maps button b{display:block;font:700 17px var(--display);color:var(--gold)}
 .maps button[disabled]{opacity:.5;cursor:not-allowed}
 .maps button.here{border-color:var(--cyan)}
+.bchips{display:flex;gap:6px;margin:-3px 0 10px 24px}
+.bchips button{flex:1;min-width:0;display:flex;gap:6px;align-items:center;padding:4px 6px;margin:0;border-radius:9px;border:1px solid rgba(242,210,122,.18);background:rgba(0,0,0,.22);font:500 10.5px/1.3 var(--ui);color:#cdbf9f}
+.bchips img{width:42px;height:42px;object-fit:contain;flex:none;border-radius:8px;background:radial-gradient(circle,rgba(255,255,255,.14),rgba(0,0,0,0) 70%)}
+.bchips b{display:block;font:700 12px var(--ui)!important;line-height:1.25}
+.blore{text-align:center}.blore h3{margin:6px 0 0;font:700 24px var(--display)}.blore .btitle{color:var(--gold);font:600 italic 14px var(--display);margin:2px 0 4px}
+.blore p{text-align:left;font:400 14px/1.6 var(--ui);color:#e4dac4;margin:10px 2px 4px}
+.bart{margin:0 auto;width:min(300px,78vw);aspect-ratio:1;border-radius:14px;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--bc) 35%,transparent),rgba(0,0,0,.35) 72%)}
+.bart img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(0,0,0,.5))}
 .maps .dot{width:14px;height:14px;border-radius:50%;flex:none}
 .small{font-size:11px!important;color:#93c6cf!important}
 .hide{display:none!important}
@@ -309,6 +317,11 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 <div class="pnl hide" id="mapP" role="dialog" aria-modal="true" aria-labelledby="mapTitle" style="max-width:520px;max-height:560px">
   <header><h2 id="mapTitle">Bản đồ thế giới</h2><button class="x" id="mapClose" aria-label="Đóng">×</button></header>
   <div class="body maps" id="mapList"></div>
+</div>
+
+<div class="pnl hide" id="bossP" role="dialog" aria-modal="true" aria-labelledby="bossTitle" style="max-width:460px;max-height:640px;z-index:60">
+  <header><h2 id="bossTitle">Thánh sử Boss</h2><button class="x" id="bossClose" aria-label="Đóng">×</button></header>
+  <div class="body" id="bossBody"></div>
 </div>
 
 <div class="pnl hide" id="wP" role="dialog" aria-modal="true" aria-labelledby="wTitle" style="max-width:560px;max-height:620px">
@@ -2354,6 +2367,63 @@ Object.assign(MT, {
   bossIceKing: MY('serpent', 'Băng Long Vương', '#dff8ff', 1, { body: 0x6a9ac8, belly: 0xffffff, glow: 0xbff4ff, horn: 0xffffff, whisk: true, mane: 0xdff8ff, fly: true, crown: true, segs: 14 }, { boss: true, y: 1.1 }),
   bossSeraphKing: MY('golem', 'Thiên Binh Thống Lĩnh', '#fff0b0', 1, { stone: 0xe0b84a, glow: 0xfff0b0, metal: true, halo: true, crown: true }, { boss: true })
 });
+
+// ---------- boss models (Meshy, from concept art): about twice the hero's height, alive through a procedural rig ----------
+// kind: jelly (bell pulse, tentacles wave below), fish (swims, tail wave), serpent (upper body sways), float (hovering figure), giant (heavy breathing)
+// H: height in hero heights; L: or the longest side in hero heights (for long creatures); yaw: turns the model to face +Z; fy: hover height
+const BOSS3D = {
+  bossJelly: { kind: 'jelly', H: 2.1, fy: 0.5, glow: 0.35, wA: 0.09, wY: [0.55, 0.0] },
+  bossFishNight: { kind: 'fish', L: 2.4, fy: 0.9, glow: 0.18, yaw: Math.PI / 2 },
+  bossFish: { kind: 'fish', L: 2.3, fy: 0.8, glow: 0.12, yaw: Math.PI / 2 },
+  bossKelpSerpent: { kind: 'serpent', H: 2.1, fy: 0, glow: 0.12, wA: 0.07, wY: [0.35, 1.0] },
+  bossLava: { kind: 'jelly', H: 2.1, fy: 0.5, glow: 0.55, wA: 0.09, wY: [0.55, 0.0] },
+  bossFlame: { kind: 'float', H: 2.2, fy: 0.25, glow: 0.6, wA: 0.06, wY: [0.45, 0.0] },
+  bossApep: { kind: 'serpent', H: 2.0, fy: 0, glow: 0.12, wA: 0.06, wY: [0.35, 1.0] },
+  bossMummy: { kind: 'float', H: 2.1, fy: 0.3, glow: 0.14, wA: 0.04, wY: [0.35, 0.0] },
+  bossTitan: { kind: 'giant', H: 2.2, fy: 0, glow: 0.1 },
+  bossHydra: { kind: 'serpent', H: 2.0, fy: 0, glow: 0.14, wA: 0.06, wY: [0.4, 1.0] }
+};
+const BOSS_LORE = {
+  bossJelly: { t: 'Mẹ của Ánh Trăng Đáy Biển', l: 'Đêm trăng đầu tiên rọi tới đáy biển, một tia sáng kết lại thành viên ngọc trai sống. Viên ngọc nở ra Sứa Mẫu Hậu, mẹ của mọi loài sứa lân quang ở Bãi San Hô. Bà ngự trên ngai san hô, vương miện kết từ ngọc trai của những thủy thủ chết đuối. Khi bà hát khúc thủy triều, cả bãi san hô bừng sáng, và ai nghe trọn khúc ca sẽ quên đường về mặt nước.' },
+  bossFishNight: { t: 'Kẻ Nuốt Sao', l: 'Chúa tể của vùng nước không có ánh sáng. Ngọn đèn treo trước miệng Dạ Vương là linh hồn một vì sao rơi xuống biển thời khai thiên, bị nó nuốt nửa chừng rồi giữ lại làm mồi. Cá nhỏ lao theo ánh sáng ấy chưa con nào trở về. Mỗi chiếc gai pha lê trên lưng nó là vương miện của một kẻ thách đấu đã bại.' },
+  bossFish: { t: 'Vua Rêu Ba Nghìn Năm', l: 'Ba nghìn năm Lục Vương không rời Rừng Tảo U Linh. Rêu mọc kín lưng, tảo kết thành áo choàng, gai độc dài như giáo của đội hải binh đã chìm cùng chiến thuyền. Người chài kể rằng mỗi lần nó xòe gai, cả khu rừng tảo cúi rạp như thần dân trước nhà vua.' },
+  bossKelpSerpent: { t: 'Kẻ Canh Rễ Tảo Mẹ', l: 'Con rắn biển canh giữ rễ của Cây Tảo Mẹ, nơi linh hồn người chết đuối trôi về yên nghỉ. Bờm nó là tảo u linh, mỗi sợi phát sáng là một hồn người nó che chở. Khi Hải Xà Vương cuộn mình, hải lưu đổi hướng và cả khu rừng chìm vào bóng tối xanh thẫm.' },
+  bossLava: { t: 'Trái Tim Núi Lửa Đáy Biển', l: 'Khi núi lửa dưới biển phun trào lần đầu, một con sứa nhỏ bị cuốn vào dòng dung nham mà không chết. Nó nuốt lửa thay cho nước, lớn dần thành Sứa Hỏa Vương. Vòm thân là đá vỏ chai đã nguội, trái tim là lõi dung nham không bao giờ tắt. Xúc tu của nó lướt qua đâu, nước biển sôi thành hơi ở đó.' },
+  bossFlame: { t: 'Vị Thần Bị Xiềng', l: 'Thần lửa thời cổ bị các thần biển xiềng dưới đáy Hố Thẳm vì muốn thiêu khô đại dương. Xiềng xích từ lâu đã chảy thành dung nham, nhưng thần vẫn ngủ, chờ gom đủ lửa để trở lại mặt đất. Mỗi kẻ xuống đây giao chiến là thêm một ngọn lửa đánh thức ngài.' },
+  bossApep: { t: 'Kẻ Nuốt Mặt Trời', l: 'Apophis là con rắn hỗn mang, đêm nào cũng tìm cách nuốt thái dương trên đường về phương đông. Các pharaoh đã giam nó dưới cát vàng bằng một nghìn phong ấn khắc trên vách đền. Bão cát đã mài mòn phong ấn cuối cùng; nay cứ mỗi lần mặt trời lặn, sa mạc lại rung lên tiếng rít của nó.' },
+  bossMummy: { t: 'Vị Vua Không Chết', l: 'Vị pharaoh từng ra lệnh cho gió sa mạc phải dừng. Ngài đổi linh hồn lấy sự bất tử, và cái giá là đời đời canh giữ kho báu trong lăng mộ của chính mình. Băng vải của ngài tẩm nhựa thánh, bừng sáng mỗi khi có kẻ trộm bước qua ngưỡng cửa.' },
+  bossTitan: { t: 'Người Gác Cổng Olympus', l: 'Khi các Titan thua trận trước chư thần Olympus, kẻ mạnh nhất trong số họ bị Zeus hóa thành cẩm thạch và dựng ở cổng Thánh Địa làm người gác. Hàng nghìn năm sét đánh xuống đã nạp lại sức mạnh cho Titan. Những vết nứt vàng trên thân là máu thần đang thức tỉnh.' },
+  bossHydra: { t: 'Ác Quỷ Không Thể Giết', l: 'Quái vật mà Heracles từng chặt đầu: mỗi cái đầu rơi xuống đầm Lerna lại mọc thành hai. Chư thần Olympus giam nó dưới chân Thánh Địa như một lời răn rằng có những ác quỷ không bao giờ chết hẳn, chỉ có thể bị canh giữ.' }
+};
+const bossArt = k => `assets/meshy/boss/${k}_portrait.png`;
+const BOSS_WAVE_VS = 'uniform float uBT, uBA, uBY0, uBY1, uBPh;';
+function bossLoad(k) { const B = BOSS3D[k]; if (!B || B.p) return B && B.p; return B.p = loadGltfJson(`assets/meshy/boss/${k}.gltf.json`).then(g => {
+    const src = g.scene; src.updateMatrixWorld(true); const geos = [], mats = [];
+    src.traverse(o => { if (o.isMesh) { geos.push(o.geometry.clone().applyMatrix4(o.matrixWorld)); mats.push(o.material); } });
+    const box = new THREE.Box3(); geos.forEach(ge => { ge.computeBoundingBox(); box.union(ge.boundingBox); });
+    const sz = box.getSize(new THREE.Vector3()), hh = HERO_H * LOOK.size;
+    const k1 = B.L ? B.L * hh / Math.max(sz.x, sz.z) : B.H * hh / sz.y, c = box.getCenter(new THREE.Vector3());
+    const M4 = new THREE.Matrix4().makeRotationY(B.yaw || 0).multiply(new THREE.Matrix4().makeScale(k1, k1, k1)).multiply(new THREE.Matrix4().makeTranslation(-c.x, -box.min.y, -c.z));
+    geos.forEach(ge => { ge.applyMatrix4(M4); ge.computeBoundingBox(); ge.computeBoundingSphere(); });
+    B.geos = geos; B.mats = mats; B.h = sz.y * k1; B.r = Math.max(sz.x, sz.z) * k1 * 0.5; return B; }).catch(e => { console.warn('boss model', k, e); B.p = null; B.fail = true; }); }
+function makeBoss3D(k) {
+  const B = BOSS3D[k], g = new THREE.Group(), body = new THREE.Group(); g.add(body); const U = { uBT: { value: 0 }, uBA: { value: (B.wA || 0) * B.h }, uBY0: { value: (B.wY ? B.wY[0] : 0) * B.h }, uBY1: { value: (B.wY ? B.wY[1] : 1) * B.h }, uBPh: { value: Math.random() * 6.28 } };
+  const mats = B.mats.map(m0 => { const m = m0.clone(); if (m.map) { m.emissiveMap = m.map; m.emissive = new THREE.Color(1, 1, 1); m.emissiveIntensity = B.glow; }
+    if (B.wA) { m.onBeforeCompile = sh => { Object.assign(sh.uniforms, U); sh.vertexShader = BOSS_WAVE_VS + '\n' + sh.vertexShader.replace('#include <begin_vertex>',
+      `#include <begin_vertex>
+      float bw = clamp((transformed.y - uBY0) / (uBY1 - uBY0), 0.0, 1.0); bw *= bw;
+      transformed.x += sin(uBT * 1.7 + transformed.y * 2.2 + uBPh) * uBA * bw;
+      transformed.z += cos(uBT * 1.3 + transformed.y * 2.9 + uBPh) * uBA * bw * 0.7;`); }; m.customProgramCacheKey = () => 'bossWave'; }
+    return m; });
+  B.geos.forEach((ge, i) => { const me = new THREE.Mesh(ge, mats[i]); me.frustumCulled = false; body.add(me); });
+  const v = { group: g, mats, kind: 'boss3d', boss3d: true, body, anim(t, moving, m) { const ph = U.uBPh.value, lg = m.lunge > 0 ? Math.sin(m.lunge / 0.3 * Math.PI) : 0; U.uBT.value = t;
+    if (B.kind === 'jelly') { const p = Math.sin(t * 2.2 + ph); body.scale.set(1 + p * 0.035, 1 - p * 0.05, 1 + p * 0.035); body.position.y = Math.sin(t * 1.1 + ph) * 0.18; body.rotation.set(Math.sin(t * 0.7 + ph) * 0.05 + lg * 0.2, t * 0.25, Math.cos(t * 0.6 + ph) * 0.05); }
+    else if (B.kind === 'fish') { body.position.y = Math.sin(t * 1.5 + ph) * 0.15; body.rotation.set(lg * 0.25, Math.sin(t * (moving ? 9 : 3.5) + ph) * (moving ? 0.12 : 0.06), Math.sin(t * 1.2 + ph) * 0.07); }
+    else if (B.kind === 'serpent') { const br = Math.sin(t * 1.4 + ph); body.scale.set(1 + br * 0.015, 1 + br * 0.025, 1 + br * 0.015); body.rotation.set(lg * 0.3 + (moving ? 0.06 : 0), Math.sin(t * 0.8 + ph) * 0.06, Math.sin(t * 0.9 + ph) * 0.03); }
+    else if (B.kind === 'float') { body.position.y = Math.sin(t * 1.3 + ph) * 0.16; body.rotation.set(lg * 0.25 + (moving ? 0.12 : 0.02), Math.sin(t * 0.7 + ph) * 0.08, Math.sin(t * 0.9 + ph) * 0.035); }
+    else { const br = Math.sin(t * 1.6 + ph); body.scale.set(1 + br * 0.012, 1 + br * 0.02, 1 + br * 0.012); body.rotation.set(lg * 0.22 + (moving ? 0.08 : 0), Math.sin(t * 0.6 + ph) * 0.05, moving ? Math.sin(t * 5 + ph) * 0.05 : Math.sin(t * 0.8) * 0.015); } } };
+  return v; }
+function bossPreload(M) { if (!M || M.town) return; for (const b of [M.boss, M.boss2]) if (b && BOSS3D[b.k] && !BOSS3D[b.k].fail) bossLoad(b.k); }
 const BOSS2 = ['bossFishNight', 'bossKelpSerpent', 'bossFlame', 'bossMummy', 'bossHydra', 'bossOni', 'bossKoschei', 'bossHraes', 'bossIceKing', 'bossSeraphKing'];
 MAPS.forEach((M, i) => { if (!M.boss) return; M.boss.respawn = 120; M.boss.x = 3.2; M.boss.z = -12.5; M.boss2 = { k: BOSS2[i], x: -3.2, z: -12.5, off: 8 }; });
 
@@ -2522,7 +2592,7 @@ function navDir(tx, tz) {
 }
 function spawnPos(z) { for (let k = 0; k < 20; k++) { const a = rr(0, 6.28), d = Math.sqrt(rand()) * z.r; const x = z.x + Math.cos(a) * d, zz = z.z + Math.sin(a) * d; if (!collides(x, zz, 0.8)) return [x, zz]; } return [z.x, z.z]; }
 function setMap(i) {
-  S.map = i; const M = MAPS[i]; PAL = M.pal; seed = 20261119 + i * 977;
+  S.map = i; const M = MAPS[i]; PAL = M.pal; seed = 20261119 + i * 977; bossPreload(M);
   while (world.children.length) { const c = world.children.pop(); c.traverse(o => { if (o.geometry && o.geometry !== blobGeo && !SHARED.has(o.geometry)) o.geometry.dispose(); }); }
   colliders.length = 0; scenery.length = 0; const env = M.env || 'sea';
   const G = groundMat.uniforms; G.uSA.value.set(...PAL.sa); G.uSB.value.set(...PAL.sb); G.uPt.value.set(...PAL.pt); G.uCa.value.set(...PAL.ca).multiplyScalar(0.5);   // softer caustic light on the floor (clearer read)
@@ -2556,9 +2626,10 @@ function setMap(i) {
 // ---------- monsters (template jelly & spiked fish) ----------
 const mobs = [];
 function addMob(k, lv, x, z, zone, mini = false) {
-  const T = MT[k]; const boss = !!T.boss; const v = MAKERS[T.model](T.p || T.pal);
-  const scale = T.size * (boss ? (T.p ? 2.6 : 1) : mini ? 1.75 : T.model === 'fish' ? rr(0.9, 1.15) : rr(0.85, 1.2));
-  const shadow = blob((T.model === 'fish' ? 1.6 : 1.3) * scale); scene.add(shadow); scene.add(v.group);
+  const T = MT[k]; const boss = !!T.boss, B3 = boss && BOSS3D[k] && BOSS3D[k].geos ? BOSS3D[k] : null; const v = B3 ? makeBoss3D(k) : MAKERS[T.model](T.p || T.pal);
+  if (B3) { T.y = B3.fy * HERO_H * LOOK.size; T.hh = B3.h * 0.8; }      /* the Meshy boss: built at its world size, hovering at its own height */
+  const scale = B3 ? 1 : T.size * (boss ? (T.p ? 2.6 : 1) : mini ? 1.75 : T.model === 'fish' ? rr(0.9, 1.15) : rr(0.85, 1.2));
+  const shadow = blob(B3 ? B3.r * 1.5 : (T.model === 'fish' ? 1.6 : 1.3) * scale); scene.add(shadow); scene.add(v.group);
   const el = document.createElement('div'); el.className = 'lbl'; el.style.display = 'none';
   el.innerHTML = `<div class="nm" style="color:${T.color}">${mini ? '★ ' : ''}${T.name} · Lv ${lv}</div><div class="hp${boss || mini ? ' b' : ''}"><i></i></div>`; labelsEl.appendChild(el);
   const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 60 : mini ? 15 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 4 : mini ? 2.5 : 1),
@@ -2962,7 +3033,7 @@ function updateMobs(dt, t) {
   const M = MAPS[S.map];
   if (!S.boss && !S.boss2 && M.boss) { S.bossT -= dt; if (S.bossT <= 0) { S.bossT = M.boss.respawn; const spawnB = b => { const lv = zoneLv(b); const m = addMob(b.k, lv, b.x, b.z, { x: b.x, z: b.z, r: 3 }); fxBeam(b.x, b.z, '#ff6a8a', 2, 2); return m; };
       S.boss = spawnB(M.boss); if (M.boss2) S.boss2 = spawnB(M.boss2); S.shake = 0.3;
-      banner(M.boss2 ? '2 BOSS XUẤT HIỆN!' : 'BOSS XUẤT HIỆN: ' + MT[M.boss.k].name.toUpperCase(), 'red'); log(`Boss ${MT[M.boss.k].name} (Lv ${S.boss.lv})${S.boss2 ? ` và ${MT[M.boss2.k].name} (Lv ${S.boss2.lv})` : ''} xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); } }
+      banner(M.boss2 ? '2 BOSS XUẤT HIỆN!' : 'BOSS XUẤT HIỆN: ' + MT[M.boss.k].name.toUpperCase(), 'red'); log(`Boss ${MT[M.boss.k].name} (Lv ${S.boss.lv})${S.boss2 ? ` và ${MT[M.boss2.k].name} (Lv ${S.boss2.lv})` : ''} xuất hiện trước cổng đá phía bắc!`, '#ff9a9a'); for (const b of [M.boss, M.boss2]) if (b && BOSS_LORE[b.k]) log(`${MT[b.k].name}, ${BOSS_LORE[b.k].t}.`, '#ffd08a'); } }
   if (!S.mini && M.mini) { S.miniT -= dt; if (S.miniT <= 0) { const zn = pick(M.zones); const [x, z] = spawnPos(zn); S.mini = addMob(M.mini, Math.min(M.hi, zoneLv(zn) + 4), x, z, zn, true);
       banner('TINH ANH XUẤT HIỆN: ' + MT[M.mini].name.toUpperCase(), 'gold'); log(`★ Tinh anh ${MT[M.mini].name} xuất hiện! Phần thưởng bằng 1/3 boss.`, '#ffd27a'); fxBeam(x, z, '#ffd27a', 1.6, 1.4); } }
   for (const m of mobs) {
@@ -3516,10 +3587,18 @@ function renderSkills() {
 // ---------- map panel ----------
 function openMap() { closeBag(); $('mapP').classList.remove('hide');
   $('mapList').innerHTML = [TOWN, ...MAPS.map((_, i) => i).filter(i => i !== TOWN)].map(i => { const M = MAPS[i]; const lo = M.lo, hi = M.hi; const ok = true; const here = i === S.map; if (M.town) return `<button data-m="${i}" class="${here ? 'here' : ''}"${here ? ' disabled' : ''}><span class="dot" style="background:#ffd86a;box-shadow:0 0 10px #ffd86a"></span><span><b>${M.name}</b>Thành chính · NPC, chợ, nghỉ ngơi · ${here ? 'Đang ở đây' : 'Chạm để về thành'}</span></button>`;
-    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>${M.culture ? M.culture + ' · ' : ''}Quái cấp ${lo}–${hi}${S.lv < lo - 20 ? ' <b style="display:inline;font:inherit;color:#ff8a8a">· nguy hiểm</b>' : ''} · Boss ${MT[M.boss.k].name}<br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>`; }).join('');
-  $('mapList').querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { const i = +b.dataset.m; closeMap(); travel(i); }); $('mapClose').focus(); }
-function closeMap() { $('mapP').classList.add('hide'); }
-$('mapClose').onclick = closeMap;
+    return `<button data-m="${i}" class="${here ? 'here' : ''}"${ok && !here ? '' : ' disabled'}><span class="dot" style="background:#${new THREE.Color(M.pal.rune).getHexString()};box-shadow:0 0 10px #${new THREE.Color(M.pal.rune).getHexString()}"></span><span><b>${M.name}</b>${M.culture ? M.culture + ' · ' : ''}Quái cấp ${lo}–${hi}${S.lv < lo - 20 ? ' <b style="display:inline;font:inherit;color:#ff8a8a">· nguy hiểm</b>' : ''} <br>Rơi đồ <span style="color:${SETS[M.set].col}">${SETS[M.set].n}</span> · ${here ? '<b style="display:inline;font:inherit;color:var(--cyan)">Đang ở đây</b>' : ok ? 'Chạm để dịch chuyển' : 'Cần cấp ' + M.req}</span></button>${bossChips(M)}`; }).join('');
+  $('mapList').querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { const i = +b.dataset.m; closeMap(); travel(i); });
+  $('mapList').querySelectorAll('button[data-boss]').forEach(b => b.onclick = () => openBossLore(b.dataset.boss)); $('mapClose').focus(); }
+// the realm's two bosses under its card; a tap opens the boss's legend
+function bossChips(M) { const L = [M.boss, M.boss2].filter(b => b && MT[b.k]); if (!L.length) return '';
+  return `<div class="bchips">${L.map(b => `<button data-boss="${b.k}" aria-label="Thánh sử ${MT[b.k].name}"><img alt="" src="${bossArt(b.k)}" onerror="this.style.visibility='hidden'"><span><b style="color:${MT[b.k].color}">${MT[b.k].name}</b>${BOSS_LORE[b.k] ? BOSS_LORE[b.k].t : ''}</span></button>`).join('')}</div>`; }
+function openBossLore(k) { const T = MT[k], L = BOSS_LORE[k] || { t: '', l: '' }, M = MAPS.find(m => m.boss && (m.boss.k === k || (m.boss2 && m.boss2.k === k)));
+  $('bossBody').innerHTML = `<div class="blore"><div class="bart" style="--bc:${T.color}"><img alt="${T.name}" src="${bossArt(k)}"></div><h3 style="color:${T.color}">${T.name}</h3><div class="btitle">${L.t}</div>
+    <div class="muted">${M ? M.name + ' · Boss cấp ' + M.lo + '–' + M.hi : ''}</div><p>${L.l}</p></div>`;
+  $('bossP').classList.remove('hide'); $('bossClose').focus(); }
+function closeMap() { $('bossP').classList.add('hide'); $('mapP').classList.add('hide'); }
+$('mapClose').onclick = closeMap; $('bossClose').onclick = () => { $('bossP').classList.add('hide'); };
 function travel(i) { FX3.clear(); for (const p of projs) scene.remove(p.m); projs.length = 0; for (const s of sks) if (s.type === 'meteor') scene.remove(s.m); sks.length = 0; S.bossT = 60; setMap(i); showZone(); saveGame(); fxBeam(0, 8, '#9fe8ff', 1.4, 1.2); }
 
 // ---------- world: party, bot card, trade, NPCs ----------
