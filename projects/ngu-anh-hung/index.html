@@ -2662,11 +2662,11 @@ const curMount = () => S && S.mount ? MOUNTS.find(p => p.id === S.mount) : null;
 // skills of every class: 0.5 casts/s at the start, growing with attack speed like the basic attack (to 5/s);
 // the unlocked skills take turns (each waits for the others), a cast never blocks the basic attack, and its mana cost shrinks as the rate grows
 const SK_RATE0 = 0.5, SK_ROT = cls => true;          // every class, the fire knight included
-const SKD = { fire: 1.0, thunder: 1.4, ice: 1.1, elf: 2.4, holy: 3.0 };
-const BAK = { fire: 5, thunder: 4, ice: 5, elf: 4, holy: 2.4 };       // basic attack damage factor per class (same pacing target)
+const SKD = { fire: 1.0, thunder: 1.4, ice: 1.1, elf: 1.9, holy: 3.0 }, SKP = { fire: 2, thunder: 2.1, ice: 1.9, elf: 1.5, holy: 1.85 };   // factor and level falloff
+const BAK = { fire: 5, thunder: 4, ice: 5, elf: 4, holy: 2.4 }, BAP = { elf: 1.3 };       // basic attack damage factor per class (same pacing target)
 // measured on a pack of five at-level monsters with level-typical gear: skills ~70% and basic attacks ~30% of the damage, the pack down in ~5-6 s
-const atkDmgK = () => (BAK[S.cls] || 1) / Math.pow(1 + S.lv / 40, 1.5);
-const skDmgK = () => (SKD[S.cls] || 1) / Math.pow(1 + S.lv / 60, 2);      /* gear grows faster than monster health: the skill share shrinks with level so a pack still takes ~5-6 s */          // skill damage factor per class, tuned so a pack of monsters dies in about 5-6 s
+const atkDmgK = () => (BAK[S.cls] || 1) / Math.pow(1 + S.lv / 40, BAP[S.cls] || 1.5);
+const skDmgK = () => (SKD[S.cls] || 1) / Math.pow(1 + S.lv / 60, SKP[S.cls] || 2);      /* gear grows faster than monster health: the skill share shrinks with level so a pack still takes ~5-6 s */          // skill damage factor per class, tuned so a pack of monsters dies in about 5-6 s
 const skRate = () => SK_RATE0 * (HS ? HS.aps : 0.25) / CLS[S.cls].aps;
 const skOpen = () => SKILLS[S.cls].filter(k => S.lv >= k.lv).length || 1;
 function skCd(sk) { return SK_ROT(S.cls) ? skOpen() / skRate() : Math.max(0.1, sk.cdk / (HS ? HS.aps : 3)); }
