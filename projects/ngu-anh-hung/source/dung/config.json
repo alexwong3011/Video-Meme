@@ -1,0 +1,26 @@
+{
+  "name": "dung_nham_knight",
+  "views_white": "clean/white",
+  "views_transparent": "clean/transparent",
+  "views": ["front", "left", "back", "right"],
+  "out_dir": "out",
+  "web_dir": "../../../../projects/ngu-anh-hung/assets/meshy",
+  "web_name": "knight_dung",
+  "height_m": 2.0,
+  "include_fingers": true,
+  "model": {
+    "ai_model": "latest",
+    "geometry_resolution": "2k",
+    "image_enhancement": false,
+    "should_texture": true,
+    "texture_resolution": "2k",
+    "enable_pbr": true,
+    "should_remesh": true,
+    "topology": "triangle",
+    "target_polycount": 60000,
+    "pose_mode": "a-pose"
+  },
+  "actions": [],
+  "bake": true,
+  "bake_size": 2048
+}

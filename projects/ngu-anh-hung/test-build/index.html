@@ -943,7 +943,7 @@ function fadeTo(name, dur, once = false, speed = 1) {
 // The other classes keep the mannequin. Idle is procedural (upright stance, 3 s breathing cycle), the greatsword sits in the fist,
 // and the armour brightens with its upgrade level (+0..+15): fresnel rim, light running along the engraving, thin smoke wisps.
 // =====================================================================
-const KN = { ready: false, on: false, err: null, gltf: null, bones: {}, clips: {}, acts: {}, cur: null, curName: '', combo: 0, actUntil: 0, actBasic: false, idleW: 1, mq: [], mp: [], wispT: 0 };
+const KN = { vars: {}, ready: false, on: false, err: null, gltf: null, bones: {}, clips: {}, acts: {}, cur: null, curName: '', combo: 0, actUntil: 0, actBasic: false, idleW: 1, mq: [], mp: [], wispT: 0 };
 const KN_TAU = Math.PI * 2, KN_REF = 1.85;            // the poses below are in metres for a 1.85 m knight, scaled to the game's size
 const KN_CLIP = { walk: 'Walk_Fight_Forward', run: 'RunFast', hit: 'Hit_Reaction', combo: ['Attack', 'Left_Slash', 'Thrust_Slash', 'Charged_Slash'],
   skill: { flamewave: ['Sword_Judgment', 0.75], meteor: ['Charged_Spell_Cast', 0.85], firespin: ['Double_Blade_Spin', 0.7] } };
@@ -1053,6 +1053,7 @@ function knLoad() {
     const sw = await Promise.all(['assets/weapon/greatsword_front.png', 'assets/weapon/greatsword_back.png'].map(tex));
     try { const lj = await (await fetch('assets/meshy/knight_lod.json')).json(); KN.lod = new Uint32Array(Uint8Array.from(atob(lj.indices), c => c.charCodeAt(0)).buffer); } catch (e) { KN.lod = null; }
     knSetup(gltf, sw); const bg = await baseP; if (bg) knSetupBase(bg); if (S && S.cls === 'fire') buildHero3D();
+    for (const [k, V] of Object.entries(VARIANT_SETS)) loadGltfJson(V.file).then(g => knAttachVariant(g, k, V)).catch(e => console.warn('set model ' + k + ':', e));
     for (const [id, e] of [...ents]) if (!e.C.kn && !e.dead) { const p = e.pos.clone(); despawnBot(id); spawnBot(e.b, p.x, p.z); }   // bots already on the map put the armour on
   })().catch(e => { KN.err = String(e && e.message || e); console.warn('knight:', e); });
 }
@@ -1073,31 +1074,45 @@ function splitBySlot(mesh, overlap = 0.22) {
     ng.setIndex(new THREE.BufferAttribute(Uint32Array.from(out[j]), 1)); ng.boundingSphere = g.boundingSphere; r[sl] = ng; }); return r; }
 // the bare body (a thin ancient Greek outfit): shown wherever a body slot is empty. Its own rig and proportions; every frame it takes
 // the knight's bone rotations by name, so its pieces move with the armour pieces and meet them at the joints
-function knSetupBase(gltf) {
+function knSetupBase(gltf) { knAttachVariant(gltf, 'base'); }
+// another body on the same pose: the bare body ('base') or an armour set's own model (e.g. 'dung'). Its own rig and proportions; every frame
+// each of its bones takes the knight bone's world rotation change from rest (the rigs share bone names but not bone axes), and the hips follow
+function knAttachVariant(gltf, key, armour) {
   const model = gltf.scene, BB = {}; const meshes = [];
-  model.traverse(o => { if (o.isBone) BB[o.name.toLowerCase()] = o; if (o.isSkinnedMesh) meshes.push(o); if (o.isMesh) { o.frustumCulled = false; if (o.material) { o.material.envMapIntensity = 0.5; o.material.roughness = 0.85; o.material.metalness = 0; } } });
+  model.traverse(o => { if (o.isBone) BB[o.name.toLowerCase()] = o; if (o.isSkinnedMesh) meshes.push(o); if (o.isMesh) { o.frustumCulled = false; const m = o.material; if (m && !armour) { m.envMapIntensity = 0.5; m.roughness = 0.85; m.metalness = 0; } } });
+  if (armour) for (const o of meshes) { const m = o.material; m.envMapIntensity = 0.35; if (m.normalMap) m.normalScale.set(1.2, 1.2);
+    if (armour.glow) { m.emissive = new THREE.Color(armour.glow); m.emissiveMap = m.map; m.emissiveIntensity = armour.glowK || 0.4; }
+    knArmorShader(m); m.userData.base0 = m.color.clone(); KN.armorMats.push(m); }
   model.updateMatrixWorld(true); let lo = Infinity, hi = -Infinity;
   for (const [n, b] of Object.entries(BB)) { const y = knW(b).y; if (/foot|toe/.test(n)) lo = Math.min(lo, y); if (/head_end|headfront|^head$/.test(n)) hi = Math.max(hi, y); }
   model.scale.multiplyScalar(KN.h / Math.max(0.01, hi - lo)); model.updateMatrixWorld(true);
   lo = Infinity; for (const [n, b] of Object.entries(BB)) if (/foot|toe/.test(n)) lo = Math.min(lo, knW(b).y); model.position.y -= lo - 0.03 * KN.h / KN_REF;
+  const parts = {};
   for (const o of meshes) { const geos = splitBySlot(o);
-    for (const sl of BODY_SLOTS) { const p = new THREE.SkinnedMesh(geos[sl], o.material); p.frustumCulled = false; p.bind(o.skeleton, o.bindMatrix); o.parent.add(p); (KN.parts.base[sl] = KN.parts.base[sl] || []).push(p); }
+    for (const sl of BODY_SLOTS) { const p = new THREE.SkinnedMesh(geos[sl], o.material); p.frustumCulled = false; p.bind(o.skeleton, o.bindMatrix); o.parent.add(p); p.visible = false; (parts[sl] = parts[sl] || []).push(p);
+      if (armour) { const am = new THREE.ShaderMaterial({ vertexShader: KN_AURA_VS, fragmentShader: KN_AURA_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+          uniforms: { uGrow: { value: 0.022 }, uPow: { value: 1.5 }, uColor: { value: new THREE.Color() }, uInt: { value: 0 }, uTime: KN_U.uTime } });
+        const sh = new THREE.SkinnedMesh(geos[sl], am); sh.frustumCulled = false; sh.bind(o.skeleton, o.bindMatrix); sh.renderOrder = 5; o.parent.add(sh); sh.userData.piece = p; KN.auras.push(sh); } }
     o.parent.remove(o); }
-  // the two rigs share bone names but not bone axes: carry the knight's rotation away from its rest pose, in world space, onto each bare-body bone
   KN.restPose(); KN.root.add(model); KN.root.updateMatrixWorld(true);
   const order = []; model.traverse(o => { if (o.isBone && KN.bones[o.name.toLowerCase()]) order.push(o); });     // parents before children
   const map = order.map(bb => { const kb = KN.bones[bb.name.toLowerCase()];
     return { bb, kb, off: kb.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(bb.getWorldQuaternion(new THREE.Quaternion())) }; });
   const hb = BB.hips, hk = KN.bones.hips;
-  KN.base = { model, map, hip: hb && hk ? { hb, hk, b0: knW(hb), k0: knW(hk) } : null };
+  KN.vars[key] = { model, map, parts, hip: hb && hk ? { hb, hk, b0: knW(hb), k0: knW(hk) } : null };
+  if (key === 'base') { KN.base = KN.vars.base; KN.parts.base = parts; }
 }
-function knBodySlots() {        // armour piece where something is worn, the bare body elsewhere; the bare body copies the knight's pose
-  const A = KN.parts.armour, Bp = KN.parts.base, has = !!KN.base;
-  for (const sl of BODY_SLOTS) { const worn = !has || !!S.eq[sl]; for (const p of A[sl] || []) p.visible = worn; for (const p of Bp[sl] || []) p.visible = !worn; }
-  if (!has) return; const b = KN.base, q = new THREE.Quaternion(), pq = new THREE.Quaternion(); KN.root.updateMatrixWorld(true);
-  if (b.hip) {     // the hips follow the knight's (bob, steps), measured from rest in the root's space
-    const d = KN.root.worldToLocal(knW(b.hip.hk)).sub(b.hip.k0); b.hip.hb.position.copy(b.hip.hb.parent.worldToLocal(KN.root.localToWorld(b.hip.b0.clone().add(d)))); }
-  for (const m of b.map) { m.kb.getWorldQuaternion(q).multiply(m.off); m.bb.parent.getWorldQuaternion(pq); m.bb.quaternion.copy(pq.invert().multiply(q)); m.bb.updateMatrixWorld(true); }
+const VARIANT_SETS = { dung: { file: 'assets/meshy/knight_dung.gltf.json', glow: 0xff6a20, glowK: 0.45 } };     // armour sets with their own 3D model
+function knBodySlots() {        // per slot: the worn set's own model if it has one, else the Cánh Lam knight; the bare body where nothing is worn
+  const show = {}; for (const k in KN.vars) show[k] = false;
+  for (const sl of BODY_SLOTS) { const g = S.eq[sl], v = !g ? (KN.vars.base ? 'base' : 'knight') : KN.vars[g.set] ? g.set : 'knight';
+    for (const p of KN.parts.armour[sl] || []) p.visible = v === 'knight';
+    for (const k in KN.vars) { const on = k === v; for (const p of KN.vars[k].parts[sl] || []) p.visible = on; if (on) show[k] = true; } }
+  const q = new THREE.Quaternion(), pq = new THREE.Quaternion(); let first = true;
+  for (const k in KN.vars) { const b = KN.vars[k]; b.model.visible = show[k]; if (!show[k]) continue;
+    if (first) { KN.root.updateMatrixWorld(true); first = false; }
+    if (b.hip) { const d = KN.root.worldToLocal(knW(b.hip.hk)).sub(b.hip.k0); b.hip.hb.position.copy(b.hip.hb.parent.worldToLocal(KN.root.localToWorld(b.hip.b0.clone().add(d)))); }
+    for (const m of b.map) { m.kb.getWorldQuaternion(q).multiply(m.off); m.bb.parent.getWorldQuaternion(pq); m.bb.quaternion.copy(pq.invert().multiply(q)); m.bb.updateMatrixWorld(true); } }
 }
 function knSetup(gltf, swTex) {
   const B = KN.bones, model = gltf.scene, root = new THREE.Group(); root.add(model); KN.root = root; KN.model = model;
@@ -1128,6 +1143,8 @@ function knSetup(gltf, swTex) {
   sword.visible = false; KN.root.add(sword); KN.sword = sword; KN.swordMats = blade.children.filter(c => c.isMesh).map(c => c.material);
   KN.restPose(); KN.boneList = Object.values(B); knFingerSetup();
   KN.sword2 = sword.clone(true); KN.sword2.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); KN.swordMats.push(o.material); } }); KN.root.add(KN.sword2);
+  KN.swords = { 'azure0': { g: sword, guard: KN.guard, tip: KN.tip }, 'azure1': { g: KN.sword2, guard: KN.sword2.children[0].children[2], tip: KN.sword2.children[0].children[3] } }; KN.hand = ['azure', 'azure'];
+  KN.card = card;
   // the bots' knight: a light copy (same vertices, skeleton and painted texture, ~15% of the triangles), fists closed, greatsword in the right fist
   { KN.tip.name = 'kntip'; if (KN.fingers) { knCurl('right', 1); knCurl('left', 0.4); }
     const proto = SkeletonUtils.clone(model); proto.updateMatrixWorld(true);
@@ -1188,9 +1205,21 @@ function knIdlePose(t, F) {
   if (KN.fingers) knTurn(B.righthand, knW(B.righthandindex1).sub(knW(B.righthandpinky1)), cv(KN_IDLE.bladeUp));
   if (KN.fingers && KN.dual) knTurn(B.lefthand, knW(B.lefthandindex1).sub(knW(B.lefthandpinky1)), cv(KN_IDLE.bladeDown));
 }
+// the greatsword in each hand follows the set of the weapon held there (sets without their own sword use the Cánh Lam one)
+function knMakeSword(set) { const A = SET_ART[set].sword, L = KN_SWORD.L, tl = new THREE.TextureLoader(), tx = f => { const t = tl.load(`${SET_ART[set].dir}/${f}.png`); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+  const card = (t, ry) => { const g = new THREE.PlaneGeometry(A.aspect * L, L); g.translate((0.5 - A.gp[0]) * A.aspect * L, (A.gp[1] - 0.5) * L, 0);
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.3, roughness: 0.55, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.12 })); m.rotation.y = ry; KN.swordMats.push(m.material); return m; };
+  const g = new THREE.Group(), blade = new THREE.Group(); blade.add(card(tx('weapon_front'), 0), card(tx('weapon_back'), Math.PI / 2)); g.add(blade); blade.rotation.z = Math.PI;
+  const guard = new THREE.Object3D(); guard.position.set(0, -0.12 * L, 0); blade.add(guard); const tip = new THREE.Object3D(); tip.position.set(0, (A.gp[1] - A.tip[1]) * L * 0.85, 0); blade.add(tip);
+  g.visible = false; KN.root.add(g); return { g, guard, tip }; }
+function knHands() { const want = g => g && SET_ART[g.set] && SET_ART[g.set].sword ? g.set : 'azure';
+  const sets = [want(S.eq.weapon), want(S.eq.shield?.slot === 'weapon' ? S.eq.shield : null)];
+  sets.forEach((set, i) => { if (KN.hand[i] === set) return; const k = set + i; if (!KN.swords[k]) KN.swords[k] = knMakeSword(set);
+    const old = KN.swords[KN.hand[i] + i]; if (old) old.g.visible = false; KN.hand[i] = set; const sw = KN.swords[k];
+    if (i === 0) { KN.sword = sw.g; KN.guard = sw.guard; KN.tip = sw.tip; } else KN.sword2 = sw.g; }); }
 function knArmorLevel() { return clamp(Math.max(...['helm', 'armor', 'pants', 'gloves', 'boots'].map(k => S.eq[k]?.plus || 0)), 0, 15); }   // the best of the five body pieces
 function knTick(dt, t, moving) {
-  if (!KN.on) return; KN.dual = S.eq.shield?.slot === 'weapon'; const B = KN.bones; heroG.updateMatrixWorld(true);
+  if (!KN.on) return; KN.dual = S.eq.shield?.slot === 'weapon'; knHands(); const B = KN.bones; heroG.updateMatrixWorld(true);
   const F = KN.h * heroG.scale.x / KN_REF;
   const acting = S.time < KN.actUntil && !(moving && KN.actBasic);
   if (!acting) { KN.actBasic = false;
@@ -2115,12 +2144,15 @@ const DOLL = { x: -301, y: -837, w: 586, h: 843, p: {
   greatsword: { z: 35, o: [-260 - 0.5283 * 127.1, -364 - 0.1206 * 381.6], s: [127.1, 381.6] },
   greatsword_off: { z: 35, o: [235 - 0.4717 * 127.1, -364 - 0.1206 * 381.6], s: [127.1, 381.6], img: 'greatsword', flip: true },   // left hand (screen right), mirrored          // pivot at the grip, in the right hand (screen left), point down
   gauntlet_left: { z: 40, o: [-296.5, -604.5], s: [91.25, 328.0] }, gauntlet_right: { z: 40, o: [191.5, -605.0], s: [89.0, 331.75] } } };
+// sets with their own painted pieces (cut from a generated sheet on the Cánh Lam body frame): icons, doll pieces and boxes, in-hand sword
+const SET_ART = { dung: { dir: 'assets/equip/sets/dung', doll: {"helmet": {"o": [-84.24, -832.25], "s": [169.23, 235.5]}, "chestplate": {"o": [-152.94, -633.0], "s": [307.88, 312.0]}, "leggings": {"o": [-120.75, -412.0], "s": [243.74, 358.0]}, "gauntlet_left": {"o": [-302.19, -604.5], "s": [102.64, 328.0]}, "gauntlet_right": {"o": [183.92, -605.0], "s": [104.17, 331.75]}, "boot_left": {"o": [-228.77, -197.75], "s": [124.78, 199.25]}, "boot_right": {"o": [105.48, -199.0], "s": [123.54, 200.5]}, "greatsword": {"o": [-322.96, -402.3], "s": [116.35, 381.6], "gp": [0.5412, 0.1004]}, "greatsword_off": {"o": [181.61, -402.3], "s": [116.35, 381.6], "img": "greatsword", "flip": true}}, sword: {"aspect": 0.3118, "gp": [0.5398, 0.1019], "tip": [0.0239, 0.9938]} } };
+const setArt = g => g && !g.charm && SET_ART[g.set] && ART[g.slot] ? SET_ART[g.set] : null;
 const hexHue = hex => { const c = new THREE.Color(hex), o = {}; c.getHSL(o); return o.h * 360; };
-function artFilter(g) {      // the art is violet-blue steel: shift it to the set's colour, or by rarity for loose pieces
-  let f = g.set === 'azure' ? '' : g.set ? `hue-rotate(${Math.round(hexHue(SETS[g.set].col) - 245)}deg) saturate(1.25)` :
+function artFilter(g) {      // the art is violet-blue steel: shift it to the set's colour, or by rarity for loose pieces (sets with their own art stay as painted)
+  let f = g.set === 'azure' || setArt(g) ? '' : g.set ? `hue-rotate(${Math.round(hexHue(SETS[g.set].col) - 245)}deg) saturate(1.25)` :
     g.r ? `hue-rotate(${Math.round(hexHue(RARITY[g.r].css) - 245)}deg) saturate(1.45)` : 'grayscale(0.92) brightness(0.82) contrast(1.1)';
   const t = tier(g.plus || 0); if (t) f += ` drop-shadow(0 0 ${2 + t * 2}px #${new THREE.Color(TIER_COL[t]).getHexString()})`; return f; }
-const itemArt = g => ART[g.slot] && !g.charm ? `<img class="art" alt="" src="assets/equip/icons/${ART[g.slot].icon}_128.png" style="filter:${artFilter(g)}">` : null;
+const itemArt = g => ART[g.slot] && !g.charm ? `<img class="art" alt="" src="${setArt(g) ? setArt(g).dir : 'assets/equip'}/icons/${ART[g.slot].icon}_128.png" style="filter:${artFilter(g)}">` : null;
 
 // monsters: only the template's luminous jelly and spiked fish, recoloured per sea
 const MT = {
@@ -2553,7 +2585,7 @@ function cssMat(ops) { let M = [1, 0, 0, 0, 1, 0, 0, 0, 1]; const mul = (A, B) =
     else A = [v, 0, 0, 0, v, 0, 0, 0, v];          // brightness
     M = mul(A, M); }
   return M; }
-const artOps = g => g.set === 'azure' ? null : g.set ? [['hue', hexHue(SETS[g.set].col) - 245], ['sat', 1.25]] : g.r ? [['hue', hexHue(RARITY[g.r].css) - 245], ['sat', 1.45]] : [['sat', 0.08], ['bri', 0.82]];
+const artOps = g => g.set === 'azure' || setArt(g) ? null : g.set ? [['hue', hexHue(SETS[g.set].col) - 245], ['sat', 1.25]] : g.r ? [['hue', hexHue(RARITY[g.r].css) - 245], ['sat', 1.45]] : [['sat', 0.08], ['bri', 0.82]];
 function lootTex(g) {
   const art = ART[g.slot] && !g.charm, key = art ? ART[g.slot].icon + '|' + (g.set || '') + '|' + g.r : 'svg|' + (g.charm ? g.charm : g.slot) + '|' + g.r;
   if (lootTexCache[key]) return lootTexCache[key];
@@ -2565,7 +2597,7 @@ function lootTex(g) {
         a[i] = M[0] * r + M[1] * gg + M[2] * b; a[i + 1] = M[3] * r + M[4] * gg + M[5] * b; a[i + 2] = M[6] * r + M[7] * gg + M[8] * b; }    // Uint8ClampedArray clamps
       c.putImageData(d, 0, 0); }
     t.needsUpdate = true; };
-  if (art) img.src = `assets/equip/icons/${ART[g.slot].icon}_128.png`;
+  if (art) img.src = `${setArt(g) ? setArt(g).dir : 'assets/equip'}/icons/${ART[g.slot].icon}_128.png`;
   else { const col = g.charm ? CHARMS[g.charm].col : RARITY[g.r].css;
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="128" height="128" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">${GI[g.charm === 'soul' ? 'soul' : g.charm ? 'charm' : g.slot]}</svg>`); }
   return t; }
@@ -3256,8 +3288,9 @@ const eqSlot = s => `<div class="eqslot"><span>${SLOTS[s].n}</span>${S.eq[s] ? t
 function dollHtml() {       // MU-style: the worn pieces drawn in place over a dark body silhouette
   const pct = (v, o, d) => ((v - o) / d * 100).toFixed(2) + '%'; let layers = '';
   for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g || !ART[g.slot]) continue; const f = artFilter(g);
-    for (const n0 of ART[g.slot].pieces) { const n = s === 'shield' && n0 === 'greatsword' ? 'greatsword_off' : n0, P = DOLL.p[n];
-      layers += `<img alt="" data-id="${g.id}" src="assets/equip/pieces/${P.img || n}.png" style="left:${pct(P.o[0], DOLL.x, DOLL.w)};top:${pct(P.o[1], DOLL.y, DOLL.h)};width:${(P.s[0] / DOLL.w * 100).toFixed(2)}%;height:${(P.s[1] / DOLL.h * 100).toFixed(2)}%;z-index:${P.z};filter:${f}${P.flip ? ';transform:scaleX(-1)' : ''}">`; } }
+    const SA = setArt(g);
+    for (const n0 of ART[g.slot].pieces) { const n = s === 'shield' && n0 === 'greatsword' ? 'greatsword_off' : n0, P = (SA && SA.doll[n]) || DOLL.p[n];
+      layers += `<img alt="" data-id="${g.id}" src="${SA ? SA.dir : 'assets/equip'}/pieces/${P.img || n}.png" style="left:${pct(P.o[0], DOLL.x, DOLL.w)};top:${pct(P.o[1], DOLL.y, DOLL.h)};width:${(P.s[0] / DOLL.w * 100).toFixed(2)}%;height:${(P.s[1] / DOLL.h * 100).toFixed(2)}%;z-index:${P.z};filter:${f}${P.flip ? ';transform:scaleX(-1)' : ''}">`; } }
   return `<div class="dollwrap"><div class="dcol">${['helm', 'armor', 'pants'].map(eqSlot).join('')}</div>
     <div class="doll" aria-label="Hình nhân vật với đồ đang mặc"><img class="base" alt="" src="assets/equip/silhouette.png">${layers}</div>
     <div class="dcol">${['weapon', 'shield', 'gloves'].map(eqSlot).join('')}</div></div>

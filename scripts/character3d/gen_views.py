@@ -11,7 +11,7 @@ API = "https://api.meshy.ai/openapi/v1"
 args = sys.argv[1:]; ref, out, pf = args[0], args[1], args[2]
 model = args[args.index("--model") + 1] if "--model" in args else "gpt-image-2"
 only = args[args.index("--only") + 1] if "--only" in args else None
-os.makedirs(out, exist_ok=True); CH = json.load(open(pf))["character"]
+os.makedirs(out, exist_ok=True); PJ = json.load(open(pf)); CH = PJ["character"]; ARMOR = PJ.get("armor", False)
 sp = os.path.join(out, "tasks.json"); T = json.load(open(sp)) if os.path.exists(sp) else {}
 def call(method, path, body=None):
     req = urllib.request.Request(API + path, method=method, data=json.dumps(body).encode() if body is not None else None, headers={"Content-Type": "application/json"})
@@ -28,15 +28,19 @@ def wait(tid):
         time.sleep(8)
 COMMON = ("Orthographic, camera at chest height, no perspective distortion. Full body from the top of the head to the soles, centered, "
           "with empty margin around. Flat even studio lighting, no strong shadows, no glow, no floor, no cast shadow. Plain white background. "
-          "No text, no labels, no weapon, no armor.")
+          + ("No text, no labels, no weapon, no wings, no cape." if ARMOR else "No text, no labels, no weapon, no armor."))
+# an armour set: dress the reference body (usually the bare base body) in a full suit that covers it from head to feet
+INTRO = ("Image 1 shows a person standing in a neutral A-pose, seen from the front. Dress exactly this body in a full suit of armor: keep the same height, "
+         "body proportions, pose, arm angle, hand position, leg stance, camera framing and scale as image 1. The armor covers the whole body from head to feet, "
+         "including a closed helmet; no skin and no cloth visible. " if ARMOR else
+         "Image 1 shows a character standing in a neutral A-pose, seen from the front. Draw a DIFFERENT outfit on exactly the same body: "
+         "the same height, body proportions, head size, pose, arm angle, hand position, leg stance, camera framing and scale as image 1, but with no armor at all. ")
 PROMPTS = {
-  "front": ("front", ["front"], "Image 1 shows a character standing in a neutral A-pose, seen from the front. Draw a DIFFERENT outfit on exactly the same body: "
-            "the same height, body proportions, head size, pose, arm angle, hand position, leg stance, camera framing and scale as image 1, but with no armor at all. "
-            f"{CH} Front view, facing the camera. Arms straight and held 35 degrees away from the body with a clear gap under the armpits, hands open and relaxed. {COMMON}"),
+  "front": ("front", ["front"], INTRO + f"{CH} Front view, facing the camera. Arms straight and held 35 degrees away from the body with a clear gap under the armpits, hands open and relaxed. {COMMON}"),
   "side": ("side", ["front:new", "left"], "Image 1 is the front view of this character. Image 2 shows the exact pose, framing and scale for the side view. "
-           f"Draw the same character as image 1 (same face, hair, outfit, colors and every detail) seen from its left side: exact profile facing screen-left, in the same pose, proportions and scale as image 2. {CH} {COMMON}"),
+           f"Draw the same character as image 1 (same face, hair, outfit, armor, colors and every detail) seen from its left side: exact profile facing screen-left, in the same pose, proportions and scale as image 2. {CH} {COMMON}"),
   "back": ("back", ["front:new", "back"], "Image 1 is the front view of this character. Image 2 shows the exact pose, framing and scale for the back view. "
-           f"Draw the same character as image 1 (same hair, outfit, colors and every detail) seen from directly behind, in the same pose, proportions and scale as image 2. {CH} {COMMON}"),
+           f"Draw the same character as image 1 (same hair, outfit, armor, colors and every detail) seen from directly behind, in the same pose, proportions and scale as image 2. {CH} {COMMON}"),
 }
 for v in ["front", "side", "back"]:
     if only and v != only: continue
