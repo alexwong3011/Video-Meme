@@ -966,8 +966,8 @@ function knLook(lv) { let i = 0; while (i < KN_ARMOR.length - 2 && lv > KN_ARMOR
   const a = KN_ARMOR[i], b = KN_ARMOR[i + 1], f = clamp((lv - a.lv) / (b.lv - a.lv), 0, 1), mx = (x, y) => x.map((v, k) => lerp(v, y[k], f));
   return { tint: mx(a.tint, b.tint), rim: mx(a.rim, b.rim), flow: mx(a.flow, b.flow), aura: mx(a.aura, b.aura), env: lerp(a.env, b.env, f), rough: lerp(a.rough, b.rough, f) }; }
 const KN_U = { uTime: { value: 0 }, uRimColor: { value: new THREE.Color() }, uRimInt: { value: 0 }, uFlowColor: { value: new THREE.Color() }, uFlowInt: { value: 0 } };
-function knArmorShader(m) {
-  m.onBeforeCompile = sh => { Object.assign(sh.uniforms, KN_U);
+function knArmorShader(m, U = KN_U) {
+  m.onBeforeCompile = sh => { Object.assign(sh.uniforms, U);
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uTime, uRimInt, uFlowInt; uniform vec3 uRimColor, uFlowColor;')
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       { vec3 vd = isOrthographic ? vec3(0.0, 0.0, 1.0) : normalize(vViewPosition);
@@ -1058,7 +1058,8 @@ function knLoad() {
     const sw = await Promise.all(['assets/weapon/greatsword_front.png', 'assets/weapon/greatsword_back.png'].map(tex));
     try { const lj = await (await fetch('assets/meshy/knight_lod.json')).json(); KN.lod = new Uint32Array(Uint8Array.from(atob(lj.indices), c => c.charCodeAt(0)).buffer); } catch (e) { KN.lod = null; }
     knSetup(gltf, sw); const bg = await baseP; if (bg) knSetupBase(bg); if (S && S.cls === 'fire') buildHero3D();
-    for (const [k, V] of Object.entries(VARIANT_SETS)) loadGltfJson(V.file).then(g => knAttachVariant(g, k, V)).catch(e => console.warn('set model ' + k + ':', e));
+    for (const [k, V] of Object.entries(VARIANT_SETS)) Promise.all([loadGltfJson(V.file), fetch(V.file.replace('.gltf.json', '_lod.json')).then(r => r.json()).catch(() => null)])
+      .then(([g, lj]) => { V.lod = lj ? new Uint32Array(Uint8Array.from(atob(lj.indices), c => c.charCodeAt(0)).buffer) : null; knAttachVariant(g, k, V); }).catch(e => console.warn('set model ' + k + ':', e));
     for (const [id, e] of [...ents]) if (!e.C.kn && !e.dead) { const p = e.pos.clone(); despawnBot(id); spawnBot(e.b, p.x, p.z); }   // bots already on the map put the armour on
   })().catch(e => { KN.err = String(e && e.message || e); console.warn('knight:', e); });
 }
@@ -1092,6 +1093,9 @@ function knAttachVariant(gltf, key, armour) {
   for (const [n, b] of Object.entries(BB)) { const y = knW(b).y; if (/foot|toe/.test(n)) lo = Math.min(lo, y); if (/head_end|headfront|^head$/.test(n)) hi = Math.max(hi, y); }
   model.scale.multiplyScalar(KN.h / Math.max(0.01, hi - lo)); model.updateMatrixWorld(true);
   lo = Infinity; for (const [n, b] of Object.entries(BB)) if (/foot|toe/.test(n)) lo = Math.min(lo, knW(b).y); model.position.y -= lo - 0.03 * KN.h / KN_REF;
+  let vproto = null;     /* the bots' copy of an armour set: whole body, light mesh (same vertices, ~20% of the triangles) */
+  if (armour) { KN.restPose(); vproto = SkeletonUtils.clone(model); vproto.traverse(o => { if (!o.isSkinnedMesh) return; const g2 = new THREE.BufferGeometry();
+    for (const n in o.geometry.attributes) g2.setAttribute(n, o.geometry.attributes[n]); g2.setIndex(armour.lod ? new THREE.BufferAttribute(armour.lod, 1) : o.geometry.index); g2.boundingSphere = o.geometry.boundingSphere; o.geometry = g2; }); }
   const parts = {};
   for (const o of meshes) { const geos = splitBySlot(o);
     for (const sl of BODY_SLOTS) { const p = new THREE.SkinnedMesh(geos[sl], o.material); p.frustumCulled = false; p.bind(o.skeleton, o.bindMatrix); o.parent.add(p); p.visible = false; (parts[sl] = parts[sl] || []).push(p);
@@ -1104,7 +1108,8 @@ function knAttachVariant(gltf, key, armour) {
   const map = order.map(bb => { const kb = KN.bones[bb.name.toLowerCase()];
     return { bb, kb, off: kb.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(bb.getWorldQuaternion(new THREE.Quaternion())) }; });
   const hb = BB.hips, hk = KN.bones.hips;
-  KN.vars[key] = { model, map, parts, hip: hb && hk ? { hb, hk, b0: knW(hb), k0: knW(hk) } : null };
+  KN.vars[key] = { model, map, parts, hip: hb && hk ? { hb, hk, b0: knW(hb), k0: knW(hk) } : null, proto: vproto, off: Object.fromEntries(map.map(m => [m.bb.name.toLowerCase(), m.off])) };
+  if (vproto) for (const [id, e] of [...ents]) if (e.C.kn && !e.dead && botKit(e.b).look === key) { const p = e.pos.clone(); despawnBot(id); spawnBot(e.b, p.x, p.z); }   /* bots in this set put it on */
   if (key === 'base') { KN.base = KN.vars.base; KN.parts.base = parts; }
 }
 const VARIANT_SETS = { dung: { file: 'assets/meshy/knight_dung.gltf.json', glow: 0xff6a20, glowK: 0.45 }, olym: { file: 'assets/meshy/knight_olym.gltf.json', glow: 0x8fd0ff, glowK: 0.08 }, song: { file: 'assets/meshy/knight_song.gltf.json' } };     // armour sets with their own 3D model
@@ -1155,7 +1160,7 @@ function knSetup(gltf, swTex) {
     const proto = SkeletonUtils.clone(model); proto.updateMatrixWorld(true);
     proto.traverse(o => { if (o.isSkinnedMesh) { const g = new THREE.BufferGeometry(); for (const n in o.geometry.attributes) g.setAttribute(n, o.geometry.attributes[n]);
       g.setIndex(KN.lod ? new THREE.BufferAttribute(KN.lod, 1) : o.geometry.index); g.boundingSphere = o.geometry.boundingSphere; o.geometry = g; } });
-    const bs = sword.clone(true); bs.traverse(o => { if (o.isMesh) o.material = o.material.clone(); }); bs.visible = true;
+    const bs = sword.clone(true); bs.traverse(o => { if (o.isMesh) o.material = o.material.clone(); }); bs.visible = true; bs.name = 'knsword';
     const f = KN.fingers ? knFist('right') : { G: knW(KN.handR) }; bs.position.copy(f.G); if (KN.fingers) bs.quaternion.copy(knBladeQ(f.axis, f.flat)); bs.scale.setScalar(KN.h / KN_REF); bs.updateMatrixWorld(true);
     proto.getObjectByName(KN.handR.name).attach(bs); KN.proto = proto; KN.restPose(); }
   // glowing ink outline (the hero look's colour) and the level aura shell, both pushed out along the skinned normals in view space
@@ -2982,21 +2987,31 @@ function botLoot(b, force) { if (b.inv.length >= 10) b.inv.shift();
   if (!force && Math.random() < 0.08) { const c = makeCharm(pick(['dmg', 'hp', 'mp']), b.lv); if (!stackInto(b.inv, c)) b.inv.push(c); return; }
   const q = Math.random(), r = q < 0.08 ? 3 : q < 0.3 ? 2 : q < 0.65 ? 1 : 0; const g = makeGear(Math.random() < 0.35 ? pick(AS_SLOTS) : pick(SLOT_ORDER), r, Math.max(1, b.lv - ri(0, 20)), r >= 1 && Math.random() < 0.4 ? MAPS[pickMapFor(b.lv)].set : null); if (r >= 1 && Math.random() < 0.5) g.plus = ri(1, 3 + r * 2); b.inv.push(g); }
 function botGain(b, xp) { b.exp += xp; let up = false; while (b.lv < MAXLV && b.exp >= expNeed(b.lv)) { b.exp -= expNeed(b.lv); b.lv++; up = true; }
-  let e = ents.get(b.id); if (up && e && botWing(b) !== e.wing && !e.dead) { const p = e.pos.clone(); despawnBot(b.id); e = spawnBot(b, p.x, p.z); }   // new wings: rebuild the bot
+  let e = ents.get(b.id); if (up && e && (botWing(b) !== e.wing || botKit(b).look !== e.look || botKit(b).plus !== e.plus) && !e.dead) { const p = e.pos.clone(); despawnBot(b.id); e = spawnBot(b, p.x, p.z); }   // new wings: rebuild the bot
   if (up && e) { const st = botStats(b); e.maxHp = st.hp; e.hp = st.hp; fxRing(e.pos.x, e.pos.z, 0, 1.4, '#ffd27a', 0.6); e.el.querySelector('.nm').innerHTML = botName(b); } }
 // Bots wear gear: a virtual kit sized to their level and their own habits (how lucky / how keen each bot is), worked out with the
 // player's own rules (rarity, +level, the set of the realm they farm, stones, wings), so their power and their wings keep up.
 const botQ = (b, k = 0) => { const v = Math.sin((b.hue * 977 + k * 131.7 + b.id.length * 13.1) * 12.9898) * 43758.5453; return v - Math.floor(v); };   // fixed per bot
-const botWing = b => clamp(Math.floor(b.lv / 55 + botQ(b, 1) * 1.6 - 0.3), 0, WMAX);
+const botWing = b => { const best = clamp(Math.floor(b.lv / 55 + botQ(b, 1) * 1.6 - 0.3), 0, WMAX), taste = botQ(b, 5);
+  return best >= 3 && taste < 0.4 ? best - 1 - (best === 4 && taste < 0.15 ? 1 : 0) : best; };     /* some bots keep a lower wing they like the look of */
 const botKitCache = new Map();
+// the bots' evolution plan: by level, the +level band and the rarity floor every bot keeps up with (keen bots sit at the top of the band);
+// from level 300 no bot is below +13. High-level keen bots chase the Cánh Lam set from the bosses.
+const BOT_PLAN = [[1, 0, 3, 0], [50, 3, 6, 1], [100, 6, 9, 1], [170, 9, 11, 2], [250, 11, 13, 3], [300, 13, 15, 3]];   /* [from level, min +, max +, rarity floor] */
+const botPlan = lv => { let p = BOT_PLAN[0]; for (const x of BOT_PLAN) if (lv >= x[0]) p = x; return p; };
 function botKit(b) {
   const key = b.id + ':' + b.lv; let k = botKitCache.get(key); if (k) return k;
   const C = CLS[b.cls], lv = b.lv, q = botQ(b), gl = Math.max(1, lv - 6);
   const realm = MAPS.filter(M => !M.town && M.lo <= lv).pop() || MAPS[0];
+  // each bot keeps a favourite set among the realms it has reached (mostly the newest; from 250 some chase the Cánh Lam set) so the crowd looks varied
+  const pool = MAPS.filter(M => !M.town && M.lo <= lv).map(M => M.set).concat(lv >= 250 ? ['azure'] : []), pq = botQ(b, 3);
+  const favSet = pool.length ? pool[Math.max(0, pool.length - 1 - Math.floor(pq * pq * pool.length))] : realm.set;
   const st = { atk: (12 + lv * 3.2) * C.atk, def: lv * 1.2, hp: (380 + lv * 55) * C.hp, crit: 0, as: Math.round(lv * 0.1) }, sets = {}, slots = [];
   SLOT_ORDER.forEach((slot, i) => { const j = botQ(b, 10 + i);
-    const r = clamp(Math.floor(lv / 110 + q * 1.3 + j * 0.6 - 0.3), 0, 3), plus = clamp(Math.round(lv / 38 + q * 4 + j * 2 - 1.5), 0, 15);
-    const set = SETS[realm.set] && SETS[realm.set].names[slot] && q + j * 0.5 > 0.45 ? realm.set : null;
+    const [, pmin, pmax, rf] = botPlan(lv), plus = clamp(Math.round(pmin + (pmax - pmin) * clamp(q * 0.75 + j * 0.35, 0, 1)), 0, 15);
+    const r = clamp(Math.max(rf, Math.floor(lv / 110 + q * 1.3 + j * 0.6 - 0.3)), 0, 3);
+    const bset = favSet;
+    const set = SETS[bset] && SETS[bset].names[slot] && (lv >= 170 || q + j * 0.5 > 0.45) ? bset : null;
     const base = {}; for (const kk in SLOTS[slot].base) base[kk] = kk === 'crit' ? SLOTS[slot].base[kk] * (r + 1) : Math.round(SLOTS[slot].base[kk] * RMULT[r] * (1 + gl * 0.09));
     if (AS_SLOTS.includes(slot)) base.as = gearAS(gl, r);
     const gs = gearStats({ base, plus }); for (const kk in gs) st[kk] = (st[kk] || 0) + gs[kk]; if (set) sets[set] = (sets[set] || 0) + 1; slots.push({ slot, r, plus, set }); });
@@ -3007,19 +3022,20 @@ function botKit(b) {
   let avg = 1; for (const sk of SK) { const S1 = STONES[sk], base = S1.stat === 'crit' ? (C.crit || BASE_RATE.crit) : BASE_RATE[S1.stat];
     const n = Math.round((S1.cap - base) / S1.inc * clamp(lv / 400 * (0.5 + q) + botQ(b, 20) * 0.1, 0, 1)); const rate = Math.min(S1.cap, base + S1.inc * n); avg *= 1 + rate * (S1.mult - 1); }
   k = { atk: Math.round(st.atk * (1 + bb.atkP)), def: Math.round(st.def * (1 + bb.defP)), hp: Math.round(st.hp * (1 + bb.hpP) * 1.3), as: st.as,
-    aps: apsOf(C.aps, st.as), dmgMul: WINGM[w] * (1 + bb.dmgP), avg, wing: w, slots, sets };
+    aps: apsOf(C.aps, st.as), dmgMul: WINGM[w] * (1 + bb.dmgP), avg, wing: w, slots, sets,
+    plus: Math.max(...slots.filter(z => BODY_SLOTS.includes(z.slot)).map(z => z.plus)), look: Object.keys(sets).find(x => sets[x] >= 4 && (VARIANT_SETS[x] || x === 'azure')) || null };
   if (botKitCache.size > 400) botKitCache.clear(); botKitCache.set(key, k); return k;
 }
 const botStats = botKit;
 const inParty = b => !!(S.party && S.party.members.includes(b.id));
-const botName = b => `${inParty(b) ? (S.party.leader === b.id ? '♛ ' : '◆ ') : ''}${b.name} · Lv ${b.lv}`;
+const botName = b => `${inParty(b) ? (S.party.leader === b.id ? '♛ ' : '◆ ') : ''}${b.name} · Lv ${b.lv} · <b style="color:${TIER_COL[tier(botKit(b).plus)] ? '#' + new THREE.Color(TIER_COL[tier(botKit(b).plus)]).getHexString() : '#cfe3ea'}">+${botKit(b).plus}</b>`;
 
 // ---------- 3D characters (same armored mannequin as the hero, each bot in its own colours) ----------
 function charMats(hue, cls) { const c = (s, l) => new THREE.Color().setHSL(hue, s, l);
   return { suit: stylized({ color: c(0.5, 0.1), roughness: 0.75 }, 0x5d7dff, 0.25, 3), steel: stylized({ color: c(0.2, 0.68), metalness: 0.9, roughness: 0.28, envMapIntensity: 1.2 }, 0x8fe6ff, 0.45, 2.6),
     dark: stylized({ color: c(0.45, 0.2), metalness: 0.85, roughness: 0.34 }, 0x7fb8ff, 0.35, 2.6), gold: heroMats.gold, blade: heroMats.blade,
     cape: stylized({ color: c(0.7, 0.32), roughness: 0.7, side: THREE.DoubleSide, emissive: c(0.7, 0.08) }, 0x9f8bff, 0.5, 2), glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(CLS[cls].glow).multiplyScalar(2.4) }) }; }
-function makeChar(cls, hue, wingTier, asKnight) {
+function makeChar(cls, hue, wingTier, asKnight, look) {
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body); scene.add(g);
   const kn = !!(asKnight && KN.proto); let model, T3 = { tip: null }, outl = [], mx, acts = {};
   if (kn) {        // bots wear the Azure Wing armour: the light knight copy, its own slightly tinted material, the library clips
@@ -3028,6 +3044,7 @@ function makeChar(cls, hue, wingTier, asKnight) {
       if (!mats.has(o.material)) { const m = o.material.clone(); m.onBeforeCompile = () => {}; m.customProgramCacheKey = () => 'knBot'; m.color.set(0xffffff).lerp(new THREE.Color().setHSL(hue, 0.55, 0.72), 0.14); m.envMapIntensity = 0.45; mats.set(o.material, m); }
       o.material = mats.get(o.material); });
     body.add(model); mx = new THREE.AnimationMixer(model); for (const c of Object.values(KN.clips)) acts[c.name] = mx.clipAction(c);
+    botDress(model, body, look, T3);
   } else {
     model = SkeletonUtils.clone(heroGLTF.scene); buildArmor(model, cls, lookMats(charMats(hue, cls)), T3); outl = lookOutline(model);
     const box = new THREE.Box3().setFromObject(model); const k = HERO_H / (box.max.y - box.min.y); model.scale.setScalar(k); model.position.y = -box.min.y * k; body.add(model);
@@ -3038,11 +3055,35 @@ function makeChar(cls, hue, wingTier, asKnight) {
     wg = new THREE.Group(); wg.position.set(0, HERO_H * 0.66, -0.3 * HERO_H / 2.3); wg.scale.setScalar(HERO_H / 2.3 * 1.15 * WSCALE[Math.min(5, wingTier)]); body.add(wg);
     wR = new THREE.Mesh(wingGeo, wm); wR.position.x = 0.1; wg.add(wR); wL = new THREE.Mesh(wingGeo, wm); wL.scale.x = -1; wL.position.x = -0.1; wg.add(wL); }
   g.scale.setScalar(LOOK.size); const shadow = blob(1.5 * LOOK.size); scene.add(shadow);
-  const C = { g, body, model, mx, acts, cur: null, tip: T3.tip, wR, wL, sw, shadow, outl, olOn: true, animAcc: 0, melee: CLS[cls].melee, phase: rr(0, 6.28) };
+  const C = { g, body, model, mx, acts, cur: null, tip: T3.tip, vt: T3.vt || null, wR, wL, sw, shadow, outl, olOn: true, animAcc: 0, melee: CLS[cls].melee, phase: rr(0, 6.28) };
   C.idle = C.melee ? 'Sword_Idle' : 'Spell_Simple_Idle_Loop'; C.atk = C.melee ? 'Sword_Attack' : 'Spell_Simple_Shoot';
   if (kn) { C.kn = true; C.idle = knFind('Combat_Stance'); C.run = knFind(KN_CLIP.run); C.atk = knFind(C.melee ? pick(KN_CLIP.combo) : 'Charged_Spell_Cast'); }
   mx.addEventListener('finished', () => charPlay(C, C.idle, 0.25)); charPlay(C, C.idle, 0); return C;
 }
+// a bot's armour: the set's own model (light copy) following the bot's knight skeleton, the glow of its + level, the set's weapon in hand
+function botDress(model, body, look, T3) {
+  const plus = look ? look.plus || 0 : 0, set = look && look.set, V = set && KN.vars[set] && KN.vars[set].proto ? KN.vars[set] : null;
+  const L = knLook(plus), U = { uTime: KN_U.uTime, uRimColor: { value: new THREE.Color(L.rim[0], L.rim[1], L.rim[2]) }, uRimInt: { value: L.rim[3] * 0.6 }, uFlowColor: { value: new THREE.Color(L.flow[0], L.flow[1], L.flow[2]) }, uFlowInt: { value: L.flow[3] * 0.5 } };
+  const dress = root => { const done = new Map(); root.traverse(o => { if (!o.isSkinnedMesh) return; o.frustumCulled = false;
+    if (!done.has(o.material)) { const m = o.material.clone(); knArmorShader(m, U); m.envMapIntensity = L.env; const t = L.tint.map(v => 1 + (v - 1) * 0.55); m.color.multiply(new THREE.Color(t[0], t[1], t[2])); done.set(o.material, m); }
+    o.material = done.get(o.material); }); };
+  if (V) { model.traverse(o => { if (o.isSkinnedMesh) o.visible = false; });
+    const vm = SkeletonUtils.clone(V.proto); body.add(vm); dress(vm); const KB = {}; model.traverse(o => { if (o.isBone) KB[o.name.toLowerCase()] = o; });
+    const list = []; vm.traverse(o => { if (o.isBone) { const n = o.name.toLowerCase(); if (KB[n] && V.off[n]) list.push({ bb: o, kb: KB[n], off: V.off[n] }); } });
+    const hb = list.find(m => m.bb.name.toLowerCase() === 'hips');
+    T3.vt = { list, hip: hb && V.hip ? { bb: hb.bb, kb: hb.kb, b0: V.hip.b0, k0: V.hip.k0 } : null, q: new THREE.Quaternion(), pq: new THREE.Quaternion(), v: new THREE.Vector3() }; }
+  else dress(model);
+  if (set && SET_ART[set] && SET_ART[set].sword) { const old = model.getObjectByName('knsword');
+    if (old) { const A = SET_ART[set].sword, Ln = A.L || KN_SWORD.L, tl = new THREE.TextureLoader(), tx = f => { const t = tl.load(`${SET_ART[set].dir}/${f}.png`); t.colorSpace = THREE.SRGBColorSpace; return t; };
+      const card = (t, ry) => { const g = new THREE.PlaneGeometry(A.aspect * Ln, Ln); g.translate((0.5 - A.gp[0]) * A.aspect * Ln, (A.gp[1] - 0.5) * Ln, 0);
+        const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.3, roughness: 0.55, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.12 })); m.rotation.y = ry; return m; };
+      const g = new THREE.Group(), blade = new THREE.Group(); blade.add(card(tx('weapon_front'), 0), card(tx('weapon_back'), Math.PI / 2)); g.add(blade); blade.rotation.z = Math.PI;
+      const tip = new THREE.Object3D(); tip.position.set(0, (A.gp[1] - A.tip[1]) * Ln * 0.85, 0); blade.add(tip);
+      g.position.copy(old.position); g.quaternion.copy(old.quaternion); g.scale.copy(old.scale); old.parent.add(g); old.parent.remove(old); T3.tip = tip; } }
+}
+function charRetarget(C) { const R0 = C.vt; if (!R0) return; C.g.updateMatrixWorld(true); const q = R0.q, pq = R0.pq;
+  if (R0.hip) { const d = C.body.worldToLocal(R0.hip.kb.getWorldPosition(R0.v)).sub(R0.hip.k0); R0.hip.bb.position.copy(R0.hip.bb.parent.worldToLocal(C.body.localToWorld(R0.hip.b0.clone().add(d)))); }
+  for (const m of R0.list) { m.kb.getWorldQuaternion(q).multiply(m.off); m.bb.parent.getWorldQuaternion(pq); m.bb.quaternion.copy(pq.invert().multiply(q)); m.bb.updateMatrixWorld(true); } }
 function charPlay(C, name, dur, once = false, speed = 1) { const a = C.acts[name]; if (!a) return; if (C.cur === a && !once) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = once; a.timeScale = speed; a.enabled = true; a.setEffectiveWeight(1);
   if (C.cur && C.cur !== a) a.crossFadeFrom(C.cur, dur, false); a.play(); C.cur = a; }
 function charPose(C, x, z, face, t, moving) { C.g.position.set(x, C.kn ? 0.02 : 0.55 + Math.sin(t * 2.2 + C.phase) * 0.1, z);
@@ -3053,9 +3094,9 @@ function charRemove(C) { scene.remove(C.g); scene.remove(C.shadow); }
 // ---------- bots that share the map with the player ----------
 const ents = new Map(); // bot id -> live entity
 function charLabel(html, cls) { const el = document.createElement('div'); el.className = 'lbl ' + cls; el.innerHTML = html; el.style.display = 'none'; labelsEl.appendChild(el); return el; }
-function spawnBot(b, x, z) { if (!heroGLTF || ents.has(b.id)) return; const st = botStats(b); const C = makeChar(b.cls, b.hue, botWing(b), true);
+function spawnBot(b, x, z) { if (!heroGLTF || ents.has(b.id)) return; const st = botStats(b); const C = makeChar(b.cls, b.hue, botWing(b), true, { set: botKit(b).look, plus: botKit(b).plus });
   const el = charLabel(`<div class="nm">${botName(b)}</div><div class="hp"><i></i></div><div class="say"></div>`, 'bot');
-  const e = { b, C, el, bar: el.querySelector('.hp i'), sayEl: el.querySelector('.say'), pos: new THREE.Vector3(x, 0, z), face: rr(0, 6.28), hp: st.hp, maxHp: st.hp, atkCd: 0, skT: rr(2, 4), tgt: null, dead: 0, alive: true, wT: 0, wing: botWing(b), goal: null, sayT: rr(4, 15), nav: null, stuck: 0 };
+  const e = { b, C, el, bar: el.querySelector('.hp i'), sayEl: el.querySelector('.say'), pos: new THREE.Vector3(x, 0, z), face: rr(0, 6.28), hp: st.hp, maxHp: st.hp, atkCd: 0, skT: rr(2, 4), tgt: null, dead: 0, alive: true, wT: 0, wing: botWing(b), look: botKit(b).look, plus: botKit(b).plus, goal: null, sayT: rr(4, 15), nav: null, stuck: 0 };
   ents.set(b.id, e); fxBeam(x, z, '#9fe8ff', 0.9, 0.7); return e; }
 function despawnBot(id, beam) { const e = ents.get(id); if (!e) return; if (beam) fxBeam(e.pos.x, e.pos.z, '#9fe8ff', 0.9, 0.7); charRemove(e.C); e.el.remove(); e.alive = false; ents.delete(id); for (const m of mobs) if (m.tgt === e) m.tgt = null; }
 function syncBots() { // who stands in the player's current map
@@ -3110,7 +3151,7 @@ function updateBots(dt, t) {
   const town = isTown(); let k = 0;
   for (const e of ents.values()) { const b = e.b, C = e.C; k++;
     frusS.center.set(e.pos.x, 1, e.pos.z); frusS.radius = 2.2; const seen = frus.intersectsSphere(frusS); const far = Math.hypot(e.pos.x - camera.position.x, e.pos.z - camera.position.z) > 15;
-    C.g.visible = seen && !(e.dead > 0); C.animAcc += dt; if (seen && (!far || C.animAcc > 0.06)) { C.mx.update(C.animAcc); C.animAcc = 0; }
+    C.g.visible = seen && !(e.dead > 0); C.animAcc += dt; if (seen && (!far || C.animAcc > 0.06)) { C.mx.update(C.animAcc); C.animAcc = 0; charRetarget(C); }
     const ol = seen && !far && PERF.botCap >= 6; if (ol !== C.olOn) { C.olOn = ol; for (const o of C.outl) o.visible = ol; }
     if (e.sayHide && S.time > e.sayHide) { e.sayEl.style.display = 'none'; e.sayHide = 0; }
     if (e.dead > 0) { e.dead -= dt; if (e.dead <= 0) { e.hp = e.maxHp; const L = partyLeaderPos() || S.pos; e.pos.set(L.x + rr(-1.5, 1.5), 0, L.z + rr(-1.5, 1.5)); C.g.visible = C.shadow.visible = true; fxBeam(e.pos.x, e.pos.z, '#9fe8ff', 1); } continue; }
