@@ -1,0 +1,240 @@
+<title>Thị Trường ASTROPOLIS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one reading column of a field report; summary first, then the competitor ledger, the Vietnam chapter, the fit matrix, the plan, sources. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#152033; --muted:#556178; --line:#d7dde7;
+  --lapis:#1d4fa0; --gold:#a8761c; --goldsoft:#f4e6c6; --lapissoft:#e3ebf8;
+  --good:#1f7a4d; --warn:#a05a00; --bad:#b0302a;
+  --f-body:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1420; --surface:#141d2c; --ink:#e7ecf4; --muted:#9aa6bb; --line:#2a3548;
+  --lapis:#7ea6ec; --gold:#e0b45e; --goldsoft:#3a2f17; --lapissoft:#1a2944;
+  --good:#5cc392; --warn:#e7a54a; --bad:#f07a70; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1420; --surface:#141d2c; --ink:#e7ecf4; --muted:#9aa6bb; --line:#2a3548;
+  --lapis:#7ea6ec; --gold:#e0b45e; --goldsoft:#3a2f17; --lapissoft:#1a2944;
+  --good:#5cc392; --warn:#e7a54a; --bad:#f07a70; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--f-body)}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:800}
+h3{font-size:16px;font-weight:700}
+p{margin:0;max-width:68ch}
+a{color:var(--lapis)}
+a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.eyebrow{font:700 12px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+header{display:flex;flex-direction:column;gap:10px;padding-bottom:20px;border-bottom:2px solid var(--gold)}
+header .meta{color:var(--muted);font-size:13px}
+section{display:flex;flex-direction:column;gap:16px}
+.lede{font-size:16.5px;color:var(--ink)}
+.note{font-size:13px;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.kpi b{font:700 24px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--lapis)}
+.kpi span{font-size:13px;color:var(--muted);line-height:1.4}
+.find{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.find > div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.find p{font-size:14px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:700 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--bg);position:sticky;top:0}
+tr.grp td{background:var(--lapissoft);font-weight:700;color:var(--lapis);font-size:12.5px;letter-spacing:.04em}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:12.5px}
+td .sub{display:block;color:var(--muted);font-size:12px}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font:700 11.5px var(--f-body);white-space:nowrap}
+.p-hi{background:var(--goldsoft);color:var(--gold)}
+.p-mid{background:var(--lapissoft);color:var(--lapis)}
+.p-lo{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.mx td,.mx th{text-align:center}
+.mx td:first-child,.mx th:first-child{text-align:left}
+.mx .us{background:var(--goldsoft)}
+.dot{font-size:16px;line-height:1}
+.y{color:var(--good)} .h{color:var(--warn)} .no{color:var(--muted)}
+ol.plan{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px;max-width:72ch}
+ol.plan b{color:var(--ink)}
+.risk{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.risk > div{border-left:3px solid var(--bad);padding:4px 0 4px 12px;display:flex;flex-direction:column;gap:4px}
+.risk > div.ok{border-left-color:var(--good)}
+.src{columns:2 320px;column-gap:28px;font-size:13px;margin:0;padding-left:18px}
+.src li{break-inside:avoid;margin-bottom:6px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Nghiên cứu thị trường · App Store &amp; Google Play</span>
+    <h1>Thị trường cho ASTROPOLIS: Anihilation</h1>
+    <p class="lede">Các tựa game di động gần với ASTROPOLIS nhất: dòng MU (cánh, cường hóa, set đồ, tự đánh), MMORPG Hàn Quốc, ARPG chặt chém và idle RPG. Kèm xếp hạng, lượt tải, người chơi và doanh thu ước tính.</p>
+    <p class="meta">Cập nhật 22/11/2026. Số liệu doanh thu và người chơi là <b>ước tính của bên thứ ba</b> (Sensor Tower, AppMagic, AppGoblin, Udonis), trừ khi ghi là nhà phát hành tự công bố. Các nguồn đo khác nhau nên chỉ so sánh tương đối.</p>
+  </header>
+
+  <section>
+    <span class="eyebrow">Bối cảnh</span>
+    <h2>Toàn cảnh thị trường</h2>
+    <div class="kpis">
+      <div class="kpi"><b>$82,3 tỷ</b><span>Doanh thu IAP game di động toàn cầu 2025, +1,3% so với 2024 (Sensor Tower)</span></div>
+      <div class="kpi"><b>−$1,53 tỷ</b><span>RPG là thể loại giảm doanh thu mạnh nhất châu Á năm 2025; chiến thuật 4X tăng mạnh nhất</span></div>
+      <div class="kpi"><b>$825 triệu</b><span>Thị trường game di động Việt Nam 2025, +9,16% (Gamota)</span></div>
+      <div class="kpi"><b>#1</b><span>MMORPG vẫn là nhóm doanh thu số 1 tại Việt Nam (H1 và Q3/2026)</span></div>
+    </div>
+    <div class="find">
+      <div><h3>MMORPG co lại, nhưng Hàn Quốc hồi phục</h3><p>Tỉ trọng RPG trong doanh thu IAP Hàn Quốc giảm từ 66% (2021) xuống 43% (2026). Từ tháng 6/2026 doanh thu MMORPG Hàn hồi phục, tháng 9 cao nhất gần 1 năm nhờ 3 tựa mới chiếm 13,4% doanh thu thể loại.</p></div>
+      <div><h3>Thần thoại Hy Lạp đang thắng ở Hàn</h3><p>Zeus: God of Arrogance (Com2uS, 26/8/2026) lên #1 doanh thu cả hai store sau 18 giờ, khoảng $35 triệu trong 30 ngày đầu, cao nhất trong các MMORPG ra mắt năm 2026.</p></div>
+      <div><h3>Dòng MU đang chững</h3><p>Doanh thu IP MU của Webzen năm 2025 là ₩109,8 tỷ, giảm khoảng 27% so với ₩150,9 tỷ năm 2024. Riêng thị trường nước ngoài vẫn giữ được, tỉ trọng tăng lên 49%.</p></div>
+      <div><h3>Idle kiếm tiền tốt hơn dù tải giảm</h3><p>Ở Hàn, idle RPG giảm 30% lượt tải trong 12 tháng nhưng doanh thu IAP tăng 57%. Người chơi ít hơn nhưng chi tiêu nhiều hơn.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Đối thủ</span>
+    <h2>Bảng đối thủ trên App Store và Google Play</h2>
+    <p class="note">Cột "Độ giống" so với hệ thống của ASTROPOLIS: cánh nhiều cấp, cường hóa +15, set đồ 2/4 món, tự đánh, 5 lớp nhân vật, thần thoại.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Tựa game</th><th>Nhà phát hành</th><th>Độ giống</th><th>Xếp hạng</th><th>Lượt tải / người chơi</th><th>Doanh thu (ước tính)</th></tr></thead>
+        <tbody>
+          <tr class="grp"><td colspan="6">A. Dòng MU: gần nhất về hệ thống</td></tr>
+          <tr><td><b>MU Origin 3</b><span class="sub">Android, iOS · 2022</span></td><td>FingerFun</td><td><span class="pill p-hi">Cao</span></td><td>Top 5 MMORPG Brazil Q2/2025</td><td class="n">22 triệu+ lượt tải toàn cầu<span class="sub">NPH tự công bố</span>115K người dùng hoạt động ở Brazil cuối Q2/2025</td><td class="n">≈$200K/tháng<span class="sub">Sensor Tower, không rõ thời điểm</span>Brazil: tối đa $4,9K/tuần</td></tr>
+          <tr><td><b>MU Immortal</b><span class="sub">Android, iOS</span></td><td>MU IP</td><td><span class="pill p-hi">Cao</span></td><td>Top 5 MMORPG Peru, Tây Ban Nha, Romania 2025</td><td class="n">Peru: 20K tải/tuần lúc ra mắt, còn ≈900 vào cuối 2025</td><td class="n">$3–7,6K/tuần mỗi nước</td></tr>
+          <tr><td><b>MU: Vĩnh Hằng</b><span class="sub">Bản Việt Nam, Webzen cấp phép</span></td><td>Chưa rõ NPH</td><td><span class="pill p-hi">Cao</span></td><td><b>#6 doanh thu tuần</b> ở Việt Nam (2–8/3/2026, AppMagic qua Gamota)</td><td class="n">Chưa có số liệu</td><td class="n">Chưa có số liệu</td></tr>
+          <tr><td><b>MU Monarch · MU: Pocket Knights</b><span class="sub">Hàn 10/2023 · toàn cầu 9/2025</span></td><td>Webzen</td><td><span class="pill p-hi">Cao</span></td><td>Không có số liệu riêng</td><td class="n">Chưa có số liệu</td><td class="n">Cả IP MU: ₩109,8 tỷ năm 2025<span class="sub">Gồm PC và mobile, −27%</span></td></tr>
+          <tr><td><b>MU Awaken VNG · MU Lục Địa VNG · MU Đại Thiên Sứ H5</b><span class="sub">App Store Việt Nam</span></td><td>VNG và các NPH Việt</td><td><span class="pill p-hi">Cao</span></td><td>Đang phát hành ở Việt Nam; bản H5 chạy trên web</td><td class="n">Chưa có số liệu</td><td class="n">Chưa có số liệu</td></tr>
+
+          <tr class="grp"><td colspan="6">B. MMORPG Hàn Quốc: đối thủ về doanh thu</td></tr>
+          <tr><td><b>Zeus: God of Arrogance</b><span class="sub">Thần thoại Hy Lạp · 26/8/2026</span></td><td>Com2uS</td><td><span class="pill p-mid">Chủ đề</span></td><td><b>#1 doanh thu Hàn Quốc</b> cả hai store sau 18 giờ, giữ #1 từ cuối tháng 8</td><td class="n">Chưa có số liệu</td><td class="n">≈$35 triệu trong 30 ngày đầu</td></tr>
+          <tr><td><b>SOL: enchant</b><span class="sub">2026</span></td><td>Netmarble</td><td><span class="pill p-lo">Thể loại</span></td><td>#2 MMORPG, #6 toàn bộ game ở Hàn</td><td class="n">Chưa có số liệu</td><td class="n">≈$90 triệu luỹ kế (Hàn)</td></tr>
+          <tr><td><b>Eclipse: The Awakening</b><span class="sub">9/2026</span></td><td>Smilegate</td><td><span class="pill p-lo">Thể loại</span></td><td>#1 doanh thu cả hai store sau 5 ngày; #5 tăng trưởng doanh thu toàn cầu tháng 9</td><td class="n">Chưa có số liệu</td><td class="n">Chưa có số liệu</td></tr>
+          <tr><td><b>Odin: Valhalla Rising</b><span class="sub">Thần thoại Bắc Âu</span></td><td>Kakao Games</td><td><span class="pill p-mid">Chủ đề</span></td><td>#8 doanh thu Hàn năm 2025; trở lại #1 Google Play tháng 7/2026</td><td class="n">Châu Âu: 119K → 2,5K tải/tuần sau 2 tháng ra mắt (Q2/2025)</td><td class="n">$63,2 triệu (Hàn, 2025)<span class="sub">Hơn $900 triệu trong 2 năm đầu</span></td></tr>
+          <tr><td><b>Night Crows</b></td><td>Wemade</td><td><span class="pill p-lo">Thể loại</span></td><td>#2 doanh thu Hàn nửa cuối 2023</td><td class="n">Chưa có số liệu</td><td class="n">≈$200 triệu luỹ kế (báo chí)</td></tr>
+          <tr><td><b>Lineage M / Lineage W</b></td><td>NCSoft</td><td><span class="pill p-lo">Thể loại</span></td><td>Lineage M #1, Lineage W #4 doanh thu Hàn nửa cuối 2023</td><td class="n">Chưa có số liệu</td><td class="n">Chưa có số liệu 2025</td></tr>
+          <tr><td><b>Legend of Ymir</b><span class="sub">2/2025</span></td><td>Wemade</td><td><span class="pill p-lo">Thể loại</span></td><td>#1 phổ biến Google Play Hàn ngày ra mắt; doanh thu #3 → #7 trong 3 ngày đầu<span class="sub">Chưa kiểm chứng</span></td><td class="n">Chưa có số liệu</td><td class="n">Chưa có số liệu</td></tr>
+
+          <tr class="grp"><td colspan="6">C. ARPG chặt chém: đối thủ về lối chơi</td></tr>
+          <tr><td><b>Diablo Immortal</b></td><td>Blizzard, NetEase</td><td><span class="pill p-mid">Lối chơi</span></td><td>Có trong dữ liệu MMORPG năm của Sensor Tower</td><td class="n">34,4 triệu lượt tải luỹ kế; 3,9 triệu năm 2025<span class="sub">MAU ≈1–1,2 triệu cuối 2025 (Udonis)</span></td><td class="n">$58,1 triệu năm 2025<span class="sub">Đỉnh $160,8 triệu năm 2022; ≈$6–7 triệu/tháng 2026</span></td></tr>
+          <tr><td><b>Torchlight: Infinite</b></td><td>XD</td><td><span class="pill p-mid">Lối chơi</span></td><td>Không có số liệu mới</td><td class="n">10 triệu+ trên Google Play<span class="sub">Bài đánh giá cũ</span></td><td class="n">Chưa có số liệu</td></tr>
+          <tr><td><b>Eternium</b><span class="sub">Studio nhỏ · 2014</span></td><td>Making Fun</td><td><span class="pill p-mid">Lối chơi</span></td><td>4,79★ với 2,7 triệu đánh giá</td><td class="n">26,1 triệu lượt cài; ≈899K MAU</td><td class="n">≈$50K+/tháng (AppGoblin)</td></tr>
+          <tr><td><b>Titan Quest</b><span class="sub">Hy Lạp · bản PC chuyển sang</span></td><td>HandyGames</td><td><span class="pill p-mid">Chủ đề</span></td><td>3,47★</td><td class="n">521K lượt cài</td><td class="n">&lt;$10K/tháng</td></tr>
+
+          <tr class="grp"><td colspan="6">D. Idle RPG: đối thủ về tự đánh và giữ chân người chơi</td></tr>
+          <tr><td><b>Legend of Mushroom</b></td><td>Joy Net Games</td><td><span class="pill p-lo">Tự đánh</span></td><td>Top 5 idle RPG Mỹ (iOS, Q3/2025)</td><td class="n">Chưa có số liệu</td><td class="n">≈$270 triệu luỹ kế từ 11/2023<span class="sub">Hàn 39,4%, Nhật 30%; Mỹ iOS $61–138K/tuần</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Thị trường chính</span>
+    <h2>Việt Nam: nơi nên ra mắt đầu tiên</h2>
+    <div class="find">
+      <div><h3>Quy mô</h3><p>$825 triệu năm 2025 (+9,16%). Top 5 tựa chiếm 36% chi tiêu. Q3/2026 giảm 7,9% doanh thu và 8,1% lượt tải so với Q2.</p></div>
+      <div><h3>MMORPG dẫn đầu</h3><p>MMORPG là nhóm doanh thu cao nhất H1/2026 (≈$29,9 triệu, +1%), vẫn số 1 ở Q3 nhưng đà tăng đã yếu đi.</p></div>
+      <div><h3>Ai đang lên bảng</h3><p>Top doanh thu tuần (AppMagic): MU: Vĩnh Hằng #6, OMG 3Q (VNG), Nghịch Thủy Hàn #18, Tiên Nghịch Mobile #15, LORDNINE #35, TS Origin (VTC) #31.</p></div>
+      <div><h3>Ai đứng đầu cả năm</h3><p>Free Fire MAX, Last War, Coin Master, Liên Quân, Rise of Kingdoms. Không có MMORPG trong top 5, nên doanh thu MMORPG chia cho nhiều tựa nhỏ hơn.</p></div>
+    </div>
+    <p class="note">Gamehubs ghi Võ Lâm Truyền Kỳ Mobile (VNG) có 3,8 triệu MAU và ≈$5,8 triệu/tháng; nguồn này không nêu phương pháp nên độ tin cậy thấp.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Định vị</span>
+    <h2>ASTROPOLIS so với các tựa tiêu biểu</h2>
+    <p class="note">● có, ◐ có một phần, ○ không có. Đánh giá theo mô tả trên cửa hàng và lối chơi phổ biến của từng tựa.</p>
+    <div class="tbl">
+      <table class="mx">
+        <thead><tr><th>Hệ thống</th><th class="us">ASTROPOLIS</th><th>MU Origin 3</th><th>Diablo Immortal</th><th>Odin</th><th>Eternium</th><th>Legend of Mushroom</th></tr></thead>
+        <tbody>
+          <tr><td>Cánh nhiều cấp</td><td class="us"><span class="dot y">●</span></td><td><span class="dot y">●</span></td><td><span class="dot no">○</span></td><td><span class="dot h">◐</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
+          <tr><td>Cường hóa đồ (+15)</td><td class="us"><span class="dot y">●</span></td><td><span class="dot y">●</span></td><td><span class="dot h">◐</span></td><td><span class="dot y">●</span></td><td><span class="dot h">◐</span></td><td><span class="dot h">◐</span></td></tr>
+          <tr><td>Set đồ có thưởng 2/4 món</td><td class="us"><span class="dot y">●</span></td><td><span class="dot y">●</span></td><td><span class="dot y">●</span></td><td><span class="dot h">◐</span></td><td><span class="dot y">●</span></td><td><span class="dot no">○</span></td></tr>
+          <tr><td>Tự đánh, tự dùng bình máu</td><td class="us"><span class="dot y">●</span></td><td><span class="dot y">●</span></td><td><span class="dot no">○</span></td><td><span class="dot y">●</span></td><td><span class="dot no">○</span></td><td><span class="dot y">●</span></td></tr>
+          <tr><td>Thế giới đông người từ ngày đầu (bot)</td><td class="us"><span class="dot y">●</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
+          <tr><td>Chơi ngay trên trình duyệt, không cài</td><td class="us"><span class="dot y">●</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
+          <tr><td>Thần thoại Hy Lạp và Ai Cập</td><td class="us"><span class="dot y">●</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot h">◐</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>ASTROPOLIS có đủ bộ hệ thống mà người chơi MU ở Việt Nam đã quen (cánh, cường hóa, set đồ, tự đánh). Phần khác biệt nằm ở 3 hàng cuối: thế giới có bot, chơi trên web và bối cảnh Hy Lạp kết hợp Ai Cập. Trong các nguồn đã tìm, chưa thấy tựa lớn nào khai thác Ai Cập làm chủ đề chính.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Đánh giá</span>
+    <h2>Cơ hội và rủi ro</h2>
+    <div class="risk">
+      <div class="ok"><h3>Người chơi đã quen thể loại</h3><p>MU vẫn vào top 6 doanh thu tuần ở Việt Nam năm 2026, VNG vẫn phát hành MU. Không cần dạy người chơi cách chơi.</p></div>
+      <div class="ok"><h3>Chủ đề Hy Lạp đang lên</h3><p>Zeus đạt $35 triệu trong 30 ngày ở Hàn. Bản đồ Olympus và các boss thần thoại hợp xu hướng này.</p></div>
+      <div class="ok"><h3>Web là kênh phân phối rẻ</h3><p>Không phải cài, chia sẻ bằng một link. Bản H5 của MU ở Việt Nam cho thấy người chơi chấp nhận game web; đồ họa 3D giúp ASTROPOLIS nổi hơn các bản H5 thường thấy.</p></div>
+      <div><h3>Thể loại đang bão hòa</h3><p>Doanh thu IP MU giảm 27% năm 2025. Có quá nhiều bản MU, người chơi chia nhỏ ra.</p></div>
+      <div><h3>Người chơi rời đi rất nhanh</h3><p>Odin ở châu Âu giảm từ 119K xuống 2,5K lượt tải mỗi tuần chỉ sau 2 tháng. Giữ chân người chơi quan trọng hơn lượt tải ban đầu.</p></div>
+      <div><h3>Bán sức mạnh bị phản ứng</h3><p>Doanh thu Diablo Immortal giảm từ $160,8 triệu (2022) xuống $58,1 triệu (2025) sau làn sóng chỉ trích về pay-to-win.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Đề xuất</span>
+    <h2>Hướng đi cho ASTROPOLIS</h2>
+    <ol class="plan">
+      <li><b>Câu định vị:</b> ARPG 3D kiểu MU chơi ngay trên trình duyệt, bối cảnh thần thoại Hy Lạp và Ai Cập, thế giới đông người ngay từ ngày đầu.</li>
+      <li><b>Thứ tự thị trường:</b> Việt Nam trước, sau đó Philippines và Thái Lan, nơi dòng MU cũng có người chơi. Hàn Quốc để sau vì cạnh tranh doanh thu với các tựa ngân sách lớn.</li>
+      <li><b>Kiếm tiền:</b> ưu tiên cánh, thời trang, vé mùa và gói tháng. Hạn chế bán thẳng chỉ số để tránh vết xe của Diablo Immortal.</li>
+      <li><b>Giữ chân:</b> giữ tự đánh và thêm tiến trình khi offline, vì idle RPG tăng 57% doanh thu dù lượt tải giảm. Sự kiện boss theo giờ giúp người chơi quay lại mỗi ngày.</li>
+      <li><b>Thử nghiệm sớm:</b> phát hành thử (soft launch) bản web cho một nhóm nhỏ, đo tỉ lệ quay lại ngày 1, 7 và 30 trước khi đầu tư quảng cáo.</li>
+      <li><b>Pháp lý:</b> cơ chế game không có bản quyền, nhưng tên, hình ảnh và thuật ngữ riêng của MU thuộc Webzen. Giữ toàn bộ tên gọi, hình ảnh của ASTROPOLIS là bản gốc, và kiểm tra nhãn hiệu tên game trước khi ra mắt.</li>
+      <li><b>Số liệu sâu hơn:</b> muốn có lượt tải và doanh thu từng tựa theo tháng ở Việt Nam cần tài khoản AppMagic hoặc Sensor Tower (có bản dùng thử).</li>
+    </ol>
+  </section>
+
+  <section>
+    <span class="eyebrow">Nguồn</span>
+    <h2>Tài liệu tham khảo</h2>
+    <ul class="src">
+      <li><a href="https://sensortower.com/blog/state-of-gaming-2026">Sensor Tower, State of Gaming 2026</a></li>
+      <li><a href="https://gamedevreports.substack.com/p/sensor-tower-state-of-gaming-2026">Tóm tắt State of Gaming 2026 (GameDev Reports)</a></li>
+      <li><a href="https://www.globalgamesforum.com/news/state-of-gaming-heres-what-the-mobile-data-actually-says">Global Games Forum, phân tích State of Gaming 2026</a></li>
+      <li><a href="https://www.invenglobal.com/articles/28017/sensor-tower-analyzes-shifting-monetization-trends-in-korean-mobile-games">Inven Global, xu hướng kiếm tiền game Hàn</a></li>
+      <li><a href="https://www.invenglobal.com/articles/27180/sensor-tower-korean-mobile-mmo-revenue-rebounds-driven-by-hits-like-sol-enchant-and-zeus">Inven Global, MMORPG Hàn hồi phục nhờ SOL: enchant và Zeus</a></li>
+      <li><a href="https://sensortower.com/ko/blog/korea-mobile-mmorpg-market-rebounds-on-strong-new-releases">Sensor Tower (KR), MMORPG Hàn hồi phục</a></li>
+      <li><a href="https://www.goha.ru/neveroyatnyj-triumf-ili-pobeda-donaterov-zeus-god-of-arrogance-okkupirovala-vershiny-korejskih-chartov-vsego-za-18-chasov-dpPQ6V">GoHa, Zeus lên đỉnh bảng xếp hạng Hàn sau 18 giờ</a></li>
+      <li><a href="https://sports.khan.co.kr/en/article/202609151338007">Sports Khan, Eclipse #1 doanh thu</a></li>
+      <li><a href="https://sports.khan.co.kr/en/article/202607131023007">Sports Khan, Odin trở lại #1 Google Play</a></li>
+      <li><a href="https://company.webzen.com/Files/260211_WEBZEN_Earnings%20Release_FY2025.pdf">Webzen, báo cáo kết quả kinh doanh FY2025</a></li>
+      <li><a href="https://www.digitaltoday.co.kr/en/view/3678/webzen-2025-operating-profit-falls-455-percent-to-cancel-105-percent-of-treasury-shares">Digital Today, lợi nhuận Webzen 2025</a></li>
+      <li><a href="https://play.google.com/store/apps/details?id=com.fingerfun.mu3.gp.sea&amp;hl=en">Google Play, MU ORIGIN 3</a></li>
+      <li><a href="https://app.sensortower.com/overview/1596902287?country=US">Sensor Tower, MU ORIGIN 3 (App Store Mỹ)</a></li>
+      <li><a href="https://sensortower.com/blog/2025-q2-unified-top-5-mmorpg-units-br-600f48cb241bc16eb8b8d5e3">Sensor Tower, top 5 MMORPG Brazil Q2/2025</a></li>
+      <li><a href="https://sensortower.com/blog/2025-q4-android-top-5-mmorpg-revenue-pe-600f48cb241bc16eb8b8d5e3">Sensor Tower, top 5 MMORPG Peru Q4/2025</a></li>
+      <li><a href="https://sensortower.com/blog/2025-q2-android-top-5-mmorpg-revenue-europe-600f48cb241bc16eb8b8d5e3">Sensor Tower, top 5 MMORPG châu Âu Q2/2025</a></li>
+      <li><a href="https://www.bluestacks.com/vi/blog/game-guides/mu-eternal/muel-classes-guide-vi.html">BlueStacks, giới thiệu MU: Vĩnh Hằng</a></li>
+      <li><a href="https://apps.apple.com/vn/app/mu-awaken-vng/id1439862260">App Store VN, MU Awaken VNG</a></li>
+      <li><a href="https://apps.apple.com/vn/app/id6502928253">App Store VN, MU Lục Địa VNG</a></li>
+      <li><a href="https://apps.apple.com/vn/app/mu-%C4%91%E1%BA%A1i-thi%C3%AAn-s%E1%BB%A9-h5/id1436275741">App Store VN, MU Đại Thiên Sứ H5</a></li>
+      <li><a href="https://www.blockchaingamer.biz/news/37411/wemades-mmorpg-legend-ymir-tops-google-play-south-korea/">BlockchainGamerBiz, Legend of Ymir</a></li>
+      <li><a href="https://x.com/impalementd/status/1893584607976869971">Bài đăng X về doanh thu Legend of Ymir (chưa kiểm chứng)</a></li>
+      <li><a href="https://www.linkedin.com/posts/jakubremiar_night-crows-%EB%82%98%EC%9D%B4%ED%8A%B8-%ED%81%AC%EB%A1%9C%EC%9A%B0-already-grossed-more-activity-7077671094710657024-eUXZ">LinkedIn, doanh thu Night Crows</a></li>
+      <li><a href="https://www.kedglobal.com/korean-games/newsView/ked202304280023">KED Global, Night Crows</a></li>
+      <li><a href="https://www.shanethegamer.com/research/diablo-immortal/">ShaneTheGamer, số liệu Diablo Immortal (AppMagic)</a></li>
+      <li><a href="https://www.blog.udonis.co/mobile-marketing/mobile-games/diablo-immortal-player-count">Udonis, số người chơi Diablo Immortal</a></li>
+      <li><a href="https://activeplayer.io/diablo-immortal/">ActivePlayer.io, Diablo Immortal</a></li>
+      <li><a href="https://www.androidpolice.com/torchlight-infinite-review/">Android Police, đánh giá Torchlight: Infinite</a></li>
+      <li><a href="https://appgoblin.info/apps/com.dotemu.titanquest">AppGoblin, Titan Quest</a></li>
+      <li><a href="https://app2top.com/?p=266742">App2Top, doanh thu Legend of Mushroom</a></li>
+      <li><a href="https://sensortower.com/blog/2025-q3-ios-top-5-idle rpg-units-us-6040bbc2241bc16eb883a0cb">Sensor Tower, top 5 idle RPG Mỹ Q3/2025</a></li>
+      <li><a href="https://www.pocketgamer.biz/vietnams-mobile-games-market-reached-825m-in-revenue-in-2025/">PocketGamer.biz, thị trường Việt Nam $825 triệu</a></li>
+      <li><a href="https://www.pocketgamer.biz/over-50-of-vietnam-population-plays-mobile-games/">PocketGamer.biz, MMORPG và 4X dẫn đầu chi tiêu ở Việt Nam</a></li>
+      <li><a href="https://gamota.com/en_GB/gamota-lab/vietnam-game-industry-weekly-updates-march-2-8-2026/">Gamota, điểm tin tuần 2–8/3/2026</a></li>
+      <li><a href="https://gamota.com/en_GB/gamota-lab/vietnam-game-industry-weekly-updates-june-15-21-2026/">Gamota, điểm tin tuần 15–21/6/2026</a></li>
+      <li><a href="https://gamota.com/en_GB/gamota-lab/vietnam-game-industry-weekly-updates-july-27-august-2-2026/">Gamota, điểm tin tuần 27/7–2/8/2026</a></li>
+      <li><a href="https://gamota.com/gamota-lab/vietnam-game-industry-weekly-updates-august-3-9-2026/">Gamota, điểm tin tuần 3–9/8/2026</a></li>
+      <li><a href="https://daibieunhandan.vn/doanh-thu-game-di-dong-viet-nam-giam-gan-8-cuoc-canh-tranh-cua-cac-nha-phat-hanh-dang-thay-doi-10441610.html">Đại Biểu Nhân Dân, doanh thu game Việt Q3/2026 giảm gần 8%</a></li>
+      <li><a href="https://investgame.net/wp-content/uploads/2026/09/2026-09-03-socialpetaxgamato_2026_southeast_asia_mobile_game_marketing_report_wp.pdf">SocialPeta và Gamota, báo cáo marketing game Đông Nam Á 2026</a></li>
+      <li><a href="https://gamehubs.top/vn/market-report">Gamehubs, báo cáo thị trường game online Việt Nam 2026</a></li>
+      <li><a href="https://mobilegamer.biz/the-top-grossing-mobile-games-of-2025/">Mobilegamer.biz, top doanh thu 2025</a></li>
+      <li><a href="https://www.pocketgamer.biz/strategy-games-surge-as-rpg-revenue-tumbles-h1-2025s-top-genres-revealed">PocketGamer.biz, RPG giảm doanh thu H1/2025</a></li>
+    </ul>
+  </section>
+</div>
