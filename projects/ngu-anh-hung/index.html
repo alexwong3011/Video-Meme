@@ -2659,10 +2659,10 @@ function heroStats() {
 }
 const curPet = () => S && S.pet ? PETS.find(p => p.id === S.pet) : null;
 const curMount = () => S && S.mount ? MOUNTS.find(p => p.id === S.mount) : null;
-// skills of the four classes (not the fire knight): 0.5 casts/s at the start, growing with attack speed like the basic attack (to 5/s);
+// skills of every class: 0.5 casts/s at the start, growing with attack speed like the basic attack (to 5/s);
 // the unlocked skills take turns (each waits for the others), a cast never blocks the basic attack, and its mana cost shrinks as the rate grows
-const SK_RATE0 = 0.5, SK_ROT = cls => cls !== 'fire';
-const SKD = { thunder: 1, ice: 1, elf: 1, holy: 1 };          // skill damage factor per class, tuned so a pack of monsters dies in about 5-6 s
+const SK_RATE0 = 0.5, SK_ROT = cls => true;          // every class, the fire knight included
+const SKD = { fire: 1, thunder: 1, ice: 1, elf: 1, holy: 1 };          // skill damage factor per class, tuned so a pack of monsters dies in about 5-6 s
 const skRate = () => SK_RATE0 * (HS ? HS.aps : 0.25) / CLS[S.cls].aps;
 const skOpen = () => SKILLS[S.cls].filter(k => S.lv >= k.lv).length || 1;
 function skCd(sk) { return SK_ROT(S.cls) ? skOpen() / skRate() : Math.max(0.1, sk.cdk / (HS ? HS.aps : 3)); }
