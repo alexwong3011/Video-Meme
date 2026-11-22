@@ -386,7 +386,13 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 .exp{background:rgba(18,12,6,.3)!important;box-shadow:0 -1.5px 0 #d8a945}
 .pot b{box-shadow:0 0 0 1.5px rgba(20,12,2,.85)}
 #bossbar,#bossbar2{border-width:1.5px!important}
-.sk .cd{border-radius:50%;background:rgba(0,0,0,.42)!important}
+.sk .cd{transform:none!important;inset:2px!important;border-radius:50%;background:conic-gradient(rgba(8,5,2,.5) calc(var(--cd,0) * 1turn),transparent 0)!important}
+/* cooldown: a clock sweep over the face and a gold ring filling up round the rim; the icon dims until ready */
+.sk::after{content:"";position:absolute;inset:-7px;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .15s;
+  background:conic-gradient(#f6dc94 calc((1 - var(--cd,0)) * 1turn),rgba(246,220,148,.12) 0);
+  -webkit-mask:radial-gradient(closest-side,transparent calc(100% - 4px),#000 calc(100% - 3.5px));mask:radial-gradient(closest-side,transparent calc(100% - 4px),#000 calc(100% - 3.5px))}
+.sk.cool::after{opacity:1}
+.sk.cool .ic,.sk.cool small{opacity:.55}
 </style>
 <meta name="description" content="ARPG cày cuốc dưới đáy biển: 5 lớp nhân vật, 3 bãi quái, boss, cánh, linh thạch, bộ đồ.">
 
@@ -3686,7 +3692,7 @@ function updateHud() { potHud();
   SKILLS[S.cls].forEach((sk, j) => { const b = $('sk' + j); const lock = S.lv < sk.lv; b.classList.toggle('lock', lock); b.classList.toggle('nomp', !lock && S.mp < skMp(sk));
     b.style.setProperty('--c2', ELC[sk.el] + '99'); b.style.setProperty('--c3', ELC[sk.el] + '55');
     b.querySelector('.ic').textContent = ELI[sk.el]; b.querySelector('small').textContent = lock ? 'Lv ' + sk.lv : sk.name.split(' ').slice(0, 2).join(' ');
-    const rot = SK_ROT(S.cls), cdF = rot ? (S.skG || 0) * skRate() : S.skCd[j] / skCd(sk); b.querySelector('.cd').style.transform = `scaleY(${lock ? 0 : Math.min(1, cdF || 0)})`; b.querySelector('.cdt').textContent = !rot && !lock && S.skCd[j] >= 1 ? Math.ceil(S.skCd[j]) : '';
+    const rot = SK_ROT(S.cls), cdF = rot ? (S.skG || 0) * skRate() : S.skCd[j] / skCd(sk); const cdv = lock ? 0 : Math.min(1, cdF || 0); b.style.setProperty('--cd', cdv.toFixed(3)); b.classList.toggle('cool', cdv > 0.001); b.querySelector('.cdt').textContent = !rot && !lock && S.skCd[j] >= 1 ? Math.ceil(S.skCd[j]) : '';
     b.setAttribute('aria-label', sk.name + (lock ? ' (mở ở cấp ' + sk.lv + ')' : '')); });
   const boss = S.boss && !S.boss.dead ? S.boss : null, b2 = S.boss2 && !S.boss2.dead ? S.boss2 : null;
   $('bossbar').classList.toggle('hide', !boss); $('bossbar2').classList.toggle('hide', !b2);
