@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Thẻ chi tiết món đồ</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Be+Vietnam+Pro:wght@500;600;700;800&display=swap">
+<style>
+body{margin:0}
+.row{display:flex;align-items:baseline;gap:6px;font:600 14px 'Be Vietnam Pro',sans-serif;color:#2b1f12}
+.row i{flex:1;border-bottom:2px dotted rgba(90,60,20,.45);transform:translateY(-4px)}
+.row b{font-weight:800;font-variant-numeric:tabular-nums}
+.btn{border:0;cursor:pointer;padding:11px 22px;border-radius:999px;font:700 14px 'Be Vietnam Pro',sans-serif}
+</style>
+</helmet>
+<div style="width:390px;height:844px;position:relative;overflow:hidden;font-family:'Be Vietnam Pro',sans-serif;background:#0f1d28 url('/_blob/d6bdb51f8223ce0aa9839f8190a2f241') center/cover">
+  <div style="position:absolute;inset:0;background:rgba(8,14,20,.62)"></div>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <pattern id="mk3" width="16" height="10" patternUnits="userSpaceOnUse"><path d="M0 9.5H15.5V.5H3.5V6.5H11.5V3.5H7" fill="none" stroke="#e2b85a" stroke-width="1.2"></path></pattern>
+  </defs></svg>
+  <!-- the card: a sheet of papyrus under a lapis band -->
+  <section aria-label="Nhẫn Bọt Biển +10" style="position:absolute;left:18px;right:18px;top:170px;border-radius:14px;overflow:hidden;background:#d9c59b url('/_blob/192931c56e620b52393c32c81e633b52') center/cover;box-shadow:0 0 0 2px #6b4a14,0 0 0 4px #e2b85a,0 0 0 5px #4a3210,0 18px 40px rgba(0,0,0,.6)">
+    <div style="position:relative;height:16px;background:linear-gradient(#24477f,#132a52);box-shadow:0 2px 0 #e2b85a">
+      <svg width="354" height="10" style="position:absolute;left:0;top:3px;opacity:.65" aria-hidden="true"><rect width="354" height="10" fill="url(#mk3)"></rect></svg>
+    </div>
+    <div style="padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:14px;align-items:center">
+        <div style="position:relative;flex:none;width:76px;height:76px;border-radius:14px;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#f6ddd2,#d79a86 85%);box-shadow:inset 0 0 0 3px #b3261e,inset 0 5px 10px rgba(179,38,30,.45),0 0 0 2px #e2b85a">
+          <img src="/_blob/f715d08d174ed4bdf63fe7e4efdf2e0c" alt="" style="width:62px;height:62px;object-fit:contain">
+          <span style="position:absolute;top:-7px;right:-7px;padding:0 6px;border-radius:9px;background:#2b1f12;color:#f6dc94;font:800 12px/19px 'Be Vietnam Pro',sans-serif;box-shadow:0 0 0 1px #e2b85a">+10</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+          <h2 style="margin:0;font:700 26px/1.05 'Cormorant Garamond',serif;color:#9c2416">Nhẫn Bọt Biển +10</h2>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+            <span style="padding:3px 12px;border-radius:999px;background:linear-gradient(#d24a3a,#8f1f16);color:#fff6e2;font:800 12px 'Be Vietnam Pro',sans-serif;letter-spacing:.12em;box-shadow:0 0 0 1.5px #4a3210">HUYỀN THOẠI</span>
+            <span style="font:600 12.5px 'Be Vietnam Pro',sans-serif;color:#5a4630">Nhẫn · cấp 60 · <b style="color:#1d4f9e">Đang mặc</b></span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="row"><span>Máu</span><i></i><b>1.997</b></div>
+        <div class="row"><span>Chí mạng %</span><i></i><b>13</b></div>
+        <div class="row"><span>Hồi mana %/giây</span><i></i><b style="color:#1d4f9e">2,6</b></div>
+      </div>
+      <div style="padding:12px 14px;border-radius:10px;background:rgba(90,60,20,.12);box-shadow:inset 0 0 0 1.5px rgba(107,74,20,.45),inset 0 3px 8px rgba(70,45,12,.2);display:flex;flex-direction:column;gap:4px">
+        <span style="font:700 19px 'Cormorant Garamond',serif;color:#2b1f12">+10 → +11</span>
+        <span style="font:500 13px/1.45 'Be Vietnam Pro',sans-serif;color:#3d2e1c">Tỉ lệ thành công 80% · thất bại giảm 1 cấp<br>Cần 4 Đá Cường Hóa · 3.710 vàng</span>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button class="btn" style="color:#f6dc94;background:linear-gradient(#2a4c86,#14305c);box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a">Tháo ra</button>
+        <button class="btn" style="flex:1;color:#2b1f12;background:linear-gradient(#f6dc94,#c99a3a 60%,#9a6a18);box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,inset 0 1px 0 rgba(255,255,255,.6)">Cường hóa</button>
+      </div>
+    </div>
+    <button aria-label="Đóng" style="position:absolute;right:12px;top:24px;width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;background:radial-gradient(circle at 40% 35%,#e5683e,#a8321f 60%,#5c160c);box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a">
+      <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="#fff2d6" stroke-width="2.2" stroke-linecap="round"></path></svg>
+    </button>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

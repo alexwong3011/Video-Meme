@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Chọn nhân vật</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Be+Vietnam+Pro:wght@500;600;700;800&display=swap">
+<style>
+body{margin:0}
+.slotc{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:999px;background:rgba(120,85,35,.10);box-shadow:0 0 0 1.5px #8a6420,0 0 0 3.5px rgba(226,184,90,.55),inset 0 2px 5px rgba(70,45,12,.2)}
+.slotc.last{background:rgba(29,58,110,.12);box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3.5px #e2b85a,0 0 14px rgba(226,184,90,.55),inset 0 2px 5px rgba(70,45,12,.2)}
+.emb{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,inset 0 -3px 6px rgba(0,0,0,.4)}
+.play{border:0;cursor:pointer;padding:9px 16px;border-radius:999px;font:800 12.5px 'Be Vietnam Pro',sans-serif;color:#2b1f12;background:linear-gradient(#f6dc94,#c99a3a 60%,#9a6a18);box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,inset 0 1px 0 rgba(255,255,255,.6)}
+</style>
+</helmet>
+<div style="width:390px;height:844px;position:relative;overflow:hidden;font-family:'Be Vietnam Pro',sans-serif;background:#0f1d28 url('/_blob/d6bdb51f8223ce0aa9839f8190a2f241') center/cover">
+  <div style="position:absolute;inset:0;background:rgba(8,14,20,.45)"></div>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <pattern id="mk4" width="16" height="10" patternUnits="userSpaceOnUse"><path d="M0 9.5H15.5V.5H3.5V6.5H11.5V3.5H7" fill="none" stroke="#e2b85a" stroke-width="1.2"></path></pattern>
+    <pattern id="wv4" width="20" height="12" patternUnits="userSpaceOnUse"><path d="M0 10 C5 10 5 3 10 3 C15 3 15 8 11.5 8 C9 8 9 5.5 11 5.5" fill="none" stroke="#e2b85a" stroke-width="1.3"></path><path d="M10 10 H20" stroke="#e2b85a" stroke-width="1.3"></path></pattern>
+    <linearGradient id="fea4" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b5562e"></stop><stop offset=".35" stop-color="#e2b85a"></stop><stop offset=".7" stop-color="#3f6bb0"></stop><stop offset="1" stop-color="#1d3a6e"></stop></linearGradient>
+  </defs></svg>
+  <section style="position:absolute;left:14px;right:14px;top:60px;bottom:40px;border-radius:16px;overflow:hidden;background:#d9c59b url('/_blob/192931c56e620b52393c32c81e633b52') center/cover;box-shadow:0 0 0 2px #6b4a14,0 0 0 4px #e2b85a,0 0 0 5px #4a3210,0 18px 40px rgba(0,0,0,.55);display:flex;flex-direction:column">
+    <header style="position:relative;height:118px;flex:none;background:linear-gradient(#24477f,#132a52);box-shadow:0 2px 0 #e2b85a,0 4px 0 #6b4a14">
+      <svg width="362" height="10" style="position:absolute;left:0;top:6px;opacity:.6" aria-hidden="true"><rect width="362" height="10" fill="url(#mk4)"></rect></svg>
+      <svg width="230" height="74" viewBox="0 0 230 74" style="position:absolute;left:66px;top:14px" aria-hidden="true">
+        <path d="M115 44 Q70 4 6 16 Q50 26 64 34 Q34 34 14 42 Q56 44 74 52 Q46 54 30 62 Q76 60 96 56 Z" fill="url(#fea4)" stroke="#6b4a14" stroke-width="1"></path>
+        <g transform="translate(230 0) scale(-1 1)"><path d="M115 44 Q70 4 6 16 Q50 26 64 34 Q34 34 14 42 Q56 44 74 52 Q46 54 30 62 Q76 60 96 56 Z" fill="url(#fea4)" stroke="#6b4a14" stroke-width="1"></path></g>
+        <circle cx="115" cy="44" r="17" fill="#e2b85a" stroke="#6b4a14" stroke-width="1.5"></circle>
+        <circle cx="115" cy="44" r="12" fill="#1d3a6e" stroke="#f6dc94" stroke-width="1"></circle>
+        <path d="M115 35 L118 44 L115 53 L112 44 Z M106 44 L115 41 L124 44 L115 47 Z" fill="#bfe6ff"></path>
+      </svg>
+      <h1 style="position:absolute;left:0;right:0;bottom:8px;margin:0;text-align:center;font:700 32px/1 'Cormorant Garamond',serif;letter-spacing:.06em;color:#f6dc94;text-shadow:0 2px 3px #000">Ngũ Anh Hùng</h1>
+    </header>
+    <div style="padding:16px 18px 12px;display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
+      <p style="margin:0;text-align:center;font:600 12px 'Be Vietnam Pro',sans-serif;letter-spacing:.2em;color:#7a2a18">CHỌN ANH HÙNG CỦA BẠN</p>
+      <div class="slotc last">
+        <div class="emb" style="background:radial-gradient(circle at 40% 35%,#3a67ad,#16305c 70%)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bfe6ff" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 4l3 2 3-2M9 20l3-2 3 2"></path></svg></div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+          <b style="font:700 19px/1.1 'Cormorant Garamond',serif;color:#1d3a6e">Tuyết Liên</b>
+          <span style="font:600 12px 'Be Vietnam Pro',sans-serif;color:#2b1f12">Băng Pháp Sư · Cấp 77</span>
+          <span style="font:500 11px 'Be Vietnam Pro',sans-serif;color:#5a4630">Bãi San Hô · 6 giờ 12 phút</span>
+        </div>
+        <button class="play">VÀO GAME</button>
+      </div>
+      <div class="slotc">
+        <div class="emb" style="background:radial-gradient(circle at 40% 35%,#e5683e,#a8321f 70%)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff2d6" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-3 2-4 2-6 1.5 1 2 2 2 3 1-2 1-4 1-7z"></path></svg></div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+          <b style="font:700 19px/1.1 'Cormorant Garamond',serif;color:#9c2416">Hỏa Long</b>
+          <span style="font:600 12px 'Be Vietnam Pro',sans-serif;color:#2b1f12">Hỏa Kiếm Sĩ · Cấp 142</span>
+          <span style="font:500 11px 'Be Vietnam Pro',sans-serif;color:#5a4630">Hố Thẳm Dung Nham · 21 giờ</span>
+        </div>
+        <button class="play">VÀO GAME</button>
+      </div>
+      <button class="slotc" style="border:0;cursor:pointer;text-align:left;font-family:inherit">
+        <div class="emb" style="background:rgba(120,85,35,.15)"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v14M3 10h14" stroke="#6b4a14" stroke-width="2.2" stroke-linecap="round"></path></svg></div>
+        <div style="display:flex;flex-direction:column;gap:1px"><b style="font:700 17px 'Cormorant Garamond',serif;color:#5a4630">Ô trống 3</b><span style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#5a4630">Tạo nhân vật mới, bắt đầu từ cấp 1</span></div>
+      </button>
+      <button class="slotc" style="border:0;cursor:pointer;text-align:left;font-family:inherit">
+        <div class="emb" style="background:rgba(120,85,35,.15)"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v14M3 10h14" stroke="#6b4a14" stroke-width="2.2" stroke-linecap="round"></path></svg></div>
+        <div style="display:flex;flex-direction:column;gap:1px"><b style="font:700 17px 'Cormorant Garamond',serif;color:#5a4630">Ô trống 4</b><span style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#5a4630">Tạo nhân vật mới, bắt đầu từ cấp 1</span></div>
+      </button>
+      <button class="slotc" style="border:0;cursor:pointer;text-align:left;font-family:inherit">
+        <div class="emb" style="background:rgba(120,85,35,.15)"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v14M3 10h14" stroke="#6b4a14" stroke-width="2.2" stroke-linecap="round"></path></svg></div>
+        <div style="display:flex;flex-direction:column;gap:1px"><b style="font:700 17px 'Cormorant Garamond',serif;color:#5a4630">Ô trống 5</b><span style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#5a4630">Tạo nhân vật mới, bắt đầu từ cấp 1</span></div>
+      </button>
+      <p style="margin:auto 0 0;text-align:center;font:500 11.5px/1.5 'Be Vietnam Pro',sans-serif;color:#5a4630">Mỗi nhân vật lưu riêng trên tài khoản của bạn. Thế giới và các người chơi khác vẫn tiếp diễn dù bạn chơi nhân vật nào.</p>
+    </div>
+    <div style="position:relative;height:22px;flex:none;background:linear-gradient(#24477f,#132a52);box-shadow:0 -2px 0 #e2b85a">
+      <svg width="362" height="12" style="position:absolute;left:0;top:5px;opacity:.7" aria-hidden="true"><rect width="362" height="12" fill="url(#wv4)"></rect></svg>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

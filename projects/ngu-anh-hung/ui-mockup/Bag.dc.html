@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Túi đồ</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Be+Vietnam+Pro:wght@500;600;700;800&display=swap">
+<style>
+body{margin:0}
+.cart{border-radius:999px;box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,0 0 0 4px #4a3210,0 2px 5px rgba(60,40,10,.35),inset 0 0 0 2px rgba(246,220,148,.35)}
+.slot{position:relative;width:54px;height:54px;border-radius:12px;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#efe2c2,#c8b07e 80%);box-shadow:inset 0 3px 6px rgba(70,45,12,.55),inset 0 -1px 0 rgba(255,255,255,.5),0 1px 0 rgba(255,255,255,.45)}
+.slot img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(40,25,5,.6))}
+.slot.r1{box-shadow:inset 0 0 0 2.5px #2f6fc0,inset 0 4px 8px rgba(47,111,192,.45),0 1px 0 rgba(255,255,255,.45);background:radial-gradient(circle at 50% 40%,#e7eef6,#b9c7d6 85%)}
+.slot.r2{box-shadow:inset 0 0 0 2.5px #b07a1c,inset 0 4px 8px rgba(176,122,28,.5),0 1px 0 rgba(255,255,255,.45);background:radial-gradient(circle at 50% 40%,#f6e6bd,#d8b46a 85%)}
+.slot.r3{box-shadow:inset 0 0 0 2.5px #b3261e,inset 0 4px 8px rgba(179,38,30,.45),0 1px 0 rgba(255,255,255,.45);background:radial-gradient(circle at 50% 40%,#f6ddd2,#d79a86 85%)}
+.slot.set{outline:2px solid #e2b85a;outline-offset:2px}
+.slot .pl{position:absolute;top:-6px;right:-6px;padding:0 5px;border-radius:8px;background:#2b1f12;color:#f6dc94;font:800 10px/16px 'Be Vietnam Pro',sans-serif;box-shadow:0 0 0 1px #e2b85a}
+.slot .lb{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);white-space:nowrap;font:600 10px 'Be Vietnam Pro',sans-serif;color:#5a4630}
+.tab{border:0;cursor:pointer;padding:7px 12px;border-radius:999px;font:700 12px 'Be Vietnam Pro',sans-serif;color:#2b1f12;background:linear-gradient(#efe0bb,#d7bf8c);box-shadow:0 0 0 1.5px #8a6420,inset 0 1px 0 rgba(255,255,255,.6)}
+.tab.on{color:#f6dc94;background:linear-gradient(#2a4c86,#14305c);box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a}
+.tab-l{font:700 11px 'Be Vietnam Pro',sans-serif;letter-spacing:.16em;color:#7a2a18;text-transform:uppercase}
+.tablet{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px;border-radius:8px;background:rgba(120,85,35,.10);box-shadow:inset 0 0 0 1px rgba(90,60,20,.28),inset 0 2px 4px rgba(90,60,20,.18)}
+.tablet span{font:600 10.5px 'Be Vietnam Pro',sans-serif;color:#5a4630}
+.tablet b{font:800 15px 'Be Vietnam Pro',sans-serif;color:#2b1f12;font-variant-numeric:tabular-nums}
+.sell{border:0;cursor:pointer;padding:6px 11px;border-radius:999px;font:700 11.5px 'Be Vietnam Pro',sans-serif;color:#fff6e2;box-shadow:0 0 0 1.5px #4a3210,inset 0 1px 0 rgba(255,255,255,.35)}
+</style>
+</helmet>
+<div style="width:390px;height:1120px;position:relative;overflow:hidden;font-family:'Be Vietnam Pro',sans-serif;color:#2b1f12;background:#d9c59b url('/_blob/192931c56e620b52393c32c81e633b52') center top/120% auto repeat-y">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <pattern id="mk2" width="16" height="10" patternUnits="userSpaceOnUse"><path d="M0 9.5H15.5V.5H3.5V6.5H11.5V3.5H7" fill="none" stroke="#e2b85a" stroke-width="1.2"></path></pattern>
+    <pattern id="wv2" width="20" height="12" patternUnits="userSpaceOnUse"><path d="M0 10 C5 10 5 3 10 3 C15 3 15 8 11.5 8 C9 8 9 5.5 11 5.5" fill="none" stroke="#e2b85a" stroke-width="1.3"></path><path d="M10 10 H20" stroke="#e2b85a" stroke-width="1.3"></path></pattern>
+    <linearGradient id="fea2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b5562e"></stop><stop offset=".35" stop-color="#e2b85a"></stop><stop offset=".7" stop-color="#3f6bb0"></stop><stop offset="1" stop-color="#1d3a6e"></stop></linearGradient>
+  </defs></svg>
+
+  <!-- header band: lapis, gold rules, meander, winged crest -->
+  <header style="position:relative;height:96px;background:linear-gradient(#24477f,#132a52);box-shadow:0 2px 0 #e2b85a,0 4px 0 #6b4a14,0 7px 10px rgba(40,25,5,.4)">
+    <svg width="390" height="10" style="position:absolute;left:0;top:6px;opacity:.6" aria-hidden="true"><rect width="390" height="10" fill="url(#mk2)"></rect></svg>
+    <svg width="230" height="74" viewBox="0 0 230 74" style="position:absolute;left:80px;top:10px" aria-hidden="true">
+      <path d="M115 44 Q70 4 6 16 Q50 26 64 34 Q34 34 14 42 Q56 44 74 52 Q46 54 30 62 Q76 60 96 56 Z" fill="url(#fea2)" stroke="#6b4a14" stroke-width="1"></path>
+      <g transform="translate(230 0) scale(-1 1)"><path d="M115 44 Q70 4 6 16 Q50 26 64 34 Q34 34 14 42 Q56 44 74 52 Q46 54 30 62 Q76 60 96 56 Z" fill="url(#fea2)" stroke="#6b4a14" stroke-width="1"></path></g>
+      <circle cx="115" cy="44" r="17" fill="#e2b85a" stroke="#6b4a14" stroke-width="1.5"></circle>
+      <circle cx="115" cy="44" r="12" fill="#1d3a6e" stroke="#f6dc94" stroke-width="1"></circle>
+      <path d="M115 35 L118 44 L115 53 L112 44 Z M106 44 L115 41 L124 44 L115 47 Z" fill="#bfe6ff"></path>
+    </svg>
+    <h1 style="position:absolute;left:0;right:0;bottom:4px;margin:0;text-align:center;font:700 22px/1 'Cormorant Garamond',serif;letter-spacing:.12em;color:#f6dc94;text-shadow:0 1px 2px #000">HÀNH TRANG</h1>
+    <button aria-label="Đóng" style="position:absolute;right:12px;top:22px;width:40px;height:40px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;background:radial-gradient(circle at 40% 35%,#e5683e,#a8321f 60%,#5c160c);box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,0 3px 6px rgba(0,0,0,.5)">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="#fff2d6" stroke-width="2.2" stroke-linecap="round"></path></svg>
+    </button>
+  </header>
+
+  <div style="padding:16px 16px 0;display:flex;flex-direction:column;gap:14px">
+    <!-- purse -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <span class="cart" style="padding:4px 12px;background:linear-gradient(#efe0bb,#d7bf8c);font:700 12px 'Be Vietnam Pro',sans-serif">Vàng <b style="font-weight:800">21.477</b></span>
+      <span class="cart" style="padding:4px 12px;background:linear-gradient(#efe0bb,#d7bf8c);font:700 12px 'Be Vietnam Pro',sans-serif">Đá Cường Hóa <b style="font-weight:800">36</b></span>
+      <span class="cart" style="padding:4px 12px;background:linear-gradient(#efe0bb,#d7bf8c);font:700 12px 'Be Vietnam Pro',sans-serif">Lông vũ <b style="font-weight:800">4</b></span>
+    </div>
+    <!-- tabs -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap" role="tablist" aria-label="Mục túi đồ">
+      <button class="tab on" role="tab" aria-selected="true">Trang bị</button>
+      <button class="tab" role="tab" aria-selected="false">Linh thạch</button>
+      <button class="tab" role="tab" aria-selected="false">Cánh</button>
+      <button class="tab" role="tab" aria-selected="false">Thú</button>
+      <button class="tab" role="tab" aria-selected="false">Kỹ năng</button>
+    </div>
+    <!-- stats as inscribed tablets -->
+    <div class="tab-l">Chỉ số</div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px">
+      <div class="tablet"><span>Tấn công</span><b>1.501</b></div>
+      <div class="tablet"><span>Phòng thủ</span><b>2.101</b></div>
+      <div class="tablet"><span>Máu</span><b style="color:#8a2a18">15.276</b></div>
+      <div class="tablet"><span>Chí mạng</span><b style="color:#1d4f9e">13,5%</b></div>
+      <div class="tablet"><span>Đòn / giây</span><b>0,7 / 2,5</b></div>
+      <div class="tablet"><span>Hồi mana</span><b style="color:#1d4f9e">2,6%/s</b></div>
+    </div>
+    <!-- worn: a fresco panel with the paper doll -->
+    <div class="tab-l">Đang mặc</div>
+    <div style="display:grid;grid-template-columns:62px minmax(0,1fr) 62px;gap:4px;align-items:start;padding:10px 6px 26px;border-radius:12px;background:rgba(90,60,20,.12);box-shadow:inset 0 0 0 1.5px rgba(107,74,20,.5),inset 0 0 0 4px rgba(226,184,90,.35),inset 0 6px 14px rgba(70,45,12,.25)">
+      <div style="display:flex;flex-direction:column;gap:26px;align-items:center;padding-top:6px">
+        <div class="slot r3 set"><img src="/_blob/343c31bf760453988171260d60ea2f62" alt="Mũ"><span class="pl">+9</span><span class="lb">Mũ</span></div>
+        <div class="slot r3 set"><img src="/_blob/6e1cc9d49ce1750d9810e1007bd5f0c2" alt="Giáp"><span class="pl">+9</span><span class="lb">Giáp</span></div>
+        <div class="slot r2"><img src="/_blob/9f656f9db42b7025dea887474b74887d" alt="Giày"><span class="pl">+7</span><span class="lb">Giày</span></div>
+      </div>
+      <div style="display:grid;place-items:center"><img src="/_blob/4edbcfb3f871096b90eac80568e7d4df" alt="Hình nhân mặc bộ Lôi Thần Olympus" style="width:100%;max-width:220px;height:auto"></div>
+      <div style="display:flex;flex-direction:column;gap:26px;align-items:center;padding-top:6px">
+        <div class="slot r2"><img src="/_blob/d898fad8d52cdecb2fef043df48e206d" alt="Vũ khí"><span class="pl">+9</span><span class="lb">Vũ khí</span></div>
+        <div class="slot r3 set"><img src="/_blob/73711d2b223847cbaa8474834463465e" alt="Khiên"><span class="pl">+11</span><span class="lb">Khiên</span></div>
+        <div class="slot r1"><img src="/_blob/317362912e4aed17a9b8b17ea9c5890f" alt="Găng"><span class="pl">+5</span><span class="lb">Găng</span></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:22px;margin-top:-6px">
+      <div class="slot r3"><img src="/_blob/f715d08d174ed4bdf63fe7e4efdf2e0c" alt="Nhẫn"><span class="pl">+10</span><span class="lb">Nhẫn</span></div>
+      <div class="slot r2"><img src="/_blob/6fc482db40a02ffe61893dc12f0f1085" alt="Dây chuyền"><span class="pl">+5</span><span class="lb">Dây chuyền</span></div>
+      <div class="slot r1"><img src="/_blob/73ca556f8a19702aeca14ae9170ce986" alt="Cánh"><span class="lb">Cánh</span></div>
+    </div>
+
+    <!-- stacked goods -->
+    <div class="tab-l" style="margin-top:12px">Vật phẩm xếp chồng · 66 món</div>
+    <div style="display:flex;gap:10px">
+      <div class="slot"><img src="/_blob/faed41b40ba029c35165dc29341a29d9" alt="Bình máu"><span class="pl">42</span></div>
+      <div class="slot"><img src="/_blob/71865c8d376f4ef878eb860530861438" alt="Bình mana"><span class="pl">18</span></div>
+      <div class="slot"><img src="/_blob/ec0bfac2125a4eff620a40ada976a006" alt="Đá cường hóa"><span class="pl">36</span></div>
+    </div>
+    <!-- bag -->
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="tab-l">Túi đồ</span><span style="font:600 11px 'Be Vietnam Pro',sans-serif;color:#5a4630">8 / 300 ô</span></div>
+    <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;justify-items:center">
+      <div class="slot r3"><img src="/_blob/f715d08d174ed4bdf63fe7e4efdf2e0c" alt="Nhẫn"></div>
+      <div class="slot r2"><img src="/_blob/6fc482db40a02ffe61893dc12f0f1085" alt="Dây chuyền"></div>
+      <div class="slot r1"><img src="/_blob/343c31bf760453988171260d60ea2f62" alt="Mũ"><span class="pl">+3</span></div>
+      <div class="slot"><img src="/_blob/9f656f9db42b7025dea887474b74887d" alt="Giày"></div>
+      <div class="slot r1"><img src="/_blob/317362912e4aed17a9b8b17ea9c5890f" alt="Găng"></div>
+      <div class="slot"><img src="/_blob/d898fad8d52cdecb2fef043df48e206d" alt="Kiếm"></div>
+      <div class="slot r2 set"><img src="/_blob/6e1cc9d49ce1750d9810e1007bd5f0c2" alt="Giáp"></div>
+      <div class="slot r1"><img src="/_blob/73711d2b223847cbaa8474834463465e" alt="Khiên"></div>
+      <div class="slot" style="opacity:.55"></div><div class="slot" style="opacity:.55"></div><div class="slot" style="opacity:.55"></div><div class="slot" style="opacity:.55"></div>
+    </div>
+    <!-- quick sell -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border-radius:12px;background:rgba(90,60,20,.10);box-shadow:inset 0 0 0 1px rgba(107,74,20,.35)">
+      <span style="font:600 11.5px 'Be Vietnam Pro',sans-serif;color:#5a4630">Bán nhanh:</span>
+      <button class="sell" style="background:linear-gradient(#8c8576,#5e584b)">Thường (2)</button>
+      <button class="sell" style="background:linear-gradient(#3f7fd0,#1f4f96)">Hiếm (3)</button>
+      <button class="sell" style="background:linear-gradient(#c99a3a,#8a5e14)">Sử thi (1)</button>
+      <button class="sell" style="background:linear-gradient(#d24a3a,#8f1f16)">Huyền thoại (1)</button>
+    </div>
+  </div>
+  <!-- footer band: Vitruvian waves -->
+  <div style="position:absolute;left:0;right:0;bottom:0;height:22px;background:linear-gradient(#24477f,#132a52);box-shadow:0 -2px 0 #e2b85a">
+    <svg width="390" height="12" style="position:absolute;left:0;top:5px;opacity:.7" aria-hidden="true"><rect width="390" height="12" fill="url(#wv2)"></rect></svg>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Màn hình chơi</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Be+Vietnam+Pro:wght@500;600;700;800&display=swap">
+<style>
+body{margin:0}
+.md{position:relative;border-radius:50%;display:grid;place-items:center;color:#f6dc94;background:radial-gradient(circle at 38% 30%,#3a67ad,#16305c 60%,#0b1a36);box-shadow:0 0 0 2px #6b4a14,0 0 0 4px #e2b85a,0 0 0 5px #5a3e12,0 4px 10px rgba(0,0,0,.6),inset 0 2px 3px rgba(255,255,255,.2),inset 0 -4px 8px rgba(0,0,0,.55)}
+.md small{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);white-space:nowrap;font:700 10px 'Be Vietnam Pro',sans-serif;color:#f6e6bd;text-shadow:0 1px 2px #000,0 0 4px #000}
+.md.on{background:radial-gradient(circle at 38% 30%,#e9b54e,#9a6418 62%,#4a2c06);color:#2b1f12}
+.chan{position:relative;height:13px;border-radius:7px;background:#1a120a;box-shadow:inset 0 2px 3px rgba(0,0,0,.8),0 0 0 1px #8a6420,0 0 0 2px #e2b85a55;overflow:hidden}
+.chan i{position:absolute;left:0;top:0;bottom:0;border-radius:7px}
+.chan b{position:absolute;inset:0;display:grid;place-items:center;font:800 9.5px 'Be Vietnam Pro',sans-serif;color:#fff7e0;text-shadow:0 1px 2px #000}
+.cart{border-radius:999px;box-shadow:0 0 0 1.5px #6b4a14,0 0 0 3px #e2b85a,0 0 0 4px #4a3210,0 3px 8px rgba(0,0,0,.55),inset 0 0 0 2px rgba(246,220,148,.35)}
+</style>
+</helmet>
+<div style="width:390px;height:844px;position:relative;overflow:hidden;font-family:'Be Vietnam Pro',sans-serif;background:#10202a url('/_blob/d6bdb51f8223ce0aa9839f8190a2f241') center/cover">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <pattern id="mk" width="16" height="10" patternUnits="userSpaceOnUse"><path d="M0 9.5H15.5V.5H3.5V6.5H11.5V3.5H7" fill="none" stroke="#e2b85a" stroke-width="1.2"></path></pattern>
+    <radialGradient id="sun" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#e5683e"></stop><stop offset=".6" stop-color="#a8321f"></stop><stop offset="1" stop-color="#5c160c"></stop></radialGradient>
+    <linearGradient id="fea" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b5562e"></stop><stop offset=".35" stop-color="#e2b85a"></stop><stop offset=".7" stop-color="#3f6bb0"></stop><stop offset="1" stop-color="#1d3a6e"></stop></linearGradient>
+  </defs></svg>
+
+  <!-- status plate -->
+  <div style="position:absolute;left:12px;top:44px;display:flex;align-items:center;gap:0">
+    <div class="md" style="width:68px;height:68px;z-index:2;flex-direction:column;gap:0">
+      <span style="font:700 9px 'Be Vietnam Pro',sans-serif;letter-spacing:.14em;color:#e9d6a6;margin-top:6px">CẤP</span>
+      <span style="font:700 30px/1 'Cormorant Garamond',serif;color:#f6dc94;margin-top:-4px">77</span>
+      <span style="position:absolute;right:-4px;bottom:-2px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#0d1c38;box-shadow:0 0 0 1.5px #e2b85a">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bfe6ff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 4l3 2 3-2M9 20l3-2 3 2"></path></svg>
+      </span>
+    </div>
+    <div class="cart" style="margin-left:-20px;padding:8px 16px 9px 28px;width:190px;display:flex;flex-direction:column;gap:5px;background:linear-gradient(#1d3a6e,#112650);border-radius:0 18px 18px 0">
+      <span style="font:700 18px/1 'Cormorant Garamond',serif;color:#f6dc94;letter-spacing:.02em">Tuyết Liên</span>
+      <div class="chan"><i style="width:87%;background:linear-gradient(#e0623a,#a8321f 60%,#7a1f12)"></i><b>4.435 / 5.080</b></div>
+      <div class="chan" style="height:11px"><i style="width:98%;background:linear-gradient(#6f9ee0,#2d5a9e 60%,#1a3a70)"></i><b style="font-size:8.5px">327 / 334</b></div>
+    </div>
+  </div>
+  <div class="cart" style="position:absolute;left:16px;top:122px;display:flex;align-items:center;gap:7px;padding:5px 14px 5px 6px;background:linear-gradient(#e2b85a,#a87522);color:#2b1f12">
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f6dc94" stroke="#6b4a14" stroke-width="1.5"></circle><circle cx="12" cy="12" r="6" fill="none" stroke="#6b4a14" stroke-width="1.3"></circle><path d="M12 8v8M9 12h6" stroke="#6b4a14" stroke-width="1.3"></path></svg>
+    <span style="font:800 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:tabular-nums">21.477</span>
+  </div>
+
+  <!-- top right menu -->
+  <div style="position:absolute;right:14px;top:50px;display:flex;gap:16px">
+    <button class="md" aria-label="Túi đồ" style="width:52px;height:52px;border:0;padding:0;cursor:pointer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14l-1.2 11H6.2z"></path><path d="M9 9V7a3 3 0 016 0v2"></path><path d="M9 14h6"></path></svg>
+      <span style="position:absolute;top:-8px;right:-8px;min-width:22px;height:20px;border-radius:10px;background:radial-gradient(circle at 40% 35%,#e5683e,#a8321f 60%,#5c160c);box-shadow:0 0 0 1.5px #e2b85a;font:800 11px/20px 'Be Vietnam Pro',sans-serif;color:#fff2d6;text-align:center">8</span>
+      <small>Túi</small>
+    </button>
+    <button class="md" aria-label="Bản đồ" style="width:52px;height:52px;border:0;padding:0;cursor:pointer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"></path><path d="M9 4v14M15 6v14"></path></svg>
+      <small>Bản đồ</small>
+    </button>
+    <button class="md" aria-label="Menu" style="width:52px;height:52px;border:0;padding:0;cursor:pointer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path></svg>
+      <small>Menu</small>
+    </button>
+  </div>
+
+  <!-- boss bars -->
+  <div style="position:absolute;left:50px;right:50px;top:178px;display:flex;flex-direction:column;gap:8px">
+    <div class="cart" style="border-radius:10px;background:linear-gradient(#1d3a6e,#112650);padding:6px 14px 8px;display:flex;flex-direction:column;gap:5px;align-items:center">
+      <span style="font:700 15px 'Cormorant Garamond',serif;letter-spacing:.14em;color:#f6dc94">SỨA MẪU HẬU · Lv 86</span>
+      <div class="chan" style="width:100%;height:8px"><i style="width:96%;background:linear-gradient(#e0623a,#a8321f)"></i></div>
+    </div>
+    <div class="cart" style="border-radius:10px;background:linear-gradient(#1d3a6e,#112650);padding:6px 14px 8px;display:flex;flex-direction:column;gap:5px;align-items:center">
+      <span style="font:700 15px 'Cormorant Garamond',serif;letter-spacing:.14em;color:#f6dc94">CÁ GAI DẠ VƯƠNG · Lv 85</span>
+      <div class="chan" style="width:100%;height:8px"><i style="width:100%;background:linear-gradient(#e0623a,#a8321f)"></i></div>
+    </div>
+  </div>
+
+  <!-- left column -->
+  <div style="position:absolute;left:18px;top:380px;display:flex;flex-direction:column;gap:30px">
+    <button class="md" aria-label="Bảng xếp hạng" style="width:50px;height:50px;border:0;padding:0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 01-10 0z"></path><path d="M7 6H4a3 3 0 003 4M17 6h3a3 3 0 01-3 4M12 14v4M8 21h8M9 18h6"></path></svg><small>BXH</small></button>
+    <button class="md" aria-label="Nhóm" style="width:50px;height:50px;border:0;padding:0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.4"></circle><path d="M3 19a6 6 0 0112 0M15 19a4.5 4.5 0 016-4"></path></svg><small>Nhóm</small></button>
+    <button class="md on" aria-label="Tự lượm" style="width:50px;height:50px;border:0;padding:0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l3 4.5L12 21 9 7.5z"></path><path d="M9 7.5h6"></path></svg><small>Tự lượm</small></button>
+    <button class="md" aria-label="Săn boss" style="width:50px;height:50px;border:0;padding:0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M4 9l3.5 3L12 5l4.5 7L20 9l-1.5 9h-13z"></path></svg><small>Săn boss</small></button>
+    <button class="md on" aria-label="Tự động" style="width:50px;height:50px;border:0;padding:0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M19 13a7 7 0 01-11.6 5.2M5 11a7 7 0 0111.6-5.2"></path><path d="M16.6 2.5v3.3h-3.3M7.4 21.5v-3.3h3.3"></path></svg><small>Tự động</small></button>
+  </div>
+
+  <!-- action cluster: potions, skills, the winged attack disc -->
+  <div style="position:absolute;right:12px;bottom:46px;width:230px;height:220px">
+    <button class="md" aria-label="Bình máu" style="position:absolute;right:178px;bottom:8px;width:46px;height:46px;border:0;padding:0;background:radial-gradient(circle at 40% 35%,#4a3a28,#1c140c 70%)">
+      <img src="/_blob/faed41b40ba029c35165dc29341a29d9" alt="" style="width:36px;height:36px;object-fit:contain">
+      <span style="position:absolute;right:-6px;bottom:-6px;min-width:22px;padding:0 4px;border-radius:9px;background:#f6dc94;color:#2b1f12;box-shadow:0 0 0 1.5px #6b4a14;font:800 10.5px/16px 'Be Vietnam Pro',sans-serif">42</span>
+    </button>
+    <button class="md" aria-label="Bình mana" style="position:absolute;right:166px;bottom:68px;width:46px;height:46px;border:0;padding:0;background:radial-gradient(circle at 40% 35%,#4a3a28,#1c140c 70%)">
+      <img src="/_blob/71865c8d376f4ef878eb860530861438" alt="" style="width:36px;height:36px;object-fit:contain">
+      <span style="position:absolute;right:-6px;bottom:-6px;min-width:22px;padding:0 4px;border-radius:9px;background:#f6dc94;color:#2b1f12;box-shadow:0 0 0 1.5px #6b4a14;font:800 10.5px/16px 'Be Vietnam Pro',sans-serif">18</span>
+    </button>
+    <button class="md" aria-label="Băng Phong Bạo" style="position:absolute;right:104px;bottom:0;width:60px;height:60px;border:0;padding:0">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#bfe6ff" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 4l3 2 3-2M9 20l3-2 3 2"></path></svg><small>Băng Phong</small></button>
+    <button class="md" aria-label="Vạn Băng Trụ" style="position:absolute;right:92px;bottom:84px;width:60px;height:60px;border:0;padding:0">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#bfe6ff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 21l2-12 2 12M11 21l2-16 2 16M16 21l2-9 2 9"></path></svg><small>Vạn Băng</small></button>
+    <button class="md" aria-label="Băng Tiễn Liên Hoàn" style="position:absolute;right:18px;bottom:134px;width:60px;height:60px;border:0;padding:0">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#bfe6ff" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20L20 4M20 4l-6 1M20 4l-1 6M4 14l6-6M10 20l6-6"></path></svg><small>Băng Tiễn</small></button>
+    <!-- attack: a sun disc with spread wings -->
+    <div style="position:absolute;right:0;bottom:0;width:100px;height:100px">
+      <svg width="170" height="64" viewBox="0 0 170 64" style="position:absolute;left:-35px;top:-18px" aria-hidden="true">
+        <path d="M85 40 Q50 6 6 14 Q40 22 52 30 Q30 30 14 36 Q46 38 60 44 Z" fill="url(#fea)" stroke="#6b4a14" stroke-width="1"></path>
+        <path d="M85 40 Q120 6 164 14 Q130 22 118 30 Q140 30 156 36 Q124 38 110 44 Z" fill="url(#fea)" stroke="#6b4a14" stroke-width="1" transform="translate(0 0)"></path>
+      </svg>
+      <button class="md" aria-label="Đánh thường" style="position:absolute;inset:0;width:100px;height:100px;border:0;padding:0;background:radial-gradient(circle at 40% 35%,#e5683e,#a8321f 55%,#4e120a);flex-direction:column">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff2d6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19L17 7M17 7l.6-3.6L21 3l-.4 3.4zM8 16l-2.8-.6L3.5 17l3.5 3.5 1.6-1.7z"></path><path d="M19 19L13.5 13.5M5 5l5.5 5.5"></path></svg>
+        <span style="font:700 14px 'Cormorant Garamond',serif;letter-spacing:.14em;color:#fff2d6;margin-top:-2px">ĐÁNH</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- exp channel with a meander rim -->
+  <div style="position:absolute;left:0;right:0;bottom:0;height:24px;background:linear-gradient(#1d3a6e,#112650);box-shadow:0 -1px 0 #e2b85a">
+    <svg width="390" height="10" style="position:absolute;top:2px;left:0;opacity:.55" aria-hidden="true"><rect width="390" height="10" fill="url(#mk)"></rect></svg>
+    <div class="chan" style="position:absolute;left:10px;right:80px;bottom:3px;height:6px"><i style="width:89.9%;background:linear-gradient(#f6dc94,#c08a2c)"></i></div>
+    <span style="position:absolute;right:10px;bottom:2px;font:800 10px 'Be Vietnam Pro',sans-serif;color:#f6dc94">EXP 89,9%</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
