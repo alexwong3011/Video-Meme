@@ -1033,9 +1033,9 @@ function knBladeQ(dir, side) { const y = dir.clone().normalize(), z = side.clone
   return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z)); }
 
 // load: glTF JSON with the buffer in base64 (the artifact host serves no .glb), rebuilt into a GLB in memory; the JPEG textures sit beside it
-function knLoad() {
-  (async () => {
-    const r = await fetch('assets/meshy/knight.gltf.json'); if (!r.ok) throw new Error('model ' + r.status);
+// glTF JSON with the buffer in base64 (the artifact host serves no .glb), rebuilt into a GLB in memory; textures sit beside it
+async function loadGltfJson(url) {
+    const r = await fetch(url); if (!r.ok) throw new Error('model ' + r.status);
     const j = await r.json(), uri = j.buffers[0].uri, bin = Uint8Array.from(atob(uri.slice(uri.indexOf(',') + 1)), c => c.charCodeAt(0)); delete j.buffers[0].uri;
     const js = new TextEncoder().encode(JSON.stringify(j)), jp = (4 - js.length % 4) % 4, bp = (4 - bin.length % 4) % 4;
     const total = 12 + 8 + js.length + jp + 8 + bin.length + bp, out = new ArrayBuffer(total), dv = new DataView(out), u8 = new Uint8Array(out);
@@ -1043,13 +1043,61 @@ function knLoad() {
     dv.setUint32(12, js.length + jp, true); dv.setUint32(16, 0x4E4F534A, true); u8.set(js, 20); u8.fill(0x20, 20 + js.length, 20 + js.length + jp);
     const o = 20 + js.length + jp; dv.setUint32(o, bin.length + bp, true); dv.setUint32(o + 4, 0x004E4942, true); u8.set(bin, o + 8);
     const loader = new GLTFLoader(); loader.register(parser => { parser.textureLoader = new THREE.TextureLoader(parser.options.manager); return { name: 'img_textures' }; });
-    const gltf = await new Promise((res, rej) => loader.parse(out, 'assets/meshy/', res, rej));
+    return new Promise((res, rej) => loader.parse(out, url.slice(0, url.lastIndexOf('/') + 1), res, rej));
+}
+function knLoad() {
+  (async () => {
+    const gltf = await loadGltfJson('assets/meshy/knight.gltf.json');
+    const baseP = loadGltfJson('assets/meshy/base_greek.gltf.json').catch(e => { console.warn('base body:', e); return null; });
     const tl = new THREE.TextureLoader(), tex = src => new Promise(res => tl.load(src, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
     const sw = await Promise.all(['assets/weapon/greatsword_front.png', 'assets/weapon/greatsword_back.png'].map(tex));
     try { const lj = await (await fetch('assets/meshy/knight_lod.json')).json(); KN.lod = new Uint32Array(Uint8Array.from(atob(lj.indices), c => c.charCodeAt(0)).buffer); } catch (e) { KN.lod = null; }
-    knSetup(gltf, sw); if (S && S.cls === 'fire') buildHero3D();
+    knSetup(gltf, sw); const bg = await baseP; if (bg) knSetupBase(bg); if (S && S.cls === 'fire') buildHero3D();
     for (const [id, e] of [...ents]) if (!e.C.kn && !e.dead) { const p = e.pos.clone(); despawnBot(id); spawnBot(e.b, p.x, p.z); }   // bots already on the map put the armour on
   })().catch(e => { KN.err = String(e && e.message || e); console.warn('knight:', e); });
+}
+// ---------- MU-style body slots: which piece of the body each bone carries ----------
+const BODY_SLOTS = ['helm', 'armor', 'pants', 'gloves', 'boots'];
+const slotOfBone = n => /head|eye|jaw/.test(n) ? 'helm' : /forearm|hand/.test(n) ? 'gloves' : /foot|toe/.test(n) ? 'boots' : /hips|upleg|leg/.test(n) ? 'pants' : 'armor';
+// cut a skinned mesh into the five slots: each triangle goes to the slot that carries most of its weight, and also to any slot carrying
+// a good share of it, so neighbouring pieces overlap a little at the neck, shoulders, wrists, waist and ankles (no gaps when sets are mixed)
+function splitBySlot(mesh, overlap = 0.22) {
+  const g = mesh.geometry, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, bs = mesh.skeleton.bones.map(b => BODY_SLOTS.indexOf(slotOfBone(b.name.toLowerCase())));
+  const nV = si.count, vw = new Float32Array(nV * 5), get = [a => 0, 'getX', 'getY', 'getZ', 'getW'];
+  for (let v = 0; v < nV; v++) for (let k = 0; k < 4; k++) { const w = sw[get[k + 1]](v); if (w > 0) vw[v * 5 + bs[si[get[k + 1]](v)]] += w; }
+  const idx = g.index.array, out = BODY_SLOTS.map(() => []), sm = new Float32Array(5);
+  for (let t = 0; t < idx.length; t += 3) { sm.fill(0); for (let c = 0; c < 3; c++) for (let j = 0; j < 5; j++) sm[j] += vw[idx[t + c] * 5 + j];
+    let best = 0; for (let j = 1; j < 5; j++) if (sm[j] > sm[best]) best = j;
+    for (let j = 0; j < 5; j++) if (j === best || sm[j] >= overlap * 3) out[j].push(idx[t], idx[t + 1], idx[t + 2]); }
+  const r = {}; BODY_SLOTS.forEach((sl, j) => { const ng = new THREE.BufferGeometry(); for (const n in g.attributes) ng.setAttribute(n, g.attributes[n]);
+    ng.setIndex(new THREE.BufferAttribute(Uint32Array.from(out[j]), 1)); ng.boundingSphere = g.boundingSphere; r[sl] = ng; }); return r; }
+// the bare body (a thin ancient Greek outfit): shown wherever a body slot is empty. Its own rig and proportions; every frame it takes
+// the knight's bone rotations by name, so its pieces move with the armour pieces and meet them at the joints
+function knSetupBase(gltf) {
+  const model = gltf.scene, BB = {}; const meshes = [];
+  model.traverse(o => { if (o.isBone) BB[o.name.toLowerCase()] = o; if (o.isSkinnedMesh) meshes.push(o); if (o.isMesh) { o.frustumCulled = false; if (o.material) { o.material.envMapIntensity = 0.5; o.material.roughness = 0.85; o.material.metalness = 0; } } });
+  model.updateMatrixWorld(true); let lo = Infinity, hi = -Infinity;
+  for (const [n, b] of Object.entries(BB)) { const y = knW(b).y; if (/foot|toe/.test(n)) lo = Math.min(lo, y); if (/head_end|headfront|^head$/.test(n)) hi = Math.max(hi, y); }
+  model.scale.multiplyScalar(KN.h / Math.max(0.01, hi - lo)); model.updateMatrixWorld(true);
+  lo = Infinity; for (const [n, b] of Object.entries(BB)) if (/foot|toe/.test(n)) lo = Math.min(lo, knW(b).y); model.position.y -= lo - 0.03 * KN.h / KN_REF;
+  for (const o of meshes) { const geos = splitBySlot(o);
+    for (const sl of BODY_SLOTS) { const p = new THREE.SkinnedMesh(geos[sl], o.material); p.frustumCulled = false; p.bind(o.skeleton, o.bindMatrix); o.parent.add(p); (KN.parts.base[sl] = KN.parts.base[sl] || []).push(p); }
+    o.parent.remove(o); }
+  // the two rigs share bone names but not bone axes: carry the knight's rotation away from its rest pose, in world space, onto each bare-body bone
+  KN.restPose(); KN.root.add(model); KN.root.updateMatrixWorld(true);
+  const order = []; model.traverse(o => { if (o.isBone && KN.bones[o.name.toLowerCase()]) order.push(o); });     // parents before children
+  const map = order.map(bb => { const kb = KN.bones[bb.name.toLowerCase()];
+    return { bb, kb, off: kb.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(bb.getWorldQuaternion(new THREE.Quaternion())) }; });
+  const hb = BB.hips, hk = KN.bones.hips;
+  KN.base = { model, map, hip: hb && hk ? { hb, hk, b0: knW(hb), k0: knW(hk) } : null };
+}
+function knBodySlots() {        // armour piece where something is worn, the bare body elsewhere; the bare body copies the knight's pose
+  const A = KN.parts.armour, Bp = KN.parts.base, has = !!KN.base;
+  for (const sl of BODY_SLOTS) { const worn = !has || !!S.eq[sl]; for (const p of A[sl] || []) p.visible = worn; for (const p of Bp[sl] || []) p.visible = !worn; }
+  if (!has) return; const b = KN.base, q = new THREE.Quaternion(), pq = new THREE.Quaternion(); KN.root.updateMatrixWorld(true);
+  if (b.hip) {     // the hips follow the knight's (bob, steps), measured from rest in the root's space
+    const d = KN.root.worldToLocal(knW(b.hip.hk)).sub(b.hip.k0); b.hip.hb.position.copy(b.hip.hb.parent.worldToLocal(KN.root.localToWorld(b.hip.b0.clone().add(d)))); }
+  for (const m of b.map) { m.kb.getWorldQuaternion(q).multiply(m.off); m.bb.parent.getWorldQuaternion(pq); m.bb.quaternion.copy(pq.invert().multiply(q)); m.bb.updateMatrixWorld(true); }
 }
 function knSetup(gltf, swTex) {
   const B = KN.bones, model = gltf.scene, root = new THREE.Group(); root.add(model); KN.root = root; KN.model = model;
@@ -1090,6 +1138,13 @@ function knSetup(gltf, swTex) {
     proto.getObjectByName(KN.handR.name).attach(bs); KN.proto = proto; KN.restPose(); }
   // glowing ink outline (the hero look's colour) and the level aura shell, both pushed out along the skinned normals in view space
   KN.hullMats = []; KN.auras = [];
+  // MU-style: the armour mesh cut into the five body slots by bone weights (bots keep the whole knight: their copy was made above)
+  KN.parts = { armour: {}, base: {} }; const pieces = [];
+  for (const o of hulls) { const geos = splitBySlot(o);
+    for (const sl of BODY_SLOTS) { const p = new THREE.SkinnedMesh(geos[sl], o.material); p.frustumCulled = false; p.bind(o.skeleton, o.bindMatrix); o.parent.add(p);
+      (KN.parts.armour[sl] = KN.parts.armour[sl] || []).push(p); pieces.push(p); }
+    o.parent.remove(o); }
+  hulls.length = 0; hulls.push(...pieces);
   for (const o of hulls) {
     const mat = new THREE.MeshBasicMaterial({ color: LOOK.outlineCol, side: THREE.BackSide });
     mat.onBeforeCompile = sh => { sh.uniforms.uTh = KN_TH; sh.vertexShader = 'uniform float uTh;\n' + sh.vertexShader.replace('#include <project_vertex>',
@@ -1098,7 +1153,7 @@ function knSetup(gltf, swTex) {
     const hull = new THREE.SkinnedMesh(o.geometry, mat); hull.frustumCulled = false; hull.bind(o.skeleton, o.bindMatrix); o.parent.add(hull); KN.hullMats.push(mat);
     const am = new THREE.ShaderMaterial({ vertexShader: KN_AURA_VS, fragmentShader: KN_AURA_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       uniforms: { uGrow: { value: 0.022 }, uPow: { value: 1.5 }, uColor: { value: new THREE.Color() }, uInt: { value: 0 }, uTime: KN_U.uTime } });
-    const sh = new THREE.SkinnedMesh(o.geometry, am); sh.frustumCulled = false; sh.bind(o.skeleton, o.bindMatrix); sh.renderOrder = 5; o.parent.add(sh); KN.auras.push(sh);
+    const sh = new THREE.SkinnedMesh(o.geometry, am); sh.frustumCulled = false; sh.bind(o.skeleton, o.bindMatrix); sh.renderOrder = 5; o.parent.add(sh); sh.userData.piece = o; KN.auras.push(sh);
   }
   KN.ready = true;
 }
@@ -1158,6 +1213,7 @@ function knTick(dt, t, moving) {
   KN.sword.position.copy(KN.root.worldToLocal(G)); KN.sword.quaternion.copy(rq.clone().multiply(Qs)); KN.sword.scale.setScalar(F / rs); KN.sword.visible = true;
   KN.sword2.visible = !!(KN.dual && KN.fingers);          // dual wield: a second greatsword through the left fist, a little smaller
   if (KN.sword2.visible) { const f2 = knFist('left'); KN.sword2.position.copy(KN.root.worldToLocal(f2.G.clone())); KN.sword2.quaternion.copy(rq.clone().multiply(knBladeQ(f2.axis, f2.flat))); KN.sword2.scale.setScalar(F / rs * 0.9); }
+  knBodySlots();
   // wings from between the shoulder blades
   if (KN.chest && B.neck && B.leftarm && B.rightarm) { const S2 = knW(KN.chest), N = knW(B.neck), lx = knW(B.leftarm).sub(knW(B.rightarm)).normalize(), up = N.clone().sub(S2).normalize(), fw = new THREE.Vector3().crossVectors(lx, up).normalize();
     const C = S2.lerp(N, 0.75).addScaledVector(fw, -0.13 * F); wings.position.copy(heroBody.worldToLocal(C)); }
@@ -1167,7 +1223,7 @@ function knTick(dt, t, moving) {
   Lk.tint = Lk.tint.map(v => 1 + (v - 1) * 0.55); Lk.rim[3] *= 0.6; Lk.flow[3] *= 0.5;
   KN_U.uRimColor.value.setRGB(Lk.rim[0], Lk.rim[1], Lk.rim[2]); KN_U.uRimInt.value = Lk.rim[3]; KN_U.uFlowColor.value.setRGB(Lk.flow[0], Lk.flow[1], Lk.flow[2]); KN_U.uFlowInt.value = Lk.flow[3];
   for (const m of KN.armorMats) { m.color.copy(m.userData.base0).multiply(new THREE.Color(Lk.tint[0], Lk.tint[1], Lk.tint[2])); m.envMapIntensity = Lk.env; m.roughness = m.roughnessMap ? Lk.rough : 0.5 * Lk.rough; }
-  for (const sh of KN.auras) { sh.visible = Lk.aura[3] > 0.01; sh.material.uniforms.uColor.value.setRGB(Lk.aura[0], Lk.aura[1], Lk.aura[2]); sh.material.uniforms.uInt.value = Math.min(Lk.aura[3], 1.2) * 0.6; sh.material.uniforms.uGrow.value = 0.03 * F; }
+  for (const sh of KN.auras) { sh.visible = Lk.aura[3] > 0.01 && sh.userData.piece.visible; sh.material.uniforms.uColor.value.setRGB(Lk.aura[0], Lk.aura[1], Lk.aura[2]); sh.material.uniforms.uInt.value = Math.min(Lk.aura[3], 1.2) * 0.6; sh.material.uniforms.uGrow.value = 0.03 * F; }
   for (const m of KN.hullMats) m.visible = false;      // no outline at this camera distance: the aura carries the silhouette
   const wt = tier(S.eq.weapon?.plus || 0); for (const m of KN.swordMats) { m.emissive.set(wt ? TIER_COL[wt] : 0xffffff); m.emissiveIntensity = wt ? 0.35 + wt * 0.25 : 0.12; }
   H3.tip = KN.tip;

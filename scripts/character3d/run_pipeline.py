@@ -75,7 +75,7 @@ def main():
                                                    "include_fingers": cfg.get("include_fingers", True)})["result"]; save(); print("rig:", S["rig_task"])
     if "rig" in todo: wait("rigging", S["rig_task"]); save()
 
-    acts = cfg["actions"]; batches = [acts[i:i + 10] for i in range(0, len(acts), 10)]
+    acts = cfg.get("actions", []); batches = [acts[i:i + 10] for i in range(0, len(acts), 10)]
     if "animate" in todo:
         S.setdefault("anim_tasks", [])
         for i, b in enumerate(batches):
@@ -86,7 +86,9 @@ def main():
     if "download" in todo:
         if not S.get("model"): S["model"] = call("GET", f"/multi-image-to-3d/{S['model_task']}")["model_urls"]["glb"]
         fetch(S["model"], os.path.join(out, "model.glb"))
-        for i, t in enumerate(S["anim_tasks"]):        # signed URLs expire: ask for fresh ones
+        if S.get("rig_task"):                          # the rigged character itself (the base for a merge without clips)
+            fetch(call("GET", f"/rigging/{S['rig_task']}")["result"]["rigged_character_glb_url"], os.path.join(out, "rigged.glb"))
+        for i, t in enumerate(S.get("anim_tasks", [])):        # signed URLs expire: ask for fresh ones
             url = call("GET", f"/animations/{t}")["result"]["animation_glb_url"]; fetch(url, os.path.join(out, f"anim{i + 1}.glb"))
 
     albedo = os.path.join(out, "albedo_painted.png")
@@ -97,7 +99,7 @@ def main():
 
     if "merge" in todo:
         dest = P(cfg["web_dir"]); os.makedirs(dest, exist_ok=True)
-        anims = [os.path.join(out, f"anim{i + 1}.glb") for i in range(len(S["anim_tasks"]))]
+        anims = [os.path.join(out, f"anim{i + 1}.glb") for i in range(len(S.get("anim_tasks", [])))] or [os.path.join(out, "rigged.glb")]   # no clips: the rigged model
         cmd = [sys.executable, os.path.join(HERE, "meshy_merge.py"), os.path.join(dest, cfg.get("web_name", "character") + ".gltf.json"), *anims, "--images", dest]
         if cfg.get("bake", True) and os.path.exists(albedo): cmd += ["--albedo", albedo]
         subprocess.run(cmd, check=True)

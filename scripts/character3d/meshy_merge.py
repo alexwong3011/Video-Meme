@@ -49,7 +49,7 @@ for p in more:
         for s in a["samplers"]: na["samplers"].append({"input": acc(s["input"]), "output": acc(s["output"]), "interpolation": s.get("interpolation", "LINEAR")})
         for c in a["channels"]:
             t = dict(c["target"]); t["node"] = names[nn[t["node"]]]; na["channels"].append({"sampler": c["sampler"], "target": t})
-        J["animations"].append(na); print("added", a["name"])
+        J.setdefault("animations", []).append(na); print("added", a["name"])
 # compact: keep only the buffer views something still points at
 used = sorted({a["bufferView"] for a in J["accessors"] if "bufferView" in a} | {i["bufferView"] for i in J.get("images", []) if "bufferView" in i})
 remap, NB = {}, bytearray()
@@ -65,4 +65,4 @@ for i in J.get("images", []):
 BIN = NB
 J["buffers"] = [{"byteLength": len(BIN), "uri": "data:application/octet-stream;base64," + base64.b64encode(bytes(BIN)).decode()}]
 json.dump(J, open(out, "w"), separators=(",", ":"))
-print("clips", [a["name"] for a in J["animations"]], "bytes", len(BIN))
+print("clips", [a["name"] for a in J.get("animations", [])], "bytes", len(BIN))
