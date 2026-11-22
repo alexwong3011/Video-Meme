@@ -2659,8 +2659,14 @@ function heroStats() {
 }
 const curPet = () => S && S.pet ? PETS.find(p => p.id === S.pet) : null;
 const curMount = () => S && S.mount ? MOUNTS.find(p => p.id === S.mount) : null;
-function skCd(sk) { return Math.max(0.1, sk.cdk / (HS ? HS.aps : 3)); }
-function skMp(sk) { return Math.ceil((HS ? HS.mp : 100) * sk.mpP); }
+// skills of the four classes (not the fire knight): 0.5 casts/s at the start, growing with attack speed like the basic attack (to 5/s);
+// the unlocked skills take turns (each waits for the others), a cast never blocks the basic attack, and its mana cost shrinks as the rate grows
+const SK_RATE0 = 0.5, SK_ROT = cls => cls !== 'fire';
+const SKD = { thunder: 1, ice: 1, elf: 1, holy: 1 };          // skill damage factor per class, tuned so a pack of monsters dies in about 5-6 s
+const skRate = () => SK_RATE0 * (HS ? HS.aps : 0.25) / CLS[S.cls].aps;
+const skOpen = () => SKILLS[S.cls].filter(k => S.lv >= k.lv).length || 1;
+function skCd(sk) { return SK_ROT(S.cls) ? skOpen() / skRate() : Math.max(0.1, sk.cdk / (HS ? HS.aps : 3)); }
+function skMp(sk) { return Math.ceil((HS ? HS.mp : 100) * sk.mpP * (SK_ROT(S.cls) ? 0.6 * SK_RATE0 / skRate() : 1)); }
 // recovery from hitting / killing monsters, capped per second so it never becomes god mode
 function recover(hpF, mpF) { const R = S.rec; if (S.time - R.t >= 1) { R.t = S.time; R.hp = R.mp = 0; }
   const h = Math.min(hpF, HS.hpCap - R.hp), m = Math.min(mpF, (HS.mpCap || REC.mpCap) - R.mp); if (h > 0) { R.hp += h; S.hp = Math.min(HS.hp, S.hp + HS.hp * h); } if (m > 0) { R.mp += m; S.mp = Math.min(HS.mp, S.mp + HS.mp * m); }
@@ -2974,7 +2980,7 @@ function updateProjs(dt) {
 
 // ---------- skills (template arc ring, beams and particles) ----------
 const sks = [];
-function skillReady(j, strict) { const sk = SKILLS[S.cls][j]; return S.lv >= sk.lv && S.skCd[j] <= 0 && (!strict || S.atkCd <= 0) && S.mp >= skMp(sk) && !S.dead; }
+function skillReady(j, strict) { const sk = SKILLS[S.cls][j], rot = SK_ROT(S.cls); return S.lv >= sk.lv && S.skCd[j] <= 0 && (rot ? (S.skG || 0) <= 0 : (!strict || S.atkCd <= 0)) && S.mp >= skMp(sk) && !S.dead; }
 let skNameT = [0, 0, 0];
 function heroRing(hex) { skillRing.visible = true; skillMat.uniforms.uT.value = 0; skillMat.uniforms.uC.value.set(hex); skillRing.position.set(S.pos.x, 0.6, S.pos.z); S.skillT = 0.001; }
 function castSkill(j, pref) {
@@ -2985,13 +2991,13 @@ function castSkill(j, pref) {
   if (self && sk.id !== 'blessing' && !mobsNear(S.pos.x, S.pos.z, 3.2).length) return false;
   const zoneSk = ['storm', 'blizzard', 'judg', 'arrowrain', 'meteor'];
   if (zoneSk.includes(sk.id)) { const live = sks.filter(o => o.sk === sk.id); if (live.length >= 3) { const o = live[0]; o.done = true; if (o.m && o.type === 'meteor') scene.remove(o.m); } }
-  S.mp -= skMp(sk); S.skCd[j] = skCd(sk); S.atkCd = 1 / HS.aps; S.castT = Math.min(0.3, 1 / HS.aps); if (KN.on) knAct(j); else fadeTo(H3.attack || 'Sword_Attack', 0.04, true, Math.max(1.4, HS.aps * 0.5));
+  S.mp -= skMp(sk); S.skCd[j] = skCd(sk); if (SK_ROT(S.cls)) { S.skG = 1 / skRate(); S.castT = Math.min(0.25, S.skG * 0.5); } else { S.atkCd = 1 / HS.aps; S.castT = Math.min(0.3, 1 / HS.aps); } if (KN.on) knAct(j); else fadeTo(H3.attack || 'Sword_Attack', 0.04, true, Math.max(1.4, HS.aps * 0.5));
   if (tg) S.face = Math.atan2(tg.x - S.pos.x, tg.z - S.pos.z);
   fxSkill(sk, tg);
   const col = ELC[sk.el]; // skill names are no longer shown when casting
   const nP = Math.round(40 * Math.min(1, skCd(sk) / 0.8));
   for (let i = 0; i < nP; i++) { const a = rr(0, 6.28), s = rr(3, 7); emit(S.pos.x, heroG.position.y + 0.7, S.pos.z, Math.cos(a) * s, rr(0, 2), Math.sin(a) * s, C3(col), 0.4, 0.6, 0, 0.9); }
-  const D = sk.mult, px = S.pos.x, pz = S.pos.z;
+  const D = sk.mult * (SKD[S.cls] || 1), px = S.pos.x, pz = S.pos.z;
   switch (sk.id) {
     case 'bolts': { const list = []; for (let n = 0; n < 5; n++) { const pool = mobsNear(tg.x, tg.z, 2.2); const m = pool.length ? pick(pool) : tg; list.push({ x: m.x + rr(-0.3, 0.3), z: m.z + rr(-0.3, 0.3) }); } sks.push({ type: 'boltseq', list, t: 0, n: 0, D }); break; }
     case 'storm': fxRing(tg.x, tg.z, 0, 2.6, col, 0.8); sks.push({ type: 'storm', sk: 'storm', x: tg.x, z: tg.z, R: 2.6, t: 0, dur: 2, tick: 0.1, D, col }); break;
@@ -3171,7 +3177,7 @@ function updateHero(dt, t) {
   if (heroSW.g) { heroSW.g.position.copy(wings.position); animSWings(heroSW.g, t, moving); }
   if (S.atkT > 0) { S.atkT += dt; slashMat.uniforms.uT.value = Math.min(1, S.atkT / 0.38); if (S.atkT > 0.38) { S.atkT = 0; slash.visible = false; } }
   if (S.skillT > 0) { S.skillT += dt; const k = clamp(S.skillT / 0.6, 0, 1); skillMat.uniforms.uT.value = k; skillRing.rotation.y = -k * 4; skillRing.position.set(S.pos.x, 0.6, S.pos.z); if (k >= 1) { S.skillT = 0; skillRing.visible = false; } }
-  S.atkCd = Math.max(0, S.atkCd - dt); S.castT = Math.max(0, S.castT - dt); for (let j = 0; j < 3; j++) S.skCd[j] = Math.max(0, S.skCd[j] - dt);
+  S.atkCd = Math.max(0, S.atkCd - dt); S.castT = Math.max(0, S.castT - dt); for (let j = 0; j < 3; j++) S.skCd[j] = Math.max(0, S.skCd[j] - dt); S.skG = Math.max(0, (S.skG || 0) - dt);
   const ooc = S.time - S.lastHit > 4; S.hp = Math.min(HS.hp, S.hp + HS.hp * (ooc ? 0.03 : 0.004) * dt); S.mp = Math.min(HS.mp, S.mp + (4 + S.lv * 0.05 + HS.mp * (HS.mpr || 0) / 100) * dt);
   aura.position.set(S.pos.x, 0.04, S.pos.z); aura.rotation.y = t * 0.4; heroBlob.position.set(S.pos.x, 0.03, S.pos.z); heroLight.position.set(S.pos.x, 2.2, S.pos.z); groundMat.uniforms.uHero.value.copy(S.pos);
   if (levelFxT > 0) { levelFxT -= dt; auraMat.uniforms.uC.value.setHex(0xffd36a); } else auraMat.uniforms.uC.value.setHex(0x4fc8ff);
