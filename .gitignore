@@ -6,3 +6,4 @@ remotion/.remotion/
 *.log
 .DS_Store
 __pycache__/
+scripts/character3d/work/
