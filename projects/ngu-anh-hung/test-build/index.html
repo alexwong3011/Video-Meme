@@ -202,6 +202,7 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 .slot.empty:hover,.slot.empty:focus-visible{border-color:#c9a24a;color:#f2d27a}
 .slot.empty .si{color:#c9a24a;border-color:rgba(242,210,122,.4)}
 .slot.empty .sd b{color:#cdbf9f}
+.gfxrow{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:12px}.gfxrow span{font:700 12px var(--ui);color:#c9b48a;margin-right:4px}
 .hname-in{display:flex;flex-direction:column;gap:4px;align-items:center;margin:8px auto 2px;font:600 12px var(--ui);color:#9fb2b2;max-width:280px}
 .hname-in input{width:100%;padding:8px 10px;border-radius:9px;border:1.5px solid rgba(242,210,122,.35);background:rgba(0,0,0,.35);color:#f2d27a;font:700 16px var(--display);text-align:center}
 .hname-in input:focus{outline:none;border-color:#f2d27a}
@@ -464,6 +465,8 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
     <h1 style="font-size:32px">Menu</h1>
     <p id="menuInfo"></p>
     <button class="btn" id="mResume">TIẾP TỤC</button><br>
+    <div class="gfxrow" role="group" aria-label="Chất lượng đồ họa"><span>Đồ họa</span><button class="pb" data-gfx="auto">Tự động</button><button class="pb" data-gfx="high">Cao</button><button class="pb" data-gfx="low">Thấp</button></div>
+    <p class="small" id="gfxNote" style="margin:2px 0 6px"></p>
     <button class="pb" id="mSave" style="margin-top:10px">Lưu game</button>
     <button class="pb" id="mHome" style="margin-top:10px">Đổi nhân vật</button>
     <p id="mMsg" class="small" style="min-height:18px"></p>
@@ -518,7 +521,9 @@ try {
   document.body.insertAdjacentHTML('beforeend', '<div id="err">Trình duyệt này không bật được WebGL. Hãy mở bằng Chrome hoặc Safari bản mới.</div>');
   throw e;
 }
-let DPR = Math.min(window.devicePixelRatio || 1, 2);
+let GFX = 'auto'; try { GFX = localStorage.getItem('nah-gfx') || 'auto'; } catch (e) { }
+const gfxDPR = () => GFX === 'low' ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+let DPR = gfxDPR();
 renderer.setPixelRatio(DPR);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1417,10 +1422,10 @@ function knTick(dt, t, moving) {
   // armour level: tint, rim, running light, a close shell at the silhouette and thin smoke wisps rising from the body
   const lv = knArmorLevel(), Lk = knLook(lv); KN_U.uTime.value = t;
   // the game's tone mapping and bloom lift emissive light a lot more than the flat test page: keep the armour's own colours readable
-  Lk.tint = Lk.tint.map(v => 1 + (v - 1) * 0.55); Lk.rim[3] *= 0.6; Lk.flow[3] *= 0.5;
+  Lk.tint = Lk.tint.map(v => 1 + (v - 1) * 0.55); Lk.rim[3] *= 0.6 * paleK(); Lk.flow[3] *= 0.5 * paleK();
   KN_U.uRimColor.value.setRGB(Lk.rim[0], Lk.rim[1], Lk.rim[2]); KN_U.uRimInt.value = Lk.rim[3]; KN_U.uFlowColor.value.setRGB(Lk.flow[0], Lk.flow[1], Lk.flow[2]); KN_U.uFlowInt.value = Lk.flow[3];
   for (const m of KN.armorMats) { m.color.copy(m.userData.base0).multiply(new THREE.Color(Lk.tint[0], Lk.tint[1], Lk.tint[2])); m.envMapIntensity = Lk.env; m.roughness = m.roughnessMap ? Lk.rough : 0.5 * Lk.rough; }
-  for (const sh of KN.auras) { sh.visible = Lk.aura[3] > 0.01 && sh.userData.piece.visible; sh.material.uniforms.uColor.value.setRGB(Lk.aura[0], Lk.aura[1], Lk.aura[2]); sh.material.uniforms.uInt.value = Math.min(Lk.aura[3], 1.2) * 0.6; sh.material.uniforms.uGrow.value = 0.03 * F; }
+  for (const sh of KN.auras) { sh.visible = Lk.aura[3] > 0.01 && sh.userData.piece.visible; sh.material.uniforms.uColor.value.setRGB(Lk.aura[0], Lk.aura[1], Lk.aura[2]); sh.material.uniforms.uInt.value = Math.min(Lk.aura[3], 1.2) * 0.6 * paleK(); sh.material.uniforms.uGrow.value = 0.03 * F; }
   for (const m of KN.hullMats) m.visible = false;      // no outline at this camera distance: the aura carries the silhouette
   const wt = tier(S.eq.weapon?.plus || 0); for (const m of KN.swordMats) { m.emissive.set(wt ? TIER_COL[wt] : 0xffffff); m.emissiveIntensity = wt ? 0.35 + wt * 0.25 : 0.12; }
   H3.tip = KN.tip;
@@ -1791,8 +1796,11 @@ function heroAuraPoint(H) {
   const d = new THREE.Vector3(p.x - c.x, 0, p.z - c.z); if (d.lengthSq() < 1e-6) d.set(Math.random() - 0.5, 0, Math.random() - 0.5); d.normalize();
   return p.addScaledVector(d, (0.06 + Math.random() * 0.1) * H);       // from the edges of the body, not over the chest
 }
+// pale sets (white marble, pearl, silver): their aura and smoke are dimmed so the armour keeps its detail under the bloom
+const PALE_SETS = { olym: 1, song: 1 };
+const paleK = () => { if (!S) return 1; let n = 0; for (const k of BODY_SLOTS) if (S.eq[k] && PALE_SETS[S.eq[k].set]) n++; return n >= 3 ? 0.5 : 1; };
 function heroAuraTick(dt, t) {
-  const on = !!(S && heroG.visible && !S.dead), lv = on ? knArmorLevel() : 0, Lk = knLook(lv), A = Lk.aura[3] * (lv >= 7 ? 1 : 0.6), rgb = Lk.aura.slice(0, 3);
+  const on = !!(S && heroG.visible && !S.dead), lv = on ? knArmorLevel() : 0, Lk = knLook(lv), A = Lk.aura[3] * (lv >= 7 ? 1 : 0.6) * paleK(), rgb = Lk.aura.slice(0, 3);
   const H = HERO_H * heroG.scale.x;
   if (!AURA.pool) { AURA.pool = new THREE.Mesh(new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: FX3.tex('flare', 'pale'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); AURA.pool.renderOrder = 2; scene.add(AURA.pool); }
   AURA.pool.visible = on && A > 0.01; if (!AURA.pool.visible) return;
@@ -4043,9 +4051,13 @@ function startRun(fresh) {
   if (fresh) log('Chào mừng đến Ngũ Anh Hùng! Chạm vào nền để di chuyển, chạm vào quái để đánh. Tự động đánh đang bật. Mở túi đồ để khảm linh thạch và chế cánh.', '#9fe8ff');
   saveGame();
 }
-function openMenu() { $('menuOv').classList.remove('hide'); paused = true; const h = Math.floor(S.playT / 3600), mi = Math.floor(S.playT / 60) % 60; const L = S.lvLog.filter(e => e[0] >= S.playT - 600); const pace = L.length > 1 ? (L[L.length - 1][1] - L[0][1]) / Math.max(60, L[L.length - 1][0] - L[0][0]) * 3600 : 0;
+function openMenu() { $('menuOv').classList.remove('hide'); paused = true; gfxUI(); const h = Math.floor(S.playT / 3600), mi = Math.floor(S.playT / 60) % 60; const L = S.lvLog.filter(e => e[0] >= S.playT - 600); const pace = L.length > 1 ? (L[L.length - 1][1] - L[0][1]) / Math.max(60, L[L.length - 1][0] - L[0][0]) * 3600 : 0;
   $('menuInfo').innerHTML = `<b>${escH(S.name || '')}</b> · ${CLS[S.cls].name} · Cấp <b>${S.lv}</b> / ${MAXLV} · ${MAPS[S.map].name}<br>Đã chơi ${h} giờ ${mi} phút${pace ? ` · tốc độ gần đây ≈ <b>${Math.round(pace)}</b> cấp/giờ` : ''}`; $('mMsg').textContent = ''; $('mResume').focus(); }
 let paused = false;
+const GFX_NOTE = { auto: 'Tự hạ độ nét khi máy chậm để giữ mượt.', high: 'Luôn nét nhất (có thể nóng máy, tốn pin).', low: 'Nhẹ máy, hình mờ hơn.' };
+function setGfx(g) { GFX = g; try { localStorage.setItem('nah-gfx', g); } catch (e) { } DPR = gfxDPR(); renderer.setPixelRatio(DPR); onResize(); fpsAcc = fpsN = fpsCheck = 0; gfxUI(); }
+function gfxUI() { document.querySelectorAll('[data-gfx]').forEach(b => { b.classList.toggle('pri', b.dataset.gfx === GFX); b.setAttribute('aria-pressed', String(b.dataset.gfx === GFX)); }); $('gfxNote').textContent = GFX_NOTE[GFX]; }
+document.querySelectorAll('[data-gfx]').forEach(b => b.onclick = () => setGfx(b.dataset.gfx));
 $('mResume').onclick = () => { $('menuOv').classList.add('hide'); paused = false; };
 $('mSave').onclick = async () => { $('mMsg').textContent = 'Đang lưu...'; const r = await saveGame(); $('mMsg').textContent = r && r.any ? `Đã lưu lúc ${new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}${Store.db ? (r.cloud ? ' (đám mây + máy này)' : ' (chỉ máy này)') : ''}.` : 'Không lưu được trên trình duyệt này.'; };
 $('mHome').onclick = async () => { await saveGame(); running = false; paused = false; CUR = -1; $('menuOv').classList.add('hide'); $('hud').classList.add('hide'); closeBag(); closeMap(); $('startOv').classList.remove('hide'); updateStartUI(); };
@@ -4057,8 +4069,9 @@ const SAFE_SHADER = { uniforms: { tDiffuse: { value: null } },
   fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
     float ok(float v){ return (v >= 0.0 && v < 1.0e4) ? v : (v >= 1.0e4 ? 1.0e4 : 0.0); }   // NaN fails both tests -> 0
     void main(){ vec4 c = texture2D(tDiffuse, vUv); gl_FragColor = vec4(ok(c.r), ok(c.g), ok(c.b), ok(c.a)); }` };
+let bloomPass = null;
 function makeComposer() { const w = innerWidth, h = innerHeight; const rt = new THREE.WebGLRenderTarget(w * DPR, h * DPR, { type: THREE.HalfFloatType, samples: 4 }); const c = new EffectComposer(renderer, rt); c.setPixelRatio(DPR); c.setSize(w, h);
-  c.addPass(new RenderPass(scene, camera)); c.addPass(new ShaderPass(SAFE_SHADER)); c.addPass(new UnrealBloomPass(new THREE.Vector2(w / 2, h / 2), 0.35, 0.4, 0.95)); c.addPass(new OutputPass()); return c; }
+  c.addPass(new RenderPass(scene, camera)); c.addPass(new ShaderPass(SAFE_SHADER)); bloomPass = new UnrealBloomPass(new THREE.Vector2(w / 2, h / 2), 0.28, 0.4, 1.0); c.addPass(bloomPass);     /* softer bloom with a higher threshold: white armour no longer washes out */ c.addPass(new OutputPass()); return c; }
 let composer = makeComposer(), fitCam = true;
 const CAM_ZOOM = 1.3 * 1.2 * 1.3;      // the follow camera sits ~2x closer than the sample's (1.3, then 1.2, then 1.3 more)
 function onResize() { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.fov = innerHeight > innerWidth ? 46 : 36; camera.updateProjectionMatrix(); composer.dispose?.(); composer = makeComposer(); const s = innerHeight * DPR * 0.5; pMat.uniforms.uScale.value = s; moteMats.forEach(m => m.uniforms.uScale.value = s); }
@@ -4085,7 +4098,7 @@ function frame() {
   else { camera.position.set(Math.sin(t * 0.08) * 14, 10, Math.cos(t * 0.08) * 14); camera.lookAt(0, 0.5, 0); }
   aura.visible = !!S;
   composer.render(dt);
-  fpsAcc += dt; fpsN++; fpsCheck += dt; if (fpsCheck > 5 && DPR > 1) { if (fpsN / fpsAcc < 38) { DPR = Math.max(1, DPR - 0.5); renderer.setPixelRatio(DPR); onResize(); } fpsAcc = fpsN = fpsCheck = 0; }
+  fpsAcc += dt; fpsN++; fpsCheck += dt; if (fpsCheck > 5 && DPR > 1 && GFX === 'auto') { if (fpsN / fpsAcc < 38) { DPR = Math.max(1, DPR - 0.5); renderer.setPixelRatio(DPR); onResize(); } fpsAcc = fpsN = fpsCheck = 0; }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
