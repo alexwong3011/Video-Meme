@@ -2373,8 +2373,8 @@ Object.assign(MT, {
 // H: height in hero heights; L: or the longest side in hero heights (for long creatures); yaw: turns the model to face +Z; fy: hover height
 const BOSS3D = {
   bossJelly: { kind: 'jelly', H: 2.1, fy: 0.5, glow: 0.35, wA: 0.09, wY: [0.55, 0.0] },
-  bossFishNight: { kind: 'fish', L: 2.4, fy: 0.9, glow: 0.18, yaw: 0 },
-  bossFish: { kind: 'fish', L: 2.3, fy: 0.8, glow: 0.12, yaw: 0 },
+  bossFishNight: { kind: 'fish', L: 2.4, fy: 0.9, glow: 0.18, yaw: Math.PI / 2 },
+  bossFish: { kind: 'fish', L: 2.3, fy: 0.8, glow: 0.12, yaw: Math.PI / 2 },
   bossKelpSerpent: { kind: 'serpent', H: 2.1, fy: 0, glow: 0.12, wA: 0.07, wY: [0.35, 1.0] },
   bossLava: { kind: 'jelly', H: 2.1, fy: 0.5, glow: 0.55, wA: 0.09, wY: [0.55, 0.0] },
   bossFlame: { kind: 'float', H: 2.2, fy: 0.25, glow: 0.6, wA: 0.06, wY: [0.45, 0.0] },
