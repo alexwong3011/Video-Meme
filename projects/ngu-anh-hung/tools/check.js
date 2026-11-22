@@ -11,7 +11,7 @@ const HOOK = "window.__T = { get S() { return S; }, get HS() { return HS; }, get
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const pg = await b.newPage({ viewport: { width: 430, height: 860 }, deviceScaleFactor: 2 });
+  const [VW, VH] = (process.env.VIEW || '430x860').split('x').map(Number); const pg = await b.newPage({ viewport: { width: VW, height: VH }, deviceScaleFactor: VW > 800 ? 1 : 2 });
   const errs = []; pg.on('console', m => { if (m.type() === 'error' && !/ERR_FAILED/.test(m.text())) errs.push(m.text()); }); pg.on('pageerror', e => errs.push('PAGEERR ' + e.message));
   await pg.route('**/*', r => { const u = new URL(r.request().url());
     if (u.hostname === 'cdn.jsdelivr.net') return r.fulfill({ path: path.join(THREE_DIR, u.pathname.replace(/^\/npm\/three@[^/]+\//, '')), contentType: 'application/javascript' });
