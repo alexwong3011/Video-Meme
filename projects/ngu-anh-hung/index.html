@@ -2663,6 +2663,8 @@ const curMount = () => S && S.mount ? MOUNTS.find(p => p.id === S.mount) : null;
 // the unlocked skills take turns (each waits for the others), a cast never blocks the basic attack, and its mana cost shrinks as the rate grows
 const SK_RATE0 = 0.5, SK_ROT = cls => true;          // every class, the fire knight included
 const SKD = { fire: 1, thunder: 1, ice: 0.9, elf: 1.3, holy: 1.1 };
+const BAK = { fire: 1, thunder: 1, ice: 1, elf: 1, holy: 1 };       // basic attack damage factor per class (same pacing target)
+const atkDmgK = () => BAK[S.cls] || 1;
 const skDmgK = () => (SKD[S.cls] || 1) / (1 + S.lv / 60);      /* gear grows faster than monster health: the skill share shrinks with level so a pack still takes ~5-6 s */          // skill damage factor per class, tuned so a pack of monsters dies in about 5-6 s
 const skRate = () => SK_RATE0 * (HS ? HS.aps : 0.25) / CLS[S.cls].aps;
 const skOpen = () => SKILLS[S.cls].filter(k => S.lv >= k.lv).length || 1;
@@ -2954,8 +2956,8 @@ function attack(pref) {
     slash.visible = true; slashMat.uniforms.uT.value = 0; slashMat.uniforms.uC.value.set(S.cls === 'thunder' ? '#c8b0ff' : '#8ff0ff');
     slash.position.set(S.pos.x, heroG.position.y + HERO_H * 0.5, S.pos.z); slash.rotation.y = S.face - Math.PI / 2;
     setTimeout(() => { if (!S || S.dead) return; for (const m of mobs) { if (m.dead) continue; const dx = m.x - S.pos.x, dz = m.z - S.pos.z, d = Math.hypot(dx, dz); if (d > Cl.range + (m.boss ? 1 : 0)) continue;
-        let da = Math.atan2(dx, dz) - S.face; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) < 1.25 || d < 0.6) { hitMob(m, 1, Cl.el); if (S.cls === 'fire') burn(m, 0.4); if (S.cls === 'thunder' && Math.random() < 0.2) chain(m); } } }, Math.min(120, 600 / HS.aps));
-  } else { const from = heroTip(); const p = { type: Cl.proj, m: PROJM[Cl.proj](), pos: from.clone(), tgt: tg, speed: Cl.ps, mult: 1, el: Cl.el }; p.m.position.copy(from); scene.add(p.m); projs.push(p); }
+        let da = Math.atan2(dx, dz) - S.face; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) < 1.25 || d < 0.6) { hitMob(m, atkDmgK(), Cl.el); if (S.cls === 'fire') burn(m, 0.4); if (S.cls === 'thunder' && Math.random() < 0.2) chain(m); } } }, Math.min(120, 600 / HS.aps));
+  } else { const from = heroTip(); const p = { type: Cl.proj, m: PROJM[Cl.proj](), pos: from.clone(), tgt: tg, speed: Cl.ps, mult: atkDmgK(), el: Cl.el }; p.m.position.copy(from); scene.add(p.m); projs.push(p); }
 }
 function chain(m0) { const list = [m0]; for (let j = 0; j < 2; j++) { const l = list[list.length - 1]; let b = null, bd = 3; for (const m of mobs) { if (m.dead || list.includes(m)) continue; const d = Math.hypot(m.x - l.x, m.z - l.z); if (d < bd) { bd = d; b = m; } } if (!b) break; list.push(b); }
   fxBolt([heroTip(), ...list.map(m => new THREE.Vector3(m.x, mobH(m), m.z))], '#c8a8ff', 0.22);
