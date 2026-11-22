@@ -2300,11 +2300,14 @@ const WINGM = [1, 1.3, 1.5, 1.8, 2.2], WCOST = [5, 10, 18, 30], WNAME = ['Chưa 
 const WDEF = [0, 6, 14, 26, 42, 64], WHP = [0, 60, 150, 300, 520, 800];
 
 // gear
-const SLOTS = { weapon: { n: 'Vũ khí', base: { atk: 12 } }, helm: { n: 'Mũ', base: { def: 4, hp: 30 } }, armor: { n: 'Giáp', base: { def: 8, hp: 60 } }, ring: { n: 'Nhẫn', base: { hp: 40, crit: 2 } }, pendant: { n: 'Dây chuyền', base: { hp: 25 } }, shield: { n: 'Khiên', base: { def: 10, hp: 45 } } };
+const SLOTS = { weapon: { n: 'Vũ khí', base: { atk: 12 } }, helm: { n: 'Mũ', base: { def: 4, hp: 30 } }, armor: { n: 'Giáp', base: { def: 8, hp: 60 } }, ring: { n: 'Nhẫn', base: { hp: 40, crit: 2, mpr: 0.4 } }, pendant: { n: 'Dây chuyền', base: { hp: 25, mpl: 0.3 } }, shield: { n: 'Khiên', base: { def: 10, hp: 45 } } };
 const SLOT_ORDER = ['helm', 'armor', 'pants', 'gloves', 'boots', 'weapon', 'shield', 'ring', 'pendant'];   // MU-style: five body pieces, weapon, shield, ring, pendant
 const AS_SLOTS = ['weapon', 'pendant']; // attack speed rolls only on the key items
 const ASR = [1, 1.15, 1.3, 1.45]; // attack-speed multiplier by rarity
-const STAT_N = { atk: 'Tấn công', def: 'Phòng thủ', hp: 'Máu', crit: 'Chí mạng %', as: 'Tốc đánh' };
+const STAT_N = { atk: 'Tấn công', def: 'Phòng thủ', hp: 'Máu', crit: 'Chí mạng %', as: 'Tốc đánh', mpr: 'Hồi mana %/giây', mpl: 'Hút mana %/đòn' };
+// stats rolled as a percentage: they grow with rarity (x1..x4) and each + level, not with the item level
+const PCT = { crit: 0.5, mpr: 0.1, mpl: 0.08 };      // value added per + level
+const pctBase = (slot, k, r) => +(SLOTS[slot].base[k] * (r + 1)).toFixed(2);
 const RARITY = [{ n: 'Thường', c: 0xdfe7ea, css: '#dfe7ea' }, { n: 'Hiếm', c: 0x38a2ff, css: '#38a2ff' }, { n: 'Sử thi', c: 0xd9a03a, css: '#d9a03a' }, { n: 'Huyền thoại', c: 0xff4f4f, css: '#ff4f4f' }];   // white, ocean blue, golden brown, red
 const RMULT = [1, 1.45, 2.1, 3];
 const SETS = {
@@ -2590,7 +2593,10 @@ const mobExp = lv => 10 + 3 * lv;
 const expNeed = lv => Math.round(lvSeconds(lv) * killRef(lv) * mobExp(lv));
 // late-game difficulty doubles from Lv100 to Lv400 and stays ×2 above
 const hardK = lv => 1 + clamp((lv - 100) / 300, 0, 1);
-const mobHp = lv => Math.round(60 * (1 + 0.3 * (lv - 1)) * (1 + lv / 180) * hardK(lv));
+const MOB_HP_K = 8;          // every monster has 8x the sample's health (player request)
+const mobHp = lv => Math.round(60 * (1 + 0.3 * (lv - 1)) * (1 + lv / 180) * hardK(lv) * MOB_HP_K);
+// aggression: monsters notice the hero from further, chase faster, strike more often and a little harder; bosses x2 attack and x2 speed
+const MOB_FURY = { aggro: 1.25, chase: 1.12, rate: 0.8, atk: 1.1 }, BOSS_K = { atk: 2, speed: 2 };
 const mobAtk = lv => Math.round((16 + 2.4 * lv + lv * lv / 400) * hardK(lv));
 // level suppression: fighting monsters above your level hurts both ways
 const lvDealK = gap => gap > 0 ? 1 / (1 + gap * 0.012) : 1;   // your damage to a higher-level monster
@@ -2627,20 +2633,20 @@ function newState(cls) { return { v: 2, cls, lv: 1, exp: 0, gold: 0, mats: { e: 
   pets: [], pet: null, mounts: [], mount: null, playT: 0, autoLoot: true, lootF: lootDefaults(), bossHunt: false, miniT: 70, mini: null, rec: { t: 0, hp: 0, mp: 0 }, lvLog: [] }; }
 let uidN = 1; const uid = () => 'i' + Date.now().toString(36) + (uidN++);
 function makeGear(slot, r, lv, set) {
-  const base = {}; for (const k in SLOTS[slot].base) base[k] = k === 'crit' ? SLOTS[slot].base[k] * (r + 1) : Math.round(SLOTS[slot].base[k] * RMULT[r] * (1 + lv * 0.09));
+  const base = {}; for (const k in SLOTS[slot].base) base[k] = PCT[k] ? pctBase(slot, k, r) : Math.round(SLOTS[slot].base[k] * RMULT[r] * (1 + lv * 0.09));
   if (AS_SLOTS.includes(slot)) base.as = gearAS(lv, r); if (set && !SETS[set].names[slot]) set = null;
   return { id: uid(), slot, r, lv, name: set ? SETS[set].names[slot] : pick(PLAIN[slot]), base, plus: 0, set: set || null };
 }
 const gearAS = (lv, r) => Math.round((10 + 0.3 * lv) * ASR[r]);
-function gearStats(g) { const o = {}; for (const k in g.base) o[k] = k === 'crit' ? +(g.base[k] + g.plus * 0.5).toFixed(1) : k === 'as' ? g.base[k] + g.plus : Math.round(g.base[k] * plusMult(g.plus)); return o; }
-const gearScore = g => { const s = gearStats(g); return (s.atk || 0) * 3 + (s.def || 0) * 2.5 + (s.hp || 0) * 0.25 + (s.crit || 0) * 4 + (s.as || 0) * 4 + (g.set ? 6 : 0); };
+function gearStats(g) { const o = {}; for (const k in g.base) o[k] = PCT[k] ? +(g.base[k] + g.plus * PCT[k]).toFixed(2) : k === 'as' ? g.base[k] + g.plus : Math.round(g.base[k] * plusMult(g.plus)); return o; }
+const gearScore = g => { const s = gearStats(g); return (s.atk || 0) * 3 + (s.def || 0) * 2.5 + (s.hp || 0) * 0.25 + (s.crit || 0) * 4 + (s.as || 0) * 4 + (s.mpr || 0) * 8 + (s.mpl || 0) * 8 + (g.set ? 6 : 0); };
 const WPRICE = [0, 2500, 9000, 26000, 70000];
 const sellPrice = g => g.slot === 'wings' ? WPRICE[g.tier] || 0 : Math.round((20 + g.lv * 6) * RMULT[g.r] * (1 + g.plus * 0.3) * (g.charm ? CHARMS[g.charm].pv : 1));
 function setCounts() { const c = {}, seen = new Set(); for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g || !g.set || seen.has(g.set + g.slot)) continue; seen.add(g.set + g.slot); c[g.set] = (c[g.set] || 0) + 1; } return c; }   // two weapons of one set count once
 function makeWing(t, lv) { return { id: uid(), slot: 'wings', tier: t, r: Math.min(3, t - 1), lv: lv || 1, name: WNAME[t], base: {}, plus: 0, set: null }; }
 function heroStats() {
   S.wing = S.eq.wings ? S.eq.wings.tier : 0;      /* the worn wing item sets the wing level */
-  const Cl = CLS[S.cls]; const st = { atk: (12 + S.lv * 3.2) * Cl.atk, def: S.lv * 1.2, hp: (380 + S.lv * 55) * Cl.hp, mp: 100 + S.lv * 3, crit: 0, as: Math.round(S.lv * 0.1) };
+  const Cl = CLS[S.cls]; const st = { atk: (12 + S.lv * 3.2) * Cl.atk, def: S.lv * 1.2, hp: (380 + S.lv * 55) * Cl.hp, mp: 100 + S.lv * 3, crit: 0, as: Math.round(S.lv * 0.1), mpr: 0, mpl: 0 };
   for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g) continue; const gs = gearStats(g); if (s === 'shield' && g.slot === 'weapon') for (const k in OFFHAND) if (gs[k]) gs[k] = Math.round(gs[k] * OFFHAND[k]); for (const k in gs) st[k] += gs[k]; }
   st.def += WDEF[S.wing]; st.hp += WHP[S.wing]; st.as += S.wing * 8;
   const P = curPet(), Mt = curMount(); if (P) st.as += P.as; if (Mt) { st.as += Mt.as; st.def *= 1 + Mt.defP; st.hp *= 1 + Mt.hpP; }
@@ -2649,7 +2655,7 @@ function heroStats() {
   st.atk = Math.round(st.atk * (1 + b.atkP)); st.hp = Math.round(st.hp * (1 + b.hpP)); st.def = Math.round(st.def * (1 + b.defP)); st.crit += b.crit;
   const ch = { dmg: 0, hp: 0, mp: 0, soul: 0 }; for (const g of S.inv) if (g.slot === 'charm') ch[g.charm] += qty(g); for (const k in ch) ch[k] = Math.min(CHARM_CAP, ch[k]); st.charms = ch; st.hp = Math.round(st.hp * (1 + ch.hp * 0.01)); st.mp = Math.round(st.mp * (1 + ch.mp * 0.01));
   st.dmgMul = WINGM[S.wing] * (1 + b.dmgP) * (1 + ch.dmg * 0.01) * (1 + ch.soul * 0.01); st.dr = ch.soul * 0.003; st.sets = sc; st.aps = apsOf(Cl.aps, st.as);
-  st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.spd = (4.6 + S.wing * 0.3) * 0.6 * 0.7 * (1 + (Mt ? Mt.spd : 0)); return st;   // move speed -30% (player feedback)
+  st.loot = P ? P.loot : 0.9; st.expB = P ? P.exp : 0; st.goldB = P ? P.gold : 0; st.hpCap = REC.hpCap + (P ? P.rec : 0); st.mpCap = REC.mpCap + st.mpl / 100 * 4; st.spd = (4.6 + S.wing * 0.3) * 0.6 * 0.7 * (1 + (Mt ? Mt.spd : 0)); return st;   // move speed -30% (player feedback)
 }
 const curPet = () => S && S.pet ? PETS.find(p => p.id === S.pet) : null;
 const curMount = () => S && S.mount ? MOUNTS.find(p => p.id === S.mount) : null;
@@ -2657,7 +2663,7 @@ function skCd(sk) { return Math.max(0.1, sk.cdk / (HS ? HS.aps : 3)); }
 function skMp(sk) { return Math.ceil((HS ? HS.mp : 100) * sk.mpP); }
 // recovery from hitting / killing monsters, capped per second so it never becomes god mode
 function recover(hpF, mpF) { const R = S.rec; if (S.time - R.t >= 1) { R.t = S.time; R.hp = R.mp = 0; }
-  const h = Math.min(hpF, HS.hpCap - R.hp), m = Math.min(mpF, REC.mpCap - R.mp); if (h > 0) { R.hp += h; S.hp = Math.min(HS.hp, S.hp + HS.hp * h); } if (m > 0) { R.mp += m; S.mp = Math.min(HS.mp, S.mp + HS.mp * m); }
+  const h = Math.min(hpF, HS.hpCap - R.hp), m = Math.min(mpF, (HS.mpCap || REC.mpCap) - R.mp); if (h > 0) { R.hp += h; S.hp = Math.min(HS.hp, S.hp + HS.hp * h); } if (m > 0) { R.mp += m; S.mp = Math.min(HS.mp, S.mp + HS.mp * m); }
 }
 let HS = null;
 function rates() { const Cl = CLS[S.cls], o = {}; for (const k of SK) { const s = STONES[k]; const base = s.stat === 'crit' ? (Cl.crit || BASE_RATE.crit) : BASE_RATE[s.stat]; o[s.stat] = Math.min(s.cap, base + s.inc * (S.st[k] || 0)); } o.crit = Math.min(0.85, o.crit + (HS ? HS.crit : 0) / 100); return o; }
@@ -2774,13 +2780,13 @@ function addMob(k, lv, x, z, zone, mini = false) {
   const shadow = blob(B3 ? B3.r * 1.5 : (T.model === 'fish' ? 1.6 : 1.3) * scale); scene.add(shadow); scene.add(v.group);
   const el = document.createElement('div'); el.className = 'lbl'; el.style.display = 'none';
   el.innerHTML = `<div class="nm" style="color:${T.color}">${mini ? '★ ' : ''}${T.name} · Lv ${lv}</div><div class="hp${boss || mini ? ' b' : ''}"><i></i></div>`; labelsEl.appendChild(el);
-  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 60 : mini ? 15 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 4 : mini ? 2.5 : 1),
+  const m = { ...v, T, k, lv, boss, zone, x, z, home: { x, z }, scale, shadow, el, bar: el.querySelector('.hp i'), hpEl: el.querySelector('.hp'), mini, baseE: v.mats[0].emissive ? v.mats[0].emissive.clone() : null, maxHp: mobHp(lv) * (zone.hk || 1) * (boss ? 60 : mini ? 15 : 1), atk: mobAtk(lv) * (zone.hk || 1) * (boss ? 4 * BOSS_K.atk : mini ? 2.5 : 1) * MOB_FURY.atk,
     hp: 0, face: rr(0, 6.28), state: 'idle', wait: rr(0, 3), flash: 0, dead: 0, respawn: 0, aggro: false, atkCd: 0, phase: rr(0, 6.28), spawnT: 0.6 };
   m.hp = m.maxHp; mobs.push(m); return m;
 }
 // zone monsters follow the hero's level inside the map's range (grind anywhere in the map)
 function zoneLv(zn) { const M = MAPS[S.map]; return clamp(S.lv + (zn.off || 0) + ri(-1, 1), M.lo, M.hi); }
-function setMobLv(m, lv) { m.lv = lv; m.maxHp = mobHp(lv) * (m.zone.hk || 1); m.atk = mobAtk(lv) * (m.zone.hk || 1); m.el.querySelector('.nm').textContent = `${m.mini ? '★ ' : ''}${m.T.name} · Lv ${lv}`; }
+function setMobLv(m, lv) { m.lv = lv; m.maxHp = mobHp(lv) * (m.zone.hk || 1); m.atk = mobAtk(lv) * (m.zone.hk || 1) * MOB_FURY.atk; m.el.querySelector('.nm').textContent = `${m.mini ? '★ ' : ''}${m.T.name} · Lv ${lv}`; }
 function removeMob(m) { scene.remove(m.group); scene.remove(m.shadow); m.el.remove(); }
 const mobH = m => m.T.y + m.T.hh * m.scale;
 function vuln(m, el) { let k = 1; if (m.frzT > 0) k *= 1.3; if (m.shockT > 0) k *= 1.2; if (m.burnT > 0) k *= 1.15; if (m.wetT > 0) k *= (el === 'ice' || el === 'thunder') ? 1.35 : 1.1; return k; }
@@ -2788,7 +2794,7 @@ const DMG_TEXT = 0.6; // damage numbers at 60% of their old size (min 9px)
 const dmgSize = px => Math.max(9, Math.round(px * DMG_TEXT));
 function hitMob(m, mult, el, show = true) {
   if (m.dead) return; const r = roll(); const dmg = HS.atk * mult * HS.dmgMul * DMG_SCALE * hitK(S.cls, HS.as) * rr(0.9, 1.1) * vuln(m, el) * r.m * lvDealK(m.lv - S.lv);
-  m.hp -= dmg; m.flash = 1; m.aggro = true; m.tgt = null; recover(REC.hpHit, REC.mpHit); show = show && textN < 34;
+  m.hp -= dmg; m.flash = 1; m.aggro = true; m.tgt = null; recover(REC.hpHit, REC.mpHit + (HS.mpl || 0) / 100); show = show && textN < 34;
   if (show) { const y = m.T.y + 0.9 * Math.max(1, m.scale);
     fxText(m.x + rr(-0.3, 0.3), m.z, fmtN(dmg), r.ty === 'n' ? '' : DMGC[r.ty], dmgSize({ n: 17, c: 22, p: 23, d: 24, t: 26, x: 30 }[r.ty] + Math.max(0, r.L - 1) * 2), r.ty === 'n' ? null : { glow: r.ty === 'x' || r.L >= 3, life: 1.1 }, y);
     if (r.L >= 2) fxText(m.x, m.z, (r.L >= 3 ? 'SIÊU ĐÒN ' : '') + '×' + (Math.round(r.m * 10) / 10), DMGC[r.ty], dmgSize(13), { life: 1.3, glow: true }, y + 0.55);
@@ -3166,7 +3172,7 @@ function updateHero(dt, t) {
   if (S.atkT > 0) { S.atkT += dt; slashMat.uniforms.uT.value = Math.min(1, S.atkT / 0.38); if (S.atkT > 0.38) { S.atkT = 0; slash.visible = false; } }
   if (S.skillT > 0) { S.skillT += dt; const k = clamp(S.skillT / 0.6, 0, 1); skillMat.uniforms.uT.value = k; skillRing.rotation.y = -k * 4; skillRing.position.set(S.pos.x, 0.6, S.pos.z); if (k >= 1) { S.skillT = 0; skillRing.visible = false; } }
   S.atkCd = Math.max(0, S.atkCd - dt); S.castT = Math.max(0, S.castT - dt); for (let j = 0; j < 3; j++) S.skCd[j] = Math.max(0, S.skCd[j] - dt);
-  const ooc = S.time - S.lastHit > 4; S.hp = Math.min(HS.hp, S.hp + HS.hp * (ooc ? 0.03 : 0.004) * dt); S.mp = Math.min(HS.mp, S.mp + (4 + S.lv * 0.05) * dt);
+  const ooc = S.time - S.lastHit > 4; S.hp = Math.min(HS.hp, S.hp + HS.hp * (ooc ? 0.03 : 0.004) * dt); S.mp = Math.min(HS.mp, S.mp + (4 + S.lv * 0.05 + HS.mp * (HS.mpr || 0) / 100) * dt);
   aura.position.set(S.pos.x, 0.04, S.pos.z); aura.rotation.y = t * 0.4; heroBlob.position.set(S.pos.x, 0.03, S.pos.z); heroLight.position.set(S.pos.x, 2.2, S.pos.z); groundMat.uniforms.uHero.value.copy(S.pos);
   if (levelFxT > 0) { levelFxT -= dt; auraMat.uniforms.uC.value.setHex(0xffd36a); } else auraMat.uniforms.uC.value.setHex(0x4fc8ff);
   if (S.wing >= 1 && rand() < dt * (40 + S.wing * 12)) { const side = rand() < 0.5 ? -1 : 1, s = rand(); const sc = WSCALE[S.wing]; const lx = side * (0.3 + s * 1.6) * sc * 0.5, ly = (1.4 + s * 0.8 - rr(0, 1.2) * s) * 0.5, lz = (-0.5 - s * 0.6) * 0.5; const c = Math.cos(S.face), sn = Math.sin(S.face);
@@ -3192,10 +3198,10 @@ function updateMobs(dt, t) {
     if (m.burnT > 0) { m.burnT -= dt; dot(m, m.burnD * dt); if (Math.random() < dt * 10) emit(m.x + rr(-0.2, 0.2), mobH(m), m.z + rr(-0.2, 0.2), 0, 0.8, 0, C3('#ff7a1a'), 0.25, 0.5, 0.3, 0.98); if (m.dead) continue; }
     if (m.shockT > 0 && Math.random() < dt * 6) emit(m.x + rr(-0.3, 0.3), mobH(m) + rr(-0.2, 0.2), m.z + rr(-0.3, 0.3), rr(-0.5, 0.5), rr(-0.5, 0.5), rr(-0.5, 0.5), C3('#d8c0ff'), 0.2, 0.15, 0, 1);
     if (m.wetT > 0 && Math.random() < dt * 3) emit(m.x + rr(-0.2, 0.2), mobH(m), m.z, 0, -1.2, 0, C3('#7fd0ff'), 0.15, 0.5, -2, 1);
-    const stopped = m.frzT > 0 || m.stunT > 0; const spd = (m.T.speed || 1.2) * 0.7 * (m.slowT > 0 ? 1 - (m.slow || 0) : 1);   // monsters slowed with the heroes, so a chase stays fair
+    const stopped = m.frzT > 0 || m.stunT > 0; const spd = (m.T.speed || 1.2) * 0.7 * (m.boss ? BOSS_K.speed : 1) * (m.slowT > 0 ? 1 - (m.slow || 0) : 1);   // monsters slowed with the heroes, so a chase stays fair
     if (m.tgt && (!m.tgt.alive || m.tgt.dead > 0)) m.tgt = null;
     const dP = Math.hypot(S.pos.x - m.x, S.pos.z - m.z);
-    if (!m.aggro && !S.dead && dP < (m.boss ? 7 : 4.5) + Math.min(4, Math.max(0, m.lv - S.lv) * 0.02) && m.lv >= S.lv - 25) { m.aggro = true; m.tgt = null; }
+    if (!m.aggro && !S.dead && dP < (m.boss ? 7 : 4.5) * MOB_FURY.aggro + Math.min(4, Math.max(0, m.lv - S.lv) * 0.02) && m.lv >= S.lv - 25) { m.aggro = true; m.tgt = null; }
     if (!m.aggro && ents.size && Math.random() < 0.1) for (const e of ents.values()) if (!e.dead && Math.hypot(e.pos.x - m.x, e.pos.z - m.z) < 3.5) { m.aggro = true; m.tgt = e; break; }
     const TP = m.tgt ? m.tgt.pos : S.pos, tGone = m.tgt ? false : !!S.dead;
     const dh = Math.hypot(TP.x - m.x, TP.z - m.z); let moving = false; const reach = m.boss ? 2.2 : 1.0;
@@ -3203,12 +3209,12 @@ function updateMobs(dt, t) {
       if (dh > (m.boss ? 18 : 14)) { m.aggro = false; m.tgt = null; }
       else if (dh > reach) { if (!stopped) { m.tx = TP.x; m.tz = TP.z; moving = true; } }
       else if (!stopped) { m.face = Math.atan2(TP.x - m.x, TP.z - m.z); m.atkCd -= dt;
-        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 : rr(1.0, 1.5); m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - m.tgt.b.lv)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - S.lv) * (1 - HS.def / (HS.def + 10 * m.lv + 100)) * (1 - HS.dr))); S.hp -= dmg; S.lastHit = S.time;
+        if (m.atkCd <= 0) { m.atkCd = m.boss ? 1.4 / BOSS_K.speed : rr(1.0, 1.5) * MOB_FURY.rate; m.lunge = 0.3; if (m.tgt) { botTakeDmg(m.tgt, m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - m.tgt.b.lv)); } else { const dmg = Math.max(1, Math.round(m.atk * rr(0.85, 1.15) * lvTakeK(m.lv - S.lv) * (1 - HS.def / (HS.def + 10 * m.lv + 100)) * (1 - HS.dr))); S.hp -= dmg; S.lastHit = S.time;
           fxText(S.pos.x, S.pos.z, '-' + dmg, '#ff6b6b', 14, null, HERO_H + 0.9); if (m.boss) { fxRing(m.x, m.z, 0, 3, '#ff6a6a', 0.5, 0, 0.3); S.shake = Math.max(S.shake || 0, 0.2); } if (S.hp <= 0) heroDie(); } } }
     } else if (!stopped) { m.wait -= dt; if (m.wait <= 0) { if (m.state === 'idle') { const a = rr(0, 6.28), d = rr(1, m.zone.r * 0.8); m.tx = m.zone.x + Math.cos(a) * d; m.tz = m.zone.z + Math.sin(a) * d; m.state = 'move'; } else { m.state = 'idle'; m.wait = rr(1.5, 4); } } if (m.state === 'move') moving = true; }
     if (moving && !stopped) { const dx = m.tx - m.x, dz = m.tz - m.z, d = Math.hypot(dx, dz);
       if (d < 0.3) { if (!m.aggro) { m.state = 'idle'; m.wait = rr(1.5, 4); } }
-      else { const sp = spd * (m.aggro ? 1.8 : 1); const nx = m.x + dx / d * sp * dt, nz = m.z + dz / d * sp * dt; if (!collides(nx, nz, m.boss ? 0.9 : 0.5)) { m.x = nx; m.z = nz; } else if (!m.aggro) { m.state = 'idle'; m.wait = 0.5; }
+      else { const sp = spd * (m.aggro ? 1.8 * MOB_FURY.chase : 1); const nx = m.x + dx / d * sp * dt, nz = m.z + dz / d * sp * dt; if (!collides(nx, nz, m.boss ? 0.9 : 0.5)) { m.x = nx; m.z = nz; } else if (!m.aggro) { m.state = 'idle'; m.wait = 0.5; }
         const want = Math.atan2(dx, dz); let da = want - m.face; da = Math.atan2(Math.sin(da), Math.cos(da)); m.face += da * Math.min(1, dt * 4); } }
     let y = m.T.y;
     if (!stopped) {
@@ -3267,7 +3273,7 @@ function botKit(b) {
     const r = clamp(Math.max(rf, Math.floor(lv / 110 + q * 1.3 + j * 0.6 - 0.3)), 0, 3);
     const bset = favSet;
     const set = SETS[bset] && SETS[bset].names[slot] && (lv >= 170 || q + j * 0.5 > 0.45) ? bset : null;
-    const base = {}; for (const kk in SLOTS[slot].base) base[kk] = kk === 'crit' ? SLOTS[slot].base[kk] * (r + 1) : Math.round(SLOTS[slot].base[kk] * RMULT[r] * (1 + gl * 0.09));
+    const base = {}; for (const kk in SLOTS[slot].base) base[kk] = PCT[kk] ? pctBase(slot, kk, r) : Math.round(SLOTS[slot].base[kk] * RMULT[r] * (1 + gl * 0.09));
     if (AS_SLOTS.includes(slot)) base.as = gearAS(gl, r);
     const gs = gearStats({ base, plus }); for (const kk in gs) st[kk] = (st[kk] || 0) + gs[kk]; if (set) sets[set] = (sets[set] || 0) + 1; slots.push({ slot, r, plus, set }); });
   const w = botWing(b); st.def += WDEF[w]; st.hp += WHP[w]; st.as += w * 8;
@@ -3632,8 +3638,8 @@ function renderGear() {
     <div class="sect">Chỉ số</div>
     <div class="stats"><div><span>Cấp</span><b>${S.lv}</b></div><div><span>Tấn công</span><b>${fmt(st.atk)}</b></div><div><span>Phòng thủ</span><b>${fmt(st.def)}</b></div><div><span>Máu</span><b>${fmt(st.hp)}</b></div>
       <div><span>Chí mạng</span><b style="color:#4aa8ff">${(r.crit * 100).toFixed(1)}%</b></div><div><span>Siêu đòn TB</span><b>×${avgMult().toFixed(2)}</b></div><div><span>ST cánh & bộ</span><b>×${st.dmgMul.toFixed(2)}</b></div><div><span>Mana</span><b style="color:#5ab0ff">${st.mp}</b></div>
-      <div><span>Tốc đánh</span><b style="color:#7dffb0">${st.as} / ${AS_MAX}</b></div><div><span>Đòn / giây</span><b style="color:#7dffb0">${st.aps.toFixed(1)} / ${APS_MAX}</b></div><div><span>Hút máu</span><b>${(REC.hpHit * 100).toFixed(2)}%/đòn</b></div><div><span>Hút mana</span><b>${(REC.mpHit * 100).toFixed(1)}%/đòn</b></div></div>
-    <p class="muted" style="margin:4px 0 0">Hồi từ đánh quái tối đa ${(st.hpCap * 100).toFixed(0)}% máu và ${(REC.mpCap * 100).toFixed(0)}% mana mỗi giây. Tốc đánh đến từ cấp, vũ khí, dây chuyền, cánh và thú.</p>
+      <div><span>Tốc đánh</span><b style="color:#7dffb0">${st.as} / ${AS_MAX}</b></div><div><span>Đòn / giây</span><b style="color:#7dffb0">${st.aps.toFixed(1)} / ${APS_MAX}</b></div><div><span>Hút máu</span><b>${(REC.hpHit * 100).toFixed(2)}%/đòn</b></div><div><span>Hút mana</span><b>${(REC.mpHit * 100 + st.mpl).toFixed(2)}%/đòn</b></div><div><span>Hồi mana</span><b style="color:#5ab0ff">${(st.mpr + (4 + S.lv * 0.05) / st.mp * 100).toFixed(2)}%/giây</b></div></div>
+    <p class="muted" style="margin:4px 0 0">Hồi từ đánh quái tối đa ${(st.hpCap * 100).toFixed(0)}% máu và ${(st.mpCap * 100).toFixed(0)}% mana mỗi giây. Nhẫn có dòng hồi mana, dây chuyền có dòng hút mana. Tốc đánh đến từ cấp, vũ khí, dây chuyền, cánh và thú.</p>
     <div class="sect">Đang mặc</div>
     ${dollHtml()}
     ${setInfo()}
@@ -3846,7 +3852,8 @@ function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: Math.min(MAX
   if (S.wing > 0 && !S.eq.wings && !S.inv.some(g => g.slot === 'wings')) { S.eq.wings = makeWing(S.wing, S.lv); S.wingMax = Math.max(S.wingMax, S.wing); }   /* older saves: the wing level becomes a wing item */
   S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.lootF = Object.assign(lootDefaults(), d.lootF || {}); S.bossHunt = !!d.bossHunt; S.traded = d.traded || 0; S.bots = ROSTER && Array.isArray(ROSTER.world.bots) ? ROSTER.world.bots : Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null; S.name = d.name || ''; S.born = d.born || 0;
   { const inv = []; for (const g of S.inv) if (!stackInto(inv, g)) inv.push(g); S.inv = inv; } // older saves: merge loose charms into stacks S.lvLog = d.lvLog || [];
-  for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
+  for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r);
+  for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && !g.charm && SLOTS[g.slot]) for (const k of ['mpr', 'mpl']) if (SLOTS[g.slot].base[k] != null && g.base[k] == null) g.base[k] = pctBase(g.slot, k, g.r || 0);   /* older rings and pendants get their mana roll */ // older weapons get their speed roll
   }
 async function initStore() { try { if (window.claude && typeof window.claude.use === 'function') { const db = await window.claude.use('db'); const u = await window.claude.use('user'); if (db && u) { const id = await u.id(); if (id) { Store.db = db; Store.uid = id; } } } } catch (e) { } await refreshSave(); }
 async function readSave() { let b = null; try { const l = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (l && l.v === 2) b = l; } catch (e) { }
