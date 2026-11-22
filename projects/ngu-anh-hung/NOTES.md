@@ -31,5 +31,5 @@ Trong `scripts/character3d/` (khóa API do proxy tự chèn cho api.meshy.ai):
 - **Bẫy hay gặp**: chú thích `//` chèn giữa dòng code nuốt phần sau — dùng `/* */` hoặc đặt chú thích riêng dòng.
 
 ## Việc đang làm / tiếp theo
-- **Khiên cho các bộ + cách cầm khiên 3D chi tiết** (đang làm): hiện khiên của bản mẫu là tấm nổi lơ lửng (`heroShield`, `lookShield`). Kế hoạch: Meshy vẽ tấm khiên cho 4 bộ có tranh (azure, dung, olym, song) + 3 mẫu theo độ hiếm; cắt icon/mảnh; kỵ sĩ đeo khiên trên cẳng tay trái (mặt khiên hướng ra ngoài), tư thế nghỉ đưa khiên ra trước; hình nhân vẽ khiên ở tay trái.
+- **Khiên (xong)**: 4 khiên bộ (azure `assets/equip/pieces/shield.png`, dung/olym/song `sets/<k>/pieces/shield.png`) + 4 khiên thường theo tên (`items/shield_N.png`). Code: `shieldSrc`, `makeShield`, `shieldPlace` (đeo cẳng tay trái, luôn dựng đứng, mặt hướng ra ngoài/trước), tư thế thủ `KN_IDLE.L3`, bot `botShield` + `charShield`, hình nhân `DOLL.p.shield`. Nguồn: `source/shields/`.
 - Bộ còn thiếu tranh riêng: Vảy Rồng Biển (vay), Thần Ưng Sa Mạc (sa). 4 lớp nhân vật khác vẫn là người mẫu cũ.
