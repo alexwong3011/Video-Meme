@@ -124,10 +124,14 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 #bagGrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}
 .tile{position:relative;aspect-ratio:1;width:100%;max-width:62px;border-radius:8px;display:grid;place-items:center;padding:0;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.08),rgba(0,0,0,.35));border:1px solid rgba(255,255,255,.12);color:var(--r0);cursor:pointer}
 .tile svg{width:60%;height:60%}
+.ipop{position:fixed;inset:0;z-index:80;background:rgba(0,6,12,.55);display:flex;align-items:center;justify-content:center;padding:12px}
+.ipop-card{position:relative;width:100%;max-width:440px;max-height:86vh;overflow:auto;background:linear-gradient(180deg,#10222c,#0a151c);border:1.5px solid rgba(242,210,122,.45);border-radius:14px;padding:16px 14px 12px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.ipop-x{position:absolute;right:8px;top:8px}
+.sellk{display:flex;flex-wrap:wrap;gap:10px;align-items:center;width:100%;font:600 12px var(--ui);color:#cfe3ea}.sellk input{accent-color:#d9a03a;vertical-align:-2px}
 .sellbar{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:0 0 8px}.sellbar .pb{border-color:var(--rc);color:var(--rc);padding:5px 9px;font-size:12px}.sellbar .pb.pri{color:#fff}
 .tile img.art{width:86%;height:86%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 .dollwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);gap:6px;align-items:center;margin:4px 0}
-.dcol{display:flex;flex-direction:column;gap:6px;align-items:center}.drow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:6px}
+.dcol{display:flex;flex-direction:column;gap:6px;align-items:center}.drow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:6px}
 .dcol .eqslot,.drow .eqslot{width:100%;max-width:66px;margin:0 auto}
 .doll{position:relative;width:100%;max-width:190px;margin:0 auto;aspect-ratio:586/843;background:radial-gradient(ellipse at 50% 55%,rgba(120,180,255,.12),transparent 70%)}
 .doll img{position:absolute;display:block;pointer-events:none}.doll img[data-id]{pointer-events:auto;cursor:pointer}
@@ -162,6 +166,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .msg.show{opacity:1}.msg.ok{color:#6dff9c}.msg.bad{color:var(--hurt)}
 .row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(242,198,107,.16);border-radius:9px;padding:7px 9px;margin-bottom:6px}
 .row svg{width:24px;height:24px;flex:none}
+img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 .row .t{flex:1;font-size:11.5px;line-height:1.4;color:#d8ccb0;min-width:0}
 .row .t b{font-weight:800}
 .wingbig{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
@@ -2124,6 +2129,7 @@ Object.assign(SETS, {
 });
 const PLAIN = { weapon: ['Kiếm Hải Lam', 'Kích San Hô', 'Thương Triều Dâng'], helm: ['Mũ Ngọc Trai', 'Mũ Vỏ Ốc Bạc'], armor: ['Giáp Lân Quang', 'Giáp Vỏ Sò'], ring: ['Nhẫn Bọt Biển', 'Nhẫn Lân Quang'], pendant: ['Dây Chuyền Ngọc Trai', 'Mặt Dây Lân Quang', 'Bùa Triều Cường'], shield: ['Khiên Vỏ Rùa Cổ', 'Khiên Hải Lam', 'Khiên Thánh Quang', 'Khiên Vảy Rồng'] };
 // MU-style body pieces: pants, gloves and boots join helm and armour; the old armour stats are spread over armour, pants and boots
+SLOTS.wings = { n: 'Cánh', base: {} };
 Object.assign(SLOTS, { pants: { n: 'Quần', base: { def: 3, hp: 20 } }, gloves: { n: 'Găng tay', base: { atk: 2, crit: 1 } }, boots: { n: 'Giày', base: { def: 2, hp: 12 } } });
 SLOTS.armor.base = { def: 4, hp: 30 };
 SLOTS.shield.n = 'Khiên / tay trái';      // the left hand takes a shield or a second weapon
@@ -2152,7 +2158,9 @@ function artFilter(g) {      // the art is violet-blue steel: shift it to the se
   let f = g.set === 'azure' || setArt(g) ? '' : g.set ? `hue-rotate(${Math.round(hexHue(SETS[g.set].col) - 245)}deg) saturate(1.25)` :
     g.r ? `hue-rotate(${Math.round(hexHue(RARITY[g.r].css) - 245)}deg) saturate(1.45)` : 'grayscale(0.92) brightness(0.82) contrast(1.1)';
   const t = tier(g.plus || 0); if (t) f += ` drop-shadow(0 0 ${2 + t * 2}px #${new THREE.Color(TIER_COL[t]).getHexString()})`; return f; }
-const itemArt = g => ART[g.slot] && !g.charm ? `<img class="art" alt="" src="${setArt(g) ? setArt(g).dir : 'assets/equip'}/icons/${ART[g.slot].icon}_128.png" style="filter:${artFilter(g)}">` : null;
+const JEWEL = g => g.charm ? `assets/equip/items/charm_${g.charm}.png` : g.slot === 'ring' || g.slot === 'pendant' ? `assets/equip/items/${g.slot}_${g.r >= 3 ? 3 : g.r === 2 ? 2 : 1}.png` : null;
+const MAT_ART = { e: 1, c: 1, p: 1, d: 1, t: 1, x: 1, f: 1 };
+const itemArt = g => JEWEL(g) ? `<img class="art" alt="" src="${JEWEL(g)}">` : g.slot === 'wings' ? `<img class="art" alt="" src="assets/equip/wings/t${g.tier}_128.png">` : ART[g.slot] && !g.charm ? `<img class="art" alt="" src="${setArt(g) ? setArt(g).dir : 'assets/equip'}/icons/${ART[g.slot].icon}_128.png" style="filter:${artFilter(g)}">` : null;
 
 // monsters: only the template's luminous jelly and spiked fish, recoloured per sea
 const MT = {
@@ -2370,9 +2378,12 @@ function makeGear(slot, r, lv, set) {
 const gearAS = (lv, r) => Math.round((10 + 0.3 * lv) * ASR[r]);
 function gearStats(g) { const o = {}; for (const k in g.base) o[k] = k === 'crit' ? +(g.base[k] + g.plus * 0.5).toFixed(1) : k === 'as' ? g.base[k] + g.plus : Math.round(g.base[k] * plusMult(g.plus)); return o; }
 const gearScore = g => { const s = gearStats(g); return (s.atk || 0) * 3 + (s.def || 0) * 2.5 + (s.hp || 0) * 0.25 + (s.crit || 0) * 4 + (s.as || 0) * 4 + (g.set ? 6 : 0); };
-const sellPrice = g => Math.round((20 + g.lv * 6) * RMULT[g.r] * (1 + g.plus * 0.3) * (g.charm ? CHARMS[g.charm].pv : 1));
+const WPRICE = [0, 2500, 9000, 26000, 70000];
+const sellPrice = g => g.slot === 'wings' ? WPRICE[g.tier] || 0 : Math.round((20 + g.lv * 6) * RMULT[g.r] * (1 + g.plus * 0.3) * (g.charm ? CHARMS[g.charm].pv : 1));
 function setCounts() { const c = {}, seen = new Set(); for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g || !g.set || seen.has(g.set + g.slot)) continue; seen.add(g.set + g.slot); c[g.set] = (c[g.set] || 0) + 1; } return c; }   // two weapons of one set count once
+function makeWing(t, lv) { return { id: uid(), slot: 'wings', tier: t, r: Math.min(3, t - 1), lv: lv || 1, name: WNAME[t], base: {}, plus: 0, set: null }; }
 function heroStats() {
+  S.wing = S.eq.wings ? S.eq.wings.tier : 0;      /* the worn wing item sets the wing level */
   const Cl = CLS[S.cls]; const st = { atk: (12 + S.lv * 3.2) * Cl.atk, def: S.lv * 1.2, hp: (380 + S.lv * 55) * Cl.hp, mp: 100 + S.lv * 3, crit: 0, as: Math.round(S.lv * 0.1) };
   for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g) continue; const gs = gearStats(g); if (s === 'shield' && g.slot === 'weapon') for (const k in OFFHAND) if (gs[k]) gs[k] = Math.round(gs[k] * OFFHAND[k]); for (const k in gs) st[k] += gs[k]; }
   st.def += WDEF[S.wing]; st.hp += WHP[S.wing]; st.as += S.wing * 8;
@@ -2587,17 +2598,17 @@ function cssMat(ops) { let M = [1, 0, 0, 0, 1, 0, 0, 0, 1]; const mul = (A, B) =
   return M; }
 const artOps = g => g.set === 'azure' || setArt(g) ? null : g.set ? [['hue', hexHue(SETS[g.set].col) - 245], ['sat', 1.25]] : g.r ? [['hue', hexHue(RARITY[g.r].css) - 245], ['sat', 1.45]] : [['sat', 0.08], ['bri', 0.82]];
 function lootTex(g) {
-  const art = ART[g.slot] && !g.charm, key = art ? ART[g.slot].icon + '|' + (g.set || '') + '|' + g.r : 'svg|' + (g.charm ? g.charm : g.slot) + '|' + g.r;
+  const jp = g.mat ? `assets/equip/items/mat_${g.mat}.png` : JEWEL(g), art = !jp && ART[g.slot] && !g.charm, key = jp ? jp : art ? ART[g.slot].icon + '|' + (g.set || '') + '|' + g.r : 'svg|' + (g.charm ? g.charm : g.slot) + '|' + g.r;
   if (lootTexCache[key]) return lootTexCache[key];
   const cv = document.createElement('canvas'); cv.width = cv.height = 128; const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; lootTexCache[key] = t;
   const img = new Image();
-  img.onload = () => { const c = cv.getContext('2d'); c.drawImage(img, art ? 0 : 20, art ? 0 : 20, art ? 128 : 88, art ? 128 : 88);
+  img.onload = () => { const c = cv.getContext('2d'); const full = art || jp; c.drawImage(img, full ? 0 : 20, full ? 0 : 20, full ? 128 : 88, full ? 128 : 88);
     const ops = art && artOps(g); if (ops) { const d = c.getImageData(0, 0, 128, 128), a = d.data, M = cssMat(ops);
       for (let i = 0; i < a.length; i += 4) { if (!a[i + 3]) continue; const r = a[i], gg = a[i + 1], b = a[i + 2];
         a[i] = M[0] * r + M[1] * gg + M[2] * b; a[i + 1] = M[3] * r + M[4] * gg + M[5] * b; a[i + 2] = M[6] * r + M[7] * gg + M[8] * b; }    // Uint8ClampedArray clamps
       c.putImageData(d, 0, 0); }
     t.needsUpdate = true; };
-  if (art) img.src = `${setArt(g) ? setArt(g).dir : 'assets/equip'}/icons/${ART[g.slot].icon}_128.png`;
+  if (jp) img.src = jp; else if (art) img.src = `${setArt(g) ? setArt(g).dir : 'assets/equip'}/icons/${ART[g.slot].icon}_128.png`;
   else { const col = g.charm ? CHARMS[g.charm].col : RARITY[g.r].css;
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="128" height="128" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">${GI[g.charm === 'soul' ? 'soul' : g.charm ? 'charm' : g.slot]}</svg>`); }
   return t; }
@@ -2606,7 +2617,8 @@ function dropLoot(x, z, it) {
   if (it.kind === 'gold') { col = new THREE.Color(0xffd36a); geo = new THREE.CylinderGeometry(0.16, 0.16, 0.05, 16); name = `${it.amount} Vàng`; cls = 'var(--gold)'; }
   else if (it.kind === 'mat') { const M = MATS[it.k]; col = new THREE.Color(M.col); geo = it.k === 'e' ? new THREE.IcosahedronGeometry(0.14) : it.k === 'f' ? FEATHER : new THREE.OctahedronGeometry(0.15).scale(0.8, 1.3, 0.8); name = M.name + (it.amount > 1 ? ' ×' + it.amount : ''); cls = M.col; beam = ['t', 'x', 'f'].includes(it.k); }
   else { const gr = it.gear; col = new THREE.Color(gr.charm ? CHARMS[gr.charm].col : gr.set ? SETS[gr.set].col : RARITY[gr.r].css); geo = new THREE.OctahedronGeometry(0.18); name = gr.name + (gr.plus ? ` +${gr.plus}` : ''); cls = gr.charm ? CHARMS[gr.charm].col : gr.set ? SETS[gr.set].col : RARITY[gr.r].css; beam = gr.r >= 1; }
-  let gem; if (it.kind === 'gear') { const gr = it.gear, rc = gr.charm ? CHARMS[gr.charm].col : RARITY[gr.r].css; col = new THREE.Color(rc); cls = rc;
+  let gem; if (it.kind === 'mat' && MAT_ART[it.k]) { gem = new THREE.Sprite(new THREE.SpriteMaterial({ map: lootTex({ mat: it.k }), transparent: true, depthWrite: false })); gem.center.set(0.5, 0.1); gem.scale.setScalar(0.5); gem.userData.sprite = true; g.add(gem); }
+  else if (it.kind === 'gear') { const gr = it.gear, rc = gr.charm ? CHARMS[gr.charm].col : RARITY[gr.r].css; col = new THREE.Color(rc); cls = rc;
     gem = new THREE.Sprite(new THREE.SpriteMaterial({ map: lootTex(gr), transparent: true, depthWrite: false })); gem.center.set(0.5, 0.1); gem.scale.setScalar(0.62); gem.userData.sprite = true; g.add(gem);
     const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: haloTex, color: col.clone().multiplyScalar(gr.r ? 1.2 : 0.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     pool.position.y = 0.04; pool.scale.setScalar(0.9 + gr.r * 0.15); g.add(pool); }
@@ -2630,7 +2642,7 @@ const stackKey = g => g.slot === 'charm' ? 'charm:' + g.charm : null;
 const qty = g => g.n || 1;
 function stackInto(list, g) { const k = stackKey(g); if (!k) return false; const s = list.find(q => q !== g && stackKey(q) === k); if (!s) return false; s.n = qty(s) + qty(g); return true; }
 function takeOne(list, g) { if (qty(g) > 1) { g.n--; return Object.assign({}, g, { id: uid(), n: 1 }); } const i = list.indexOf(g); if (i >= 0) list.splice(i, 1); return g; }
-function addItem(g) { if (stackInto(S.inv, g)) return; if (S.inv.length >= BAG_MAX) { const p = sellPrice(g); S.gold += p; log(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, '#6fe7ff'); return; } S.inv.push(g); }
+function addItem(g) { bagDirty = true; if (stackInto(S.inv, g)) return; if (S.inv.length >= BAG_MAX) { const p = sellPrice(g); S.gold += p; log(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, '#6fe7ff'); return; } S.inv.push(g); }
 function updateLoot(dt, t) {
   for (let i = loots.length - 1; i >= 0; i--) { const l = loots[i]; l.t += dt;
     if (!l.gem.userData.sprite) l.gem.rotation.y = t * 2; l.gem.position.y = (l.gem.userData.sprite ? 0.12 : 0.45) + Math.sin(t * 3 + i) * 0.06 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
@@ -2638,7 +2650,7 @@ function updateLoot(dt, t) {
     const ready = l.t >= LOOT_WAIT;      // a drop rests on the ground for a second before it can be picked up
     if (!S.dead && ready && S.autoLoot && ld < HS.loot && ld > 0.5 && lootOk(l.it)) { const k = Math.min(1, dt * 7 / Math.max(ld, 0.6)); l.x += (S.pos.x - l.x) * k * 1.5; l.z += (S.pos.z - l.z) * k * 1.5; l.g.position.set(l.x, 0, l.z); }
     if ((!S.dead && ready && ld < 0.9 && (!S.autoLoot || lootOk(l.it))) || l.t > 40) {
-      if (l.t <= 40) { const it = l.it;
+      if (l.t <= 40) { bagDirty = true; const it = l.it;
         if (it.kind === 'gold') { S.gold += it.amount; }
         else if (it.kind === 'mat') { S.mats[it.k] += it.amount; log(`Nhặt được [${l.name}]`, MATS[it.k].col); }
         else { addItem(it.gear); if (it.gear.charm) recalc(); log(`Nhặt được [${l.name}] · ${RARITY[it.gear.r].n.toUpperCase()}${it.gear.set ? ' · ' + SETS[it.gear.set].n : ''}`, it.gear.charm ? CHARMS[it.gear.charm].col : RARITY[it.gear.r].css); }
@@ -3182,7 +3194,7 @@ let zoneT = 0; function showZone() { const M = MAPS[S.map]; if (M.town) { $('zon
 function pulseHud() { }
 
 // ---------- HUD ----------
-function upgradeHint() { return SK.some(k => S.mats[k] > 0 && canStone(k)) || (S.wing < WMAX && S.mats.f >= WCOST[S.wing]) || FORGE.some(([f]) => S.mats[f] >= 3); }
+function upgradeHint() { return SK.some(k => S.mats[k] > 0 && canStone(k)) || ((S.wingMax || 0) < WMAX && S.mats.f >= WCOST[S.wingMax || 0]) || FORGE.some(([f]) => S.mats[f] >= 3); }
 function updateHud() {
   if (!S || !HS) return; const C = CLS[S.cls];
   $('hLv').textContent = S.lv; $('hIcon').textContent = C.icon; $('hName').textContent = C.name; $('hName').style.color = C.col;
@@ -3257,10 +3269,10 @@ const GI = {
   charm: '<path d="M12 2l2.6 6.2L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.4-.8z"/>',
   soul: '<path d="M12 3c3 4 6 6.5 6 10.5a6 6 0 01-12 0C6 9.5 9 7 12 3z"/><path d="M12 10c1.4 1.8 2.6 3 2.6 4.6a2.6 2.6 0 01-5.2 0c0-1.6 1.2-2.8 2.6-4.6z"/>',
   shield: '<path d="M12 3l7 3v5.5c0 4.3-3 7.6-7 9.5-4-1.9-7-5.2-7-9.5V6z"/><path d="M12 7v10M8.5 11h7"/>',
-  pants: '<path d="M7 3h10l1 18h-4l-2-11-2 11H6z"/>', gloves: '<path d="M7 21v-7l-2-4 2-1 2 3V5h2v6V4h2v7V5h2v8l2-3 1 1-2 6v4z"/>', boots: '<path d="M8 3h5v10l6 3v4H6v-4l2-2z"/>'
+  pants: '<path d="M7 3h10l1 18h-4l-2-11-2 11H6z"/>', wings: '<path d="M12 9C9 4 5 3 2 4c1 4 3 8 10 11 7-3 9-7 10-11-3-1-7 0-10 5z"/><path d="M12 9v8"/>', gloves: '<path d="M7 21v-7l-2-4 2-1 2 3V5h2v6V4h2v7V5h2v8l2-3 1 1-2 6v4z"/>', boots: '<path d="M8 3h5v10l6 3v4H6v-4l2-2z"/>'
 };
 const gIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${GI[k]}</svg>`;
-const mIcon = k => { const c = MATS[k].col; if (k === 'f') return `<svg viewBox="0 0 24 24"><path d="M5 20C8 12 13 6 20 3c-1 7-6 13-14 16z" fill="${c}" stroke="#000" stroke-width="1"/><path d="M5 20L17 7" stroke="#fff8d0" stroke-width="1"/></svg>`;
+const mIcon = k => { if (MAT_ART[k]) return `<img class="mat" alt="" src="assets/equip/items/mat_${k}.png">`; const c = MATS[k].col; if (k === 'f') return `<svg viewBox="0 0 24 24"><path d="M5 20C8 12 13 6 20 3c-1 7-6 13-14 16z" fill="${c}" stroke="#000" stroke-width="1"/><path d="M5 20L17 7" stroke="#fff8d0" stroke-width="1"/></svg>`;
   if (k === 'e') return `<svg viewBox="0 0 24 24"><path d="M12 3l7 6-7 12L5 9z" fill="${c}" stroke="#000" stroke-width="1"/><path d="M5 9h14" stroke="rgba(255,255,255,.6)" stroke-width=".8"/></svg>`;
   return `<svg viewBox="0 0 24 24"><path d="M12 2l7 7-7 13-7-13z" fill="${c}" stroke="#000" stroke-width="1"/><path d="M5 9h14M12 2l-3 7 3 13 3-13z" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="0.8"/></svg>`; };
 
@@ -3271,14 +3283,18 @@ function closeBag() { bagEl.classList.add('hide'); }
 $('bagClose').onclick = closeBag;
 bagEl.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; renderBag(); });
 const fmt = n => n.toLocaleString('vi-VN');
-const findItem = id => { for (const s of SLOT_ORDER) if (S.eq[s] && S.eq[s].id === id) return { g: S.eq[s], equipped: true }; const g = S.inv.find(x => x.id === id); return g ? { g, equipped: false } : null; };
+const EQ_KEYS = [...SLOT_ORDER, 'wings'];
+const findItem = id => { for (const s of EQ_KEYS) if (S.eq[s] && S.eq[s].id === id) return { g: S.eq[s], equipped: true }; const g = S.inv.find(x => x.id === id); return g ? { g, equipped: false } : null; };
 function tileHtml(g, extra = '') { return `<button style="${g.charm ? 'color:' + CHARMS[g.charm].col : ''}" class="tile r${g.r}${selId === g.id ? ' sel' : ''}${g.plus >= 7 ? ' t' + tier(g.plus) : ''}" data-id="${g.id}" aria-label="${g.name} +${g.plus}" ${extra}>${itemArt(g) || gIcon(g.charm === 'soul' ? 'soul' : g.slot)}${g.plus ? `<span class="pl">+${g.plus}</span>` : ''}${qty(g) > 1 ? `<span class="qt">×${qty(g)}</span>` : ''}${g.set ? `<span class="st" style="--sc:${SETS[g.set].col}"></span>` : ''}</button>`; }
-function flash(t, cls = '') { const m = bagBody.querySelector('.msg'); if (!m) return; m.textContent = t; m.className = 'msg show ' + cls; clearTimeout(msgT); msgT = setTimeout(() => { m.className = 'msg'; }, 2200); }
+let bagDirty = false, bagLiveT = 0;
+/* while the bag is open the game keeps running: new loot re-renders it (at most once a second), keeping the scroll and the open item card */
+function bagLive(dt) { bagLiveT -= dt; if (!bagDirty || bagLiveT > 0 || bagEl.classList.contains('hide')) return; bagDirty = false; bagLiveT = 0.5; const st = bagBody.scrollTop; renderBag(); bagBody.scrollTop = st; }
+function flash(t, cls = '') { const ms = bagBody.querySelectorAll('.msg'); const m = ms[ms.length - 1]; if (!m) return; m.textContent = t; m.className = 'msg show ' + cls; clearTimeout(msgT); msgT = setTimeout(() => { m.className = 'msg'; }, 2200); }
 function afterChange(heal) { recalc(heal); applyGearVisuals(); applyPetMount(); updateHud(); renderBag(); saveGame(); }
 function renderBag() {
   if (bagEl.classList.contains('hide')) return;
   $('bGold').textContent = fmt(S.gold); $('bE').textContent = S.mats.e; $('bF').textContent = S.mats.f;
-  bagEl.querySelectorAll('.tabs button').forEach(b => { b.setAttribute('aria-selected', String(b.dataset.t === tab)); b.classList.toggle('dot', (b.dataset.t === 'stone' && (SK.some(k => S.mats[k] > 0 && canStone(k)) || FORGE.some(([f]) => S.mats[f] >= 3))) || (b.dataset.t === 'wing' && S.wing < WMAX && S.mats.f >= WCOST[S.wing])); });
+  bagEl.querySelectorAll('.tabs button').forEach(b => { b.setAttribute('aria-selected', String(b.dataset.t === tab)); b.classList.toggle('dot', (b.dataset.t === 'stone' && (SK.some(k => S.mats[k] > 0 && canStone(k)) || FORGE.some(([f]) => S.mats[f] >= 3))) || (b.dataset.t === 'wing' && (S.wingMax || 0) < WMAX && S.mats.f >= WCOST[S.wingMax || 0])); });
   if (tab === 'gear') renderGear(); else if (tab === 'stone') renderStones(); else if (tab === 'wing') renderWing(); else if (tab === 'pet') renderPets(); else renderSkills();
 }
 function statLines(g, cmp) { const s = gearStats(g), c = cmp ? gearStats(cmp) : null; return Object.keys(s).map(k => { const d = c ? s[k] - (c[k] || 0) : 0; return `<li><span>${STAT_N[k]}</span><b>${s[k]}</b>${c && d ? `<em class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '+' : ''}${+d.toFixed(1)}</em>` : ''}</li>`; }).join(''); }
@@ -3287,19 +3303,22 @@ function setInfo() { const sc = HS.sets; const ks = Object.keys(sc); if (!ks.len
 const eqSlot = s => `<div class="eqslot"><span>${SLOTS[s].n}</span>${S.eq[s] ? tileHtml(S.eq[s]) : `<div class="tile empty">${gIcon(s)}</div>`}</div>`;
 function dollHtml() {       // MU-style: the worn pieces drawn in place over a dark body silhouette
   const pct = (v, o, d) => ((v - o) / d * 100).toFixed(2) + '%'; let layers = '';
+  if (S.eq.wings) { const t = S.eq.wings.tier, f = `assets/equip/wings/t${t}`;      /* wings behind the body, from the shoulder blades */
+    layers += `<img alt="" data-id="${S.eq.wings.id}" src="${f}_L.png" style="right:49%;top:12%;width:50%;z-index:0"><img alt="" data-id="${S.eq.wings.id}" src="${f}_R.png" style="left:49%;top:12%;width:50%;z-index:0">`; }
   for (const s of SLOT_ORDER) { const g = S.eq[s]; if (!g || !ART[g.slot]) continue; const f = artFilter(g);
     const SA = setArt(g);
     for (const n0 of ART[g.slot].pieces) { const n = s === 'shield' && n0 === 'greatsword' ? 'greatsword_off' : n0, P = (SA && SA.doll[n]) || DOLL.p[n];
       layers += `<img alt="" data-id="${g.id}" src="${SA ? SA.dir : 'assets/equip'}/pieces/${P.img || n}.png" style="left:${pct(P.o[0], DOLL.x, DOLL.w)};top:${pct(P.o[1], DOLL.y, DOLL.h)};width:${(P.s[0] / DOLL.w * 100).toFixed(2)}%;height:${(P.s[1] / DOLL.h * 100).toFixed(2)}%;z-index:${P.z};filter:${f}${P.flip ? ';transform:scaleX(-1)' : ''}">`; } }
   return `<div class="dollwrap"><div class="dcol">${['helm', 'armor', 'pants'].map(eqSlot).join('')}</div>
-    <div class="doll" aria-label="Hình nhân vật với đồ đang mặc"><img class="base" alt="" src="assets/equip/silhouette.png">${layers}</div>
+    <div class="doll" aria-label="Hình nhân vật với đồ đang mặc"><img class="base" alt="" src="assets/equip/silhouette.png" style="z-index:1">${layers}</div>
     <div class="dcol">${['weapon', 'shield', 'gloves'].map(eqSlot).join('')}</div></div>
-    <div class="drow">${['boots', 'ring', 'pendant'].map(eqSlot).join('')}</div>`; }
+    <div class="drow">${['boots', 'ring', 'pendant', 'wings'].map(eqSlot).join('')}</div>`; }
 let sellArm = -1;
-const sellable = r => S.inv.filter(g => g.r === r && !g.set && !g.plus && !g.charm);
+const sellKeep = () => S.sellKeep || (S.sellKeep = { set: true, hi: true });
+const sellable = r => { const K = sellKeep(); return S.inv.filter(g => g.r === r && !g.charm && g.slot !== 'wings' && !(K.set && g.set) && !(K.hi && g.plus >= 7)); };
 function sellBar() { return `<div class="sellbar"><span class="muted">Bán nhanh:</span>${RARITY.map((R0, r) => { const L = sellable(r), sum = L.reduce((v, g) => v + sellPrice(g), 0);
-    return `<button class="pb${sellArm === r ? ' pri' : ''}" data-sell="${r}" style="--rc:${R0.css}"${L.length ? '' : ' disabled'}>${sellArm === r ? `Bán ${L.length} món · ${fmt(sum)} vàng?` : `${R0.n} (${L.length})`}</button>`; }).join('')}
-    <span class="muted" style="width:100%">Không bán đồ bộ, đồ đã cường hóa và bùa.</span></div>`; }
+    return `<button class="pb${sellArm === r ? ' pri' : ''}" data-sell="${r}" style="--rc:${R0.css};opacity:${L.length ? 1 : 0.55}">${sellArm === r ? `Bán ${L.length} món · ${fmt(sum)} vàng?` : `${R0.n} (${L.length})`}</button>`; }).join('')}
+    <span class="sellk"><label><input type="checkbox" data-keep="set"${sellKeep().set ? ' checked' : ''}> Giữ đồ bộ</label><label><input type="checkbox" data-keep="hi"${sellKeep().hi ? ' checked' : ''}> Giữ đồ từ +7</label><span class="muted">Không bán cánh và bùa.</span></span></div>`; }
 function renderGear() {
   const st = HS, r = rates();
   bagBody.innerHTML = `<div class="grid2"><div class="col">
@@ -3311,14 +3330,17 @@ function renderGear() {
     <div class="sect">Đang mặc</div>
     ${dollHtml()}
     ${setInfo()}
-    <div class="box" id="detail"></div><div class="msg" role="status"></div>
+    <div class="msg" role="status"></div>
   </div><div class="col">
     <div class="sect" style="display:flex;justify-content:space-between;align-items:center">Túi đồ ${S.inv.length}/${BAG_MAX}<span><button class="pb" id="bBest">Mặc đồ tốt nhất</button></span></div>
     ${sellBar()}
     <div id="bagGrid">${S.inv.map(g => tileHtml(g)).join('')}${'<div class="tile empty"></div>'.repeat(Math.max(0, BAG_MAX - S.inv.length))}</div>
   </div></div>`;
+  bagBody.insertAdjacentHTML('beforeend', '<div class="ipop hide" id="ipop"><div class="ipop-card" role="dialog" aria-modal="true" aria-label="Chi tiết món đồ"><button class="x ipop-x" id="ipopX" aria-label="Đóng">×</button><div id="detail"></div><div class="msg" role="status"></div></div></div>');
+  $('ipop').onclick = e => { if (e.target.id === 'ipop') { selId = null; renderBag(); } }; $('ipopX').onclick = () => { selId = null; renderBag(); };
   bagBody.querySelectorAll('.tile[data-id], .doll img[data-id]').forEach(b => b.onclick = () => { selId = b.dataset.id; renderBag(); });
   $('bBest').onclick = bestGear;
+  bagBody.querySelectorAll('[data-keep]').forEach(c => c.onchange = () => { sellKeep()[c.dataset.keep] = c.checked; sellArm = -1; renderBag(); saveGame(true); });
   bagBody.querySelectorAll('[data-sell]').forEach(btn => btn.onclick = () => { const r = +btn.dataset.sell, list = sellable(r);
     if (!list.length) { flash('Không có ' + RARITY[r].n.toLowerCase() + ' nào để bán.'); return; }
     if (sellArm !== r) { sellArm = r; renderBag(); return; }          // the first tap arms the button, the second sells
@@ -3327,24 +3349,24 @@ function renderGear() {
   renderDetail();
 }
 function renderDetail() {
-  const box = $('detail'); const f = selId && findItem(selId);
-  if (!f) { box.innerHTML = '<p class="muted">Chọn một món đồ để xem chỉ số, mặc vào, cường hóa hoặc bán.</p>'; return; }
+  const box = $('detail'); const f = selId && findItem(selId); $('ipop').classList.toggle('hide', !f);
+  if (!f) { box.innerHTML = ''; return; }
   const { g, equipped } = f;
   if (g.slot === 'charm') { const C = CHARMS[g.charm]; box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${C.col}">${g.name} ×${qty(g)}</h3><p class="muted">${g.charm === 'soul' ? 'Vật phẩm cổ đại' : 'Bùa siêu hiếm'} · ${C.d} mỗi ${g.charm === 'soul' ? 'viên' : 'lá'} khi mang trong túi · cộng dồn tối đa ${CHARM_CAP} lá (đang có tác dụng ${HS.charms[g.charm]}/${CHARM_CAP}) · xếp chồng trong 1 ô</p></div></div>
       <div class="acts"><button class="pb" id="aSell">Bán 1 · ${fmt(sellPrice(g))} vàng</button>${qty(g) > 1 ? `<button class="pb" id="aSellAll">Bán cả ${qty(g)} · ${fmt(sellPrice(g) * qty(g))} vàng</button>` : ''}</div>`;
     $('aSell').onclick = () => { takeOne(S.inv, g); S.gold += sellPrice(g); if (!S.inv.includes(g)) selId = null; afterChange(); };
     const all = $('aSellAll'); if (all) all.onclick = () => { S.gold += sellPrice(g) * qty(g); S.inv = S.inv.filter(x => x !== g); selId = null; afterChange(); }; return; }
-  const cur = S.eq[g.slot]; const cost = upCost(g.plus), rate = upRate(g.plus); const canUp = g.plus < 15;
+  const cur = S.eq[g.slot]; const cost = upCost(g.plus), rate = upRate(g.plus); const canUp = g.plus < 15 && g.slot !== 'wings';
   box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${RARITY[g.r].css};font-size:21px;text-shadow:0 0 10px ${RARITY[g.r].css}66">${g.name}${g.plus ? ' +' + g.plus : ''}</h3>
     <p class="muted" style="margin:5px 0 0"><span class="rtag" style="--c:${RARITY[g.r].css}">${RARITY[g.r].n}</span> ${SLOTS[g.slot].n} · cấp ${g.lv}${g.set ? ` · <span class="settag" style="--c:${SETS[g.set].col}">◆ ${SETS[g.set].n}</span>` : ''}${equipped ? ' · <b style="color:var(--cyan)">Đang mặc</b>' : ''}</p></div></div>
-    <ul class="stl">${statLines(g, !equipped && cur ? cur : null)}</ul>
-    ${canUp ? `<div class="upb"><b>+${g.plus} → +${g.plus + 1}</b><span>Tỉ lệ thành công ${Math.round(rate * 100)}%${g.plus >= 9 ? ' · thất bại giảm 1 cấp' : ''}</span><span>Cần ${cost.stones} Đá Cường Hóa · ${fmt(cost.gold)} vàng</span></div>` : '<p class="muted">Đã đạt +15.</p>'}
+    <ul class="stl">${g.slot === 'wings' ? `<li><span>Sát thương</span><b>×${WINGM[g.tier]}</b></li><li><span>Phòng thủ</span><b>+${WDEF[g.tier]}</b></li><li><span>Máu</span><b>+${WHP[g.tier]}</b></li><li><span>Tốc đánh</span><b>+${g.tier * 8}</b></li>` : statLines(g, !equipped && cur ? cur : null)}</ul>
+    ${g.slot === 'wings' ? '' : canUp ? `<div class="upb"><b>+${g.plus} → +${g.plus + 1}</b><span>Tỉ lệ thành công ${Math.round(rate * 100)}%${g.plus >= 9 ? ' · thất bại giảm 1 cấp' : ''}</span><span>Cần ${cost.stones} Đá Cường Hóa · ${fmt(cost.gold)} vàng</span></div>` : '<p class="muted">Đã đạt +15.</p>'}
     <div class="acts"><button class="pb" id="aEq">${equipped ? 'Tháo ra' : g.slot === 'weapon' ? 'Cầm tay phải' : 'Mặc vào'}</button>${!equipped && g.slot === 'weapon' ? '<button class="pb" id="aEq2">Cầm tay trái</button>' : ''}${canUp ? `<button class="pb pri" id="aUp"${S.mats.e < cost.stones || S.gold < cost.gold ? ' disabled' : ''}>Cường hóa</button>` : ''}${equipped ? '' : `<button class="pb" id="aSell">Bán · ${fmt(sellPrice(g))} vàng</button>`}</div>`;
   $('aEq').onclick = () => equipToggle(g, equipped); if ($('aEq2')) $('aEq2').onclick = () => equipToggle(g, false, 'shield');
   if (canUp) $('aUp').onclick = () => enhance(g);
   if (!equipped) $('aSell').onclick = () => { S.inv = S.inv.filter(x => x !== g); S.gold += sellPrice(g); selId = null; afterChange(); flash('Đã bán ' + g.name + '.'); };
 }
-function equipToggle(g, equipped, to) { if (equipped) { if (S.inv.length >= BAG_MAX) { flash('Túi đầy, không tháo được.', 'bad'); return; } const k = SLOT_ORDER.find(s => S.eq[s] === g); if (k) delete S.eq[k]; S.inv.push(g); } else { const k = to || g.slot; const old = S.eq[k]; S.inv = S.inv.filter(x => x !== g); if (old) S.inv.push(old); S.eq[k] = g; } afterChange(); }
+function equipToggle(g, equipped, to) { if (equipped) { if (S.inv.length >= BAG_MAX) { flash('Túi đầy, không tháo được.', 'bad'); return; } const k = EQ_KEYS.find(s => S.eq[s] === g); if (k) delete S.eq[k]; S.inv.push(g); } else { const k = to || g.slot; const old = S.eq[k]; S.inv = S.inv.filter(x => x !== g); if (old) S.inv.push(old); S.eq[k] = g; } afterChange(); }
 function enhance(g) { const cost = upCost(g.plus); if (S.mats.e < cost.stones || S.gold < cost.gold) return; S.mats.e -= cost.stones; S.gold -= cost.gold; const ok = Math.random() < upRate(g.plus);
   if (ok) g.plus++; else if (g.plus >= 9) g.plus--; afterChange();
   flash(ok ? `Thành công! ${g.name} +${g.plus}` : g.plus >= 8 ? `Thất bại. ${g.name} còn +${g.plus}.` : 'Thất bại. Đồ giữ nguyên cấp.', ok ? 'ok' : 'bad');
@@ -3365,17 +3387,18 @@ function renderStones() {
   $('fChain').onclick = () => { let n = 0; for (const [f] of FORGE) n += forgeAll(f, true); afterChange(); flash(n ? `Đã hợp ${n} viên.` : 'Chưa đủ 3 viên cùng loại.', n ? 'ok' : 'bad'); };
 }
 function wingThumb(w) { const st = 'width:58px;height:34px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#0a1a22;overflow:hidden';
-  if (SWING[w]) return `<div style="${st}"><img alt="" src="assets/wings/${SWING[w].dir}/L.png" style="height:32px"><img alt="" src="assets/wings/${SWING[w].dir}/R.png" style="height:32px"></div>`;
+  if (w >= 1) return `<div style="${st}"><img alt="" src="assets/equip/wings/t${w}_128.png" style="height:34px"></div>`;
   return `<div style="${st};background:linear-gradient(90deg,#ff9ad8,#ffe08a,#9fffc0,#7fd8ff,#c8a8ff)" aria-hidden="true"></div>`; }
 function renderWing() {
-  const w = S.wing, nx = w < WMAX ? w + 1 : null;
-  bagBody.innerHTML = `<div class="wingbig"><div><div class="sect">Cánh hiện tại</div><div class="tier">${WNAME[w]}</div></div>
-    <ul class="stl" style="flex:1;min-width:200px"><li><span>Sát thương</span><b>×${WINGM[w]}</b></li><li><span>Phòng thủ</span><b>+${WDEF[w]}</b></li><li><span>Máu</span><b>+${WHP[w]}</b></li><li><span>Tốc chạy</span><b>+${(w * 0.4).toFixed(1)}</b></li></ul></div>
-    <p class="muted">Cánh ghép từ <b style="color:#ffd85a">Lông Vũ Thần</b> (rơi từ quái và boss). Cánh càng cao càng to, càng sáng, và nhân vật bay lơ lửng khi đeo cánh.</p>
-    ${nx ? `<div class="row">${mIcon('f')}<div class="t"><b style="color:var(--gold)">${w ? 'Nâng cấp' : 'Chế tạo'} ${WNAME[nx]}</b> — cần ${WCOST[w]} lông vũ (đang có ${S.mats.f})<br>Sát thương ×${WINGM[nx]} · Phòng thủ +${WDEF[nx]} · Máu +${WHP[nx]}</div><button class="pb pri" id="wCraft"${S.mats.f < WCOST[w] ? ' disabled' : ''}>${w ? 'Nâng cấp' : 'Chế tạo'}</button></div>` : '<p class="muted"><b style="color:var(--gold)">Cánh đã đạt cấp tối đa.</b></p>'}
-    <div class="sect" style="margin-top:10px">Các cấp cánh</div>
-    ${WNAME.slice(1).map((n, i) => `<div class="row">${wingThumb(i + 1)}<div class="t"><b style="color:${i + 1 <= w ? 'var(--gold)' : '#93c6cf'}">${n}</b> · ${WCOST[i]} lông vũ · ×${WINGM[i + 1]} sát thương · +${WDEF[i + 1]} phòng thủ · +${WHP[i + 1]} máu</div>${i + 1 <= w ? '<b style="color:#6dff9c">✓</b>' : ''}</div>`).join('')}<div class="msg" role="status"></div>`;
-  if (nx) $('wCraft').onclick = () => { if (S.mats.f < WCOST[S.wing]) return; S.mats.f -= WCOST[S.wing]; S.wing++; fxBeam(S.pos.x, S.pos.z, '#ffd85a', 1.4, 1); burst(S.pos.x, 1.2, S.pos.z, 40, C3('#fff0b0'), 4, 0.4, 0.9); banner(WNAME[S.wing].toUpperCase() + '!', 'gold'); afterChange(); };
+  const m = S.wingMax || 0, own = t => S.inv.filter(g => g.slot === 'wings' && g.tier === t).length + (S.eq.wings && S.eq.wings.tier === t ? 1 : 0);
+  bagBody.innerHTML = `<p class="muted" style="margin-top:0">Cánh chế từ <b style="color:#ffd85a">Lông Vũ Thần</b> (rơi từ quái và boss). Mỗi lần chế ra một đôi cánh nằm trong túi đồ: chạm vào để mặc, tháo, bán hoặc đem ra chợ. Chế được cấp tiếp theo sau khi đã chế cấp trước. Đang có ${S.mats.f} lông vũ.</p>
+    ${WNAME.slice(1).map((n, i) => { const t = i + 1, can = t <= m + 1, worn = S.eq.wings && S.eq.wings.tier === t;
+      return `<div class="row">${wingThumb(t)}<div class="t"><b style="color:${RARITY[Math.min(3, t - 1)].css}">${n}</b>${worn ? ' · <b style="color:var(--cyan)">Đang mặc</b>' : ''} · có ${own(t)}<br>${WCOST[i]} lông vũ · ×${WINGM[t]} sát thương · +${WDEF[t]} phòng thủ · +${WHP[t]} máu</div>
+        <button class="pb pri" data-wc="${t}"${can && S.mats.f >= WCOST[i] ? '' : ' disabled'}>${can ? 'Chế tạo' : 'Khóa'}</button></div>`; }).join('')}<div class="msg" role="status"></div>`;
+  bagBody.querySelectorAll('[data-wc]').forEach(b => b.onclick = () => { const t = +b.dataset.wc; if (t > (S.wingMax || 0) + 1 || S.mats.f < WCOST[t - 1]) return;
+    if (S.inv.length >= BAG_MAX) { flash('Túi đầy.', 'bad'); return; }
+    S.mats.f -= WCOST[t - 1]; S.inv.push(makeWing(t, S.lv)); S.wingMax = Math.max(S.wingMax || 0, t); fxBeam(S.pos.x, S.pos.z, '#ffd85a', 1.4, 1); burst(S.pos.x, 1.2, S.pos.z, 40, C3('#fff0b0'), 4, 0.4, 0.9);
+    banner(WNAME[t].toUpperCase() + '!', 'gold'); afterChange(); flash(WNAME[t] + ' đã vào túi đồ.', 'ok'); });
 }
 function renderPets() {
   const P = curPet(), Mt = curMount();
@@ -3494,9 +3517,10 @@ function rankRows(k) { const where = m => MAPS[m] ? MAPS[m].name : '';
 const SKEY = 'nguanhhung-save-v2', OLDKEY = 'nguanhhung-save-v1';
 const Store = { db: null, uid: null, writing: false, pending: null };
 let SAVE = null, OLD = null, running = false, best = 0;
-function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(SLOT_ORDER.map(s => [s, S.eq[s] || null])), map: S.map, auto: S.auto, autoLoot: S.autoLoot, lootF: S.lootF, bossHunt: !!S.bossHunt, traded: S.traded || 0, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog }; }
+function snapshot() { return { v: 2, ts: Date.now(), cls: S.cls, lv: S.lv, exp: Math.floor(S.exp), gold: S.gold, mats: { ...S.mats }, st: { ...S.st }, wing: S.wing, inv: S.inv, eq: Object.fromEntries(EQ_KEYS.map(s => [s, S.eq[s] || null])), wingMax: S.wingMax || 0, map: S.map, auto: S.auto, autoLoot: S.autoLoot, lootF: S.lootF, bossHunt: !!S.bossHunt, traded: S.traded || 0, bots: S.bots, party: S.party, pets: S.pets, pet: S.pet, mounts: S.mounts, mount: S.mount, playT: Math.round(S.playT), lvLog: S.lvLog, sellKeep: S.sellKeep || null }; }
 function applySave(d) { S = newState(d.cls); Object.assign(S, { lv: Math.min(MAXLV, d.lv || 1), exp: d.lv > MAXLV ? 0 : d.exp || 0, gold: d.gold || 0, wing: Math.min(WMAX, d.wing || 0), map: d.map || 0, auto: d.auto !== false });
-  S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of SLOT_ORDER) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s];
+  S.mats = Object.assign(S.mats, d.mats || {}); S.st = Object.assign(S.st, d.st || {}); S.inv = Array.isArray(d.inv) ? d.inv : []; S.eq = {}; for (const s of EQ_KEYS) if (d.eq && d.eq[s]) S.eq[s] = d.eq[s]; S.wingMax = d.wingMax || 0; S.sellKeep = d.sellKeep || null;
+  if (S.wing > 0 && !S.eq.wings && !S.inv.some(g => g.slot === 'wings')) { S.eq.wings = makeWing(S.wing, S.lv); S.wingMax = Math.max(S.wingMax, S.wing); }   /* older saves: the wing level becomes a wing item */
   S.pets = d.pets || []; S.pet = d.pet || null; S.mounts = d.mounts || []; S.mount = d.mount || null; S.playT = d.playT || 0; S.autoLoot = d.autoLoot !== false; S.lootF = Object.assign(lootDefaults(), d.lootF || {}); S.bossHunt = !!d.bossHunt; S.traded = d.traded || 0; S.bots = Array.isArray(d.bots) ? d.bots : null; S.party = d.party || null;
   { const inv = []; for (const g of S.inv) if (!stackInto(inv, g)) inv.push(g); S.inv = inv; } // older saves: merge loose charms into stacks S.lvLog = d.lvLog || [];
   for (const g of [...S.inv, ...Object.values(S.eq)]) if (g && AS_SLOTS.includes(g.slot) && g.base.as == null) g.base.as = gearAS(g.lv, g.r); // older weapons get their speed roll
@@ -3565,7 +3589,7 @@ function frame() {
   }
   if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) $('banner').classList.remove('show'); }
   if (running && !paused && S) { updateBots(dt, t); updateNpcs(dt, t); if (isTown() && !npcEnts.length && heroGLTF) spawnNpcs(); }
-  updateParticles(dt); updateFx(dt); FX3.update(dt, t); heroLookTick(dt, t); for (const f of scenery) f(t, dt);
+  updateParticles(dt); updateFx(dt); FX3.update(dt, t); if (S) bagLive(dt); heroLookTick(dt, t); for (const f of scenery) f(t, dt);
   if (S) { const portrait = innerHeight > innerWidth; const dist = (portrait ? 1.2 : 1) / CAM_ZOOM; camPos.set(S.pos.x, 1 + 10 * dist, S.pos.z + 9.5 * dist); if (fitCam) { camera.position.copy(camPos); fitCam = false; } camera.position.lerp(camPos, Math.min(1, dt * 4));
     if (S.shake > 0) { S.shake -= dt; camera.position.x += (Math.random() - 0.5) * S.shake * 0.4; camera.position.y += (Math.random() - 0.5) * S.shake * 0.4; }
     camera.lookAt(camera.position.x, 1.0, camera.position.z - 9.5 * dist);
