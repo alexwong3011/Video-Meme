@@ -100,6 +100,9 @@ form.add .wide { grid-column: 1 / -1 }
 .meter .big { font: 600 32px/1 var(--ui); font-variant-numeric: tabular-nums }
 .meter .big small { font-size: 14px; color: var(--mute); font-weight: 500 }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+.go { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 2px }
+button.go-b { color: var(--teal); border-color: var(--teal); padding: 4px 11px; font-size: 12px }
+button.go-b:hover { background: var(--teal-soft) } button.go-b[disabled] { opacity: .6; cursor: wait }
 .empty { padding: 18px; color: var(--mute); text-align: center; font-size: 13px }
 .saving { font-size: 11px; color: var(--mute) }
 @media (max-width: 640px) {
@@ -202,16 +205,16 @@ function compSheet(tid) {
   if (!L.length) return `<div class="sheet"><div class="empty">Chưa có cấu phần nào trong mục này. Thêm cấu phần đầu tiên bằng biểu mẫu bên dưới.</div></div>`;
   return `<div class="sheet"><div class="hd"><div>Cấu phần · hiện trạng</div><div>Hướng update cần làm</div></div>${L.map(x => `
     <div class="row st-${esc(x.status)}" data-row="${esc(x.id)}">
-      <div><div class="name">${esc(x.name)} ${pillSel('comps', x.id, 'status', x.status, CST)}${canWrite ? `<button class="x" data-del="comps" data-id="${esc(x.id)}" aria-label="Xóa cấu phần ${esc(x.name)}" title="Xóa">×</button>` : ''}</div><div class="now">${esc(x.now)}</div></div>
+      <div><div class="name">${esc(x.name)} ${pillSel('comps', x.id, 'status', x.status, CST)}${canWrite ? `<button class="x" data-del="comps" data-id="${esc(x.id)}" aria-label="Xóa cấu phần ${esc(x.name)}" title="Xóa">×</button>` : ''}</div><div class="now">${esc(x.now)}</div>${goBtn('comps', x)}</div>
       <div class="next">${ta('comps', x.id, 'next', x.next, 'Ghi hướng update, ý tưởng hoặc lỗi cần sửa…', 'Hướng update cho ' + x.name)}</div>
     </div>`).join('')}</div>`; }
 function taskTable(f, showTab) {
   const L = list(S.tasks, f).sort((a, b) => ({ doing: 0, todo: 1, paused: 2, done: 3 }[a.state] - { doing: 0, todo: 1, paused: 2, done: 3 }[b.state]) || byOrder(a, b));
   if (!L.length) return `<div class="tasks"><div class="empty">Chưa có công việc. Thêm việc mới bằng biểu mẫu bên dưới.</div></div>`;
   return `<div class="tasks"><table><thead><tr><th style="width:34px"><span class="sr">Xong</span></th><th>Công việc</th>${showTab ? '<th>Mục</th>' : ''}<th>Trạng thái</th><th>Tài nguyên cần</th><th class="num">Credit ước tính</th><th class="num">Credit đã dùng</th><th style="width:30px"></th></tr></thead><tbody>${L.map(t => `
-    <tr class="${t.state === 'done' ? 'done' : ''}">
+    <tr class="${t.state === 'done' ? 'done' : ''}" data-row="${esc(t.id)}">
       <td><input type="checkbox" aria-label="Đánh dấu xong: ${esc(t.title)}" data-done="${esc(t.id)}"${t.state === 'done' ? ' checked' : ''}${canWrite ? '' : ' disabled'}></td>
-      <td class="tc"><div class="t">${esc(t.title)}</div>${t.note ? `<div class="sm">${esc(t.note)}</div>` : ''}</td>
+      <td class="tc"><div class="t">${esc(t.title)}</div>${t.note ? `<div class="sm">${esc(t.note)}</div>` : ''}${goBtn('tasks', t)}</td>
       ${showTab ? `<td><span class="tabtag">${esc(tabName(t.tab))}</span></td>` : ''}
       <td>${pillSel('tasks', t.id, 'state', t.state, TST)}</td>
       <td><div class="sm">${esc(t.need || '–')}</div></td>
@@ -219,6 +222,25 @@ function taskTable(f, showTab) {
       <td class="num">${canWrite ? `<input type="number" min="0" aria-label="Credit đã dùng" data-col="tasks" data-id="${esc(t.id)}" data-f="used" data-num value="${esc(val('tasks', t.id, 'used', t.used ?? ''))}" style="width:90px;text-align:right">` : fmt(num(t.used))}</td>
       <td>${canWrite ? `<button class="x" data-del="tasks" data-id="${esc(t.id)}" aria-label="Xóa công việc ${esc(t.title)}" title="Xóa">×</button>` : ''}</td>
     </tr>`).join('')}</tbody></table></div>`; }
+// "Bắt đầu làm": posts the item as a comment sent to Claude; Claude answers in that thread with a work plan to confirm
+let cm = null, cmState = 'off'; const sent = new Map();
+const CM_WHY = { writers_only: 'Chỉ người có quyền sửa trang mới gửi được cho Claude.', no_session: 'Chưa có phiên Claude nào đang nhận yêu cầu từ trang này. Mở lại phiên làm việc rồi thử lại.', off: 'Trang chưa gửi được cho Claude ở chế độ xem này.' };
+function goBtn(col, x) { const open = col === 'comps' ? x.status !== 'done' : x.state !== 'done'; if (!open) return ''; const k = col + '/' + x.id, st = sent.get(k);
+  return `<div class="go"><button class="btn go-b" type="button" data-go="${col}" data-id="${esc(x.id)}"${st === 'sending' ? ' disabled' : ''}>${st === 'sending' ? 'Đang gửi…' : st === 'sent' ? 'Gửi lại cho Claude' : 'Bắt đầu làm'}</button>${st === 'sent' ? '<span class="saving">Đã gửi. Kế hoạch sẽ hiện trong luồng bình luận của mục này.</span>' : ''}</div>`; }
+function goText(col, x) {
+  const L = col === 'comps'
+    ? ['[Bắt đầu làm] ' + x.name, 'Mục: ' + tabName(x.tab), 'Trạng thái: ' + (CST[x.status] || x.status), 'Hiện trạng: ' + (x.now || '–'), 'Hướng update: ' + (val('comps', x.id, 'next', x.next) || '–')]
+    : ['[Bắt đầu làm] ' + x.title, 'Mục: ' + tabName(x.tab), 'Trạng thái: ' + (TST[x.state] || x.state), 'Tài nguyên cần: ' + (x.need || '–'), 'Credit ước tính: ' + (num(x.est) ?? '–'), 'Ghi chú: ' + (x.note || '–')];
+  L.push('Hãy trình bày kế hoạch công việc chi tiết để tôi xác nhận trước khi làm.');
+  let t = L.join('\n'); while (new TextEncoder().encode(t).length > 3900) t = t.slice(0, -50); return t; }
+async function startWork(btn) { const col = btn.dataset.go, id = btn.dataset.id, x = S[col].get(id); if (!x) return; const k = col + '/' + id;
+  if (!cm) { note('Trang này chưa được phép gửi bình luận cho Claude.', true); return; }
+  try { cmState = await cm.canSendToClaude(); } catch (e) { cmState = 'off'; }
+  if (cmState !== 'available') { note(CM_WHY[cmState] || CM_WHY.off, true); return; }
+  const row = btn.closest('[data-row]') || btn; sent.set(k, 'sending'); render();
+  try { const anchor = await cm.anchorFor(row); await cm.sendToClaude({ anchor, text: goText(col, x) }); sent.set(k, 'sent'); note('Đã gửi "' + (x.name || x.title) + '" cho Claude.', false); }
+  catch (e) { sent.delete(k); note(e && e.code === 'consent_required' ? 'Chưa gửi: hãy cho phép trang bình luận thay bạn rồi bấm lại.' : e && e.code === 'claude_unavailable' ? CM_WHY.no_session : 'Chưa gửi được cho Claude (' + ((e && e.code) || 'lỗi') + ').', true); }
+  render(); }
 function addTaskForm(tid) { if (!canWrite) return '';
   return `<form class="add" data-add="task">
     <label class="wide">Công việc mới<input type="text" name="title" required placeholder="Ví dụ: Hiệu ứng riêng cho Vạn Băng Trụ"></label>
@@ -285,6 +307,7 @@ function resources() {
 // ---- events ----
 document.addEventListener('click', e => {
   const tb = e.target.closest('[data-tab]'); if (tb) { setTab(tb.dataset.tab); return; }
+  const go = e.target.closest('[data-go]'); if (go) { startWork(go); return; }
   const d = e.target.closest('[data-del]'); if (d && db && canWrite) {
     if (d.dataset.arm !== '1') { d.dataset.arm = '1'; d.textContent = 'Xóa?'; d.style.color = 'var(--bad)'; setTimeout(() => { if (d.isConnected) { d.dataset.arm = ''; d.textContent = '×'; d.style.color = ''; } }, 3000); return; }
     db.collection(d.dataset.del).doc(d.dataset.id).delete().catch(flag); } });
@@ -322,6 +345,7 @@ render();
   const sub = (col, key) => db.collection(col).onSnapshot(q => { const m = new Map(); q.docs.forEach(d => m.set(d.id, Object.assign({ id: d.id }, d.data()))); S[key] = m; if (!q.metadata.fromCache) S.loaded[key] = true; done(); render(); },
     e => { clearTimeout(timer); note('Mất kết nối dữ liệu (' + e.code + '). Tải lại trang để thử lại.', true); });
   sub('comps', 'comps'); sub('tasks', 'tasks'); sub('spend', 'spend');
+  try { cm = await window.claude.use('comments'); } catch (e) { cm = null; }
   db.doc('meta/meshy').onSnapshot(d => { S.meta = d.exists ? d.data() : null; if (!d.metadata.fromCache) S.loaded.meta = true; done(); render(); }, () => {});
 })();
 </script>
