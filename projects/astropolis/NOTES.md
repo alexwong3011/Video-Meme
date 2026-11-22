@@ -1,8 +1,8 @@
-# Ngũ Anh Hùng — ghi chú bàn giao (đọc trước khi làm tiếp)
+# ASTROPOLIS: Anihilation — ghi chú bàn giao (tên cũ: Ngũ Anh Hùng) (đọc trước khi làm tiếp)
 
 ## Link và quy tắc xuất bản
 - Dev: https://claude.ai/artifact/PBAE7ke18xyxBVu2Sente7 ← `index.html` (+ `assets/**`)
-- Test: https://claude.ai/artifact/JytjwNgSMK18nigbrBf9Zc ← `test-build/index.html` (bản sao của index.html, chỉ đổi `<title>` thành "Ngũ Anh Hùng Test")
+- Test: https://claude.ai/artifact/JytjwNgSMK18nigbrBf9Zc ← `test-build/index.html` (bản sao của index.html, chỉ đổi `<title>` thành "ASTROPOLIS: Anihilation Test")
 - Bảng phát triển: https://claude.ai/artifact/AQze3RX5putBzaumknY4ye ← `dashboard/index.html`. Dữ liệu nằm trong kho db của trang (comps, tasks, spend, meta/meshy); nạp ban đầu bằng `dashboard/seed.py`. **Khi xong hoặc mở việc mới, cập nhật bảng bằng ArtifactData** (đọc trước, ghi kèm if_version).
 - **Mỗi lần cập nhật dev thì xuất bản luôn test** (chủ dự án yêu cầu). Asset mới: publish dev với `files` = đường dẫn tương đối; test lấy file server-side `{artifact: <dev url>, path}`.
 - Capabilities (giữ nguyên khi publish, không truyền lại): db rules `[{path:"",read:"view",write:"owner"},{path:"data/users/{self}",write:"interact"}]` + `user`.
@@ -21,7 +21,7 @@ Trong `scripts/character3d/` (khóa API do proxy tự chèn cho api.meshy.ai):
 1. `gen_views.py work/base_greek/clean/white work/<k>/raw work/<k>/prompt.json` (prompt có `"armor": true`) → 3 ảnh A-pose (36 cr)
 2. `gen_sheet.py <prompts/ref-armor-layout.jpg|ref-weapon-layout.jpg> <prompt.txt> <out.png> [--aspect 16:9]` → tấm giáp + tấm vũ khí (12 cr/ảnh)
 3. `apose.py work/<k>/raw work/<k>/raw work/<k>/clean`, rồi `run_pipeline.py work/<k>/config.json` (chép config của dung, đổi name/web_name) → `assets/meshy/knight_<k>.*` (40 cr)
-4. `set_pieces.py armor.png weapon.png ../../projects/ngu-anh-hung/prompts/ref-armor-layout.jpg ../../projects/ngu-anh-hung/assets/equip/sets/<k> [--pole]` → mảnh hình nhân, icon, `doll.json`, `weapon_front/back.png`, `weapon.json`
+4. `set_pieces.py armor.png weapon.png ../../projects/astropolis/prompts/ref-armor-layout.jpg ../../projects/astropolis/assets/equip/sets/<k> [--pole]` → mảnh hình nhân, icon, `doll.json`, `weapon_front/back.png`, `weapon.json`
 5. LOD cho bot: `node lod2.mjs <gltf.json> <out_lod.json> 0.2` (script trong scratchpad cũ; cần `npm i meshoptimizer@0.21.0`) — nên chép vào repo nếu dùng lại
 6. Code: thêm vào `SET_ART` (doll + sword, `L: 1.7` cho vũ khí dài), `VARIANT_SETS`, tên món trong `SETS.<k>.names`.
 - Phong cách: **sáng** (Lam, Bích, Tím, Vàng kim, Đỏ, Bạc, Lục Bích). Bộ Dung Nham bị tối — có thể làm lại.

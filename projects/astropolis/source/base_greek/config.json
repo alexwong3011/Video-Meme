@@ -1,11 +1,11 @@
 {
-  "name": "dung_nham_knight",
+  "name": "greek_base_body",
   "views_white": "clean/white",
   "views_transparent": "clean/transparent",
   "views": ["front", "left", "back", "right"],
   "out_dir": "out",
-  "web_dir": "../../../../projects/ngu-anh-hung/assets/meshy",
-  "web_name": "knight_dung",
+  "web_dir": "../../../../projects/astropolis/assets/meshy",
+  "web_name": "base_greek",
   "height_m": 2.0,
   "include_fingers": true,
   "model": {
@@ -14,10 +14,10 @@
     "image_enhancement": false,
     "should_texture": true,
     "texture_resolution": "2k",
-    "enable_pbr": true,
+    "enable_pbr": false,
     "should_remesh": true,
     "topology": "triangle",
-    "target_polycount": 60000,
+    "target_polycount": 40000,
     "pose_mode": "a-pose"
   },
   "actions": [],

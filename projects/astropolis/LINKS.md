@@ -1,4 +1,4 @@
-# Ngũ Anh Hùng: các link
+# ASTROPOLIS: Anihilation: các link
 
 | Bản | Link | File nguồn | Cập nhật khi |
 |---|---|---|---|
@@ -6,4 +6,4 @@
 | Test | https://claude.ai/artifact/JytjwNgSMK18nigbrBf9Zc | `test-build/index.html` | ngay sau mỗi lần cập nhật bản dev (chủ dự án yêu cầu chốt luôn, từ 21/11/2026) |
 
 Hai bản có kho lưu tiến trình riêng, chơi bản này không ảnh hưởng bản kia.
-Chốt bản test mới: chép `index.html` sang `test-build/index.html` (đổi `<title>` thành "Ngũ Anh Hùng Test") rồi xuất bản lại đúng file đó.
+Chốt bản test mới: chép `index.html` sang `test-build/index.html` (đổi `<title>` thành "ASTROPOLIS: Anihilation Test") rồi xuất bản lại đúng file đó.

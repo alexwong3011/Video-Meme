@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <meta charset="utf-8">
-<title>Ngũ Anh Hùng</title>
+<title>ASTROPOLIS: Anihilation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=Cormorant+Garamond:wght@600;700&display=swap">
@@ -203,6 +203,7 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 .slot.empty .si{color:#c9a24a;border-color:rgba(242,210,122,.4)}
 .slot.empty .sd b{color:#cdbf9f}
 .gfxrow{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:12px}.gfxrow span{font:700 12px var(--ui);color:#c9b48a;margin-right:4px}
+.ocard h1 .t2{display:block;font-size:.46em;letter-spacing:.34em;margin-top:6px;text-transform:uppercase}
 .hname-in{display:flex;flex-direction:column;gap:4px;align-items:center;margin:8px auto 2px;font:600 12px var(--ui);color:#9fb2b2;max-width:280px}
 .hname-in input{width:100%;padding:8px 10px;border-radius:9px;border:1.5px solid rgba(242,210,122,.35);background:rgba(0,0,0,.35);color:#f2d27a;font:700 16px var(--display);text-align:center}
 .hname-in input:focus{outline:none;border-color:#f2d27a}
@@ -475,7 +476,7 @@ img.mat{width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0
 <div class="ov" id="startOv">
   <div class="ocard">
     <div class="sub">ARPG · BẢN THỬ 5 VÙNG ĐẤT</div>
-    <h1>Ngũ Anh Hùng</h1>
+    <h1>ASTROPOLIS<span class="t2">Anihilation</span></h1>
     <p>Chọn một trong <b>5 lớp anh hùng</b>, cày quái qua <b>5 vùng đất</b> tới <b>cấp 400</b>, hạ <b>boss</b> để lấy đồ hiếm. Ghép lông vũ thành <b>cánh</b>, khảm <b>linh thạch</b> để mở 5 tầng sát thương (tối đa ×180), mặc đủ <b>bộ đồ</b> để nhận hiệu ứng.</p>
     <p id="bestTxt" class="small"></p>
     <div class="slots" id="slotList" aria-label="Nhân vật của bạn"></div>
@@ -4084,7 +4085,7 @@ $('classGo').onclick = () => { if (!pickCls || newSlot < 0 || !ROSTER) return; S
 function startRun(fresh) {
   $('startOv').classList.add('hide'); $('classOv').classList.add('hide'); $('menuOv').classList.add('hide'); $('hud').classList.remove('hide');
   if (!S.bots) S.bots = newBots(); else if (S.bots.length < BOT_NAMES.length) { const fresh = newBots(); for (const b of fresh) if (!S.bots.some(q => q.id === b.id)) S.bots.push(b); } S.map = TOWN; recalc(true); running = true; buildHero3D(); setMap(S.map); recalc(true); applyPetMount(); showZone(); updateHud(); fitCam = true;
-  if (fresh) log('Chào mừng đến Ngũ Anh Hùng! Chạm vào nền để di chuyển, chạm vào quái để đánh. Tự động đánh đang bật. Mở túi đồ để khảm linh thạch và chế cánh.', '#9fe8ff');
+  if (fresh) log('Chào mừng đến ASTROPOLIS: Anihilation! Chạm vào nền để di chuyển, chạm vào quái để đánh. Tự động đánh đang bật. Mở túi đồ để khảm linh thạch và chế cánh.', '#9fe8ff');
   saveGame();
 }
 function openMenu() { $('menuOv').classList.remove('hide'); paused = true; gfxUI(); const h = Math.floor(S.playT / 3600), mi = Math.floor(S.playT / 60) % 60; const L = S.lvLog.filter(e => e[0] >= S.playT - 600); const pace = L.length > 1 ? (L[L.length - 1][1] - L[0][1]) / Math.max(60, L[L.length - 1][0] - L[0][0]) * 3600 : 0;

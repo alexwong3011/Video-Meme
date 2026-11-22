@@ -50,7 +50,7 @@ c('kythuat','pipe_set','Quy trình Meshy cho bộ đồ','done','gen_views → g
 c('kythuat','pipe_boss','Quy trình Meshy cho boss','done','gen_boss.py: ảnh concept (9 credit) → dựng 3D (30 credit) → định dạng web.')
 c('kythuat','check','Kiểm tra tự động','done','tools/check.js chạy game không giao diện, chụp ảnh, báo lỗi. Có tùy chọn khung hình (VIEW=1280x800).')
 c('kythuat','publish','Quy tắc xuất bản','done','Mỗi lần cập nhật xuất bản cả bản dev và bản test, rồi commit lên nhánh claude/sharp-goodall-ay56hb.')
-c('kythuat','notes','Ghi chú bàn giao','done','projects/ngu-anh-hung/NOTES.md: kiến trúc, quy trình, bẫy hay gặp, việc tiếp theo.')
+c('kythuat','notes','Ghi chú bàn giao','done','projects/astropolis/NOTES.md: kiến trúc, quy trình, bẫy hay gặp, việc tiếp theo.')
 c('kythuat','perf','Dung lượng và hiệu năng','partial','Thư mục tài nguyên khoảng 121 MB. Boss 50–86 nghìn tam giác, texture màu 2048 px. Chưa đo trên điện thoại yếu.', 'Đo FPS trên điện thoại khi có 2 boss; nếu giật thì giảm texture boss xuống 1024 và làm LOD.')
 T = []
 def t(tab, id, title, state, need='', est=None, used=None, note=''): T.append(dict(tab=tab, id=id, title=title, state=state, need=need, est=est, used=used, note=note))

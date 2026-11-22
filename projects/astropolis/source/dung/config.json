@@ -1,11 +1,11 @@
 {
-  "name": "olym_knight",
+  "name": "dung_nham_knight",
   "views_white": "clean/white",
   "views_transparent": "clean/transparent",
   "views": ["front", "left", "back", "right"],
   "out_dir": "out",
-  "web_dir": "../../../../projects/ngu-anh-hung/assets/meshy",
-  "web_name": "knight_olym",
+  "web_dir": "../../../../projects/astropolis/assets/meshy",
+  "web_name": "knight_dung",
   "height_m": 2.0,
   "include_fingers": true,
   "model": {

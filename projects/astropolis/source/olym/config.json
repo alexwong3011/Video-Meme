@@ -1,11 +1,11 @@
 {
-  "name": "greek_base_body",
+  "name": "olym_knight",
   "views_white": "clean/white",
   "views_transparent": "clean/transparent",
   "views": ["front", "left", "back", "right"],
   "out_dir": "out",
-  "web_dir": "../../../../projects/ngu-anh-hung/assets/meshy",
-  "web_name": "base_greek",
+  "web_dir": "../../../../projects/astropolis/assets/meshy",
+  "web_name": "knight_olym",
   "height_m": 2.0,
   "include_fingers": true,
   "model": {
@@ -14,10 +14,10 @@
     "image_enhancement": false,
     "should_texture": true,
     "texture_resolution": "2k",
-    "enable_pbr": false,
+    "enable_pbr": true,
     "should_remesh": true,
     "topology": "triangle",
-    "target_polycount": 40000,
+    "target_polycount": 60000,
     "pose_mode": "a-pose"
   },
   "actions": [],
