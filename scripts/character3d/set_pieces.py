@@ -72,14 +72,28 @@ for n, m in pieces.items():
 # the greatsword: the left (front) view of the weapon sheet, point down; the grip pivot sits in the handle just above the crossguard
 Wp = cv2.imread(weapon_p, cv2.IMREAD_UNCHANGED); wa = (Wp[:, :, 3] > 100).astype(np.uint8)
 big2 = sorted(comps(wa, 3000), key=lambda p: -p[0].sum())[:2]; sw = sorted(big2, key=lambda p: p[2][0])[0][0]; sword = crop(sw, Wp); sa = sword[:, :, 3] > 100   # the two swords; the left one is the front view
-widths = sa.sum(1); top = int(0.45 * len(widths)); guard = int(np.argmax(widths[:top]))
-hand = [y for y in range(guard) if widths[y] < 0.18 * widths[guard]]; py = (hand[len(hand) // 2] if hand else guard * 0.6)
+POLE = "--pole" in sys.argv          # a staff or polearm drawn head up: held a little below the middle of its shaft, head up in the hand
+if POLE: py = int(0.56 * sa.shape[0])
+else:
+    widths = sa.sum(1); top = int(0.45 * len(widths)); guard = int(np.argmax(widths[:top]))
+    hand = [y for y in range(guard) if widths[y] < 0.18 * widths[guard]]; py = (hand[len(hand) // 2] if hand else guard * 0.6)
 xs = np.nonzero(sa[int(py)])[0]; px = xs.mean() if len(xs) else sa.shape[1] / 2
-gh = 381.6; k = gh / sword.shape[0]; gw = sword.shape[1] * k; gp = [px / sword.shape[1], py / sword.shape[0]]
+gh = 620.0 if POLE else 381.6; k = gh / sword.shape[0]; gw = sword.shape[1] * k; gp = [px / sword.shape[1], py / sword.shape[0]]
 cv2.imwrite(f"{out}/pieces/greatsword.png", cv2.resize(sword, (round(gw), round(gh)), interpolation=cv2.INTER_AREA), [cv2.IMWRITE_PNG_COMPRESSION, 9])
 doll["greatsword"] = {"o": [round(-260 - gp[0] * gw, 2), round(-364 - gp[1] * gh, 2)], "s": [round(gw, 2), round(gh, 2)], "gp": [round(gp[0], 4), round(gp[1], 4)]}
 doll["greatsword_off"] = {"o": [round(235 - (1 - gp[0]) * gw, 2), round(-364 - gp[1] * gh, 2)], "s": [round(gw, 2), round(gh, 2)], "img": "greatsword", "flip": True}
 json.dump(doll, open(f"{out}/doll.json", "w"), indent=1)
+# the in-hand cards for the 3D hero: both views of the weapon at full resolution; the game turns the card so the image's bottom points up the hand,
+# so a sword is kept point down and a staff is flipped (head down in the image, head up in the hand). weapon.json: aspect, grip pivot, tip
+views = sorted(big2, key=lambda p: p[2][0]); spec = None
+for nm, (m, _, _) in zip(["weapon_front", "weapon_back"], views):
+    im = crop(m, Wp)
+    if POLE: im = im[::-1].copy()
+    cv2.imwrite(f"{out}/{nm}.png", im, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+    if spec is None:
+        a = im[:, :, 3] > 100; H2, W2 = a.shape; gy = (1 - 0.56) * H2 if POLE else py * H2 / sa.shape[0]; row = np.nonzero(a[int(gy)])[0]
+        ys, xs2 = np.nonzero(a); bot = ys.max(); spec = {"aspect": round(W2 / H2, 4), "gp": [round((row.mean() if len(row) else W2 / 2) / W2, 4), round(gy / H2, 4)], "tip": [round(xs2[ys == bot].mean() / W2, 4), round(bot / H2, 4)]}
+json.dump(spec, open(f"{out}/weapon.json", "w"))
 # icons: 128 px, the piece (or the pair) fitted with a margin; the sword laid diagonally
 def icon(ims, name, rot=0):
     gap = 6; hh = max(i.shape[0] for i in ims); cw = sum(i.shape[1] for i in ims) + gap * (len(ims) - 1)
@@ -94,5 +108,5 @@ def icon(ims, name, rot=0):
     cv2.imwrite(f"{out}/icons/{name}_128.png", o, [cv2.IMWRITE_PNG_COMPRESSION, 9])
 P = {n: crop(m) for n, m in pieces.items()}
 icon([P["helmet"]], "helm"); icon([P["chestplate"]], "cuirass"); icon([P["leggings"]], "greaves")
-icon([P["gauntlet_left"], P["gauntlet_right"]], "gauntlets"); icon([P["boot_left"], P["boot_right"]], "sabatons"); icon([sword], "greatsword", rot=-40)
+icon([P["gauntlet_left"], P["gauntlet_right"]], "gauntlets"); icon([P["boot_left"], P["boot_right"]], "sabatons"); icon([sword], "greatsword", rot=-40 if not POLE else -35)
 print(json.dumps(doll))
