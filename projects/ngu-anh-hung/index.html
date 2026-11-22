@@ -1675,8 +1675,9 @@ function cfxProjHit(p, m) { if (p.bot) return; const x = m.x, z = m.z, y = mobH(
   else if (p.type === 'holy') { FX3.bill('cross', 'holy', x, y + 0.2, z, { s0: 0.5, s1: 1.1, life: 0.3, fi: 0.01, fo: 0.4 }); FX3.decal('ring', 'holy', x, z, { s0: 0.2, s1: (CLS.holy.splash || 1.3) * 1.1, life: 0.3, fi: 0.01 }); FX3.beam('holy', x, z, { w: 0.25, hgt: 1.4, life: 0.2, a: 0.7 }); } }
 
 // ---------- painted wings (tiers 2-4): the wing sheets as cards on the upper back, one pivot per side, for every class and the bots ----------
-// tier 1 is the shader rainbow wing above; level 0 has no wings
-const SWING = { 2: { dir: 'crystal-feather', glow: '#e6f0ff', ei: 0.3, L: [[541, 700], [465.3, 329.0]], R: [[544, 699], [76.2, 328.5]] },
+// every tier is a painted pair now (tier 1 the rainbow wing); level 0 has no wings
+const SWING = { 1: { dir: 'rainbow', glow: '#ffe6f4', ei: 0.32, L: [[320, 413], [275.2, 194.1]], R: [[320, 412], [44.8, 193.6]] },     /* tier 1: the painted rainbow wing (same layout as tier 2) replaces the shader wing */
+  2: { dir: 'crystal-feather', glow: '#e6f0ff', ei: 0.3, L: [[541, 700], [465.3, 329.0]], R: [[544, 699], [76.2, 328.5]] },
   3: { dir: 'crystal-bat', glow: '#bcd8ff', ei: 0.3, L: [[634, 654], [519.9, 215.8]], R: [[632, 655], [113.8, 216.2]] },
   4: { dir: 'dragon', glow: '#5f8bff', ei: 0.22, L: [[630, 700], [466.2, 210.0]], R: [[632, 702], [164.3, 210.6]] } };
 const SWING_CARD = 1.3, SWING_REF = 1.85;            // card size (metres) on a 1.85 m body, as in the knight test
@@ -1696,7 +1697,7 @@ function animSWings(g, t, moving, ph = 0) { if (!g) return; const fl = Math.sin(
     p.quaternion.setFromEuler(new THREE.Euler(0, sg * sweep, sg * (flap + 0.12), 'YXZ')); } }
 const heroSW = { g: null, tier: 0 };
 function setHeroWings() {        // which wing the hero shows, from S.wing
-  const w = S ? S.wing : 0; wings.visible = w === 1;
+  const w = S ? S.wing : 0; wings.visible = w === 1 && !SWING[1];
   if (heroSW.tier !== w) { if (heroSW.g) heroBody.remove(heroSW.g); heroSW.g = SWING[w] ? makeSWings(w) : null; heroSW.tier = w; if (heroSW.g) heroBody.add(heroSW.g); }
   if (heroSW.g) heroSW.g.scale.setScalar(HERO_H * 0.95 / SWING_REF * WSCALE[w] * 1.6); }
 
