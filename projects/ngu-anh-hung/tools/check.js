@@ -21,7 +21,7 @@ const HOOK = "window.__sim = (sec, dt = 0.05) => { for (let i = 0, n = Math.roun
     return r.abort(); });
   await pg.goto('http://game.local/'); await pg.waitForTimeout(3000);
   await pg.evaluate(c => { (document.querySelector('[data-newslot]') || document.getElementById('newBtn')).click(); document.querySelector(`#classList button[data-c="${c}"]`).click(); document.getElementById('classGo').click(); }, CLS);
-  for (let i = 0; i < 90; i++) { if (await pg.evaluate(c => window.__T && (c !== 'fire' || __T.KN.on), CLS)) break; await pg.waitForTimeout(1000); }
+  for (let i = 0; i < 90; i++) { if (await pg.evaluate(c => window.__T && __T.KN.on, CLS)) break; await pg.waitForTimeout(1000); }
   const shot = async (name, clip) => pg.screenshot({ path: path.join(OUT, name + '.png'), ...(clip ? { clip } : {}) });
   await (new Function('pg', 'shot', 'return (async () => {' + snip + '})()'))(pg, shot);
   console.log('errors:', errs.slice(0, 10).join('\n') || 'none'); await b.close();

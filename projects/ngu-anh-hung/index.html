@@ -982,7 +982,11 @@ function fadeTo(name, dur, once = false, speed = 1) {
 const KN = { vars: {}, ready: false, on: false, err: null, gltf: null, bones: {}, clips: {}, acts: {}, cur: null, curName: '', combo: 0, actUntil: 0, actBasic: false, idleW: 1, mq: [], mp: [], wispT: 0 };
 const KN_TAU = Math.PI * 2, KN_REF = 1.85;            // the poses below are in metres for a 1.85 m knight, scaled to the game's size
 const KN_CLIP = { walk: 'Walk_Fight_Forward', run: 'RunFast', hit: 'Hit_Reaction', combo: ['Attack', 'Left_Slash', 'Thrust_Slash', 'Charged_Slash'],
-  skill: { flamewave: ['Sword_Judgment', 0.75], meteor: ['Charged_Spell_Cast', 0.85], firespin: ['Double_Blade_Spin', 0.7] } };
+  skill: { flamewave: ['Sword_Judgment', 0.75], meteor: ['Charged_Spell_Cast', 0.85], firespin: ['Double_Blade_Spin', 0.7],
+    bolts: ['Charged_Spell_Cast', 0.8], storm: ['Charged_Spell_Cast', 0.85], spinbolt: ['Double_Blade_Spin', 0.7],
+    blizzard: ['Charged_Spell_Cast', 0.8], icepillars: ['Charged_Ground_Slam', 0.8], icefan: ['Charged_Spell_Cast', 0.6],
+    arrowrain: ['Charged_Spell_Cast', 0.7], pierce: ['Thrust_Slash', 0.6], arrowfan: ['Charged_Spell_Cast', 0.6],
+    tide: ['Charged_Ground_Slam', 0.75], judg: ['Charged_Spell_Cast', 0.8], blessing: ['Charged_Spell_Cast', 0.85] } };
 const KN_IDLE = { bladeUp: [-0.5, 0.72, 0.42], bladeDown: [0.4, -0.75, 0.45], R: [-0.07, -0.34, 0.3], L: [0.15, -0.52, 0.05], L2: [0.09, -0.4, 0.24], L3: [-0.07, -0.16, 0.34] };   // L3: the left forearm raised across the chest behind a shield   // L2: the left hand with a second blade
 const KN_SWORD = { aspect: 282.5 / 848, gp: [0.5283, 0.1206], tip: [0.015, 0.9979], L: 1.25 };
 const KN_ARMOR = [
@@ -1088,7 +1092,7 @@ function knLoad() {
     const tl = new THREE.TextureLoader(), tex = src => new Promise(res => tl.load(src, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
     const sw = await Promise.all(['assets/weapon/greatsword_front.png', 'assets/weapon/greatsword_back.png'].map(tex));
     try { const lj = await (await fetch('assets/meshy/knight_lod.json')).json(); KN.lod = new Uint32Array(Uint8Array.from(atob(lj.indices), c => c.charCodeAt(0)).buffer); } catch (e) { KN.lod = null; }
-    knSetup(gltf, sw); const bg = await baseP; if (bg) knSetupBase(bg); if (S && S.cls === 'fire') buildHero3D();
+    knSetup(gltf, sw); const bg = await baseP; if (bg) knSetupBase(bg); if (S) buildHero3D();
     for (const [k, V] of Object.entries(VARIANT_SETS)) Promise.all([loadGltfJson(V.file), fetch(V.file.replace('.gltf.json', '_lod.json')).then(r => r.json()).catch(() => null)])
       .then(([g, lj]) => { V.lod = lj ? new Uint32Array(Uint8Array.from(atob(lj.indices), c => c.charCodeAt(0)).buffer) : null; knAttachVariant(g, k, V); }).catch(e => console.warn('set model ' + k + ':', e));
     for (const [id, e] of [...ents]) if (!e.C.kn && !e.dead) { const p = e.pos.clone(); despawnBot(id); spawnBot(e.b, p.x, p.z); }   // bots already on the map put the armour on
@@ -1227,6 +1231,7 @@ function knAct(j) {
   const now = S.time, aps = HS.aps || 1;
   if (j < 0) { const dur = clamp(1 / aps, 0.3, 0.9);
     if (KN.actBasic && now < KN.actUntil - dur * 0.45) return;      // very fast attacks: let the current swing finish its arc
+    if (!CLS[S.cls].melee) { knPlay('Charged_Spell_Cast', false, Math.min(dur, 0.6), true); KN.actUntil = now + Math.min(dur, 0.6); KN.actBasic = true; return; }     /* ranged classes: a quick cast */
     knPlay(KN_CLIP.combo[KN.combo++ % KN_CLIP.combo.length], false, dur, true); KN.actUntil = now + dur; KN.actBasic = true; return; }
   const sk = SKILLS[S.cls][j], m = KN_CLIP.skill[sk && sk.id] || ['Charged_Slash', 0.7], dur = Math.max(0.45, Math.min(m[1], 2.4 / Math.sqrt(aps)));
   knPlay(m[0], false, dur, true); KN.actUntil = now + dur; KN.actBasic = false; }
@@ -1331,13 +1336,13 @@ function knTick(dt, t, moving) {
   for (const m of KN.hullMats) m.visible = false;      // no outline at this camera distance: the aura carries the silhouette
   const wt = tier(S.eq.weapon?.plus || 0); for (const m of KN.swordMats) { m.emissive.set(wt ? TIER_COL[wt] : 0xffffff); m.emissiveIntensity = wt ? 0.35 + wt * 0.25 : 0.12; }
   H3.tip = KN.tip;
-  FX3.trail(knW(KN.guard), knW(KN.tip), S.time < KN.actUntil && heroG.visible, 'fire', S.time);
+  FX3.trail(knW(KN.guard), knW(KN.tip), S.time < KN.actUntil && heroG.visible && (CLS[S.cls].melee || !KN.actBasic), fxCol(CLS[S.cls].el)[0], S.time);
 }
 function knHide() { if (KN.root && KN.root.parent) KN.root.parent.remove(KN.root); KN.on = false;
   wings.position.set(0, HERO_H * 0.66, -0.3 * HERO_H / 2.3); }
 // returns true when the knight took the hero's place
 function knBuild() {
-  if (!KN.ready || S.cls !== 'fire') { knHide(); return false; }
+  if (!KN.ready) { knHide(); return false; }      /* every class wears the 3D knight body, so worn pieces show on it (class models come later) */
   heroBody.add(KN.root); KN.on = true; KN.cur = null; KN.mixer.stopAllAction(); KN.idleW = 1; KN.actUntil = 0;
   mixer.m = null; mixer.acts = {}; mixer.cur = null; H3.model = null; H3.melee = true; H3.tip = KN.tip; H3.idle = H3.attack = null;
   heroG.scale.setScalar(LOOK.size); applyGearVisuals(); return true;
