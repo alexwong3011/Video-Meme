@@ -1341,6 +1341,31 @@ const FX3 = (() => {
   const mk = (w, h, f) => { const c = document.createElement('canvas'); c.width = w; c.height = h; f(c.getContext('2d'), w, h); return c; };
   const MID = -Math.PI * 1.15 / 2;                       // the crescent texture spans -207..0 degrees: this is its middle
   const MAKE = {
+    // class effects: a holy cross of light, ground lightning cracks, a frost flake on the ground, a tall ice crystal cluster (base at the bottom)
+    cross: c => mk(256, 256, g => { g.translate(128, 128); g.globalCompositeOperation = "lighter";
+      const ray = (lx, ly, a) => { const gr = g.createRadialGradient(0, 0, 0, 0, 0, Math.max(lx, ly)); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(0.35, rgba(c, a * 0.8)); gr.addColorStop(1, rgba(c, 0));
+        g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, lx, ly, 0, 0, TAU); g.fill(); };
+      ray(14, 124, 1); ray(84, 12, 1); ray(6, 124, 0.9); ray(80, 5, 0.9);
+      const r = g.createRadialGradient(0, -18, 0, 0, -18, 60); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.3, rgba(c, 0.7)); r.addColorStop(1, rgba(c, 0)); g.fillStyle = r; g.fillRect(-64, -82, 128, 128); }),
+    crack: c => mk(256, 256, g => { g.translate(128, 128); g.globalCompositeOperation = "lighter"; g.lineCap = "round"; g.lineJoin = "round";
+      const branch = (x, y, an, len, w, depth) => { let px = x, py = y; const pts = [[px, py]];
+        for (let i = 0; i < 6; i++) { an += (Math.random() - 0.5) * 0.9; px += Math.cos(an) * len / 6; py += Math.sin(an) * len / 6; pts.push([px, py]); }
+        for (const [lw, col] of [[w * 3.5, rgba(c, 0.25)], [w * 1.6, rgba(c, 0.8)], [w * 0.6, "rgba(255,255,255,0.95)"]]) { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); pts.forEach(([a, b], i) => i ? g.lineTo(a, b) : g.moveTo(a, b)); g.stroke(); }
+        if (depth > 0) for (let k = 2; k < 5; k += 2) branch(pts[k][0], pts[k][1], an + (Math.random() < 0.5 ? 0.8 : -0.8), len * 0.5, w * 0.6, depth - 1); };
+      for (let i = 0; i < 7; i++) branch(0, 0, i / 7 * TAU + Math.random() * 0.4, 110 + Math.random() * 14, 3.2, 1);
+      const r = g.createRadialGradient(0, 0, 0, 0, 0, 40); r.addColorStop(0, "rgba(255,255,255,0.9)"); r.addColorStop(1, rgba(c, 0)); g.fillStyle = r; g.fillRect(-40, -40, 80, 80); }),
+    frost: c => mk(256, 256, g => { g.translate(128, 128); g.globalCompositeOperation = "lighter"; g.lineCap = "round";
+      for (const [lw, col] of [[7, rgba(c, 0.22)], [3, rgba(c, 0.7)], [1.2, "rgba(255,255,255,0.95)"]]) { g.strokeStyle = col; g.lineWidth = lw;
+        for (let i = 0; i < 6; i++) { g.save(); g.rotate(i / 6 * TAU); g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -118);
+          for (const [d, l] of [[40, 26], [68, 22], [92, 14]]) { g.moveTo(0, -d); g.lineTo(l, -d - l * 0.9); g.moveTo(0, -d); g.lineTo(-l, -d - l * 0.9); } g.stroke(); g.restore(); }
+        g.beginPath(); g.arc(0, 0, 122, 0, TAU); g.stroke(); }
+      const r = g.createRadialGradient(0, 0, 0, 0, 0, 126); r.addColorStop(0, rgba(c, 0.28)); r.addColorStop(1, rgba(c, 0)); g.fillStyle = r; g.beginPath(); g.arc(0, 0, 126, 0, TAU); g.fill(); }),
+    spike: c => mk(128, 256, g => {
+      const shard = (cx, w, h, lean) => { const top = [cx + lean, 256 - h], gr = g.createLinearGradient(cx - w, 256, cx + w * 0.5, 256 - h);
+        gr.addColorStop(0, rgba(c, 0.55)); gr.addColorStop(0.55, rgba(mix(c, 0.5), 0.92)); gr.addColorStop(1, "rgba(255,255,255,1)");
+        g.fillStyle = gr; g.beginPath(); g.moveTo(cx - w, 256); g.lineTo(cx - w * 0.55, 256 - h * 0.78); g.lineTo(top[0], top[1]); g.lineTo(cx + w * 0.6, 256 - h * 0.74); g.lineTo(cx + w, 256); g.closePath(); g.fill();
+        g.strokeStyle = "rgba(255,255,255,0.9)"; g.lineWidth = 1.5; g.stroke(); g.strokeStyle = "rgba(255,255,255,0.55)"; g.beginPath(); g.moveTo(cx, 256); g.lineTo(top[0], top[1]); g.stroke(); };
+      shard(34, 18, 150, -14); shard(96, 17, 165, 12); shard(64, 26, 248, 0); shard(48, 12, 96, -6); shard(82, 11, 110, 8); }),
     flare: c => mk(128, 128, g => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.18, rgba(c, 0.9));
       r.addColorStop(0.5, rgba(c, 0.25)); r.addColorStop(1, rgba(c, 0)); g.fillStyle = r; g.fillRect(0, 0, 128, 128); }),
     star: c => mk(256, 256, g => { g.translate(128, 128); g.globalCompositeOperation = "lighter";
@@ -1478,7 +1503,7 @@ const FX3 = (() => {
     decal('rune', 'gold', x, z, { s0: R * 0.8, s1: R * 1.02, life: 1.1, fi: 0.02, fo: 0.5, spin: -1.2, a: 0.8 });
     for (let i = 0; i < 6; i++) { const an = i / 6 * TAU + 0.3; beam(i % 2 ? 'gold' : col, x + Math.cos(an) * R * 0.45, z + Math.sin(an) * R * 0.45, { w: 0.12, hgt: 1.1 + Math.random() * 0.6, life: 0.26, delay: 0.03 * i }); }
     sparks(x, 0.4, z, 26, alt, { speed: 5, up: 2.6 }); shards(x, 0.4, z, 12, col, { speed: 3.4 }); mist(x, z, R, 7, 'deep', { a: 0.38, life: 1.2, s1: 1.0 }); };
-  return { C, MID, tex, decal, bill, beam, ribbon, bolt, sparks, shards, mist, wisp, after, trail, update, clear, slashAt, hit, impact };
+  return { C, MID, tex, decal, bill, beam, ribbon, bolt, sparks, shards, mist, wisp, after, trail, update, clear, slashAt, hit, impact, mix };
 })();
 // element -> effect colours [main, accent]
 const FX_EL = { fire: ['fire', 'gold'], thunder: ['thunder', 'pale'], ice: ['ice', 'pale'], water: ['water', 'leaf'], holy: ['holy', 'pale'] };
@@ -1489,6 +1514,7 @@ function fxSkill(sk, tg) {
   const [c, c2] = fxCol(sk.el), px = S.pos.x, pz = S.pos.z, tip = heroTip();
   FX3.bill('star', c2, tip.x, tip.y, tip.z, { s0: 0.3, s1: 0.06, life: 0.12, fi: 0.01 });
   FX3.decal('ring', c2, px, pz, { s0: 0.25, s1: 1.2, life: 0.26, fi: 0.01, fo: 0.3, follow: true });
+  if (CFX[sk.id] && S.cls !== 'fire') { CFX[sk.id](sk, tg); return; }
   const self = ['spinbolt', 'firespin', 'tide', 'blessing'].includes(sk.id);
   if (self) {
     FX3.decal('rune', c, px, pz, { s0: 1.0, s1: 1.3, life: 0.7, fi: 0.15, fo: 0.55, spin: 2.2, a: 0.7, follow: true });
@@ -1516,8 +1542,106 @@ function fxSkill(sk, tg) {
 }
 // basic attack: a crescent of light in front of the hero, alternating sides; ranged classes flash at the hand
 function fxAttack(tg) { const Cl = CLS[S.cls], [c, c2] = fxCol(Cl.el);
+  if (S.cls !== 'fire' && cfxAttack(tg)) return;
   if (Cl.melee) { fxSwing = -fxSwing; FX3.slashAt(S.pos.x + Math.sin(S.face) * 0.75, S.pos.z + Math.cos(S.face) * 0.75, S.face, 0.85, fxSwing > 0 ? c : c2, fxSwing < 0, Math.min(0.22, 0.9 / (HS.aps || 1))); }
   else { const tp = heroTip(); FX3.bill('star', c2, tp.x, tp.y, tp.z, { s0: 0.28, s1: 0.06, life: 0.1, fi: 0.01 }); } }
+
+// ---------- class effects: Lôi Thánh Kỵ, Băng Pháp Sư, Lục Cung Thủ, Thánh Quang Tư Tế ----------
+// each recipe only draws; the skill's damage, timing and statuses stay in castSkill/updSkills
+const V3c = (x, y, z) => new THREE.Vector3(x, y, z), TAUc = Math.PI * 2;
+const heroH = () => HERO_H * LOOK.size;
+const CFX = {
+  // Lôi Phạt Thiên Giáng: a storm rune and a glowing cloud over the target, then five sky bolts (cfxStrike, one per hit)
+  bolts(sk, tg) { FX3.decal('rune', 'thunder', tg.x, tg.z, { s0: 1.6, s1: 2.3, life: 1.0, fi: 0.1, fo: 0.55, spin: 1.8, a: 0.75 });
+    cfxCloud(tg.x, tg.z, 2.0, 1.1); },
+  // Bão Sấm Tụ Thủy: a swirling cloud for the storm's two seconds, rain streaks, a slow rune, bolts from the cloud
+  storm(sk, tg) { const x = tg.x, z = tg.z; FX3.decal('rune', 'thunder', x, z, { s0: 2.5, s1: 2.7, life: 2.2, fi: 0.1, fo: 0.8, spin: 0.9, a: 0.55 }); FX3.decal('ring', 'water', x, z, { s0: 0.3, s1: 2.8, life: 0.4, fi: 0.01 });
+    cfxCloud(x, z, 2.6, 2.3); for (let k = 0; k < 7; k++) FX3.after(0.15 + k * 0.28, () => { const a = Math.random() * TAUc, r = Math.random() * 2.2, bx = x + Math.cos(a) * r, bz = z + Math.sin(a) * r;
+      FX3.bolt(V3c(bx + 0.3, 2.8, bz), V3c(bx, 0.15, bz), 'thunder', 0.2, { w: 0.07 }); FX3.decal('crack', 'thunder', bx, bz, { s0: 0.5, s1: 0.8, life: 0.45, fi: 0.01, fo: 0.4, rot: Math.random() * 6 }); FX3.sparks(bx, 0.3, bz, 8, 'pale'); });
+    for (let k = 0; k < 10; k++) { const a0 = Math.random() * TAUc, r0 = Math.random() * 2.4; FX3.ribbon(t => [x + Math.cos(a0) * r0 + t * 1.2, 4 - t * 16, z + Math.sin(a0) * r0], { col: 'water', w: 0.018, life: 0.25, tail: 0.08, delay: Math.random() * 1.9 }); } },
+  // Lôi Long Xoáy: a lightning dragon coils up around the knight, then bursts outward
+  spinbolt() { const x = S.pos.x, z = S.pos.z, h = heroH(), a0 = Math.random() * TAUc;
+    for (const [col, w, off] of [['thunder', 0.16, 0], ['pale', 0.06, 0], ['thunder', 0.09, Math.PI]])
+      FX3.ribbon(t => { const u = t / 0.5, an = a0 + off + u * TAUc * 1.6, r = 0.6 + u * 0.9; return [S.pos.x + Math.cos(an) * r, 0.2 + h * 1.1 * u, S.pos.z + Math.sin(an) * r]; }, { col, w, life: 0.5, tail: 0.28 });
+    FX3.decal('rune', 'thunder', x, z, { s0: 1.2, s1: 1.6, life: 0.8, fi: 0.1, fo: 0.5, spin: 3, follow: true, a: 0.8 });
+    FX3.after(0.5, () => { const cx = S.pos.x, cz = S.pos.z; FX3.decal('ring', 'pale', cx, cz, { s0: 0.4, s1: 3.4, life: 0.35, fi: 0.01 }); FX3.decal('crack', 'thunder', cx, cz, { s0: 1.4, s1: 2.2, life: 0.6, fi: 0.01, fo: 0.4 });
+      for (let i = 0; i < 8; i++) { const an = i / 8 * TAUc; FX3.bolt(V3c(cx, h * 0.6, cz), V3c(cx + Math.cos(an) * 3, 0.3, cz + Math.sin(an) * 3), 'thunder', 0.22, { w: 0.05 }); }
+      FX3.bill('star', 'pale', cx, h * 0.7, cz, { s0: 2.2, s1: 0.4, life: 0.3, fi: 0.01 }); FX3.sparks(cx, 0.8, cz, 24, 'thunder', { speed: 6, up: 2 }); S && (S.shake = Math.max(S.shake || 0, 0.2)); }); },
+  // Băng Phong Bạo: a frost flake spreads on the ground, snow whirls round the storm, a ring of ice at the end
+  blizzard(sk, tg) { const x = tg.x, z = tg.z; FX3.decal('frost', 'ice', x, z, { s0: 1.0, s1: 2.7, life: 2.3, fi: 0.08, fo: 0.8, spin: 0.25, a: 0.8 }); FX3.decal('rune', 'ice', x, z, { s0: 2.4, s1: 2.6, life: 2.1, fi: 0.1, fo: 0.8, spin: -0.8, a: 0.45 });
+    FX3.mist(x, z, 2.4, 8, 'pale', { a: 0.3, life: 2.0, s1: 1.2 });
+    for (let i = 0; i < 6; i++) { const a0 = i / 6 * TAUc, rr0 = 1.0 + (i % 3) * 0.6, y0 = 0.4 + (i % 2) * 0.9; FX3.ribbon(t => { const an = a0 + t * 3.2; return [x + Math.cos(an) * rr0, y0 + Math.sin(t * 4 + i) * 0.3, z + Math.sin(an) * rr0]; }, { col: 'pale', w: 0.035, life: 2.0, tail: 0.35, delay: i * 0.05 }); }
+    FX3.after(2.0, () => { FX3.decal('ring', 'ice', x, z, { s0: 0.5, s1: 2.9, life: 0.4, fi: 0.01 }); FX3.shards(x, 0.4, z, 14, 'ice', { speed: 3.6 }); }); },
+  // Vạn Băng Trụ: a casting rune at the mage; each pillar is drawn when it rises (cfxSpike)
+  icepillars(sk, tg) { FX3.decal('rune', 'ice', S.pos.x, S.pos.z, { s0: 0.9, s1: 1.3, life: 0.6, fi: 0.05, fo: 0.5, spin: 2.5, follow: true }); FX3.decal('frost', 'ice', tg.x, tg.z, { s0: 1.4, s1: 3.2, life: 1.0, fi: 0.05, fo: 0.6, a: 0.6 }); },
+  // Băng Tiễn Liên Hoàn: a fan of frost in front of the mage as the seven shards leave
+  icefan(sk, tg) { const hd = Math.atan2(tg.x - S.pos.x, tg.z - S.pos.z); FX3.decal('rune', 'ice', S.pos.x, S.pos.z, { s0: 0.8, s1: 1.2, life: 0.45, fi: 0.04, fo: 0.4, spin: 3, follow: true });
+    FX3.slashAt(S.pos.x + Math.sin(hd) * 0.9, S.pos.z + Math.cos(hd) * 0.9, hd, 1.3, 'ice', false, 0.25); const tp = heroTip(); FX3.bill('star', 'pale', tp.x, tp.y, tp.z, { s0: 0.7, s1: 0.1, life: 0.18, fi: 0.01 }); },
+  // Thủy Tiễn Vũ: a rune under the volley; each arrow streaks down from the sky (cfxRainArrow) and splashes (cfxSplash)
+  arrowrain(sk, tg) { FX3.decal('rune', 'water', tg.x, tg.z, { s0: 2.2, s1: 2.5, life: 1.2, fi: 0.08, fo: 0.6, spin: 1.2, a: 0.6 }); const tp = heroTip();
+    FX3.ribbon(t => [tp.x, tp.y + t * 14, tp.z], { col: 'water', w: 0.06, life: 0.18, tail: 0.12 }); FX3.bill('star', 'leaf', tp.x, tp.y, tp.z, { s0: 0.6, s1: 0.1, life: 0.16, fi: 0.01 }); },
+  // Phá Lãng Tiễn: a great wave arrow flies the line (13 m/s, 10 m) dragging a spiral of water behind it
+  pierce(sk, tg) { const px = S.pos.x, pz = S.pos.z, dx = tg.x - px, dz = tg.z - pz, l = Math.hypot(dx, dz) || 1, ux = dx / l, uz = dz / l, y = heroH() * 0.55, T = 10 / 13;
+    for (const [col, w] of [['water', 0.2], ['pale', 0.07]]) FX3.ribbon(t => { const d = 0.5 + 13 * t; return [px + ux * d, y, pz + uz * d]; }, { col, w, life: T, tail: 0.22 });
+    for (let k = 0; k < 2; k++) FX3.ribbon(t => { const d = 0.5 + 13 * t - 0.6, an = t * 26 + k * Math.PI, r = 0.35; return [px + ux * d - uz * Math.cos(an) * r, y + Math.sin(an) * r, pz + uz * d + ux * Math.cos(an) * r]; }, { col: 'leaf', w: 0.05, life: T, tail: 0.3 });
+    for (let k = 1; k < 7; k++) FX3.after(T * k / 7, () => { const d = 0.5 + 10 * k / 7; FX3.mist(px + ux * d, pz + uz * d, 0.5, 2, 'water', { a: 0.35, life: 0.7 }); FX3.decal('ring', 'water', px + ux * d, pz + uz * d, { s0: 0.2, s1: 0.9, life: 0.3, fi: 0.01 }); });
+    FX3.bill('star', 'leaf', px + ux * 0.6, y, pz + uz * 0.6, { s0: 0.9, s1: 0.1, life: 0.2, fi: 0.01 }); },
+  // Tiễn Bạo: the drawn bowstring's arc in front of the archer as five arrows fly
+  arrowfan(sk, tg) { const hd = Math.atan2(tg.x - S.pos.x, tg.z - S.pos.z); FX3.slashAt(S.pos.x + Math.sin(hd) * 0.7, S.pos.z + Math.cos(hd) * 0.7, hd, 1.1, 'leaf', false, 0.22); FX3.slashAt(S.pos.x + Math.sin(hd) * 0.8, S.pos.z + Math.cos(hd) * 0.8, hd, 1.2, 'water', true, 0.22, 0.03);
+    const tp = heroTip(); FX3.bill('star', 'pale', tp.x, tp.y, tp.z, { s0: 0.8, s1: 0.1, life: 0.18, fi: 0.01 }); },
+  // Thánh Thủy Triều: a wave ring rolls outward, rising at its edge
+  tide() { const x = S.pos.x, z = S.pos.z; FX3.decal('ring', 'water', x, z, { s0: 0.4, s1: 3.9, life: 0.6, fi: 0.01, fo: 0.5 }); FX3.decal('ring', 'pale', x, z, { s0: 0.3, s1: 3.4, life: 0.6, fi: 0.01, fo: 0.4, delay: 0.08 });
+    FX3.decal('rune', 'holy', x, z, { s0: 1.0, s1: 1.4, life: 0.7, fi: 0.05, fo: 0.5, spin: 2, a: 0.7 });
+    for (let k = 0; k < 4; k++) FX3.after(k * 0.14, () => { const r = 3.6 * (1 - Math.pow(1 - (k + 1) / 4, 3)); for (let i = 0; i < 10; i++) { const an = i / 10 * TAUc + k * 0.3; FX3.beam(i % 2 ? 'water' : 'pale', x + Math.cos(an) * r, z + Math.sin(an) * r, { w: 0.18, hgt: 0.5 + k * 0.25, life: 0.25, a: 0.7 }); } });
+    FX3.mist(x, z, 3.2, 8, 'water', { a: 0.3, life: 0.9 }); },
+  // Thánh Hỏa Phán Xét: a golden rune; golden fire columns fall on every tick (cfxJudg)
+  judg(sk, tg) { FX3.decal('rune', 'gold', tg.x, tg.z, { s0: 1.0, s1: 1.6, life: 1.5, fi: 0.1, fo: 0.7, spin: 1.6, a: 0.85 }); FX3.bill('cross', 'holy', tg.x, 1.9, tg.z, { s0: 0.5, s1: 1.1, life: 0.5, fi: 0.05, fo: 0.5, a: 0.8 }); },
+  // Thánh Quang Hộ Thể: wings of light open behind the priest, healing motes rise, then the burst
+  blessing() { const h = heroH(), fx = Math.sin(S.face), fz = Math.cos(S.face), rx = fz, rz = -fx;      // forward and right of the hero
+    for (const sd of [-1, 1]) for (let f = 0; f < 4; f++) FX3.ribbon(t => { const u = Math.min(1, t / 0.35), sp = 0.25 + f * 0.22, L = (1.0 + f * 0.25) * u;
+        return [S.pos.x - fx * 0.25 + rx * sd * (0.15 + L * Math.cos(sp)), h * 0.72 + L * Math.sin(sp + 0.5) * 0.9 - f * 0.05, S.pos.z - fz * 0.25 + rz * sd * (0.15 + L * Math.cos(sp))]; },
+      { col: f % 2 ? 'pale' : 'holy', w: 0.07 - f * 0.01, life: 0.35, tail: 0.9, fo: 0.95, delay: f * 0.04 });
+    FX3.beam('holy', S.pos.x, S.pos.z, { w: 0.7, hgt: 4, life: 0.6, a: 0.6 }); FX3.decal('rune', 'holy', S.pos.x, S.pos.z, { s0: 1.2, s1: 1.8, life: 1.0, fi: 0.05, fo: 0.6, spin: 1.5, follow: true });
+    for (let i = 0; i < 14; i++) { const an = Math.random() * TAUc, r = Math.random() * 0.9; FX3.bill('flare', i % 2 ? 'holy' : 'leaf', S.pos.x + Math.cos(an) * r, 0.2 + Math.random() * 0.4, S.pos.z + Math.sin(an) * r, { vy: 1.4 + Math.random(), s0: 0.12, s1: 0.06, life: 1.0, fi: 0.1, fo: 0.5, delay: Math.random() * 0.4 }); }
+    FX3.after(0.4, () => { FX3.bill('cross', 'holy', S.pos.x, h * 0.7, S.pos.z, { s0: 1.8, s1: 0.6, life: 0.35, fi: 0.01 }); FX3.decal('ring', 'holy', S.pos.x, S.pos.z, { s0: 0.4, s1: 3.2, life: 0.4, fi: 0.01 }); FX3.sparks(S.pos.x, 0.8, S.pos.z, 20, 'holy', { speed: 5 }); }); }
+};
+function cfxCloud(x, z, R, life) { for (let i = 0; i < 7; i++) { const a = Math.random() * TAUc, r = Math.sqrt(Math.random()) * R * 0.8;
+  FX3.bill('smoke', i % 2 ? 'vio' : 'deep', x + Math.cos(a) * r, 2.6 + Math.random() * 0.4, z + Math.sin(a) * r, { s0: 0.6, s1: 0.95, a: 0.4, life, fi: 0.2, fo: 0.6, rot: Math.random() * 6, spin: 0.4 }); }
+  FX3.bill('flare', 'thunder', x, 2.7, z, { s0: R * 0.25, s1: R * 0.35, a: 0.25, life, fi: 0.2, fo: 0.6 }); }
+// one sky bolt of Lôi Phạt Thiên Giáng
+function cfxStrike(x, z) { FX3.bolt(V3c(x + 0.25, 2.8, z - 0.2), V3c(x, 0.1, z), 'thunder', 0.24, { w: 0.1 }); FX3.bolt(V3c(x - 0.2, 2.8, z + 0.1), V3c(x, 0.1, z), 'pale', 0.18, { w: 0.035 });
+  FX3.beam('pale', x, z, { w: 0.3, hgt: 3.2, life: 0.18, a: 0.8 }); FX3.decal('crack', 'thunder', x, z, { s0: 0.6, s1: 1.1, life: 0.55, fi: 0.01, fo: 0.4, rot: Math.random() * 6 });
+  FX3.decal('ring', 'pale', x, z, { s0: 0.1, s1: 1.0, life: 0.25, fi: 0.01 }); FX3.bill('flare', 'thunder', x, 0.3, z, { s0: 0.8, s1: 0.3, life: 0.2, fi: 0.01 }); FX3.sparks(x, 0.3, z, 10, 'pale', { speed: 4 }); }
+// one ice pillar of Vạn Băng Trụ: a crystal cluster grows out of the ground, holds, then shatters
+function cfxSpike(x, z) { const it = FX3.bill('spike', 'ice', x, 0.02, z, { s0: 0.15, s1: 0.62, asp: 2, life: 0.75, fi: 0.03, fo: 0.7 }); it.obj.center.set(0.5, 0.02);
+  FX3.decal('frost', 'ice', x, z, { s0: 0.4, s1: 0.95, life: 0.9, fi: 0.02, fo: 0.6, rot: Math.random() * 6 }); FX3.decal('ring', 'pale', x, z, { s0: 0.1, s1: 0.9, life: 0.25, fi: 0.01 });
+  FX3.after(0.58, () => { FX3.shards(x, 0.6, z, 9, 'ice', { speed: 2.6, up: 2.2 }); FX3.mist(x, z, 0.5, 2, 'pale', { a: 0.4, life: 0.6 }); }); }
+// one arrow of Thủy Tiễn Vũ falling from the sky
+function cfxRainArrow(x, z) { const sx = x - 0.7, sz = z - 0.5, path = t => { const u = Math.min(1, t / 0.25); return [sx + 0.7 * u, 3.4 * (1 - u) + 0.1, sz + 0.5 * u]; };
+  FX3.ribbon(path, { col: 'water', w: 0.08, life: 0.25, tail: 0.12 }); FX3.ribbon(path, { col: 'pale', w: 0.028, life: 0.25, tail: 0.09 }); }
+function cfxSplash(x, z, s = 1) { FX3.decal('ring', 'water', x, z, { s0: 0.1, s1: 0.8 * s, life: 0.3, fi: 0.01 }); FX3.sparks(x, 0.15, z, 7, 'water', { speed: 2.2, up: 3, grav: 9, size: 0.08 }); FX3.bill('flare', 'pale', x, 0.2, z, { s0: 0.4 * s, s1: 0.15, life: 0.15, fi: 0.01 }); }
+// one tick of Thánh Hỏa Phán Xét: a column of golden fire from the sky
+function cfxJudg(x, z) { FX3.beam('holy', x, z, { w: 0.7, hgt: 5, life: 0.26, a: 0.75 }); FX3.beam('pale', x, z, { w: 0.25, hgt: 5.5, life: 0.2, a: 0.9 }); FX3.decal('ring', 'gold', x, z, { s0: 0.3, s1: 1.5, life: 0.25, fi: 0.01 });
+  FX3.sparks(x, 0.3, z, 8, 'ember', { speed: 3, up: 3 }); }
+// basic attacks of the four classes
+function cfxAttack(tg) { const tp = heroTip(), x = S.pos.x, z = S.pos.z, hd = S.face;
+  if (S.cls === 'thunder') {            // a spear thrust: a straight streak, a crackle at its point
+    const y = heroH() * 0.55, fx = Math.sin(hd), fz = Math.cos(hd), life = Math.min(0.12, 0.6 / (HS.aps || 1));
+    FX3.ribbon(t => { const d = 0.3 + 1.9 * Math.min(1, t / life); return [x + fx * d, y, z + fz * d]; }, { col: 'thunder', w: 0.11, life, tail: 0.1 }); FX3.ribbon(t => { const d = 0.3 + 1.9 * Math.min(1, t / life); return [x + fx * d, y, z + fz * d]; }, { col: 'pale', w: 0.035, life, tail: 0.08 });
+    FX3.after(life, () => { FX3.bolt(V3c(x + fx * 1.6, y, z + fz * 1.6), V3c(x + fx * 2.4, y - 0.3, z + fz * 2.4), 'thunder', 0.12, { w: 0.03 }); FX3.bill('star', 'pale', x + fx * 2.2, y, z + fz * 2.2, { s0: 0.45, s1: 0.08, life: 0.12, fi: 0.01 }); }); return true; }
+  const col = S.cls === 'ice' ? 'ice' : S.cls === 'elf' ? 'water' : 'holy';
+  FX3.bill('star', col, tp.x, tp.y, tp.z, { s0: 0.45, s1: 0.06, life: 0.12, fi: 0.01 }); FX3.bill('flare', 'pale', tp.x, tp.y, tp.z, { s0: 0.2, s1: 0.4, life: 0.12, fi: 0.01, a: 0.6 });
+  if (S.cls === 'holy') FX3.decal('ring', 'holy', x, z, { s0: 0.3, s1: 0.9, life: 0.22, fi: 0.01, a: 0.6 });
+  return true; }
+// hero projectiles: a light trail while they fly, a hit that fits the element
+const PRJ_COL = { shard: ['ice', 0.06], arrow: ['water', 0.045], holy: ['holy', 0.1] };
+function cfxProjFly(p) { if (p.bot || p.rib || !PRJ_COL[p.type]) return; const [col, w] = PRJ_COL[p.type];
+  p.rib = FX3.ribbon(() => [p.pos.x, p.pos.y, p.pos.z], { col, w, life: 4, tail: 0.14, fo: 0.98 }); }
+function cfxProjEnd(p) { if (p.rib) { p.rib.life = Math.max(0.001, p.rib.t); p.rib = null; } }
+function cfxProjHit(p, m) { if (p.bot) return; const x = m.x, z = m.z, y = mobH(m);
+  if (p.type === 'shard') { FX3.shards(x, y, z, 6, 'ice', { speed: 2.4 }); FX3.bill('star', 'pale', x, y, z, { s0: 0.5, s1: 0.1, life: 0.14, fi: 0.01 }); FX3.decal('frost', 'ice', x, z, { s0: 0.3, s1: 0.7, life: 0.4, fi: 0.01, rot: Math.random() * 6, a: 0.7 }); }
+  else if (p.type === 'arrow') { cfxSplash(x, z, 0.8); FX3.sparks(x, y, z, 5, 'water', { speed: 2.5, up: 1.5 }); }
+  else if (p.type === 'holy') { FX3.bill('cross', 'holy', x, y + 0.2, z, { s0: 0.5, s1: 1.1, life: 0.3, fi: 0.01, fo: 0.4 }); FX3.decal('ring', 'holy', x, z, { s0: 0.2, s1: (CLS.holy.splash || 1.3) * 1.1, life: 0.3, fi: 0.01 }); FX3.beam('holy', x, z, { w: 0.25, hgt: 1.4, life: 0.2, a: 0.7 }); } }
 
 // ---------- painted wings (tiers 2-4): the wing sheets as cards on the upper back, one pivot per side, for every class and the bots ----------
 // tier 1 is the shader rainbow wing above; level 0 has no wings
@@ -2784,7 +2908,10 @@ const PG = { shard: [new THREE.OctahedronGeometry(0.09).scale(0.6, 0.6, 2.6), ne
   arrow: [new THREE.OctahedronGeometry(0.06).scale(0.5, 0.5, 4), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xb0ffc8).multiplyScalar(2.6) })],
   holy: [new THREE.SphereGeometry(0.13, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff0b0).multiplyScalar(2.8) })],
   pet: [new THREE.SphereGeometry(0.08, 10, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffe08a).multiplyScalar(3) })] };
-const PROJM = { shard: () => new THREE.Mesh(...PG.shard), arrow: () => new THREE.Mesh(...PG.arrow), holy: () => new THREE.Mesh(...PG.holy), pet: () => new THREE.Mesh(...PG.pet) };
+// each projectile carries a glow of its element (a sprite child: it follows the mesh, always faces the camera)
+const PRJ_GLOW = { shard: ['ice', 0.32], arrow: ['water', 0.26], holy: ['holy', 0.62] };
+const prjSM = {}, prjMesh = k => { const m = new THREE.Mesh(...PG[k]), G = PRJ_GLOW[k]; if (G) { const sp = new THREE.Sprite(prjSM[k] || (prjSM[k] = new THREE.SpriteMaterial({ map: FX3.tex(k === 'holy' ? 'star' : 'flare', G[0]), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }))); sp.scale.setScalar(G[1]); m.add(sp); } return m; };
+const PROJM = { shard: () => prjMesh('shard'), arrow: () => prjMesh('arrow'), holy: () => prjMesh('holy'), pet: () => new THREE.Mesh(...PG.pet) };
 function heroTip() { return H3.tip ? H3.tip.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(S.pos.x, heroG.position.y + 1, S.pos.z); }
 function attack(pref) {
   if (S.dead || S.atkCd > 0 || S.castT > 0) return; const Cl = CLS[S.cls];
@@ -2800,12 +2927,13 @@ function attack(pref) {
   } else { const from = heroTip(); const p = { type: Cl.proj, m: PROJM[Cl.proj](), pos: from.clone(), tgt: tg, speed: Cl.ps, mult: 1, el: Cl.el }; p.m.position.copy(from); scene.add(p.m); projs.push(p); }
 }
 function chain(m0) { const list = [m0]; for (let j = 0; j < 2; j++) { const l = list[list.length - 1]; let b = null, bd = 3; for (const m of mobs) { if (m.dead || list.includes(m)) continue; const d = Math.hypot(m.x - l.x, m.z - l.z); if (d < bd) { bd = d; b = m; } } if (!b) break; list.push(b); }
-  fxBolt([heroTip(), ...list.map(m => new THREE.Vector3(m.x, mobH(m), m.z))], '#c8a8ff', 0.22); list.slice(1).forEach(m => { hitMob(m, 0.6, 'thunder'); if (Math.random() < 0.3) shock(m, 1.5); }); }
+  fxBolt([heroTip(), ...list.map(m => new THREE.Vector3(m.x, mobH(m), m.z))], '#c8a8ff', 0.22);
+  for (let i = 1; i < list.length; i++) FX3.bolt(V3c(list[i - 1].x, mobH(list[i - 1]), list[i - 1].z), V3c(list[i].x, mobH(list[i]), list[i].z), 'thunder', 0.2, { w: 0.05 }); list.slice(1).forEach(m => { hitMob(m, 0.6, 'thunder'); if (Math.random() < 0.3) shock(m, 1.5); }); }
 function projHit(p, m) {
   if (p.bot) { if (p.bot.alive) botHitMob(m, p.mult, p.bot); return; }
   const Cl = CLS[S.cls]; if (p.type === 'pet') { hitMob(m, p.mult, 'holy'); burst(m.x, mobH(m), m.z, 6, C3('#ffe08a'), 2, 0.25, 0.4); return; }
-  if (p.type === 'holy') { for (const o of mobsNear(m.x, m.z, Cl.splash)) hitMob(o, p.mult, 'holy'); fxRing(m.x, m.z, 0, Cl.splash, '#ffd85a', 0.35); burst(m.x, mobH(m), m.z, 14, C3('#ffe680'), 3, 0.3, 0.5); return; }
-  hitMob(m, p.mult, p.el);
+  if (p.type === 'holy') { cfxProjHit(p, m); for (const o of mobsNear(m.x, m.z, Cl.splash)) hitMob(o, p.mult, 'holy'); fxRing(m.x, m.z, 0, Cl.splash, '#ffd85a', 0.35); burst(m.x, mobH(m), m.z, 14, C3('#ffe680'), 3, 0.3, 0.5); return; }
+  cfxProjHit(p, m); hitMob(m, p.mult, p.el);
   if (p.type === 'shard') { m.slowT = 1.6; m.slow = m.boss ? 0.2 : 0.4; if (Math.random() < 0.1) freeze(m, 1.2); burst(m.x, mobH(m), m.z, 8, C3('#bff6ff'), 2, 0.25, 0.4); }
   else { if (Math.random() < 0.25) m.wetT = 3; burst(m.x, mobH(m), m.z, 6, C3('#9dd8ff'), 2, 0.22, 0.4); }
 }
@@ -2814,7 +2942,8 @@ function updateProjs(dt) {
     if (p.dir) { p.pos.addScaledVector(p.dir, p.speed * dt); p.trav += p.speed * dt; for (const m of mobs) { if (m.dead) continue; if (Math.hypot(m.x - p.pos.x, m.z - p.pos.z) < (m.boss ? 1.4 : 0.6)) { projHit(p, m); p.done = true; break; } } if (p.trav > p.max) p.done = true; }
     else { if (!p.tgt || p.tgt.dead) { p.done = true; } else { const tgt = new THREE.Vector3(p.tgt.x, mobH(p.tgt), p.tgt.z); const d = tgt.clone().sub(p.pos); const step = p.speed * dt; if (d.length() <= step + 0.1) { projHit(p, p.tgt); p.done = true; } else { p.pos.addScaledVector(d.normalize(), step); p.look = tgt; } } }
     if (!p.done) { p.m.position.copy(p.pos); p.m.lookAt(p.look || p.pos.clone().add(p.dir)); if (projs.length < 30 || Math.random() < 0.3) emit(p.pos.x, p.pos.y, p.pos.z, rr(-0.2, 0.2), rr(-0.2, 0.2), rr(-0.2, 0.2), C3(CLS[S.cls].col), p.type === 'holy' ? 0.4 : 0.22, 0.3, 0, 0.95); }
-    if (p.done) scene.remove(p.m);
+    if (!p.done) cfxProjFly(p);
+    if (p.done) { scene.remove(p.m); cfxProjEnd(p); }
   }
   for (let i = projs.length - 1; i >= 0; i--) if (projs[i].done) projs.splice(i, 1);
 }
@@ -2859,7 +2988,7 @@ function castSkill(j, pref) {
 function updSkills(dt) {
   for (const s of sks) { s.t += dt;
     switch (s.type) {
-      case 'boltseq': while (s.n < s.list.length && s.t >= s.n * 0.1) { const q = s.list[s.n++]; fxBolt([new THREE.Vector3(q.x, 7, q.z), new THREE.Vector3(q.x, 0.3, q.z)], '#c8a8ff', 0.3); fxRing(q.x, q.z, 0, 1.0, '#c8a8ff', 0.35); burst(q.x, 0.4, q.z, 14, C3('#e0d0ff'), 4, 0.3, 0.5); for (const m of mobsNear(q.x, q.z, 0.9)) { shock(m, 2); hitMob(m, s.D, 'thunder'); } } if (s.n >= s.list.length && s.t > 0.6) s.done = true; break;
+      case 'boltseq': while (s.n < s.list.length && s.t >= s.n * 0.1) { const q = s.list[s.n++]; cfxStrike(q.x, q.z); fxBolt([new THREE.Vector3(q.x, 7, q.z), new THREE.Vector3(q.x, 0.3, q.z)], '#c8a8ff', 0.3); fxRing(q.x, q.z, 0, 1.0, '#c8a8ff', 0.35); burst(q.x, 0.4, q.z, 14, C3('#e0d0ff'), 4, 0.3, 0.5); for (const m of mobsNear(q.x, q.z, 0.9)) { shock(m, 2); hitMob(m, s.D, 'thunder'); } } if (s.n >= s.list.length && s.t > 0.6) s.done = true; break;
       case 'storm': for (let k = 0; k < 3; k++) { const a = rr(0, 6.28), r = Math.sqrt(Math.random()) * s.R; emit(s.x + Math.cos(a) * r, 3.2, s.z + Math.sin(a) * r, 0, -7, 0, C3('#9fc8ff'), 0.18, 0.45, 0, 1); }
         s.tick -= dt; if (s.tick <= 0 && s.t < s.dur) { s.tick = 0.5; fxRing(s.x, s.z, 0, s.R, s.col, 0.5); const pool = mobsNear(s.x, s.z, s.R); pool.forEach(m => m.wetT = 3); for (let n = 0; n < 2 && pool.length; n++) { const m = pick(pool); fxBolt([new THREE.Vector3(m.x + rr(-0.5, 0.5), 4, m.z), new THREE.Vector3(m.x, mobH(m), m.z)], '#c8a8ff', 0.22); shock(m, 1.5); hitMob(m, s.D, 'thunder'); } }
         if (s.t >= s.dur) s.done = true; break;
@@ -2875,14 +3004,14 @@ function updSkills(dt) {
       case 'blizzard': if (s.t < s.dur) for (let n = 0; n < 5; n++) { const a = rr(0, 6.28), r = Math.sqrt(Math.random()) * s.R; emit(s.x + Math.cos(a) * r, rr(0.2, 2.6), s.z + Math.sin(a) * r, Math.cos(a + 1.6) * 2, -1, Math.sin(a + 1.6) * 2, C3('#e8fbff'), 0.22, 0.6, 0, 0.98); }
         s.pulse -= dt; if (s.pulse <= 0 && s.t < s.dur) { s.pulse = 0.8; fxRing(s.x, s.z, 0, s.R, '#9ff0ff', 0.6, 0, 0.3); }
         s.tick -= dt; if (s.tick <= 0 && s.t < s.dur) { s.tick = 0.4; for (const m of mobsNear(s.x, s.z, s.R)) { m.slowT = 1; m.slow = m.boss ? 0.25 : 0.5; freeze(m, 1.2, 0.12); hitMob(m, s.D, 'ice'); } } if (s.t >= s.dur + 0.3) s.done = true; break;
-      case 'pillar': if (s.t >= 0 && !s.fired) { s.fired = true; const x = s.m.x, z = s.m.z; fxRing(x, z, 0, 0.9, '#9ff0ff', 0.4, 0, 0.2); for (let n = 0; n < 24; n++) emit(x + rr(-0.25, 0.25), 0.1, z + rr(-0.25, 0.25), rr(-0.3, 0.3), rr(3, 6), rr(-0.3, 0.3), C3(n % 3 ? '#bff8ff' : '#ffffff'), rr(0.25, 0.45), 0.6, -6, 0.95);
+      case 'pillar': if (s.t >= 0 && !s.fired) { s.fired = true; const x = s.m.x, z = s.m.z; cfxSpike(x, z); fxRing(x, z, 0, 0.9, '#9ff0ff', 0.4, 0, 0.2); for (let n = 0; n < 24; n++) emit(x + rr(-0.25, 0.25), 0.1, z + rr(-0.25, 0.25), rr(-0.3, 0.3), rr(3, 6), rr(-0.3, 0.3), C3(n % 3 ? '#bff8ff' : '#ffffff'), rr(0.25, 0.45), 0.6, -6, 0.95);
           for (const o of mobsNear(x, z, 0.9)) { freeze(o, 1.6); hitMob(o, s.D, 'ice'); } } if (s.t >= 0.6) s.done = true; break;
-      case 'arrowrain': for (const a of s.arr) { if (!a.hit && s.t >= a.t && s.t < a.t + 0.25) { const k = (s.t - a.t) / 0.25; emit(a.x, 3 * (1 - k), a.z, 0, -12, 0, C3('#9fe0ff'), 0.25, 0.12, 0, 1); }
-          if (!a.hit && s.t >= a.t + 0.25) { a.hit = true; burst(a.x, 0.2, a.z, 8, C3('#9fe0ff'), 2, 0.25, 0.4); for (const m of mobsNear(a.x, a.z, 0.8)) { m.wetT = 3; hitMob(m, s.D, 'water'); } } } if (s.t >= s.dur) s.done = true; break;
+      case 'arrowrain': for (const a of s.arr) { if (!a.fx && s.t >= a.t) { a.fx = 1; cfxRainArrow(a.x, a.z); } if (!a.hit && s.t >= a.t && s.t < a.t + 0.25) { const k = (s.t - a.t) / 0.25; emit(a.x, 3 * (1 - k), a.z, 0, -12, 0, C3('#9fe0ff'), 0.25, 0.12, 0, 1); }
+          if (!a.hit && s.t >= a.t + 0.25) { a.hit = true; cfxSplash(a.x, a.z, 0.7); burst(a.x, 0.2, a.z, 8, C3('#9fe0ff'), 2, 0.25, 0.4); for (const m of mobsNear(a.x, a.z, 0.8)) { m.wetT = 3; hitMob(m, s.D, 'water'); } } } if (s.t >= s.dur) s.done = true; break;
       case 'tide': { const r = s.R * (1 - Math.pow(1 - Math.min(1, s.t / s.dur), 3)); for (const m of mobs) { if (m.dead || s.hit.has(m)) continue; if (Math.hypot(m.x - s.x, m.z - s.z) <= r) { s.hit.add(m); m.wetT = 3; knock(m, 2); hitMob(m, s.D, 'water'); } }
         for (let n = 0; n < 4; n++) { const a = rr(0, 6.28); emit(s.x + Math.cos(a) * r, 0.2, s.z + Math.sin(a) * r, Math.cos(a), 1.6, Math.sin(a), C3(n % 2 ? '#bfe8ff' : '#4ab8ff'), 0.3, 0.45, -3, 0.97); } if (s.t >= s.dur + 0.2) s.done = true; break; }
       case 'judg': if (s.m && !s.m.dead) { s.x = s.m.x; s.z = s.m.z; } s.beam.position.set(s.x, 0, s.z); if (s.t < s.dur) emit(s.x + rr(-0.5, 0.5), 0.1, s.z + rr(-0.5, 0.5), 0, rr(3, 5), 0, C3(Math.random() < 0.5 ? '#fff0b0' : '#ffb040'), 0.35, 0.6, 0, 0.98);
-        s.tick -= dt; if (s.tick <= 0 && s.t < s.dur) { s.tick = 0.2; for (const m of mobsNear(s.x, s.z, 1.5)) { burn(m, 0.3); hitMob(m, s.D, 'fire'); } } if (s.t >= s.dur + 0.3) s.done = true; break;
+        s.tick -= dt; if (s.tick <= 0 && s.t < s.dur) { s.tick = 0.2; cfxJudg(s.x, s.z); for (const m of mobsNear(s.x, s.z, 1.5)) { burn(m, 0.3); hitMob(m, s.D, 'fire'); } } if (s.t >= s.dur + 0.3) s.done = true; break;
     }
   }
   for (let i = sks.length - 1; i >= 0; i--) if (sks[i].done) sks.splice(i, 1);

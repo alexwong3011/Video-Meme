@@ -1557,7 +1557,7 @@ const CFX = {
   // Bão Sấm Tụ Thủy: a swirling cloud for the storm's two seconds, rain streaks, a slow rune, bolts from the cloud
   storm(sk, tg) { const x = tg.x, z = tg.z; FX3.decal('rune', 'thunder', x, z, { s0: 2.5, s1: 2.7, life: 2.2, fi: 0.1, fo: 0.8, spin: 0.9, a: 0.55 }); FX3.decal('ring', 'water', x, z, { s0: 0.3, s1: 2.8, life: 0.4, fi: 0.01 });
     cfxCloud(x, z, 2.6, 2.3); for (let k = 0; k < 7; k++) FX3.after(0.15 + k * 0.28, () => { const a = Math.random() * TAUc, r = Math.random() * 2.2, bx = x + Math.cos(a) * r, bz = z + Math.sin(a) * r;
-      FX3.bolt(V3c(bx + 0.3, 4.2, bz), V3c(bx, 0.15, bz), 'thunder', 0.2, { w: 0.07 }); FX3.decal('crack', 'thunder', bx, bz, { s0: 0.5, s1: 0.8, life: 0.45, fi: 0.01, fo: 0.4, rot: Math.random() * 6 }); FX3.sparks(bx, 0.3, bz, 8, 'pale'); });
+      FX3.bolt(V3c(bx + 0.3, 2.8, bz), V3c(bx, 0.15, bz), 'thunder', 0.2, { w: 0.07 }); FX3.decal('crack', 'thunder', bx, bz, { s0: 0.5, s1: 0.8, life: 0.45, fi: 0.01, fo: 0.4, rot: Math.random() * 6 }); FX3.sparks(bx, 0.3, bz, 8, 'pale'); });
     for (let k = 0; k < 10; k++) { const a0 = Math.random() * TAUc, r0 = Math.random() * 2.4; FX3.ribbon(t => [x + Math.cos(a0) * r0 + t * 1.2, 4 - t * 16, z + Math.sin(a0) * r0], { col: 'water', w: 0.018, life: 0.25, tail: 0.08, delay: Math.random() * 1.9 }); } },
   // Lôi Long Xoáy: a lightning dragon coils up around the knight, then bursts outward
   spinbolt() { const x = S.pos.x, z = S.pos.z, h = heroH(), a0 = Math.random() * TAUc;
@@ -1595,7 +1595,7 @@ const CFX = {
     for (let k = 0; k < 4; k++) FX3.after(k * 0.14, () => { const r = 3.6 * (1 - Math.pow(1 - (k + 1) / 4, 3)); for (let i = 0; i < 10; i++) { const an = i / 10 * TAUc + k * 0.3; FX3.beam(i % 2 ? 'water' : 'pale', x + Math.cos(an) * r, z + Math.sin(an) * r, { w: 0.18, hgt: 0.5 + k * 0.25, life: 0.25, a: 0.7 }); } });
     FX3.mist(x, z, 3.2, 8, 'water', { a: 0.3, life: 0.9 }); },
   // Thánh Hỏa Phán Xét: a golden rune; golden fire columns fall on every tick (cfxJudg)
-  judg(sk, tg) { FX3.decal('rune', 'gold', tg.x, tg.z, { s0: 1.0, s1: 1.6, life: 1.5, fi: 0.1, fo: 0.7, spin: 1.6, a: 0.85 }); FX3.bill('cross', 'holy', tg.x, 3.2, tg.z, { s0: 0.6, s1: 1.6, life: 0.5, fi: 0.05, fo: 0.5 }); },
+  judg(sk, tg) { FX3.decal('rune', 'gold', tg.x, tg.z, { s0: 1.0, s1: 1.6, life: 1.5, fi: 0.1, fo: 0.7, spin: 1.6, a: 0.85 }); FX3.bill('cross', 'holy', tg.x, 1.9, tg.z, { s0: 0.5, s1: 1.1, life: 0.5, fi: 0.05, fo: 0.5, a: 0.8 }); },
   // Thánh Quang Hộ Thể: wings of light open behind the priest, healing motes rise, then the burst
   blessing() { const h = heroH(), fx = Math.sin(S.face), fz = Math.cos(S.face), rx = fz, rz = -fx;      // forward and right of the hero
     for (const sd of [-1, 1]) for (let f = 0; f < 4; f++) FX3.ribbon(t => { const u = Math.min(1, t / 0.35), sp = 0.25 + f * 0.22, L = (1.0 + f * 0.25) * u;
@@ -1606,10 +1606,10 @@ const CFX = {
     FX3.after(0.4, () => { FX3.bill('cross', 'holy', S.pos.x, h * 0.7, S.pos.z, { s0: 1.8, s1: 0.6, life: 0.35, fi: 0.01 }); FX3.decal('ring', 'holy', S.pos.x, S.pos.z, { s0: 0.4, s1: 3.2, life: 0.4, fi: 0.01 }); FX3.sparks(S.pos.x, 0.8, S.pos.z, 20, 'holy', { speed: 5 }); }); }
 };
 function cfxCloud(x, z, R, life) { for (let i = 0; i < 7; i++) { const a = Math.random() * TAUc, r = Math.sqrt(Math.random()) * R * 0.8;
-  FX3.bill('smoke', i % 2 ? 'vio' : 'deep', x + Math.cos(a) * r, 3.6 + Math.random() * 0.5, z + Math.sin(a) * r, { s0: 0.9, s1: 1.4, a: 0.55, life, fi: 0.2, fo: 0.6, rot: Math.random() * 6, spin: 0.4 }); }
-  FX3.bill('flare', 'thunder', x, 3.8, z, { s0: R * 0.6, s1: R * 0.8, a: 0.35, life, fi: 0.2, fo: 0.6 }); }
+  FX3.bill('smoke', i % 2 ? 'vio' : 'deep', x + Math.cos(a) * r, 2.6 + Math.random() * 0.4, z + Math.sin(a) * r, { s0: 0.6, s1: 0.95, a: 0.4, life, fi: 0.2, fo: 0.6, rot: Math.random() * 6, spin: 0.4 }); }
+  FX3.bill('flare', 'thunder', x, 2.7, z, { s0: R * 0.25, s1: R * 0.35, a: 0.25, life, fi: 0.2, fo: 0.6 }); }
 // one sky bolt of Lôi Phạt Thiên Giáng
-function cfxStrike(x, z) { FX3.bolt(V3c(x + 0.25, 3.9, z - 0.2), V3c(x, 0.1, z), 'thunder', 0.24, { w: 0.1 }); FX3.bolt(V3c(x - 0.2, 3.9, z + 0.1), V3c(x, 0.1, z), 'pale', 0.18, { w: 0.035 });
+function cfxStrike(x, z) { FX3.bolt(V3c(x + 0.25, 2.8, z - 0.2), V3c(x, 0.1, z), 'thunder', 0.24, { w: 0.1 }); FX3.bolt(V3c(x - 0.2, 2.8, z + 0.1), V3c(x, 0.1, z), 'pale', 0.18, { w: 0.035 });
   FX3.beam('pale', x, z, { w: 0.3, hgt: 3.2, life: 0.18, a: 0.8 }); FX3.decal('crack', 'thunder', x, z, { s0: 0.6, s1: 1.1, life: 0.55, fi: 0.01, fo: 0.4, rot: Math.random() * 6 });
   FX3.decal('ring', 'pale', x, z, { s0: 0.1, s1: 1.0, life: 0.25, fi: 0.01 }); FX3.bill('flare', 'thunder', x, 0.3, z, { s0: 0.8, s1: 0.3, life: 0.2, fi: 0.01 }); FX3.sparks(x, 0.3, z, 10, 'pale', { speed: 4 }); }
 // one ice pillar of Vạn Băng Trụ: a crystal cluster grows out of the ground, holds, then shatters
@@ -1617,7 +1617,8 @@ function cfxSpike(x, z) { const it = FX3.bill('spike', 'ice', x, 0.02, z, { s0: 
   FX3.decal('frost', 'ice', x, z, { s0: 0.4, s1: 0.95, life: 0.9, fi: 0.02, fo: 0.6, rot: Math.random() * 6 }); FX3.decal('ring', 'pale', x, z, { s0: 0.1, s1: 0.9, life: 0.25, fi: 0.01 });
   FX3.after(0.58, () => { FX3.shards(x, 0.6, z, 9, 'ice', { speed: 2.6, up: 2.2 }); FX3.mist(x, z, 0.5, 2, 'pale', { a: 0.4, life: 0.6 }); }); }
 // one arrow of Thủy Tiễn Vũ falling from the sky
-function cfxRainArrow(x, z) { const sx = x - 0.9, sz = z - 0.6; FX3.ribbon(t => { const u = Math.min(1, t / 0.25); return [sx + 0.9 * u, 5 * (1 - u) + 0.1, sz + 0.6 * u]; }, { col: 'water', w: 0.045, life: 0.25, tail: 0.1 }); }
+function cfxRainArrow(x, z) { const sx = x - 0.7, sz = z - 0.5, path = t => { const u = Math.min(1, t / 0.25); return [sx + 0.7 * u, 3.4 * (1 - u) + 0.1, sz + 0.5 * u]; };
+  FX3.ribbon(path, { col: 'water', w: 0.08, life: 0.25, tail: 0.12 }); FX3.ribbon(path, { col: 'pale', w: 0.028, life: 0.25, tail: 0.09 }); }
 function cfxSplash(x, z, s = 1) { FX3.decal('ring', 'water', x, z, { s0: 0.1, s1: 0.8 * s, life: 0.3, fi: 0.01 }); FX3.sparks(x, 0.15, z, 7, 'water', { speed: 2.2, up: 3, grav: 9, size: 0.08 }); FX3.bill('flare', 'pale', x, 0.2, z, { s0: 0.4 * s, s1: 0.15, life: 0.15, fi: 0.01 }); }
 // one tick of Thánh Hỏa Phán Xét: a column of golden fire from the sky
 function cfxJudg(x, z) { FX3.beam('holy', x, z, { w: 0.7, hgt: 5, life: 0.26, a: 0.75 }); FX3.beam('pale', x, z, { w: 0.25, hgt: 5.5, life: 0.2, a: 0.9 }); FX3.decal('ring', 'gold', x, z, { s0: 0.3, s1: 1.5, life: 0.25, fi: 0.01 });
