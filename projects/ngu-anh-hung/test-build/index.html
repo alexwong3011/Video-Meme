@@ -9,7 +9,7 @@
 :root{
   --abyss:#041a20; --ink:#e8fbff; --muted:#93c6cf; --gold:#f2c66b; --cyan:#6fe7ff;
   --panel:rgba(3,22,28,.7); --line:rgba(150,230,255,.24); --hurt:#ff6b6b;
-  --r0:#e9f1f2; --r1:#5fb4ff; --r2:#c58bff; --r3:#ffb347;
+  --r0:#dfe7ea; --r1:#38a2ff; --r2:#d9a03a; --r3:#ff4f4f;
   --display:'Cormorant Garamond','Palatino Linotype','Times New Roman',serif;
   --ui:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
   color-scheme:dark;
@@ -40,6 +40,7 @@ body{background:var(--abyss);color:var(--ink);font-family:var(--ui);overflow:hid
 .dmg{position:absolute;font:700 17px/1 var(--ui);color:#fff;text-shadow:0 2px 3px #000,0 0 8px rgba(0,0,0,.7);animation:rise .9s cubic-bezier(.2,.7,.3,1) forwards;pointer-events:none;white-space:nowrap}
 .dmg.big{font:700 30px/1 var(--display);color:var(--gold);letter-spacing:.08em}
 .loot-lbl{font:600 11px var(--ui);text-shadow:0 1px 2px #000,0 0 5px #000}
+.loot-lbl.r0{font:700 12px var(--ui)}.loot-lbl.r1,.loot-lbl.r2,.loot-lbl.r3{font:800 13.5px var(--ui);text-shadow:0 1px 2px #000,0 0 6px #000,0 0 12px currentColor}
 @keyframes rise{0%{transform:translate(-50%,0) scale(1.35);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-52px) scale(1);opacity:0}}
 
 #hud{position:fixed;inset:0;pointer-events:none}
@@ -132,7 +133,12 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .doll img{position:absolute;display:block;pointer-events:none}.doll img[data-id]{pointer-events:auto;cursor:pointer}
 .doll .base{left:0;top:0;width:100%;height:100%;opacity:.9}
 .tile.empty{cursor:default;border-style:dashed;border-color:rgba(150,230,255,.12);color:rgba(150,230,255,.2)}
-.tile.r1{color:var(--r1);border-color:rgba(95,180,255,.55)}.tile.r2{color:var(--r2);border-color:rgba(197,139,255,.6)}.tile.r3{color:var(--r3);border-color:rgba(255,179,71,.7);box-shadow:inset 0 0 10px rgba(255,179,71,.25)}
+.tile.r0{color:var(--r0);border-color:rgba(223,231,234,.35)}
+.tile.r1{color:var(--r1);border:1.5px solid var(--r1);background:radial-gradient(circle at 50% 40%,rgba(56,162,255,.55),rgba(10,40,90,.85))}
+.tile.r2{color:var(--r2);border:1.5px solid var(--r2);background:radial-gradient(circle at 50% 40%,rgba(217,160,58,.6),rgba(70,42,8,.88))}
+.tile.r3{color:var(--r3);border:1.5px solid var(--r3);background:radial-gradient(circle at 50% 40%,rgba(255,79,79,.6),rgba(80,8,12,.88));box-shadow:inset 0 0 10px rgba(255,79,79,.35)}
+.rtag{display:inline-block;font:800 12.5px/1 var(--ui);letter-spacing:.06em;text-transform:uppercase;padding:4px 7px 3px;border-radius:5px;color:#08111a;background:var(--c);box-shadow:0 0 8px var(--c);vertical-align:1px}
+.settag{display:inline-block;font:700 12px var(--ui);color:var(--c)}
 .tile.sel{outline:2px solid var(--gold);outline-offset:1px}
 .tile.t1{box-shadow:0 0 10px rgba(111,184,255,.6)}.tile.t2{box-shadow:0 0 12px rgba(255,199,90,.7)}.tile.t3{box-shadow:0 0 14px rgba(210,139,255,.8)}
 .tile .pl{position:absolute;right:3px;top:2px;font:700 10px var(--ui);color:#fff;text-shadow:0 1px 2px #000}
@@ -2015,7 +2021,7 @@ const SLOT_ORDER = ['helm', 'armor', 'pants', 'gloves', 'boots', 'weapon', 'shie
 const AS_SLOTS = ['weapon', 'pendant']; // attack speed rolls only on the key items
 const ASR = [1, 1.15, 1.3, 1.45]; // attack-speed multiplier by rarity
 const STAT_N = { atk: 'Tấn công', def: 'Phòng thủ', hp: 'Máu', crit: 'Chí mạng %', as: 'Tốc đánh' };
-const RARITY = [{ n: 'Thường', c: 0xe9f1f2, css: '#e9f1f2' }, { n: 'Hiếm', c: 0x5fb4ff, css: '#5fb4ff' }, { n: 'Sử thi', c: 0xc58bff, css: '#c58bff' }, { n: 'Huyền thoại', c: 0xffb347, css: '#ffb347' }];
+const RARITY = [{ n: 'Thường', c: 0xdfe7ea, css: '#dfe7ea' }, { n: 'Hiếm', c: 0x38a2ff, css: '#38a2ff' }, { n: 'Sử thi', c: 0xd9a03a, css: '#d9a03a' }, { n: 'Huyền thoại', c: 0xff4f4f, css: '#ff4f4f' }];   // white, ocean blue, golden brown, red
 const RMULT = [1, 1.45, 2.1, 3];
 const SETS = {
   song: { n: 'Bộ Sóng Bạc', col: '#9fe8ff', names: { weapon: 'Kích Sóng Bạc', helm: 'Mũ Sóng Bạc', armor: 'Giáp Sóng Bạc', ring: 'Nhẫn Sóng Bạc' }, b2: { atkP: 0.08 }, b4: { hpP: 0.15, dmgP: 0.1 }, d2: '+8% tấn công', d4: '+15% máu, +10% sát thương' },
@@ -2056,7 +2062,7 @@ const DOLL = { x: -301, y: -837, w: 586, h: 843, p: {
 const hexHue = hex => { const c = new THREE.Color(hex), o = {}; c.getHSL(o); return o.h * 360; };
 function artFilter(g) {      // the art is violet-blue steel: shift it to the set's colour, or by rarity for loose pieces
   let f = g.set === 'azure' ? '' : g.set ? `hue-rotate(${Math.round(hexHue(SETS[g.set].col) - 245)}deg) saturate(1.25)` :
-    ['grayscale(0.92) brightness(0.82) contrast(1.1)', 'hue-rotate(-35deg) saturate(1.1) brightness(0.95)', 'hue-rotate(25deg) saturate(1.35)', 'hue-rotate(150deg) saturate(1.6) brightness(1.08)'][g.r] || '';
+    g.r ? `hue-rotate(${Math.round(hexHue(RARITY[g.r].css) - 245)}deg) saturate(1.45)` : 'grayscale(0.92) brightness(0.82) contrast(1.1)';
   const t = tier(g.plus || 0); if (t) f += ` drop-shadow(0 0 ${2 + t * 2}px #${new THREE.Color(TIER_COL[t]).getHexString()})`; return f; }
 const itemArt = g => ART[g.slot] && !g.charm ? `<img class="art" alt="" src="assets/equip/icons/${ART[g.slot].icon}_128.png" style="filter:${artFilter(g)}">` : null;
 
@@ -2480,20 +2486,51 @@ function levelFx() { if (levelFxT > 0.8) return; levelFxT = 1.6; fxText(S.pos.x,
 // ---------- loot on the ground (template gems, coins and beams) ----------
 const loots = [];
 const FEATHER = (() => { const s = new THREE.Shape(); s.moveTo(0, -0.2); s.quadraticCurveTo(0.12, 0, 0, 0.24); s.quadraticCurveTo(-0.12, 0, 0, -0.2); return new THREE.ShapeGeometry(s); })();
+const LOOT_WAIT = 1;
+// the picture of a dropped item: its painted icon recoloured like the bag tile (pixel by pixel, since canvas filters are not everywhere), or its line icon
+const lootTexCache = {};
+// the CSS filter functions as 3x3 colour matrices (Filter Effects spec), so the ground picture matches the bag tile exactly
+function cssMat(ops) { let M = [1, 0, 0, 0, 1, 0, 0, 0, 1]; const mul = (A, B) => { const o = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) o.push(A[i * 3] * B[j] + A[i * 3 + 1] * B[3 + j] + A[i * 3 + 2] * B[6 + j]); return o; };
+  for (const [k, v] of ops) { let A;
+    if (k === 'hue') { const c = Math.cos(v * Math.PI / 180), s2 = Math.sin(v * Math.PI / 180); A = [0.213 + c * 0.787 - s2 * 0.213, 0.715 - c * 0.715 - s2 * 0.715, 0.072 - c * 0.072 + s2 * 0.928, 0.213 - c * 0.213 + s2 * 0.143, 0.715 + c * 0.285 + s2 * 0.140, 0.072 - c * 0.072 - s2 * 0.283, 0.213 - c * 0.213 - s2 * 0.787, 0.715 - c * 0.715 + s2 * 0.715, 0.072 + c * 0.928 + s2 * 0.072]; }
+    else if (k === 'sat') A = [0.213 + 0.787 * v, 0.715 - 0.715 * v, 0.072 - 0.072 * v, 0.213 - 0.213 * v, 0.715 + 0.285 * v, 0.072 - 0.072 * v, 0.213 - 0.213 * v, 0.715 - 0.715 * v, 0.072 + 0.928 * v];
+    else A = [v, 0, 0, 0, v, 0, 0, 0, v];          // brightness
+    M = mul(A, M); }
+  return M; }
+const artOps = g => g.set === 'azure' ? null : g.set ? [['hue', hexHue(SETS[g.set].col) - 245], ['sat', 1.25]] : g.r ? [['hue', hexHue(RARITY[g.r].css) - 245], ['sat', 1.45]] : [['sat', 0.08], ['bri', 0.82]];
+function lootTex(g) {
+  const art = ART[g.slot] && !g.charm, key = art ? ART[g.slot].icon + '|' + (g.set || '') + '|' + g.r : 'svg|' + (g.charm ? g.charm : g.slot) + '|' + g.r;
+  if (lootTexCache[key]) return lootTexCache[key];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; lootTexCache[key] = t;
+  const img = new Image();
+  img.onload = () => { const c = cv.getContext('2d'); c.drawImage(img, art ? 0 : 20, art ? 0 : 20, art ? 128 : 88, art ? 128 : 88);
+    const ops = art && artOps(g); if (ops) { const d = c.getImageData(0, 0, 128, 128), a = d.data, M = cssMat(ops);
+      for (let i = 0; i < a.length; i += 4) { if (!a[i + 3]) continue; const r = a[i], gg = a[i + 1], b = a[i + 2];
+        a[i] = M[0] * r + M[1] * gg + M[2] * b; a[i + 1] = M[3] * r + M[4] * gg + M[5] * b; a[i + 2] = M[6] * r + M[7] * gg + M[8] * b; }    // Uint8ClampedArray clamps
+      c.putImageData(d, 0, 0); }
+    t.needsUpdate = true; };
+  if (art) img.src = `assets/equip/icons/${ART[g.slot].icon}_128.png`;
+  else { const col = g.charm ? CHARMS[g.charm].col : RARITY[g.r].css;
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="128" height="128" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">${GI[g.charm === 'soul' ? 'soul' : g.charm ? 'charm' : g.slot]}</svg>`); }
+  return t; }
 function dropLoot(x, z, it) {
   const g = new THREE.Group(); let col, geo, name, beam = false, cls = '';
   if (it.kind === 'gold') { col = new THREE.Color(0xffd36a); geo = new THREE.CylinderGeometry(0.16, 0.16, 0.05, 16); name = `${it.amount} Vàng`; cls = 'var(--gold)'; }
   else if (it.kind === 'mat') { const M = MATS[it.k]; col = new THREE.Color(M.col); geo = it.k === 'e' ? new THREE.IcosahedronGeometry(0.14) : it.k === 'f' ? FEATHER : new THREE.OctahedronGeometry(0.15).scale(0.8, 1.3, 0.8); name = M.name + (it.amount > 1 ? ' ×' + it.amount : ''); cls = M.col; beam = ['t', 'x', 'f'].includes(it.k); }
   else { const gr = it.gear; col = new THREE.Color(gr.charm ? CHARMS[gr.charm].col : gr.set ? SETS[gr.set].col : RARITY[gr.r].css); geo = new THREE.OctahedronGeometry(0.18); name = gr.name + (gr.plus ? ` +${gr.plus}` : ''); cls = gr.charm ? CHARMS[gr.charm].col : gr.set ? SETS[gr.set].col : RARITY[gr.r].css; beam = gr.r >= 1; }
-  const gem = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, metalness: 0.8, roughness: 0.2, emissive: col, emissiveIntensity: it.kind === 'gold' ? 0.6 : 1.4, side: THREE.DoubleSide })); gem.position.y = 0.45; g.add(gem);
+  let gem; if (it.kind === 'gear') { const gr = it.gear, rc = gr.charm ? CHARMS[gr.charm].col : RARITY[gr.r].css; col = new THREE.Color(rc); cls = rc;
+    gem = new THREE.Sprite(new THREE.SpriteMaterial({ map: lootTex(gr), transparent: true, depthWrite: false })); gem.center.set(0.5, 0.1); gem.scale.setScalar(0.62); gem.userData.sprite = true; g.add(gem);
+    const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: haloTex, color: col.clone().multiplyScalar(gr.r ? 1.2 : 0.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    pool.position.y = 0.04; pool.scale.setScalar(0.9 + gr.r * 0.15); g.add(pool); }
+  else { gem = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, metalness: 0.8, roughness: 0.2, emissive: col, emissiveIntensity: it.kind === 'gold' ? 0.6 : 1.4, side: THREE.DoubleSide })); gem.position.y = 0.45; g.add(gem); }
   if (beam) { const bm = beamMatBase.clone(); bm.uniforms.uC.value = col.clone().multiplyScalar(1.2); g.add(new THREE.Mesh(beamGeo, bm)); }
   const ox = rr(-0.8, 0.8), oz = rr(-0.8, 0.8); g.position.set(x + ox, 0, z + oz); scene.add(g);
-  const el = document.createElement('div'); el.className = 'lbl loot-lbl'; el.style.color = cls; el.textContent = name; el.style.display = 'none'; labelsEl.appendChild(el);
+  const el = document.createElement('div'); el.className = 'lbl loot-lbl' + (it.kind === 'gear' && !it.gear.charm ? ' r' + it.gear.r : ''); el.style.color = cls; el.textContent = name; el.style.display = 'none'; labelsEl.appendChild(el);
   loots.push({ g, gem, x: x + ox, z: z + oz, it, el, t: 0, name, col });
 }
 // loot filter: with auto-loot on, only the chosen kinds are picked up (by walking over, auto-hunt or the pet)
 const LOOT_KINDS = [['gold', 'Vàng', '#ffd36a'], ['e', 'Đá Cường Hóa', '#6fe7ff'], ['stone', 'Linh Thạch', '#c06aff'], ['f', 'Lông Vũ Thần', '#ffd85a'],
-  ['g0', 'Đồ Thường', '#e9f1f2'], ['g1', 'Đồ Hiếm', '#5fb4ff'], ['g2', 'Đồ Sử Thi', '#c58bff'], ['g3', 'Đồ Huyền Thoại', '#ffb347'], ['set', 'Đồ Bộ (mọi độ hiếm)', '#7dffb0'], ['charm', 'Bùa & Soul of Ancient', '#ff9ad8']];
+  ['g0', 'Đồ Thường', '#dfe7ea'], ['g1', 'Đồ Hiếm', '#38a2ff'], ['g2', 'Đồ Sử Thi', '#d9a03a'], ['g3', 'Đồ Huyền Thoại', '#ff4f4f'], ['set', 'Đồ Bộ (mọi độ hiếm)', '#7dffb0'], ['charm', 'Bùa & Soul of Ancient', '#ff9ad8']];
 function lootDefaults() { const o = {}; for (const [k] of LOOT_KINDS) o[k] = true; return o; }
 function lootOk(it) { const F = S.lootF || (S.lootF = lootDefaults());
   if (it.kind === 'gold') return F.gold; if (it.kind === 'mat') return it.k === 'e' ? F.e : it.k === 'f' ? F.f : F.stone;
@@ -2508,14 +2545,15 @@ function takeOne(list, g) { if (qty(g) > 1) { g.n--; return Object.assign({}, g,
 function addItem(g) { if (stackInto(S.inv, g)) return; if (S.inv.length >= BAG_MAX) { const p = sellPrice(g); S.gold += p; log(`Túi đầy, tự bán [${g.name}] được ${p} vàng`, '#6fe7ff'); return; } S.inv.push(g); }
 function updateLoot(dt, t) {
   for (let i = loots.length - 1; i >= 0; i--) { const l = loots[i]; l.t += dt;
-    l.gem.rotation.y = t * 2; l.gem.position.y = 0.45 + Math.sin(t * 3 + i) * 0.08 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
+    if (!l.gem.userData.sprite) l.gem.rotation.y = t * 2; l.gem.position.y = (l.gem.userData.sprite ? 0.12 : 0.45) + Math.sin(t * 3 + i) * 0.06 + Math.max(0, 1.2 - l.t * 3) * Math.sin(Math.min(l.t * 3, 1) * Math.PI);
     const ld = Math.hypot(l.x - S.pos.x, l.z - S.pos.z);
-    if (!S.dead && S.autoLoot && l.t > 0.5 && ld < HS.loot && ld > 0.5 && lootOk(l.it)) { const k = Math.min(1, dt * 7 / Math.max(ld, 0.6)); l.x += (S.pos.x - l.x) * k * 1.5; l.z += (S.pos.z - l.z) * k * 1.5; l.g.position.set(l.x, 0, l.z); }
-    if ((!S.dead && ld < 0.9 && (!S.autoLoot || lootOk(l.it))) || l.t > 40) {
+    const ready = l.t >= LOOT_WAIT;      // a drop rests on the ground for a second before it can be picked up
+    if (!S.dead && ready && S.autoLoot && ld < HS.loot && ld > 0.5 && lootOk(l.it)) { const k = Math.min(1, dt * 7 / Math.max(ld, 0.6)); l.x += (S.pos.x - l.x) * k * 1.5; l.z += (S.pos.z - l.z) * k * 1.5; l.g.position.set(l.x, 0, l.z); }
+    if ((!S.dead && ready && ld < 0.9 && (!S.autoLoot || lootOk(l.it))) || l.t > 40) {
       if (l.t <= 40) { const it = l.it;
         if (it.kind === 'gold') { S.gold += it.amount; }
         else if (it.kind === 'mat') { S.mats[it.k] += it.amount; log(`Nhặt được [${l.name}]`, MATS[it.k].col); }
-        else { addItem(it.gear); if (it.gear.charm) recalc(); log(`Nhặt được [${l.name}] · ${RARITY[it.gear.r].n}${it.gear.set ? ' · ' + SETS[it.gear.set].n : ''}`, it.gear.set ? SETS[it.gear.set].col : RARITY[it.gear.r].css); }
+        else { addItem(it.gear); if (it.gear.charm) recalc(); log(`Nhặt được [${l.name}] · ${RARITY[it.gear.r].n.toUpperCase()}${it.gear.set ? ' · ' + SETS[it.gear.set].n : ''}`, it.gear.charm ? CHARMS[it.gear.charm].col : RARITY[it.gear.r].css); }
         burst(l.x, 0.5, l.z, 6, l.col, 2, 0.25, 0.5); }
       removeLoot(l); loots.splice(i, 1); } }
 }
@@ -3208,8 +3246,8 @@ function renderDetail() {
     $('aSell').onclick = () => { takeOne(S.inv, g); S.gold += sellPrice(g); if (!S.inv.includes(g)) selId = null; afterChange(); };
     const all = $('aSellAll'); if (all) all.onclick = () => { S.gold += sellPrice(g) * qty(g); S.inv = S.inv.filter(x => x !== g); selId = null; afterChange(); }; return; }
   const cur = S.eq[g.slot]; const cost = upCost(g.plus), rate = upRate(g.plus); const canUp = g.plus < 15;
-  box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</h3>
-    <p class="muted">${SLOTS[g.slot].n} · ${RARITY[g.r].n} · cấp ${g.lv}${g.set ? ' · ' + SETS[g.set].n : ''}${equipped ? ' · <b style="color:var(--cyan)">Đang mặc</b>' : ''}</p></div></div>
+  box.innerHTML = `<div class="dhead">${tileHtml(g, 'tabindex="-1"')}<div><h3 style="color:${RARITY[g.r].css};font-size:21px;text-shadow:0 0 10px ${RARITY[g.r].css}66">${g.name}${g.plus ? ' +' + g.plus : ''}</h3>
+    <p class="muted" style="margin:5px 0 0"><span class="rtag" style="--c:${RARITY[g.r].css}">${RARITY[g.r].n}</span> ${SLOTS[g.slot].n} · cấp ${g.lv}${g.set ? ` · <span class="settag" style="--c:${SETS[g.set].col}">◆ ${SETS[g.set].n}</span>` : ''}${equipped ? ' · <b style="color:var(--cyan)">Đang mặc</b>' : ''}</p></div></div>
     <ul class="stl">${statLines(g, !equipped && cur ? cur : null)}</ul>
     ${canUp ? `<div class="upb"><b>+${g.plus} → +${g.plus + 1}</b><span>Tỉ lệ thành công ${Math.round(rate * 100)}%${g.plus >= 9 ? ' · thất bại giảm 1 cấp' : ''}</span><span>Cần ${cost.stones} Đá Cường Hóa · ${fmt(cost.gold)} vàng</span></div>` : '<p class="muted">Đã đạt +15.</p>'}
     <div class="acts"><button class="pb" id="aEq">${equipped ? 'Tháo ra' : g.slot === 'weapon' ? 'Cầm tay phải' : 'Mặc vào'}</button>${!equipped && g.slot === 'weapon' ? '<button class="pb" id="aEq2">Cầm tay trái</button>' : ''}${canUp ? `<button class="pb pri" id="aUp"${S.mats.e < cost.stones || S.gold < cost.gold ? ' disabled' : ''}>Cường hóa</button>` : ''}${equipped ? '' : `<button class="pb" id="aSell">Bán · ${fmt(sellPrice(g))} vàng</button>`}</div>`;
@@ -3290,7 +3328,7 @@ function charAt(cx, cy) { let best = null, bd = 44; const test = (pos, h, o) => 
   for (const e of npcEnts) test(e.pos, HERO_H * 0.55, e); for (const e of ents.values()) if (!e.dead) test(e.pos, 0.55 + HERO_H * 0.55, e); return best; }
 function npcAct(id) { if (id === 'smith') openBag('gear'); else if (id === 'pets') openBag('pet'); else if (id === 'guide') openMap(); else openWorld(id); }
 const botTag = b => `<b style="color:${CLS[b.cls].col}">${CLS[b.cls].icon} ${b.name}</b> · ${CLS[b.cls].name} · Lv ${b.lv}`;
-const itemLine = g => g.slot === 'charm' ? `<b style="color:${CHARMS[g.charm].col}">${g.name}${qty(g) > 1 ? ' ×' + qty(g) : ''}</b> · ${CHARMS[g.charm].d} · giá mỗi lá` : `<b style="color:${g.set ? SETS[g.set].col : RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</b> · ${SLOTS[g.slot].n} cấp ${g.lv} · ${Object.entries(gearStats(g)).map(([k, v]) => STAT_N[k] + ' ' + v).join(', ')}`;
+const itemLine = g => g.slot === 'charm' ? `<b style="color:${CHARMS[g.charm].col}">${g.name}${qty(g) > 1 ? ' ×' + qty(g) : ''}</b> · ${CHARMS[g.charm].d} · giá mỗi lá` : `<b style="color:${RARITY[g.r].css}">${g.name}${g.plus ? ' +' + g.plus : ''}</b> <span class="rtag" style="--c:${RARITY[g.r].css};font-size:10px;padding:2px 5px">${RARITY[g.r].n}</span> · ${SLOTS[g.slot].n} cấp ${g.lv} · ${Object.entries(gearStats(g)).map(([k, v]) => STAT_N[k] + ' ' + v).join(', ')}`;
 const buyPrice = g => Math.round((g.slot === 'charm' ? (3000 + g.lv * 120) * CHARMS[g.charm].pv : sellPrice(g) * 2.6) * (g.pm || (g.pm = rr(0.85, 1.25))));
 const offerPrice = (g, b) => Math.round((g.slot === 'charm' ? (1800 + g.lv * 70) * CHARMS[g.charm].pv : sellPrice(g) * 1.6) * (0.85 + (b.hue * 7 % 1) * 0.4));
 function renderWorldPanel() { if ($('wP').classList.contains('hide')) return; const B = $('wBody'); const here = [...ents.values()].filter(e => !e.dead).map(e => e.b);
