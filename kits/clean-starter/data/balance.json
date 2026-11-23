@@ -1,0 +1,87 @@
+{
+ "SKD": {
+  "fire": 1,
+  "thunder": 1.4,
+  "ice": 1.1,
+  "elf": 1.9,
+  "holy": 3
+ },
+ "SKP": {
+  "fire": 2,
+  "thunder": 2.1,
+  "ice": 1.9,
+  "elf": 1.5,
+  "holy": 1.85
+ },
+ "BAK": {
+  "fire": 5,
+  "thunder": 4,
+  "ice": 5,
+  "elf": 4,
+  "holy": 2.4
+ },
+ "BAP": {
+  "elf": 1.3
+ },
+ "MOB_HP_K": 8,
+ "MOB_FURY": {
+  "aggro": 1.25,
+  "chase": 1.12,
+  "rate": 0.8,
+  "atk": 1.1
+ },
+ "BOSS_K": {
+  "atk": 2,
+  "speed": 2,
+  "hp": 0.5
+ },
+ "EXP_K": 2,
+ "PCT": {
+  "crit": 0.5,
+  "mpr": 0.1,
+  "mpl": 0.08
+ },
+ "POT": {
+  "heal": 0.5,
+  "cd": 1.5,
+  "auto": 0.25,
+  "drop": {
+   "hp": 0.05,
+   "mp": 0.04
+  },
+  "max": 99999
+ },
+ "MAT_MAX": {
+  "hpp": 99999,
+  "mpp": 99999
+ },
+ "MAXLV": 400,
+ "TIER_COL": [
+  8382975,
+  7321855,
+  16762714,
+  13798399
+ ],
+ "RARITY": [
+  {
+   "n": "Thường",
+   "c": 14673898,
+   "css": "#dfe7ea"
+  },
+  {
+   "n": "Hiếm",
+   "c": 3711743,
+   "css": "#38a2ff"
+  },
+  {
+   "n": "Sử thi",
+   "c": 14262330,
+   "css": "#d9a03a"
+  },
+  {
+   "n": "Huyền thoại",
+   "c": 16731983,
+   "css": "#ff4f4f"
+  }
+ ]
+}

@@ -1,0 +1,239 @@
+{
+ "CLS": {
+  "thunder": {
+   "name": "Lôi Thánh Kỵ",
+   "icon": "⚡",
+   "col": "#b98cff",
+   "glow": "#c8b0ff",
+   "el": "thunder",
+   "melee": true,
+   "range": 1.9,
+   "rate": 0.6,
+   "atk": 1,
+   "hp": 1.15,
+   "desc": "Giáo sét, giáp dày. Đòn thường có 20% phóng sét lan sang 2 quái gần."
+  },
+  "fire": {
+   "name": "Hỏa Kiếm Sĩ",
+   "icon": "🔥",
+   "col": "#ff7a1a",
+   "glow": "#7fe9ff",
+   "el": "fire",
+   "melee": true,
+   "range": 1.8,
+   "rate": 0.62,
+   "atk": 1.15,
+   "hp": 1.05,
+   "desc": "Đại kiếm lửa, sát thương cao. Đòn thường thiêu đốt mục tiêu."
+  },
+  "ice": {
+   "name": "Băng Pháp Sư",
+   "icon": "❄",
+   "col": "#6fe8ff",
+   "glow": "#9ff4ff",
+   "el": "ice",
+   "melee": false,
+   "range": 6.5,
+   "rate": 0.72,
+   "atk": 1.1,
+   "hp": 0.9,
+   "proj": "shard",
+   "ps": 9,
+   "desc": "Phép băng tầm xa, làm chậm và đóng băng quái."
+  },
+  "elf": {
+   "name": "Lục Cung Thủ",
+   "icon": "🏹",
+   "col": "#7dff9a",
+   "glow": "#9fffc0",
+   "el": "water",
+   "melee": false,
+   "range": 7.5,
+   "rate": 0.36,
+   "atk": 0.82,
+   "hp": 0.9,
+   "proj": "arrow",
+   "ps": 14,
+   "crit": 0.2,
+   "desc": "Bắn cực nhanh, chí mạng gốc 20%. Tên nước làm Ướt."
+  },
+  "holy": {
+   "name": "Thánh Quang Tư Tế",
+   "icon": "✦",
+   "col": "#ffd85a",
+   "glow": "#fff0a0",
+   "el": "holy",
+   "melee": false,
+   "range": 6.5,
+   "rate": 0.78,
+   "atk": 1,
+   "hp": 1,
+   "proj": "holy",
+   "ps": 8,
+   "splash": 1.3,
+   "desc": "Cầu thánh quang nổ lan, có kỹ năng hồi máu."
+  }
+ },
+ "SKILLS": {
+  "thunder": [
+   {
+    "id": "bolts",
+    "name": "Lôi Phạt Thiên Giáng",
+    "el": "thunder",
+    "lv": 1,
+    "cdk": 2,
+    "mpP": 0.03,
+    "mult": 0.75,
+    "act": "5 tia sét giáng xuống cụm quái, mỗi tia 75% ST, gây Tê liệt."
+   },
+   {
+    "id": "storm",
+    "name": "Bão Sấm Tụ Thủy",
+    "el": "thunder",
+    "lv": 10,
+    "cdk": 5,
+    "mpP": 0.06,
+    "mult": 0.5,
+    "act": "Mây bão 2 giây: làm Ướt quái trong vùng, giáng sét 50% ST mỗi nhịp."
+   },
+   {
+    "id": "spinbolt",
+    "name": "Lôi Long Xoáy",
+    "el": "thunder",
+    "lv": 25,
+    "cdk": 2.5,
+    "mpP": 0.05,
+    "mult": 1.3,
+    "act": "Xoáy sét quanh thân: 130% ST mọi quái gần, gây Tê liệt."
+   }
+  ],
+  "fire": [
+   {
+    "id": "flamewave",
+    "name": "Hỏa Long Trảm",
+    "el": "fire",
+    "lv": 1,
+    "cdk": 1.5,
+    "mpP": 0.03,
+    "mult": 1.2,
+    "act": "Sóng lửa xuyên thẳng hàng, 120% ST, Thiêu đốt."
+   },
+   {
+    "id": "meteor",
+    "name": "Thiên Hỏa Lưu Tinh",
+    "el": "fire",
+    "lv": 10,
+    "cdk": 4,
+    "mpP": 0.08,
+    "mult": 2.4,
+    "act": "Thiên thạch rơi nổ 240% ST diện rộng, để lại biển lửa 2 giây."
+   },
+   {
+    "id": "firespin",
+    "name": "Lốc Hỏa Kiếm",
+    "el": "fire",
+    "lv": 25,
+    "cdk": 2.5,
+    "mpP": 0.05,
+    "mult": 1.4,
+    "act": "Xoay đại kiếm lửa: 140% ST mọi quái gần, Thiêu đốt."
+   }
+  ],
+  "ice": [
+   {
+    "id": "blizzard",
+    "name": "Băng Phong Bạo",
+    "el": "ice",
+    "lv": 1,
+    "cdk": 4,
+    "mpP": 0.06,
+    "mult": 0.4,
+    "act": "Bão tuyết 2 giây: 40% ST mỗi nhịp, làm chậm, có thể Đóng băng."
+   },
+   {
+    "id": "icepillars",
+    "name": "Vạn Băng Trụ",
+    "el": "ice",
+    "lv": 10,
+    "cdk": 3,
+    "mpP": 0.06,
+    "mult": 1.3,
+    "act": "Trụ băng trồi lên dưới tối đa 8 quái: 130% ST, Đóng băng 1.6 giây."
+   },
+   {
+    "id": "icefan",
+    "name": "Băng Tiễn Liên Hoàn",
+    "el": "ice",
+    "lv": 25,
+    "cdk": 2,
+    "mpP": 0.04,
+    "mult": 0.6,
+    "act": "Bắn quạt 7 băng tiễn, mỗi mũi 60% ST, làm chậm."
+   }
+  ],
+  "elf": [
+   {
+    "id": "arrowrain",
+    "name": "Thủy Tiễn Vũ",
+    "el": "water",
+    "lv": 1,
+    "cdk": 3,
+    "mpP": 0.05,
+    "mult": 0.4,
+    "act": "Mưa 14 mũi tên nước, mỗi mũi 40% ST, làm Ướt."
+   },
+   {
+    "id": "pierce",
+    "name": "Phá Lãng Tiễn",
+    "el": "water",
+    "lv": 10,
+    "cdk": 2,
+    "mpP": 0.04,
+    "mult": 1.6,
+    "act": "Mũi tên sóng xuyên thẳng hàng: 160% ST, đẩy lùi, làm Ướt."
+   },
+   {
+    "id": "arrowfan",
+    "name": "Tiễn Bạo",
+    "el": "water",
+    "lv": 25,
+    "cdk": 1.5,
+    "mpP": 0.03,
+    "mult": 0.7,
+    "act": "Bắn quạt 5 mũi tên, mỗi mũi 70% ST."
+   }
+  ],
+  "holy": [
+   {
+    "id": "tide",
+    "name": "Thánh Thủy Triều",
+    "el": "water",
+    "lv": 1,
+    "cdk": 2,
+    "mpP": 0.04,
+    "mult": 0.8,
+    "act": "Vòng thủy triều lan rộng: 80% ST, đẩy lùi mạnh, làm Ướt."
+   },
+   {
+    "id": "judg",
+    "name": "Thánh Hỏa Phán Xét",
+    "el": "fire",
+    "lv": 10,
+    "cdk": 4,
+    "mpP": 0.06,
+    "mult": 0.5,
+    "act": "Cột thánh hỏa giáng lên quái máu cao nhất: 6 nhịp × 50% ST, Thiêu đốt."
+   },
+   {
+    "id": "blessing",
+    "name": "Thánh Quang Hộ Thể",
+    "el": "holy",
+    "lv": 25,
+    "cdk": 8,
+    "mpP": 0.08,
+    "mult": 1.2,
+    "act": "Hồi 10% máu tối đa và phát nổ 120% ST quanh thân."
+   }
+  ]
+ }
+}

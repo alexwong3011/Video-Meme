@@ -1,0 +1,330 @@
+{
+ "SLOT_ORDER": [
+  "helm",
+  "armor",
+  "pants",
+  "gloves",
+  "boots",
+  "weapon",
+  "shield",
+  "ring",
+  "pendant"
+ ],
+ "SETS": {
+  "song": {
+   "n": "Bộ Sóng Bạc",
+   "col": "#9fe8ff",
+   "names": {
+    "weapon": "Kích Sóng Bạc",
+    "helm": "Mũ Sóng Bạc",
+    "armor": "Giáp Sóng Bạc",
+    "ring": "Nhẫn Sóng Bạc"
+   },
+   "b2": {
+    "atkP": 0.08
+   },
+   "b4": {
+    "hpP": 0.15,
+    "dmgP": 0.1
+   },
+   "d2": "+8% tấn công",
+   "d4": "+15% máu, +10% sát thương"
+  },
+  "vay": {
+   "n": "Bộ Vảy Rồng Biển",
+   "col": "#7dffb0",
+   "names": {
+    "weapon": "Kiếm Vảy Rồng",
+    "helm": "Mũ Vảy Rồng",
+    "armor": "Giáp Vảy Rồng",
+    "ring": "Nhẫn Vảy Rồng"
+   },
+   "b2": {
+    "crit": 5
+   },
+   "b4": {
+    "atkP": 0.15,
+    "dmgP": 0.15
+   },
+   "d2": "+5% chí mạng",
+   "d4": "+15% tấn công, +15% sát thương"
+  },
+  "dung": {
+   "n": "Bộ Dung Nham",
+   "col": "#ffa060",
+   "names": {
+    "weapon": "Đại Kiếm Dung Nham",
+    "helm": "Mũ Dung Nham",
+    "armor": "Giáp Dung Nham",
+    "ring": "Nhẫn Dung Nham"
+   },
+   "b2": {
+    "defP": 0.2
+   },
+   "b4": {
+    "atkP": 0.2,
+    "dmgP": 0.25,
+    "hpP": 0.1
+   },
+   "d2": "+20% phòng thủ",
+   "d4": "+20% tấn công, +25% sát thương, +10% máu"
+  }
+ },
+ "PLAIN": {
+  "weapon": [
+   "Kiếm Hải Lam",
+   "Kích San Hô",
+   "Thương Triều Dâng"
+  ],
+  "helm": [
+   "Mũ Ngọc Trai",
+   "Mũ Vỏ Ốc Bạc"
+  ],
+  "armor": [
+   "Giáp Lân Quang",
+   "Giáp Vỏ Sò"
+  ],
+  "ring": [
+   "Nhẫn Bọt Biển",
+   "Nhẫn Lân Quang"
+  ],
+  "pendant": [
+   "Dây Chuyền Ngọc Trai",
+   "Mặt Dây Lân Quang",
+   "Bùa Triều Cường"
+  ],
+  "shield": [
+   "Khiên Vỏ Rùa Cổ",
+   "Khiên Hải Lam",
+   "Khiên Thánh Quang",
+   "Khiên Vảy Rồng"
+  ]
+ },
+ "MATS": {
+  "e": {
+   "name": "Đá Cường Hóa",
+   "col": "#6fe7ff",
+   "desc": "Dùng để cường hóa trang bị"
+  },
+  "c": {
+   "name": "Linh Thạch Sơ Cấp",
+   "col": "#4aa8ff",
+   "desc": "+5% chí mạng ×1.5"
+  },
+  "p": {
+   "name": "Linh Thạch Cao Cấp",
+   "col": "#4cff6a",
+   "desc": "+5% hoàn hảo ×2"
+  },
+  "d": {
+   "name": "Linh Thạch Huyền Bí",
+   "col": "#c06aff",
+   "desc": "+2% nhân đôi ×2"
+  },
+  "t": {
+   "name": "Linh Thạch Tối Thượng",
+   "col": "#ff4a4a",
+   "desc": "+1% nhân ba ×3"
+  },
+  "x": {
+   "name": "Linh Thạch Thần Thánh",
+   "col": "#ffd23a",
+   "desc": "+0.5% thần phạt ×10"
+  },
+  "f": {
+   "name": "Lông Vũ Thần",
+   "col": "#ffd85a",
+   "desc": "Nguyên liệu chế cánh"
+  },
+  "hpp": {
+   "name": "Bình Máu",
+   "col": "#ff6a78",
+   "desc": "Hồi 50% máu tối đa"
+  },
+  "mpp": {
+   "name": "Bình Mana",
+   "col": "#5ab0ff",
+   "desc": "Hồi 50% mana tối đa"
+  }
+ },
+ "CHARMS": {
+  "dmg": {
+   "n": "Bùa Chiến Thần",
+   "d": "+1% sát thương",
+   "col": "#ff7a5a",
+   "pv": 1
+  },
+  "hp": {
+   "n": "Bùa Sinh Mệnh",
+   "d": "+1% máu tối đa",
+   "col": "#7dff9a",
+   "pv": 1
+  },
+  "mp": {
+   "n": "Bùa Linh Lực",
+   "d": "+1% mana tối đa",
+   "col": "#5ab0ff",
+   "pv": 1
+  },
+  "soul": {
+   "n": "Hồn Cổ Thần",
+   "d": "+1% sát thương và giảm 0,3% sát thương quái gây ra (tối đa 100 viên: +100% / −30%) · chỉ rơi từ boss",
+   "col": "#e0b0ff",
+   "pv": 15
+  }
+ },
+ "PETS": [
+  {
+   "id": "fish",
+   "n": "Cá Lân Tinh",
+   "price": 1000,
+   "lv": 1,
+   "model": "fish",
+   "size": 0.32,
+   "pal": {
+    "back": 670282,
+    "belly": 7333887,
+    "stripe": 12581119,
+    "fin": 6281471,
+    "finE": 1739519,
+    "rim": 12581119,
+    "eye": 10482943
+   },
+   "loot": 4,
+   "exp": 0.05,
+   "gold": 0,
+   "as": 0,
+   "rec": 0,
+   "atk": 0,
+   "d": "Hút đồ rơi trong 4m · +5% EXP"
+  },
+  {
+   "id": "jelly",
+   "n": "Sứa Ngọc Bích",
+   "price": 30000,
+   "lv": 60,
+   "model": "jelly",
+   "size": 0.26,
+   "pal": {
+    "h1": 0.45,
+    "h2": 0.5
+   },
+   "loot": 5,
+   "exp": 0.1,
+   "gold": 0.05,
+   "as": 15,
+   "rec": 0.01,
+   "atk": 0,
+   "d": "Hút đồ 5m · +10% EXP · +5% vàng · +15 tốc đánh · +1%/giây giới hạn hồi máu"
+  },
+  {
+   "id": "gold",
+   "n": "Cá Gai Hoàng Kim",
+   "price": 250000,
+   "lv": 150,
+   "model": "fish",
+   "size": 0.36,
+   "pal": {
+    "back": 3811848,
+    "belly": 16762938,
+    "stripe": 16773280,
+    "fin": 16767050,
+    "finE": 13142538,
+    "rim": 16774336,
+    "crown": true
+   },
+   "loot": 6,
+   "exp": 0.15,
+   "gold": 0.1,
+   "as": 25,
+   "rec": 0.01,
+   "atk": 0.15,
+   "d": "Hút đồ 6m · +15% EXP · +10% vàng · +25 tốc đánh · tự bắn quái"
+  },
+  {
+   "id": "flame",
+   "n": "Sứa Thần Hỏa",
+   "price": 2000000,
+   "lv": 300,
+   "model": "jelly",
+   "size": 0.3,
+   "pal": {
+    "h1": 0.02,
+    "h2": 0.12,
+    "crown": true,
+    "gem": 16765498
+   },
+   "loot": 7,
+   "exp": 0.25,
+   "gold": 0.2,
+   "as": 40,
+   "rec": 0.02,
+   "atk": 0.3,
+   "d": "Hút đồ 7m · +25% EXP · +20% vàng · +40 tốc đánh · +2%/giây hồi máu · bắn quái mạnh"
+  }
+ ],
+ "MOUNTS": [
+  {
+   "id": "ray",
+   "n": "Ó Biển Lam",
+   "price": 5000,
+   "lv": 20,
+   "model": "ray",
+   "c1": 731712,
+   "c2": 4180208,
+   "spd": 0.35,
+   "defP": 0.05,
+   "hpP": 0,
+   "as": 0,
+   "d": "+35% tốc chạy · +5% phòng thủ"
+  },
+  {
+   "id": "kinh",
+   "n": "Cá Kình Bạc",
+   "price": 80000,
+   "lv": 120,
+   "model": "fish",
+   "size": 1.25,
+   "pal": {
+    "back": 1714746,
+    "belly": 14215408,
+    "stripe": 10479871,
+    "fin": 9091288,
+    "finE": 3828378,
+    "rim": 14218495,
+    "eye": 10482943
+   },
+   "spd": 0.5,
+   "defP": 0.08,
+   "hpP": 0.05,
+   "as": 0,
+   "d": "+50% tốc chạy · +8% phòng thủ · +5% máu"
+  },
+  {
+   "id": "dragon",
+   "n": "Ó Hoàng Kim",
+   "price": 1500000,
+   "lv": 280,
+   "model": "ray",
+   "c1": 3810308,
+   "c2": 15249456,
+   "spd": 0.7,
+   "defP": 0.12,
+   "hpP": 0.1,
+   "as": 10,
+   "d": "+70% tốc chạy · +12% phòng thủ · +10% máu · +10 tốc đánh"
+  },
+  {
+   "id": "kylan",
+   "n": "Thần Thú Kỳ Lân",
+   "price": 6000000,
+   "lv": 380,
+   "model": "unicorn",
+   "spd": 0.9,
+   "defP": 0.18,
+   "hpP": 0.15,
+   "as": 25,
+   "d": "+90% tốc chạy · +18% phòng thủ · +15% máu · +25 tốc đánh · sừng thần và bờm cầu vồng"
+  }
+ ]
+}

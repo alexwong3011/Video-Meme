@@ -1,0 +1,8 @@
+Use the uploaded image only as a style reference (bright, ornate, legendary fantasy game-item illustration). Draw FOUR new SHIELDS side by side, one per column, in the same four positions as the four items in the reference:
+1 (left): Ancient Turtle Shell shield — a round shield made of a polished jade-green turtle shell with hexagonal plates, bronze rim, small gold studs.
+2: Sea Blue shield — a round-topped heater shield of bright cobalt-blue enamel with silver wave engravings and a silver rim, a pearl in the center.
+3: Holy Light shield — a tall kite shield of white enamel and gleaming gold, a radiant golden sun cross in the center, soft golden glow, purple amethyst accents.
+4 (right): Dragon Scale shield — a heater shield covered in crimson-red dragon scales with gold edges, a gold dragon head boss with ruby eyes.
+Each shield upright, facing the camera straight on, front view, orthographic, all four the same height (about 60% of the image height) and centered in their column, fully visible with empty margin around it, not touching another.
+Bright, luminous colors, crisp details, even studio light.
+Plain flat background, no floor, no shadow, no reflection. No text, no labels, no frames, no chestplates in the image.

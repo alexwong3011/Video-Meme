@@ -1,0 +1,1449 @@
+{
+ "MAPS": [
+  {
+   "name": "Bãi San Hô Lân Quang",
+   "req": 1,
+   "lo": 1,
+   "hi": 90,
+   "set": "song",
+   "env": "sea",
+   "culture": "Biển Sâu",
+   "mini": "jellyBlue",
+   "pal": {
+    "sa": [
+     0.045,
+     0.13,
+     0.15
+    ],
+    "sb": [
+     0.17,
+     0.3,
+     0.29
+    ],
+    "pt": [
+     0.03,
+     0.1,
+     0.13
+    ],
+    "ca": [
+     0.25,
+     0.75,
+     0.85
+    ],
+    "fog": 402990,
+    "bg": 470069,
+    "rock": [
+     5222036,
+     2055523,
+     731699,
+     10482392
+    ],
+    "weed": [
+     3120750,
+     5227658,
+     2062954,
+     8049050,
+     4174752
+    ],
+    "weedH": 1,
+    "weedE": 802090,
+    "stone": 6262681,
+    "rune": 7333887,
+    "portal": [
+     875161,
+     6746879
+    ],
+    "coral": [
+     [
+      16732058,
+      16756960
+     ],
+     [
+      10116095,
+      14203135
+     ],
+     [
+      16742973,
+      16765066
+     ],
+     [
+      4182472,
+      12124148
+     ]
+    ],
+    "sponge": [
+     16757821,
+     16738906,
+     13172586
+    ],
+    "fan": [
+     16736168,
+     11566079,
+     16753485
+    ],
+    "mote": [
+     8379631,
+     12580095
+    ]
+   },
+   "zones": [
+    {
+     "k": "jelly",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "fish",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "jellyBlue",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "fishNight",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossJelly",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 180
+   }
+  },
+  {
+   "name": "Rừng Tảo U Linh",
+   "req": 1,
+   "lo": 70,
+   "hi": 170,
+   "set": "vay",
+   "env": "sea",
+   "culture": "Biển Sâu",
+   "mini": "seaSerpent",
+   "pal": {
+    "sa": [
+     0.035,
+     0.12,
+     0.08
+    ],
+    "sb": [
+     0.13,
+     0.27,
+     0.17
+    ],
+    "pt": [
+     0.02,
+     0.08,
+     0.05
+    ],
+    "ca": [
+     0.35,
+     0.85,
+     0.5
+    ],
+    "fog": 402456,
+    "bg": 470046,
+    "rock": [
+     7323516,
+     2383930,
+     666134,
+     13172672
+    ],
+    "weed": [
+     3124826,
+     5231738,
+     2067018,
+     9101434,
+     4178826
+    ],
+    "weedH": 1.5,
+    "weedE": 805402,
+    "stone": 6986362,
+    "rune": 8257434,
+    "portal": [
+     883258,
+     10158000
+    ],
+    "coral": [
+     [
+      4182472,
+      12124148
+     ],
+     [
+      11599706,
+      16056256
+     ],
+     [
+      7012234,
+      14221232
+     ],
+     [
+      16765498,
+      16773280
+     ]
+    ],
+    "sponge": [
+     13172586,
+     16765498,
+     7012296
+    ],
+    "fan": [
+     7012234,
+     4182472,
+     14221162
+    ],
+    "mote": [
+     10485688,
+     14221280
+    ]
+   },
+   "zones": [
+    {
+     "k": "jellyGreen",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "fishMoss",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "seaSerpent",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "fishGold",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossFish",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 210
+   }
+  },
+  {
+   "name": "Hố Thẳm Dung Nham",
+   "req": 1,
+   "lo": 150,
+   "hi": 250,
+   "set": "dung",
+   "env": "sea",
+   "culture": "Biển Lửa",
+   "mini": "fireSpirit",
+   "pal": {
+    "sa": [
+     0.09,
+     0.04,
+     0.04
+    ],
+    "sb": [
+     0.24,
+     0.12,
+     0.09
+    ],
+    "pt": [
+     0.05,
+     0.02,
+     0.02
+    ],
+    "ca": [
+     0.9,
+     0.42,
+     0.18
+    ],
+    "fog": 1969162,
+    "bg": 2363408,
+    "rock": [
+     10510410,
+     4860452,
+     1444360,
+     16756858
+    ],
+    "weed": [
+     9054746,
+     13123610,
+     5904912,
+     14704698
+    ],
+    "weedH": 0.8,
+    "weedE": 4852224,
+    "stone": 6965828,
+    "rune": 16747066,
+    "portal": [
+     9050628,
+     16756826
+    ],
+    "coral": [
+     [
+      16730650,
+      16765066
+     ],
+     [
+      16742973,
+      16773280
+     ],
+     [
+      13642314,
+      16752816
+     ],
+     [
+      16757821,
+      16774336
+     ]
+    ],
+    "sponge": [
+     16738874,
+     16757821,
+     13642314
+    ],
+    "fan": [
+     16734762,
+     16753485,
+     16726634
+    ],
+    "mote": [
+     16752752,
+     16767152
+    ]
+   },
+   "zones": [
+    {
+     "k": "jellyRed",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "fishLava",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "fireSpirit",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "fishBlack",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossLava",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 240
+   }
+  },
+  {
+   "name": "Sa Mạc Hoàng Kim",
+   "culture": "Ai Cập",
+   "req": 1,
+   "lo": 230,
+   "hi": 330,
+   "set": "sa",
+   "env": "desert",
+   "exposure": 0.78,
+   "mini": "sphinx",
+   "pal": {
+    "sa": [
+     0.154,
+     0.105,
+     0.055
+    ],
+    "sb": [
+     0.242,
+     0.176,
+     0.094
+    ],
+    "pt": [
+     0.187,
+     0.127,
+     0.066
+    ],
+    "ca": [
+     0.06,
+     0.05,
+     0.03
+    ],
+    "fog": 9071178,
+    "bg": 10518624,
+    "fogD": 0.011,
+    "rock": [
+     14200954,
+     9071162,
+     4863008,
+     16769184
+    ],
+    "weed": [
+     9083450,
+     10528840,
+     6978090
+    ],
+    "weedH": 0.5,
+    "weedE": 2763274,
+    "stone": 13149290,
+    "rune": 7333887,
+    "portal": [
+     875161,
+     6746879
+    ],
+    "coral": [
+     [
+      9083450,
+      13160560
+     ]
+    ],
+    "sponge": [
+     13148240
+    ],
+    "fan": [
+     10526784
+    ],
+    "mote": [
+     16769184,
+     16773328
+    ],
+    "moteRise": [
+     0.15,
+     0.4
+    ],
+    "hemi": [
+     16773336,
+     6965802,
+     1.1
+    ],
+    "sun": [
+     16773320,
+     2.2
+    ],
+    "light": 16763002,
+    "shaft": [
+     0.3,
+     0.24,
+     0.12
+    ],
+    "spk": 0.6
+   },
+   "zones": [
+    {
+     "k": "scarab",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "mummy",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "apep",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "sandGolem",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossApep",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 210
+   }
+  },
+  {
+   "name": "Thánh Địa Olympus",
+   "culture": "Hy Lạp",
+   "req": 1,
+   "lo": 310,
+   "hi": 410,
+   "set": "olym",
+   "env": "olympus",
+   "exposure": 0.68,
+   "mini": "griffin",
+   "pal": {
+    "sa": [
+     0.121,
+     0.132,
+     0.094
+    ],
+    "sb": [
+     0.198,
+     0.209,
+     0.16
+    ],
+    "pt": [
+     0.099,
+     0.143,
+     0.066
+    ],
+    "ca": [
+     0.05,
+     0.06,
+     0.05
+    ],
+    "fog": 6979736,
+    "bg": 8032424,
+    "fogD": 0.012,
+    "rock": [
+     14210248,
+     9079424,
+     4868676,
+     16777215
+    ],
+    "weed": [
+     6982202,
+     9085008
+    ],
+    "weedH": 0.5,
+    "weedE": 1714698,
+    "stone": 15262936,
+    "rune": 16767082,
+    "portal": [
+     9071120,
+     16771232
+    ],
+    "coral": [
+     [
+      6982202,
+      11585664
+     ]
+    ],
+    "sponge": [
+     9083482
+    ],
+    "fan": [
+     9085008
+    ],
+    "mote": [
+     16773320,
+     16777215
+    ],
+    "moteRise": [
+     0.2,
+     0.6
+    ],
+    "hemi": [
+     15267071,
+     4872762,
+     1.15
+    ],
+    "sun": [
+     16774368,
+     2.3
+    ],
+    "light": 16769184,
+    "shaft": [
+     0.3,
+     0.28,
+     0.2
+    ],
+    "spk": 0.2
+   },
+   "zones": [
+    {
+     "k": "harpy",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "cyclops",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "gorgon",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "shade",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossTitan",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 210
+   }
+  },
+  {
+   "name": "Rừng Trúc Linh Hồ",
+   "culture": "Đông Á",
+   "req": 1,
+   "lo": 390,
+   "hi": 490,
+   "set": "ho",
+   "env": "bamboo",
+   "exposure": 0.9,
+   "mini": "tengu",
+   "pal": {
+    "sa": [
+     0.088,
+     0.132,
+     0.066
+    ],
+    "sb": [
+     0.165,
+     0.209,
+     0.11
+    ],
+    "pt": [
+     0.231,
+     0.165,
+     0.176
+    ],
+    "ca": [
+     0.04,
+     0.06,
+     0.03
+    ],
+    "fog": 5929578,
+    "bg": 6982266,
+    "fogD": 0.03,
+    "rock": [
+     9083530,
+     4872778,
+     2767402,
+     14217432
+    ],
+    "weed": [
+     4885050,
+     6990410
+    ],
+    "weedH": 0.6,
+    "weedE": 666122,
+    "stone": 8030842,
+    "rune": 16747184,
+    "portal": [
+     9050698,
+     16754904
+    ],
+    "coral": [
+     [
+      4885050,
+      10539120
+     ]
+    ],
+    "sponge": [
+     6986314
+    ],
+    "fan": [
+     6990410
+    ],
+    "mote": [
+     16759000,
+     16777215
+    ],
+    "moteRise": [
+     -0.25,
+     0.5
+    ],
+    "hemi": [
+     14221296,
+     2771498,
+     1.5
+    ],
+    "sun": [
+     16773344,
+     2.4
+    ],
+    "light": 16759000,
+    "shaft": [
+     0.2,
+     0.26,
+     0.2
+    ],
+    "spk": 0
+   },
+   "zones": [
+    {
+     "k": "kitsune",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "oni",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "yurei",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "jadeDragon",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossLong",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 210
+   }
+  },
+  {
+   "name": "Đầm Lầy U Minh",
+   "culture": "Đông Âu",
+   "req": 1,
+   "lo": 470,
+   "hi": 570,
+   "set": "dam",
+   "env": "swamp",
+   "exposure": 1,
+   "mini": "zmey",
+   "pal": {
+    "sa": [
+     0.044,
+     0.055,
+     0.039
+    ],
+    "sb": [
+     0.088,
+     0.105,
+     0.066
+    ],
+    "pt": [
+     0.028,
+     0.066,
+     0.055
+    ],
+    "ca": [
+     0.08,
+     0.16,
+     0.08
+    ],
+    "fog": 1714722,
+    "bg": 1714724,
+    "fogD": 0.04,
+    "rock": [
+     5925456,
+     2765860,
+     1053708,
+     10137728
+    ],
+    "weed": [
+     4872746,
+     6978106,
+     3820058
+    ],
+    "weedH": 0.7,
+    "weedE": 662016,
+    "stone": 4872776,
+    "rune": 8257434,
+    "portal": [
+     875050,
+     10158000
+    ],
+    "coral": [
+     [
+      4872746,
+      9083482
+     ]
+    ],
+    "sponge": [
+     5925434
+    ],
+    "fan": [
+     4872746
+    ],
+    "mote": [
+     10158000,
+     14221280
+    ],
+    "moteRise": [
+     0.1,
+     0.3
+    ],
+    "hemi": [
+     10139808,
+     1054732,
+     1.2
+    ],
+    "sun": [
+     11587768,
+     1.6
+    ],
+    "light": 8257434,
+    "shaft": [
+     0.1,
+     0.16,
+     0.1
+    ],
+    "spk": 0
+   },
+   "zones": [
+    {
+     "k": "wisp",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "leshy",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "bogBeetle",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "rusalka",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossLeshy",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 210
+   }
+  },
+  {
+   "name": "Băng Nguyên Bắc Âu",
+   "culture": "Bắc Âu",
+   "req": 1,
+   "lo": 550,
+   "hi": 650,
+   "set": "bac",
+   "env": "snow",
+   "exposure": 0.78,
+   "mini": "huginn",
+   "pal": {
+    "sa": [
+     0.198,
+     0.226,
+     0.259
+    ],
+    "sb": [
+     0.286,
+     0.319,
+     0.352
+    ],
+    "pt": [
+     0.165,
+     0.198,
+     0.242
+    ],
+    "ca": [
+     0.03,
+     0.04,
+     0.05
+    ],
+    "fog": 4872824,
+    "bg": 1714756,
+    "fogD": 0.016,
+    "rock": [
+     15266040,
+     9083048,
+     4871268,
+     16777215
+    ],
+    "weed": [
+     10137760
+    ],
+    "weedH": 0.4,
+    "weedE": 1714730,
+    "stone": 6977672,
+    "rune": 7333887,
+    "portal": [
+     871065,
+     10482431
+    ],
+    "coral": [
+     [
+      10137792,
+      16777215
+     ]
+    ],
+    "sponge": [
+     13162728
+    ],
+    "fan": [
+     11583696
+    ],
+    "mote": [
+     16777215,
+     15267071
+    ],
+    "moteRise": [
+     -0.7,
+     -1.1
+    ],
+    "hemi": [
+     14676223,
+     3820122,
+     1.15
+    ],
+    "sun": [
+     15267071,
+     2
+    ],
+    "light": 10479871,
+    "shaft": [
+     0.12,
+     0.18,
+     0.3
+    ],
+    "spk": 1
+   },
+   "zones": [
+    {
+     "k": "draugr",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "jotunn",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "raven",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "jorm",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossYmir",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 210
+   }
+  },
+  {
+   "name": "Cực Băng Vĩnh Hằng",
+   "culture": "Bắc Cực",
+   "req": 1,
+   "lo": 630,
+   "hi": 730,
+   "set": "cuc",
+   "env": "ice",
+   "exposure": 0.82,
+   "mini": "sedna",
+   "pal": {
+    "sa": [
+     0.132,
+     0.187,
+     0.242
+    ],
+    "sb": [
+     0.231,
+     0.297,
+     0.352
+    ],
+    "pt": [
+     0.088,
+     0.143,
+     0.209
+    ],
+    "ca": [
+     0.1,
+     0.16,
+     0.22
+    ],
+    "fog": 2771562,
+    "bg": 660528,
+    "fogD": 0.02,
+    "rock": [
+     12580095,
+     6986424,
+     2771560,
+     16777215
+    ],
+    "weed": [
+     10148080
+    ],
+    "weedH": 0.4,
+    "weedE": 1718874,
+    "stone": 6982312,
+    "rune": 12626175,
+    "portal": [
+     4860569,
+     13678847
+    ],
+    "coral": [
+     [
+      10148080,
+      16777215
+     ]
+    ],
+    "sponge": [
+     12580095
+    ],
+    "fan": [
+     10148080
+    ],
+    "mote": [
+     14678271,
+     12626175
+    ],
+    "moteRise": [
+     -0.4,
+     0.5
+    ],
+    "hemi": [
+     13166847,
+     1714762,
+     1.5
+    ],
+    "sun": [
+     14217471,
+     2.2
+    ],
+    "light": 12626175,
+    "shaft": [
+     0.14,
+     0.2,
+     0.34
+    ],
+    "spk": 1.4
+   },
+   "zones": [
+    {
+     "k": "auroraSp",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "crystalBug",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "iceDragon",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "snowBird",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossPhoenixIce",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 210
+   }
+  },
+  {
+   "name": "Thiên Giới Kim Quang",
+   "culture": "Thiên Giới",
+   "req": 1,
+   "lo": 710,
+   "hi": 800,
+   "set": "thien",
+   "env": "heaven",
+   "exposure": 0.66,
+   "mini": "fallen",
+   "pal": {
+    "sa": [
+     0.231,
+     0.209,
+     0.171
+    ],
+    "sb": [
+     0.308,
+     0.286,
+     0.237
+    ],
+    "pt": [
+     0.275,
+     0.226,
+     0.132
+    ],
+    "ca": [
+     0.16,
+     0.12,
+     0.05
+    ],
+    "fog": 12098160,
+    "bg": 13150848,
+    "fogD": 0.012,
+    "rock": [
+     15788248,
+     12101768,
+     6969928,
+     16777215
+    ],
+    "weed": [
+     14205040
+    ],
+    "weedH": 0.4,
+    "weedE": 3811850,
+    "stone": 15788248,
+    "rune": 16767082,
+    "portal": [
+     9067024,
+     16773280
+    ],
+    "coral": [
+     [
+      16767082,
+      16777215
+     ]
+    ],
+    "sponge": [
+     16771232
+    ],
+    "fan": [
+     16767082
+    ],
+    "mote": [
+     16769162,
+     16777215
+    ],
+    "moteRise": [
+     0.3,
+     0.8
+    ],
+    "hemi": [
+     16775400,
+     9071168,
+     1.05
+    ],
+    "sun": [
+     16774360,
+     2.1
+    ],
+    "light": 16767082,
+    "shaft": [
+     0.36,
+     0.3,
+     0.16
+    ],
+    "spk": 0.5
+   },
+   "zones": [
+    {
+     "k": "phoenix",
+     "x": -5,
+     "z": 5,
+     "r": 4.5,
+     "n": 10,
+     "off": -3,
+     "hk": 0.85
+    },
+    {
+     "k": "goldGuard",
+     "x": 9,
+     "z": -1,
+     "r": 4.5,
+     "n": 10,
+     "off": 0,
+     "hk": 1
+    },
+    {
+     "k": "seraph",
+     "x": 7,
+     "z": -8.5,
+     "r": 5,
+     "n": 10,
+     "off": 3,
+     "hk": 1.15
+    },
+    {
+     "k": "goldDragon",
+     "x": -8,
+     "z": -8,
+     "r": 5,
+     "n": 10,
+     "off": 6,
+     "hk": 1.3
+    }
+   ],
+   "boss": {
+    "k": "bossDe",
+    "x": 0,
+    "z": -12.5,
+    "off": 8,
+    "respawn": 210
+   }
+  }
+ ],
+ "BOSS_LORE": {
+  "bossJelly": {
+   "t": "Mẹ của Ánh Trăng Đáy Biển",
+   "l": "Đêm trăng đầu tiên rọi tới đáy biển, một tia sáng kết lại thành viên ngọc trai sống. Viên ngọc nở ra Sứa Mẫu Hậu, mẹ của mọi loài sứa lân quang ở Bãi San Hô. Bà ngự trên ngai san hô, vương miện kết từ ngọc trai của những thủy thủ chết đuối. Khi bà hát khúc thủy triều, cả bãi san hô bừng sáng, và ai nghe trọn khúc ca sẽ quên đường về mặt nước."
+  },
+  "bossFishNight": {
+   "t": "Kẻ Nuốt Sao",
+   "l": "Chúa tể của vùng nước không có ánh sáng. Ngọn đèn treo trước miệng Dạ Vương là linh hồn một vì sao rơi xuống biển thời khai thiên, bị nó nuốt nửa chừng rồi giữ lại làm mồi. Cá nhỏ lao theo ánh sáng ấy chưa con nào trở về. Mỗi chiếc gai pha lê trên lưng nó là vương miện của một kẻ thách đấu đã bại."
+  },
+  "bossFish": {
+   "t": "Vua Rêu Ba Nghìn Năm",
+   "l": "Ba nghìn năm Lục Vương không rời Rừng Tảo U Linh. Rêu mọc kín lưng, tảo kết thành áo choàng, gai độc dài như giáo của đội hải binh đã chìm cùng chiến thuyền. Người chài kể rằng mỗi lần nó xòe gai, cả khu rừng tảo cúi rạp như thần dân trước nhà vua."
+  },
+  "bossKelpSerpent": {
+   "t": "Kẻ Canh Rễ Tảo Mẹ",
+   "l": "Con rắn biển canh giữ rễ của Cây Tảo Mẹ, nơi linh hồn người chết đuối trôi về yên nghỉ. Bờm nó là tảo u linh, mỗi sợi phát sáng là một hồn người nó che chở. Khi Hải Xà Vương cuộn mình, hải lưu đổi hướng và cả khu rừng chìm vào bóng tối xanh thẫm."
+  },
+  "bossLava": {
+   "t": "Trái Tim Núi Lửa Đáy Biển",
+   "l": "Khi núi lửa dưới biển phun trào lần đầu, một con sứa nhỏ bị cuốn vào dòng dung nham mà không chết. Nó nuốt lửa thay cho nước, lớn dần thành Sứa Hỏa Vương. Vòm thân là đá vỏ chai đã nguội, trái tim là lõi dung nham không bao giờ tắt. Xúc tu của nó lướt qua đâu, nước biển sôi thành hơi ở đó."
+  },
+  "bossFlame": {
+   "t": "Vị Thần Bị Xiềng",
+   "l": "Thần lửa thời cổ bị các thần biển xiềng dưới đáy Hố Thẳm vì muốn thiêu khô đại dương. Xiềng xích từ lâu đã chảy thành dung nham, nhưng thần vẫn ngủ, chờ gom đủ lửa để trở lại mặt đất. Mỗi kẻ xuống đây giao chiến là thêm một ngọn lửa đánh thức ngài."
+  },
+  "bossApep": {
+   "t": "Kẻ Nuốt Mặt Trời",
+   "l": "Apophis là con rắn hỗn mang, đêm nào cũng tìm cách nuốt thái dương trên đường về phương đông. Các pharaoh đã giam nó dưới cát vàng bằng một nghìn phong ấn khắc trên vách đền. Bão cát đã mài mòn phong ấn cuối cùng; nay cứ mỗi lần mặt trời lặn, sa mạc lại rung lên tiếng rít của nó."
+  },
+  "bossMummy": {
+   "t": "Vị Vua Không Chết",
+   "l": "Vị pharaoh từng ra lệnh cho gió sa mạc phải dừng. Ngài đổi linh hồn lấy sự bất tử, và cái giá là đời đời canh giữ kho báu trong lăng mộ của chính mình. Băng vải của ngài tẩm nhựa thánh, bừng sáng mỗi khi có kẻ trộm bước qua ngưỡng cửa."
+  },
+  "bossTitan": {
+   "t": "Người Gác Cổng Olympus",
+   "l": "Khi các Titan thua trận trước chư thần Olympus, kẻ mạnh nhất trong số họ bị Zeus hóa thành cẩm thạch và dựng ở cổng Thánh Địa làm người gác. Hàng nghìn năm sét đánh xuống đã nạp lại sức mạnh cho Titan. Những vết nứt vàng trên thân là máu thần đang thức tỉnh."
+  },
+  "bossHydra": {
+   "t": "Ác Quỷ Không Thể Giết",
+   "l": "Quái vật mà Heracles từng chặt đầu: mỗi cái đầu rơi xuống đầm Lerna lại mọc thành hai. Chư thần Olympus giam nó dưới chân Thánh Địa như một lời răn rằng có những ác quỷ không bao giờ chết hẳn, chỉ có thể bị canh giữ."
+  }
+ },
+ "BOT_NAMES": [
+  "LongHuyết",
+  "ThiênKiếm",
+  "BăngTâm",
+  "HỏaPhượng",
+  "LụcCung",
+  "TiểuLong",
+  "MinhNguyệt",
+  "HắcVũ",
+  "KimLân",
+  "PhongVân",
+  "TuyếtLiên",
+  "ThanhPhong",
+  "LôiĐiện",
+  "HoaRơi",
+  "ÁnhDương",
+  "DạXoa",
+  "NgọcTiêu",
+  "BạchHổ",
+  "ThầnPhong",
+  "VôSong"
+ ],
+ "NPCS": [
+  {
+   "id": "shop",
+   "n": "Hermes · Thương Nhân",
+   "cls": "holy",
+   "hue": 0.1,
+   "x": -6,
+   "z": 1.5
+  },
+  {
+   "id": "smith",
+   "n": "Hephaestus · Thợ Rèn",
+   "cls": "fire",
+   "hue": 0.02,
+   "x": 6,
+   "z": 1.5
+  },
+  {
+   "id": "pets",
+   "n": "Artemis · Chuồng Thú",
+   "cls": "elf",
+   "hue": 0.35,
+   "x": -6.5,
+   "z": -6
+  },
+  {
+   "id": "guide",
+   "n": "Iris · Dẫn Đường",
+   "cls": "ice",
+   "hue": 0.55,
+   "x": 6.5,
+   "z": -6
+  },
+  {
+   "id": "market",
+   "n": "Agora · Chợ Giao Dịch",
+   "cls": "thunder",
+   "hue": 0.75,
+   "x": 0,
+   "z": 5.5
+  }
+ ]
+}

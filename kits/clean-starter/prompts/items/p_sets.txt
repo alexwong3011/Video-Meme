@@ -1,0 +1,8 @@
+The uploaded image shows four fantasy armor chestplates side by side. Replace each chestplate with a SHIELD that belongs to the same armor set, in the same position, same column, same style, same materials and same colors as the chestplate it replaces:
+1 (left): Azure Wing knight shield — lavender-silver steel with ornate engraved filigree, a crest of bright blue feathers fanning from the top corners, a sapphire gem in the boss.
+2: Lava knight shield — black obsidian plates with glowing orange-yellow molten cracks, dark bronze trim with jagged flame spikes, a molten core gem in the center. Make it bright and artistic: strong glowing orange, polished bronze highlights.
+3: Olympus thunder god shield — white marble and polished gold, a golden eagle with spread wings embossed in the center, a glowing sky-blue lightning bolt, small blue gems in the rim.
+4 (right): Silver Wave shield — pearl white and silver mother-of-pearl shaped like a scallop shell, turquoise wave curls on the rim, a large aqua gem in the center, a tiny coral accent.
+Each shield: a tall heater/kite shield, upright, facing the camera straight on, front view, orthographic, all four the same height (about 60% of the image height) and centered in their column, fully visible with empty margin around it, not touching another.
+Bright, luminous, legendary game-item illustration, crisp details, even studio light.
+Plain flat background, no floor, no shadow, no reflection. No text, no labels, no frames, no chestplates left in the image.
