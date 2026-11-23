@@ -1,6 +1,7 @@
 # Nghiên cứu: Sự tương đồng về lớp nhân vật, trang phục, set đồ, vũ khí và hệ thống trong game MMORPG – khi nào là đạo nhái, khi nào là vi phạm pháp luật?
 
-**Phiên bản:** 2.0 – 23/11/2026 (đã đối chứng án lệ và văn bản pháp luật đến tháng 11/2026)
+**Phiên bản:** 2.1 – 23/11/2026 (đã đối chứng án lệ và văn bản pháp luật đến tháng 11/2026)
+**Tài liệu liên quan:** *Bộ quy chế chống đạo nhái và tuân thủ bản quyền trong phát triển game* (`quy_che_chong_dao_nhai_ban_quyen_game.md`) dùng tài liệu này làm căn cứ.
 **Phạm vi:** Game online MMORPG/RPG; lớp nhân vật, trang phục, giáp, set đồ, vũ khí, cánh, thú cưỡi, hiệu ứng, tài nguyên đồ họa **và hệ thống gameplay/giao diện**.
 
 > **Kết luận tóm tắt**
@@ -17,13 +18,16 @@
 | Nội dung | Phiên bản 1 | Phiên bản 2 |
 |---|---|---|
 | Cấu trúc pháp lý | Sáu tiêu chí ngang hàng | Hai điều kiện bắt buộc: sao chép thực tế + tương đồng đáng kể phần được bảo hộ |
-| Án lệ | Chỉ Tetris v. Xio | 12 vụ việc ở Mỹ, Trung Quốc, Hàn Quốc, Việt Nam, kèm trạng thái đã kiểm chứng |
+| Án lệ | Chỉ Tetris v. Xio | 17 vụ việc tại Mỹ, Trung Quốc, Hàn Quốc, Nhật Bản, Việt Nam và 5 sự cố ngoài tòa án, kèm trạng thái kiểm chứng (v2.1) |
 | Luật chơi/hệ thống | "Thông thường không được bảo hộ" | Bổ sung án lệ bảo hộ sự lựa chọn – sắp xếp hệ thống (Hàn Quốc 2019, Trung Quốc 2018) |
 | Pháp luật Việt Nam | Điều 20, 22, 28 | Bổ sung Điều 6, 14, 15, 19, 39, 49, 127, 130, 201, 203; Luật 131/2025/QH15; Nghị định 341/2025/NĐ-CP; BLHS Điều 225 |
 | Bảng chấm điểm | Cộng điểm có trọng số | Khung **Cổng → Lọc → So sánh** |
 | Dạng tranh chấp | Chỉ tương đồng đồ họa | Bốn dạng: server lậu, rip asset, "thay da", rò rỉ bí mật kinh doanh |
 | AI | Không đề cập | Bổ sung tư cách tác giả và quy định huấn luyện AI |
 | Hình ảnh | Hotlink ảnh game, có link hỏng | Bỏ ảnh minh họa không phục vụ lập luận; hướng dẫn dùng ảnh so sánh đối chiếu |
+| *(v2.1)* Án lệ bổ sung | — | Lilith (*AFK Arena*) v. *圣树唤歌*; Chỉ dẫn xét xử game của Tòa Cấp cao Quảng Đông; Riot v. Imba (studio Việt Nam bị kiện tại Mỹ); Tencent/Riot v. Moonton; Krafton v. NetEase |
+| *(v2.1)* Sự cố ngoài tòa án | — | Mục 5.6 mới: Bungie *Marathon*, *Pokémon TCG Pocket*, *Stellaris: Galaxy Command*, *Bleak Faith: Forsaken* |
+| *(v2.1)* Pháp luật | — | Luật Trí tuệ nhân tạo 134/2025/QH15; Nghị định 147/2024/NĐ-CP (hồ sơ chứng minh quyền SHTT khi phát hành game G1); Bộ luật Lao động 2019 Điều 21; báo cáo của Cục Bản quyền Mỹ về AI (2025); Getty v. Stability AI (Anh, 2025) |
 
 ---
 
@@ -129,6 +133,9 @@ Các yếu tố riêng lẻ không được bảo hộ vẫn có thể tạo th�
 |---|---|---|---|
 | **《奇迹MU》 v. 《奇迹神话》** – Tòa án Phố Đông, Thượng Hải, (2015)浦民三(知)初字第529号, sơ thẩm 2016; phúc thẩm tại Tòa SHTT Thượng Hải 2017. Nguyên đơn: Thượng Hải Tráng Du (đơn vị độc quyền vận hành MU tại TQ); bị đơn: Thạc Tinh (phát triển) và Duy Động (vận hành) | Xâm phạm; bồi thường 5 triệu NDT (mức cao nhất cho game online thời điểm đó); một số quảng cáo bị xác định là tuyên truyền sai sự thật | **Lần đầu** coi toàn bộ hình ảnh của game nhập vai online là "tác phẩm tương tự điện ảnh". Bị đơn **biết rõ** MU nổi tiếng, ra đời trước, vẫn làm game có "tổng thể hình ảnh tương tự về bản chất". Trực tiếp liên quan đến MU Online – game mà phiên bản 1 dùng làm ảnh minh họa | ✅ (⚠️ kết quả chi tiết phúc thẩm cần đối chiếu bản án) |
 | **《太极熊猫》 v. 《花千骨》** – Tòa án Trung cấp Tô Châu, sơ thẩm 30/3/2018; phúc thẩm Tòa án Cấp cao Giang Tô | Xâm phạm quyền cải biên; sơ thẩm buộc bồi thường 30 triệu NDT | Án "thay da" tiêu biểu: 29 lối chơi giống về giao diện và luật, 24 thuộc tính chỉ số của 47 trang bị có quan hệ tương ứng. Tòa cho rằng **cách thể hiện, lựa chọn, sắp xếp, kết hợp luật chơi** được bảo hộ | ✅ (⚠️ mức bồi thường phúc thẩm cần đối chiếu) |
+| **Lilith (《剑与远征》/*AFK Arena*) v. 歆瑷网络 (《圣树唤歌》)** – sơ thẩm Tòa án quận Gia Định, Thượng Hải; phúc thẩm; được chọn vào *Án điển hình bảo hộ SHTT của tòa án Thượng Hải năm 2025* | Sơ thẩm: xâm phạm quyền tác giả (luật chơi có tính nguyên gốc, game là tác phẩm nghe nhìn). Phúc thẩm: **điều chỉnh định tính sang cạnh tranh không lành mạnh**; báo chí đưa tin bồi thường 10 triệu NDT | Bị đơn giữ nguyên hệ thống lối chơi, giao diện, mạch chính và hệ thống nhân vật, chỉ thay mỹ thuật và âm thanh. Tòa phúc thẩm coi **toàn bộ hệ thống lối chơi đã thành thục và nổi tiếng** là lợi ích cạnh tranh được bảo vệ; bị đơn có ý đồ chiếm dụng thành quả nghiên cứu phát triển để né chi phí | ✅ (⚠️ số tiền bồi thường cần đối chiếu bản án) |
+| **Chỉ dẫn xét xử tranh chấp SHTT game online (thí điểm)** – Tòa án Nhân dân Cấp cao Quảng Đông, 12/4/2020; và án **(2023)粤民终4326号** | Văn bản hướng dẫn của tòa cấp tỉnh; án phúc thẩm buộc bồi thường 10 triệu NDT + 0,5 triệu chi phí | Chủ thể quyền có thể yêu cầu bảo hộ **toàn bộ game** hoặc **từng yếu tố riêng**. Luật chơi tự thân không được bảo hộ, chỉ biểu đạt nguyên gốc của nó. Bắt chước lối chơi **không đương nhiên** là cạnh tranh không lành mạnh; chỉ chặn hành vi bắt chước làm tổn hại cạnh tranh công bằng (ví dụ: lối chơi gần như y hệt **kèm** dùng lượng lớn tài nguyên mỹ thuật của game trước) | ✅ (văn bản có hiệu lực tham khảo trong phạm vi tòa án Quảng Đông) |
+| **Tencent (công ty mẹ Riot) v. Moonton** (*League of Legends* vs *Mobile Legends*) – Thượng Hải, 2018 | Tencent thắng; báo chí đưa tin khoảng 19,4 triệu NDT | Song song, Riot kiện tại Mỹ nhưng bị bác hai lần (2017, 2022) vì tòa Mỹ cho rằng tranh chấp nên giải quyết tại Trung Quốc. Các bên sau đó **hòa giải toàn cầu**. Bài học: chọn **nơi khởi kiện** quan trọng không kém nội dung | ✅ (⚠️ bị đơn và số tiền cần đối chiếu) |
 
 ### 5.3. Hàn Quốc – nhóm án quan trọng nhất cho MMORPG
 
@@ -157,7 +164,23 @@ Các yếu tố riêng lẻ không được bảo hộ vẫn có thể tạo th�
 | **Game "Con đường tơ lụa" (Silkroad Online)** – Công an tỉnh Bắc Ninh khởi tố 3 bị can, 2026 | Sao chép trái phép mã nguồn và hình ảnh của game do VTC phát hành độc quyền để vận hành server lậu "Sro Thổ quỷ", tổ chức nạp tiền qua website, mạng xã hội | Dạng tranh chấp 1 (server lậu) được xử lý **hình sự** theo Điều 225 BLHS |
 | Vụ án đầu tiên về xâm phạm quyền tác giả đối với phần mềm máy tính – Công an Phú Thọ | Khởi tố theo Điều 225 | Cơ quan điều tra đã có tiền lệ xử lý hình sự với phần mềm |
 
-**Nhận xét:** Chưa tìm thấy bản án Việt Nam công khai nào về tranh chấp **tương đồng thiết kế** (dạng 4) hay **"thay da"** (dạng 3) giữa hai game độc lập. Đây là khoảng trống thực tiễn; các lập luận ở mục 4 và 5.2–5.3 chỉ có giá trị tham khảo khi áp dụng tại Việt Nam.
+| **Riot Games v. Imba Technology** (studio Việt Nam) – Tòa án Liên bang Quận Trung California, khởi kiện 1/2022 | Riot cáo buộc *I Am Hero: AFK Tactical Teamfight* sao chép nhân vật, cốt truyện, lối chơi, tên gọi của *Teamfight Tactics*/*League of Legends* (ví dụ: "Tomee the Hasty Scout" so với "Teemo the Swift Scout"; "Vy" so với "Vi"). Riot đã gửi thư yêu cầu chấm dứt trước khi kiện; Imba phủ nhận. Năm 2023 tòa xác định các bị đơn **phải ra tòa tại Mỹ** | **Studio Việt Nam phát hành game ra quốc tế có thể bị kiện tại tòa nước ngoài**, nơi game được phân phối, theo luật nước đó. Sao chép tên và mô tả nhân vật là chứng cứ rất dễ đưa ra tòa. *(Kết quả cuối cùng chưa được xác nhận.)* |
+
+**Nhận xét:** Chưa tìm thấy bản án Việt Nam công khai nào về tranh chấp **tương đồng thiết kế** (dạng 4) hay **"thay da"** (dạng 3) giữa hai game độc lập. Đây là khoảng trống thực tiễn; các lập luận ở mục 4 và 5.2–5.3 chỉ có giá trị tham khảo khi áp dụng tại Việt Nam. Tuy nhiên, vụ Riot v. Imba cho thấy rủi ro của studio Việt Nam **không chỉ nằm ở luật Việt Nam**.
+
+### 5.6. Sự cố thực tế ngoài tòa án – bài học vận hành cho studio
+
+Phần lớn sự cố bản quyền trong ngành **không ra tòa**. Chúng được xử lý bằng gỡ nội dung, xin lỗi, bồi thường – nhưng vẫn gây thiệt hại lớn về uy tín và tiến độ. Các sự cố dưới đây cho thấy lỗ hổng thường nằm ở **quy trình**, không ở ý đồ của lãnh đạo studio.
+
+| Sự cố | Chuyện gì xảy ra | Lỗ hổng quy trình | Trạng thái |
+|---|---|---|---|
+| **Bungie – *Marathon*** (5/2025) | Decal của họa sĩ độc lập Antireal xuất hiện trong game mà không được phép. Bungie xác nhận nguồn là **texture sheet do một cựu họa sĩ tạo**, cam kết rà soát toàn bộ tài sản. Báo chí ghi nhận đây là **lần thứ tư trong bốn năm** Bungie gặp sự cố tương tự (trailer *Witch Queen* 2021 dùng fan art; cutscene 2023 do **nhà cung cấp bên ngoài** dùng ảnh tưởng là ảnh chính thức; súng Nerf 2024) | Thư viện texture/kitbash nội bộ không có hồ sơ nguồn gốc; nhân sự nghỉ việc để lại tài sản không truy được nguồn; nhà cung cấp không được kiểm soát nguồn tham khảo | ✅ |
+| **The Pokémon Company – *Pokémon TCG Pocket*** (7/2025) | Tranh Ho-Oh trên thẻ bài có đường nét gần như trùng 1:1 với tranh của họa sĩ fan lanjiujiu (2021). Công ty thừa nhận **đội sản xuất đã đưa nhầm tài liệu tham khảo cho họa sĩ như thể là tài liệu chính thức**, gỡ hai thẻ, nhận toàn bộ trách nhiệm và mở điều tra rộng hơn | Chuỗi bàn giao tài liệu tham khảo không ghi nguồn; họa sĩ không phân biệt được tài liệu chính thức và ảnh nhặt trên mạng | ✅ |
+| **Paradox – *Stellaris: Galaxy Command*** (10/2019) | Game di động bị gỡ ngay ngày ra mắt vì chứa tranh *Halo 4* chỉ chỉnh sửa nhẹ. Game do **studio Gamebear (Hồng Kông) phát triển theo hợp đồng**, Paradox phát hành | Nhà phát hành chịu toàn bộ hậu quả uy tín vì lỗi của đối tác phát triển; không có kiểm tra tài sản trước khi phát hành | ✅ |
+| ***Bleak Faith: Forsaken*** (2023) | Studio indie bị phát hiện dùng animation giống *Elden Ring*; studio cho biết đã **mua trên Unreal Engine Marketplace**. Epic gỡ các listing nhưng nói **không có khả năng xác minh** tài sản của bên thứ ba | Mua trên chợ asset **không đồng nghĩa** nguồn gốc sạch; người bán có thể đã rip tài sản | ✅ |
+| **Bản sao *Unpacking* trên Google Play** | Nhà phát hành gỡ game sau khi nhà phát triển gốc lên tiếng, xin lỗi vì "thiếu nghiên cứu" về sản phẩm được gửi tới | Nhà phát hành không thẩm định sản phẩm trước khi ký | ✅ |
+
+**Rút ra:** (1) Rủi ro lớn nhất đến từ **chuỗi cung ứng tài sản** – nhân viên cũ, nhà cung cấp, chợ asset, tài liệu tham khảo. (2) Bên công bố sản phẩm chịu hậu quả bất kể lỗi do ai. (3) Phản ứng nhanh, minh bạch, bồi thường và **rà soát toàn diện** là cách xử lý được cộng đồng chấp nhận nhất.
 
 ---
 
@@ -168,6 +191,9 @@ Các yếu tố riêng lẻ không được bảo hộ vẫn có thể tạo th�
 - Luật Sở hữu trí tuệ số 50/2005/QH11, sửa đổi bởi Luật 36/2009/QH12, Luật 42/2019/QH14, Luật 07/2022/QH15 và **Luật 131/2025/QH15** (thông qua 10/12/2025, **hiệu lực 01/4/2026**).
 - Nghị định 17/2023/NĐ-CP hướng dẫn về quyền tác giả, quyền liên quan, sửa đổi bởi **Nghị định 134/2026/NĐ-CP**.
 - **Nghị định 341/2025/NĐ-CP** về xử phạt vi phạm hành chính về quyền tác giả, quyền liên quan, **hiệu lực 15/02/2026**, thay thế Nghị định 131/2013/NĐ-CP. Mức phạt tối đa 250 triệu đồng với cá nhân, 500 triệu đồng với tổ chức.
+- **Luật Trí tuệ nhân tạo số 134/2025/QH15** (thông qua 10/12/2025, **hiệu lực 01/3/2026**): có nghĩa vụ minh bạch, gắn nhãn đối với nội dung do AI tạo ra (theo các bài phân tích, quy định tại Điều 11; chi tiết kỹ thuật chờ nghị định hướng dẫn).
+- **Nghị định 147/2024/NĐ-CP** về quản lý dịch vụ Internet và thông tin trên mạng (hiệu lực 25/12/2024): hồ sơ xin **Quyết định phát hành trò chơi G1** (Điều 44) phải có **tài liệu chứng minh quyền sở hữu trí tuệ đối với trò chơi**, hoặc với game nước ngoài là **văn bản thỏa thuận cho phép phát hành tại Việt Nam** (hợp pháp hóa lãnh sự, dịch và chứng thực). Một số điểm của Điều 44 đã được sửa đổi bởi Nghị định 116/2026/NĐ-CP – cần đối chiếu.
+- **Bộ luật Lao động 2019, Điều 21 khoản 2** và **Thông tư 10/2020/TT-BLĐTBXH**: người sử dụng lao động được thỏa thuận bằng văn bản với người lao động về bảo vệ bí mật kinh doanh, bí mật công nghệ (danh mục bí mật, phạm vi, thời hạn, phương thức bảo vệ, xử lý vi phạm).
 - Luật Cạnh tranh 2018 (23/2018/QH14).
 - Bộ luật Hình sự 2015 (sửa đổi), **Điều 225** – Tội xâm phạm quyền tác giả, quyền liên quan.
 - Công ước Berne (Việt Nam là thành viên từ 2004) và Hiệp định TRIPS.
@@ -201,6 +227,12 @@ Luật 131/2025/QH15 giao Chính phủ quy định việc phát sinh, xác lập
 - Asset do AI tạo gần như hoàn toàn có thể **không được bảo hộ** hoặc được bảo hộ hạn chế – khó kiện người khác chép lại.
 - Asset AI tạo ra giống tác phẩm của người khác **vẫn có thể là bản sao** nếu chứng minh được mô hình tái tạo tác phẩm gốc.
 - Cần lưu hồ sơ về phần đóng góp của con người (prompt, chỉnh sửa, phác thảo) để chứng minh quyền.
+
+Các mốc quốc tế bổ sung:
+
+- **Cục Bản quyền Mỹ – Báo cáo "Copyright and Artificial Intelligence, Part 2: Copyrightability"** (29/01/2025): đầu ra AI chỉ được bảo hộ khi con người quyết định đủ các yếu tố biểu đạt; **prompt tự nó không đủ**, dù phức tạp đến đâu; việc con người **lựa chọn, sắp xếp, chỉnh sửa** đầu ra AI có thể được bảo hộ (nhưng phần AI tạo ra thì không); dùng AI hỗ trợ không làm mất bảo hộ của tác phẩm lớn hơn do con người tạo.
+- **Getty Images v. Stability AI** (Tòa Thượng thẩm Anh, 04/11/2025): yêu cầu xâm phạm gián tiếp về bản quyền thất bại vì mô hình không lưu trữ bản sao tác phẩm; Getty chỉ thắng một phần hẹp về **nhãn hiệu** (watermark xuất hiện trong ảnh tạo ra). Bài học cho studio: đầu ra AI mang **dấu vết nhận diện của bên thứ ba** (watermark, logo, chữ ký) là rủi ro thực.
+- **Steam** (Valve): từ 1/2024 yêu cầu khai báo nội dung AI (tạo sẵn và tạo trong lúc chạy); từ 1/2026 làm rõ chỉ áp dụng cho nội dung **người chơi tiếp xúc** và tài liệu marketing, không áp dụng cho công cụ hỗ trợ nội bộ (ví dụ trợ lý viết code). Nhà phát triển chịu trách nhiệm bảo đảm nội dung AI không vi phạm bản quyền.
 
 ---
 
@@ -302,7 +334,8 @@ KẾT LUẬN SÀNG LỌC
 4. **Tương đồng có hệ thống là chứng cứ gián tiếp mạnh** của việc sao chép, nhưng phải chứng minh **cả** sao chép thực tế **và** tương đồng ở phần được bảo hộ, sau khi đã lọc mô-típ thể loại và yếu tố chức năng. Sáng tạo độc lập là lý do miễn trừ hoàn toàn. Có tiếp cận và cố ý mô phỏng cũng chưa đủ (Capcom v. Data East).
 5. **Không vi phạm bản quyền chưa có nghĩa là hợp pháp.** Trong thực tiễn MMORPG gần đây, bên kiện thường thắng bằng **cạnh tranh không lành mạnh** (R2M) hoặc **bí mật kinh doanh** (Dark and Darker), còn yêu cầu bản quyền bị bác. Ngược lại, chép hệ thống rồi "thay da" có thể bị coi là xâm phạm bản quyền tại Trung Quốc và Hàn Quốc.
 6. **Các hệ thống đã thành chuẩn thể loại không còn được bảo hộ** như sáng tạo riêng của người đi đầu (ArcheAge War, ROM). Người đi trước càng thành công, thiết kế của họ càng dễ trở thành "chuẩn" mà người khác được dùng.
-7. **Tại Việt Nam**, thực tiễn xử lý tập trung ở server lậu và sao chép trực tiếp. Tranh chấp tương đồng thiết kế giữa hai game độc lập vẫn là khoảng trống; các án nước ngoài chỉ có giá trị tham khảo.
+7. **Tại Việt Nam**, thực tiễn xử lý tập trung ở server lậu và sao chép trực tiếp. Tranh chấp tương đồng thiết kế giữa hai game độc lập vẫn là khoảng trống; các án nước ngoài chỉ có giá trị tham khảo. Nhưng studio Việt Nam phát hành ra quốc tế **có thể bị kiện tại tòa nước ngoài** (Riot v. Imba).
+8. **Rủi ro thực tế lớn nhất nằm ở chuỗi cung ứng tài sản**: tài liệu tham khảo không rõ nguồn, nhân viên cũ, nhà cung cấp, chợ asset, công cụ AI (mục 5.6). Phòng ngừa bằng quy trình hiệu quả hơn nhiều so với tranh tụng sau khi sự cố đã xảy ra.
 
 **Phân biệt luật hiện hành và quan điểm:** Các kết luận 1–7 mô tả pháp luật và thực tiễn hiện hành. Quan điểm của người nghiên cứu – rằng một game "không nên được phép lấy toàn bộ thành quả thiết kế đặc trưng của game khác rồi chỉ đổi màu sắc và tên gọi" – là quan điểm về việc pháp luật **nên** như thế nào. Theo pháp luật hiện hành, hành vi đó chỉ bị xử lý khi đáp ứng các điều kiện ở mục 2; nếu phần bị lấy chủ yếu là yếu tố không được bảo hộ, hành vi có thể đáng chê trách về mặt nghề nghiệp nhưng vẫn hợp pháp.
 
@@ -352,10 +385,40 @@ KẾT LUẬN SÀNG LỌC
 26. Khởi tố vụ server lậu "Con đường tơ lụa": https://vtcnews.vn/khoi-to-3-bi-can-sao-chep-trai-phep-game-con-duong-to-lua-ar1034867.html
 27. Khởi tố vụ server lậu "Con đường tơ lụa" – VietnamPlus: https://www.vietnamplus.vn/khoi-to-3-bi-can-xam-pham-quyen-tac-gia-tro-choi-con-duong-to-lua-post1130741.amp
 
+### Bổ sung v2.1 – án lệ và sự cố
+
+28. Lilith v. 圣树唤歌 – Nam Đô (2026): https://m.mp.oeeee.com/a/BAAFRD0000202608121642479.html
+29. Chỉ dẫn xét xử game online của Tòa Cấp cao Quảng Đông (2020): https://www.court.gov.cn/zixun/xiangqing/225471.html
+30. Án (2023)粤民终4326号 – phân tích: https://m.163.com/dy/article/L3AQCHPL0514DT7M.html
+31. Tencent v. Moonton – Dot Esports: https://dotesports.com/league-of-legends/news/source-riot-games-parent-tencent-wins-lawsuit-mobile-legends-3
+32. Riot v. Moonton bị bác tại Mỹ – PC Gamer: https://www.pcgamer.com/us-judge-tells-riot-to-take-league-of-legends-lawsuit-to-china
+33. Riot v. Imba Technology – Pocket Gamer.biz: https://www.pocketgamer.biz/riot-games-sues-imba/
+34. Riot v. Imba – WSGR (2023): https://www.wsgr.com/en/insights/league-of-legends-copycat-companies-must-face-ip-lawsuit-in-the-us.html
+35. Krafton v. NetEase – Game Developer: https://www.gamedeveloper.com/business/krafton-and-netease-settle-over-i-pubg-i-i-knives-out-i-copyright-quarrel
+36. Bungie *Marathon* – PC Gamer: https://www.pcgamer.com/games/fps/artist-accuses-bungie-of-stealing-her-designs-for-marathons-art-i-am-tired-of-designers-from-huge-companies-moodboarding-and-parasitising-my-designs-while-i-struggle-to-make-a-living
+37. Bungie *Marathon* – Windows Central: https://www.windowscentral.com/gaming/bungie-responds-to-marathon-art-theft-controversy-admitting-it-stole-assets-and-blaming-a-former-developer
+38. *Pokémon TCG Pocket* – GamesRadar: https://www.gamesradar.com/games/pokemon/pokemon-tcg-pocket-owns-up-to-art-blunder-after-providing-incorrect-reference-materials-as-official-documents-when-commissioning-new-cards
+39. *Stellaris: Galaxy Command* – Game Developer: https://gamedeveloper.com/production/paradox-takes-i-stellaris-galaxy-command-i-offline-over-stolen-i-halo-4-i-artwork
+40. *Bleak Faith: Forsaken* – PC Gamer: https://pcgamer.com/indie-dev-accused-of-using-stolen-fromsoftware-animations-removes-them-warns-others-against-trusting-marketplace-assets
+41. Bản sao *Unpacking* – PC Gamer: https://www.pcgamer.com/uk/publisher-apologizes-for-lack-of-research-after-releasing-an-obvious-unpacking-clone
+
+### Bổ sung v2.1 – pháp luật, chính sách nền tảng, AI
+
+42. Luật Trí tuệ nhân tạo 134/2025/QH15: https://thuvienphapluat.vn/van-ban/Cong-nghe-thong-tin/Luat-Tri-tue-nhan-tao-2025-so-134-2025-QH15-679013.aspx
+43. Nghị định 147/2024/NĐ-CP: https://thuvienphapluat.vn/van-ban/Cong-nghe-thong-tin/Nghi-dinh-147-2024-ND-CP-quan-ly-cung-cap-su-dung-dich-vu-Internet-thong-tin-tren-mang-480755.aspx
+44. Thủ tục cấp Quyết định phát hành G1 – Cổng Dịch vụ công: https://dichvucong.gov.vn/p/home/dvc-chi-tiet-thu-tuc-hanh-chinh.html?ma_thu_tuc=2.001677
+45. Thỏa thuận bảo vệ bí mật kinh doanh theo BLLĐ 2019 – Tạp chí Luật sư Việt Nam: https://lsvn.vn/mot-so-van-de-ve-thoa-thuan-bao-ve-bi-mat-kinh-doanh-bi-mat-cong-nghe-giua-nguoi-lao-dong-va-nguoi-su-dung-lao-dong-theo-quy-dinh-cua-bo-luat-lao-dong-nam-20191624369973-a105439.html
+46. Cục Bản quyền Mỹ – Báo cáo AI Part 2: https://www.copyright.gov/newsnet/2025/1060.html
+47. Getty Images v. Stability AI – CMS case tracker: https://cms.law/en/int/publication/artificial-intelligence-and-copyright-case-tracker/united-kingdom-getty-images-us-inc-ors-v-stability-ai-ltd
+48. Steam – cập nhật khai báo AI (1/2026): https://www.gamingonlinux.com/2026/01/valve-tweak-steam-ai-disclosure-form-for-developers-to-clarify-its-for-content-consumed-by-players
+49. Unity Asset Store Terms of Service and EULA: https://unity.com/legal/as-terms ; FAQ: https://assetstore.unity.com/browse/eula-faq
+50. Fab – Licenses and pricing: https://dev.epicgames.com/documentation/en-us/fab/licenses-and-pricing-in-fab
+51. Monotype – giấy phép font cho game: https://www.monotype.com/resources/expertise/understanding-game-licensing-monotype
+52. QMUL/WIPO – Nghiên cứu toàn cầu về xâm phạm bản quyền và chiến lược thực thi trong ngành game (2022), tài liệu WIPO/ACE/15/4: https://www.qmul.ac.uk/news/latest-news/2022/pr/ip-is-the-name-of-the-game-first-global-study-into-copyright-infringement-and-enforcement-strategies-in-the-video-game-industry-reveals-key-threats-and-recommendations.html
+
 ### Tài liệu chuyên khảo
 
-28. WIPO – *Mastering the Game: Business and Legal Issues for Video Game Developers* (tra cứu tại wipo.int theo đúng tiêu đề).
-29. Unity Asset Store EULA và Fab Standard License – đọc điều khoản của từng asset cụ thể.
+53. WIPO – *Mastering the Game: Business and Legal Issues for Video Game Developers* (2022): https://tind.wipo.int/record/45851/files/wipo-pub-2022-en-mastering-the-game.pdf
 
 ### Về hình ảnh
 
